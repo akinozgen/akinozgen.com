@@ -2,9 +2,17 @@
   {
     "repokey": "akinozgen/fm",
     "name": "FM - File Manager",
-    "subtitle": "File manager in Rust + Vue",
-    "summary": "Built with Rust and Vue, runs inside the system webview instead of bundling its own browser. Does what you'd expect from a file manager without the Electron weight.",
-    "images": []
+    "subtitle": "File manager in Tauri + Vue + Rust",
+    "summary": "A cross-platform file manager built with Tauri, Vue, and Rust. Handles navigation, multi-select, inline rename, file ops, virtual locations, and per-directory view persistence. Actively developed.",
+    "images": [
+      "/projects/fm1.png",
+      "/projects/fm2.png",
+      "/projects/fm3.png",
+      "/projects/fm4.png",
+      "/projects/fm5.png",
+      "/projects/fm6.png",
+      "/projects/fm7.png"
+    ]
   },
   {
     "repokey": "akinozgen/toolbelt",
@@ -49,6 +57,22 @@
       "/projects/ue52.png",
       "/projects/ue53.png"
     ]
+  },
+  {
+    "repokey": "akinozgen/subliminal-ui",
+    "name": "Subliminal UI",
+    "subtitle": "Desktop subtitle downloader",
+    "summary": "A desktop GUI for the Subliminal subtitle library. Sits in the system tray, watches your media folders, and pulls subtitles automatically — no command line needed.",
+    "images": [
+      "/projects/sub1.png"
+    ]
+  },
+  {
+    "repokey": "akinozgen/clipwatch",
+    "name": "Clipwatch",
+    "subtitle": "Clipboard image saver for Windows",
+    "summary": "Watches your clipboard for images and saves them as files when you hit Ctrl+V in an Explorer window. Drops the image into whatever folder you have open, or the desktop if nothing's focused.",
+    "images": []
   },
   {
     "repokey": "akinozgen/ytmp3-android",

@@ -10,6 +10,23 @@ export const snapshotProfile: GithubUser = {
 
 export const snapshotProjects: Project[] = [
   {
+    repoKey: "akinozgen/fm",
+    name: "FM - File Manager",
+    slug: "fm",
+    subtitle: "File manager in Tauri + Vue + Rust",
+    description:
+      "A cross-platform file manager built with Tauri, Vue, and Rust. Handles navigation, multi-select, inline rename, file ops, virtual locations, and per-directory view persistence. Actively developed.",
+    images: [],
+    githubUrl: "https://github.com/akinozgen/fm",
+    homepageUrl: null,
+    language: "Vue",
+    stars: 0,
+    fork: false,
+    archived: false,
+    topics: ["tauri", "vue", "rust", "file-manager"],
+    updatedAt: "2026-03-22T17:00:34Z"
+  },
+  {
     repoKey: "akinozgen/ps3dec-gui",
     name: "PS3Dec GUI",
     slug: "ps3dec-gui",
@@ -76,6 +93,40 @@ export const snapshotProjects: Project[] = [
     archived: false,
     topics: ["React", "TypeScript", "Video"],
     updatedAt: "2024-09-19T13:42:56Z"
+  },
+  {
+    repoKey: "akinozgen/subliminal-ui",
+    name: "Subliminal UI",
+    slug: "subliminal-ui",
+    subtitle: "Desktop subtitle downloader",
+    description:
+      "A desktop GUI for the Subliminal subtitle library. Sits in the system tray, watches your media folders, and pulls subtitles automatically — no command line needed.",
+    images: [],
+    githubUrl: "https://github.com/akinozgen/subliminal-ui",
+    homepageUrl: null,
+    language: "Python",
+    stars: 0,
+    fork: false,
+    archived: false,
+    topics: ["python", "subtitles", "desktop", "gui"],
+    updatedAt: "2025-06-05T14:01:48Z"
+  },
+  {
+    repoKey: "akinozgen/clipwatch",
+    name: "Clipwatch",
+    slug: "clipwatch",
+    subtitle: "Clipboard image saver for Windows",
+    description:
+      "Watches your clipboard for images and saves them as files when you hit Ctrl+V in an Explorer window. Drops the image into whatever folder you have open, or the desktop if nothing's focused.",
+    images: [],
+    githubUrl: "https://github.com/akinozgen/clipwatch",
+    homepageUrl: null,
+    language: "C++",
+    stars: 0,
+    fork: false,
+    archived: false,
+    topics: ["cpp", "windows", "clipboard", "utility"],
+    updatedAt: "2025-05-29T16:18:13Z"
   },
   {
     repoKey: "akinozgen/ytmp3-android",
