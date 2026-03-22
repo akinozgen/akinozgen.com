@@ -1,0 +1,85 @@
+---
+interface Props {
+  images: string[];
+  alt: string;
+}
+
+const { images, alt } = Astro.props;
+const id = `splide-${Math.random().toString(36).slice(2, 8)}`;
+---
+
+{images.length > 0 && (
+  <div id={id} class="splide project-splide" aria-label={alt}>
+    <div class="splide__track">
+      <ul class="splide__list">
+        {images.map((src, i) => (
+          <li class="splide__slide">
+            <img
+              src={src}
+              alt={i === 0 ? alt : `${alt} — image ${i + 1}`}
+              loading="lazy"
+              decoding="async"
+              data-zoomable
+            />
+          </li>
+        ))}
+      </ul>
+    </div>
+  </div>
+)}
+
+<style>
+  .project-splide .splide__slide img {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    cursor: zoom-in;
+    display: block;
+  }
+
+  .project-splide .splide__arrow {
+    background: var(--bg-hover);
+    border: 1px solid var(--dim);
+    opacity: 1;
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .project-splide .splide__arrow svg {
+    fill: var(--muted);
+    width: 0.85em;
+    height: 0.85em;
+  }
+
+  .project-splide .splide__arrow:hover {
+    background: var(--bg-hover);
+    border-color: var(--muted);
+  }
+
+  .project-splide .splide__arrow:hover svg {
+    fill: var(--text);
+  }
+
+  .project-splide .splide__pagination__page {
+    background: var(--dim);
+  }
+
+  .project-splide .splide__pagination__page.is-active {
+    background: var(--accent);
+    transform: scale(1);
+  }
+</style>
+
+<script>
+  import Splide from "@splidejs/splide";
+  import "@splidejs/splide/css";
+
+  document.querySelectorAll<HTMLElement>(".project-splide").forEach((el) => {
+    new Splide(el, {
+      type: "loop",
+      pagination: true,
+      arrows: el.querySelectorAll(".splide__slide").length > 1,
+      rewind: true,
+    }).mount();
+  });
+</script>

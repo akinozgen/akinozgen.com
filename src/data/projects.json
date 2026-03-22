@@ -1,0 +1,66 @@
+[
+  {
+    "repokey": "akinozgen/fm",
+    "name": "FM - File Manager",
+    "subtitle": "File manager in Rust + Vue",
+    "summary": "Built with Rust and Vue, runs inside the system webview instead of bundling its own browser. Does what you'd expect from a file manager without the Electron weight.",
+    "images": []
+  },
+  {
+    "repokey": "akinozgen/toolbelt",
+    "name": "Toolbelt",
+    "subtitle": "Small tools I keep reaching for",
+    "summary": "A collection of utilities I kept needing — encoder, markdown notepad, HTTP client, hasher, alarm clock, and a few others. Built for myself, open sourced in case it's useful to anyone else.",
+    "images": [
+      "/projects/toolbelt1.png",
+      "/projects/toolbelt2.png",
+      "/projects/toolbelt3.png",
+      "/projects/toolbelt4.png",
+      "/projects/toolbelt5.png",
+      "/projects/toolbelt6.png",
+      "/projects/toolbelt7.png"
+    ]
+  },
+  {
+    "repokey": "akinozgen/react-multiwatch",
+    "name": "React Multiwatch",
+    "subtitle": "Watch multiple streams at once",
+    "summary": "Watch multiple YouTube streams in a resizable grid. Keyboard shortcuts let you rearrange the layout and control playback across all of them at the same time.",
+    "images": ["/projects/multiwatch.png", "/projects/multiwatch2.png"]
+  },
+  {
+    "repokey": "akinozgen/ps3dec-gui",
+    "name": "PS3Dec GUI",
+    "subtitle": "A GUI for the PS3Dec tool",
+    "summary": "A Windows GUI wrapped around PS3Dec, the command-line tool for decrypting PS3 game ISOs. If you don't want to deal with a terminal for this, here you go.",
+    "images": [
+      "/projects/ps3dec1.png",
+      "/projects/ps3dec2.png",
+      "/projects/ps3dec3.png"
+    ]
+  },
+  {
+    "repokey": "akinozgen/ue5-number-station-generator",
+    "name": "Number Station Generator",
+    "subtitle": "Unreal Engine 5 audio experiment",
+    "summary": "An UE5 plugin that generates number-station style audio — procedural, atmospheric, a bit eerie. Built mostly out of curiosity.",
+    "images": [
+      "/projects/ue51.png",
+      "/projects/ue52.png",
+      "/projects/ue53.png"
+    ]
+  },
+  {
+    "repokey": "akinozgen/ytmp3-android",
+    "name": "YTMP3 Android",
+    "subtitle": "YouTube to MP3 on Android",
+    "summary": "An Android app for downloading YouTube audio as MP3. Ships with a youtube-dl based backend server — install it, point the app at it, and you're good.",
+    "images": [
+      "/projects/mus1.jpg",
+      "/projects/mus2.png",
+      "/projects/mus3.png",
+      "/projects/mus4.png",
+      "/projects/mus5.jpg"
+    ]
+  }
+]

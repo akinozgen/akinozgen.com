@@ -1,0 +1,97 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getPortfolioData } from "../lib/github";
+import Icon from "../components/Icon.astro";
+import ImageSlider from "../components/ImageSlider.astro";
+
+const { profile, projects } = getPortfolioData();
+const displayName = profile.name ?? profile.login;
+---
+
+<BaseLayout
+  title={displayName}
+  description={`Personal site of ${displayName} — software developer building tools, utilities, and open source experiments.`}
+>
+  <main class="page-shell">
+    <section class="hero">
+      <p class="eyebrow">Software Developer</p>
+      <h1>{displayName}</h1>
+      <p class="lead">
+        I build tools, utilities, and experiments across web, desktop, and mobile.
+        Most of what I make ends up open source.
+      </p>
+      <div class="hero-links">
+        <a href={profile.html_url} target="_blank" rel="noreferrer">
+          <Icon name="github" size={18} /> GitHub
+        </a>
+      </div>
+    </section>
+
+    <section class="section-block">
+      <div class="section-heading">
+        <h2>Work</h2>
+      </div>
+      <div class="project-grid">
+        {projects.map((project) => (
+          <article class="project-card">
+            <ImageSlider images={project.images} alt={`${project.name} preview`} />
+            <div class="card-topline">
+              <span>{project.language ?? "Project"}</span>
+              {project.stars > 0 && (
+                <span class="star-count"><Icon name="star" size={13} />{project.stars}</span>
+              )}
+            </div>
+            <h3>{project.name}</h3>
+            <p class="subtitle">{project.subtitle}</p>
+            <p>{project.description}</p>
+            <div class="tag-row">
+              {project.topics.slice(0, 4).map((tag) => (
+                <span class="tag">{tag}</span>
+              ))}
+            </div>
+            <div class="card-links">
+              <a href={project.githubUrl} target="_blank" rel="noreferrer">
+                <Icon name="github" size={14} /> Repo
+              </a>
+              {project.homepageUrl && (
+                <a href={project.homepageUrl} target="_blank" rel="noreferrer">
+                  <Icon name="external" size={14} /> Live
+                </a>
+              )}
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  </main>
+
+<div id="lightbox" aria-hidden="true">
+  <img id="lightbox-img" src="" alt="" />
+</div>
+
+<script>
+  const lightbox = document.getElementById('lightbox')!;
+  const lightboxImg = document.getElementById('lightbox-img') as HTMLImageElement;
+
+  document.addEventListener('click', (e) => {
+    const img = (e.target as Element).closest<HTMLImageElement>('[data-zoomable]');
+    if (!img) return;
+    lightboxImg.src = img.src;
+    lightboxImg.alt = img.alt;
+    lightbox.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  });
+
+  lightbox.addEventListener('click', () => {
+    lightbox.classList.remove('open');
+    document.body.style.overflow = '';
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      lightbox.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+  });
+</script>
+</BaseLayout>
