@@ -14,6 +14,7 @@ export function getPortfolioData() {
       subtitle: metadata.subtitle,
       description: metadata.summary,
       images: metadata.images,
+      featured: metadata.featured ?? false,
     }] satisfies Project[];
   });
 

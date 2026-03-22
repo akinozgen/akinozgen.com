@@ -1,0 +1,82 @@
+---
+interface Props {
+  name: string;
+  githubUrl: string;
+}
+
+const { name, githubUrl } = Astro.props;
+---
+
+<header class="nav">
+  <a class="nav-name" href="#">{name}</a>
+  <nav class="nav-links">
+    <a href="#experience">Experience</a>
+    <a href="#work">Work</a>
+    <a href="#packages">Packages</a>
+    <a href="#skills">Skills</a>
+    <a href="#contact">Contact</a>
+    <a class="nav-github" href={githubUrl} target="_blank" rel="noreferrer">GitHub ↗</a>
+  </nav>
+</header>
+
+<style>
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2rem;
+    height: 52px;
+    background: rgba(10, 9, 8, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .nav-name {
+    font-family: 'Syne', system-ui, sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--text);
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .nav-links a {
+    font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    transition: color 0.15s;
+  }
+
+  .nav-links a:hover {
+    color: var(--text);
+  }
+
+  .nav-github {
+    color: var(--accent) !important;
+  }
+
+  @media (max-width: 640px) {
+    .nav {
+      padding: 0 1rem;
+    }
+
+    .nav-links {
+      gap: 1.25rem;
+    }
+
+    .nav-links a:not(.nav-github) {
+      display: none;
+    }
+  }
+</style>

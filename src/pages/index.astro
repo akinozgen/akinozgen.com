@@ -3,37 +3,112 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import { getPortfolioData } from "../lib/github";
 import Icon from "../components/Icon.astro";
 import ImageSlider from "../components/ImageSlider.astro";
+import Nav from "../components/Nav.astro";
+import { packages } from "../data/packages";
+import { skillGroups } from "../data/skills";
+import { workHistory, education, certificates } from "../data/history";
 
 const { profile, projects } = getPortfolioData();
 const displayName = profile.name ?? profile.login;
 ---
 
 <BaseLayout
-  title={displayName}
+  title={displayName + ' - Portfolio'}
   description={`Personal site of ${displayName} — software developer building tools, utilities, and open source experiments.`}
 >
+  <Nav name={displayName} githubUrl={profile.html_url} />
   <main class="page-shell">
     <section class="hero">
-      <p class="eyebrow">Software Developer</p>
-      <h1>{displayName}</h1>
-      <p class="lead">
-        I build tools, utilities, and experiments across web, desktop, and mobile.
-        Most of what I make ends up open source.
-      </p>
-      <div class="hero-links">
-        <a href={profile.html_url} target="_blank" rel="noreferrer">
-          <Icon name="github" size={18} /> GitHub
+      <div class="hero-left">
+        <p class="eyebrow">Software Developer</p>
+        <h1>{displayName}</h1>
+        <p class="lead">
+          Professionally I work on backends, service integrations, and database-heavy systems —
+          mostly in the ISP and networking space. Outside of that I build whatever I feel like:
+          desktop apps, mobile utilities, audio experiments, sometimes games.
+        </p>
+        <div class="hero-links">
+          <a href={profile.html_url} target="_blank" rel="noreferrer">
+            <Icon name="github" size={18} /> GitHub
+          </a>
+        </div>
+      </div>
+      <div class="hero-right">
+        <a class="stat-card" href="https://www.npmjs.com/package/data-unit-converter" target="_blank" rel="noreferrer">
+          <p class="stat-label">npm package</p>
+          <p class="stat-pkg">data-unit-converter</p>
+          <p class="stat-number">204k all-time downloads</p>
+        </a>
+        <a class="stat-card stat-card--project" href="https://github.com/akinozgen/fm" target="_blank" rel="noreferrer">
+          <p class="stat-label">actively developed</p>
+          <p class="stat-pkg">FM — File Manager</p>
+          <p class="stat-number">Tauri + Vue + Rust</p>
         </a>
       </div>
     </section>
 
-    <section class="section-block">
+    <section id="experience" class="section-block">
+      <div class="section-heading">
+        <h2>Experience</h2>
+      </div>
+
+      <div class="exp-timeline">
+        {workHistory.map((job) => (
+          <div class={`exp-row${job.current ? " exp-row--current" : ""}`}>
+            <div class="exp-period">
+              {job.current && <span class="exp-now">NOW</span>}
+              {job.period}
+            </div>
+            <div class="exp-body">
+              <div class="exp-header">
+                <span class="exp-company">
+                  {job.url
+                    ? <a href={job.url} target="_blank" rel="noreferrer">{job.company} ↗</a>
+                    : job.company}
+                </span>
+                <span class="exp-role">{job.role}</span>
+              </div>
+              <p class="exp-desc">{job.description}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div class="edu-certs-grid">
+        <div class="edu-block">
+          <p class="exp-sub-label">Education</p>
+          {education.map((e) => (
+            <div class="edu-row">
+              <span class="edu-period">{e.period}</span>
+              <div class="edu-body">
+                <span class="edu-institution">{e.institution}</span>
+                <span class="edu-field">{e.field}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div class="cert-block">
+          <p class="exp-sub-label">Certificates</p>
+          <div class="cert-grid">
+            {certificates.map((cert) => (
+              <div class="cert-card">
+                <p class="cert-name">{cert.name}</p>
+                <p class="cert-id">{cert.id}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="work" class="section-block">
       <div class="section-heading">
         <h2>Work</h2>
       </div>
       <div class="project-grid">
         {projects.map((project) => (
-          <article class="project-card">
+          <article class={`project-card${project.featured ? " project-card--featured" : ""}`}>
             <ImageSlider images={project.images} alt={`${project.name} preview`} />
             <div class="card-topline">
               <span>{project.language ?? "Project"}</span>
@@ -61,6 +136,74 @@ const displayName = profile.name ?? profile.login;
             </div>
           </article>
         ))}
+      </div>
+    </section>
+
+    <section id="packages" class="section-block">
+      <div class="section-heading">
+        <h2>Packages</h2>
+      </div>
+      <div class="pkg-grid">
+        {packages.map((pkg) => (
+          <article class="pkg-card">
+            <div class="pkg-topline">
+              <span>{pkg.language}</span>
+              <span>{pkg.totalDownloads.toLocaleString()} downloads</span>
+            </div>
+            <h3>{pkg.name}</h3>
+            <p>{pkg.description}</p>
+            <div class="pkg-footer">
+              <span class="pkg-version">v{pkg.version}</span>
+              <div class="card-links">
+                <a href={pkg.githubUrl} target="_blank" rel="noreferrer">
+                  <Icon name="github" size={13} /> Repo
+                </a>
+                <a href={pkg.npmUrl} target="_blank" rel="noreferrer">
+                  <Icon name="external" size={13} /> npm
+                </a>
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+    <section id="skills" class="section-block skills-section">
+      <div class="section-heading">
+        <h2>Skills</h2>
+      </div>
+      {skillGroups.map((group) => (
+        <div class="skill-group">
+          <p class="skill-category">{group.category}</p>
+          {group.skills.map((skill, i) => (
+            <div class="skill-row">
+              <span class="skill-index">{String(i + 1).padStart(2, "0")}</span>
+              <span class="skill-name">{skill}</span>
+            </div>
+          ))}
+        </div>
+      ))}
+    </section>
+
+    <section id="contact" class="section-block">
+      <div class="section-heading">
+        <h2>Contact</h2>
+      </div>
+      <div class="contact-list">
+        <a class="contact-row" href="mailto:akinozgen@protonmail.com?subject=Hey%20from%20your%20portfolio">
+          <span class="contact-label">Proton</span>
+          <span class="contact-value">akinozgen@protonmail.com</span>
+          <span class="contact-arrow">↗</span>
+        </a>
+        <a class="contact-row" href="mailto:akinozgen17@outlook.com?subject=Hey%20from%20your%20portfolio">
+          <span class="contact-label">Outlook</span>
+          <span class="contact-value">akinozgen17@outlook.com</span>
+          <span class="contact-arrow">↗</span>
+        </a>
+        <a class="contact-row" href="https://www.linkedin.com/in/akinozgen/" target="_blank" rel="noreferrer">
+          <span class="contact-label">LinkedIn</span>
+          <span class="contact-value">linkedin.com/in/akinozgen</span>
+          <span class="contact-arrow">↗</span>
+        </a>
       </div>
     </section>
   </main>

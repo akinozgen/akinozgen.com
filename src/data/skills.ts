@@ -1,0 +1,87 @@
+export interface SkillGroup {
+  category: string;
+  skills: string[];
+}
+
+export const skillGroups: SkillGroup[] = [
+  {
+    category: "Full-Stack Development",
+    skills: [
+      "PHP",
+      "Laravel",
+      "Eloquent ORM",
+      "Composer Package Development",
+      "Python",
+      "Go",
+      "Rust",
+      "Node.js",
+      "TypeScript",
+      "JavaScript",
+      "Vue",
+      "React",
+      "SCSS",
+      "REST API Design",
+      "WebSockets",
+      "Redis",
+      "MariaDB & SQL",
+      "SQLite",
+      "Vite",
+    ],
+  },
+  {
+    category: "Systems & Networking",
+    skills: [
+      "Linux — RHEL",
+      "Linux — Debian",
+      "Docker & Compose",
+      "Nginx",
+      "SSH & Remote Administration",
+      "iptables & Packet Filtering",
+      "FreeRADIUS — AAA Configuration",
+      "FreeRADIUS — Authentication Flows",
+      "MikroTik — RouterOS",
+      "PPPoE",
+      "Hotspot Management",
+      "SNMP & Network Monitoring",
+      "Network Architecture",
+      "Shell Scripting",
+      "ISP Infrastructure",
+    ],
+  },
+  {
+    category: "Mobile & Desktop",
+    skills: [
+      "React Native",
+      "Expo",
+      "Flutter",
+      "Tauri",
+      "WebView Integration",
+    ],
+  },
+  {
+    category: "Architecture & Integration",
+    skills: [
+      "Object-Oriented Design",
+      "DTO & Repository Patterns",
+      "Database Abstraction — DBAL",
+      "Queue & Worker Systems",
+      "Event-Driven Architecture",
+      "CI/CD Pipelines",
+      "Concurrent & Multithreaded Systems",
+      "Big Data Processing",
+      "Payment Gateway Integration",
+      "SMS & Telco Systems",
+    ],
+  },
+  {
+    category: "Creative Engineering",
+    skills: [
+      "Unreal Engine — C++",
+      "Unreal Engine — Blueprints",
+      "Blender — 3D Modeling & Asset Pipeline",
+      "Procedural Audio Systems",
+      "Win32 API",
+      "Experimental Tooling",
+    ],
+  },
+];

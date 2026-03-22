@@ -4,6 +4,7 @@
     "name": "FM - File Manager",
     "subtitle": "File manager in Tauri + Vue + Rust",
     "summary": "A cross-platform file manager built with Tauri, Vue, and Rust. Handles navigation, multi-select, inline rename, file ops, virtual locations, and per-directory view persistence. Actively developed.",
+    "featured": true,
     "images": [
       "/projects/fm1.png",
       "/projects/fm2.png",

@@ -5,6 +5,7 @@ export interface Project {
   subtitle: string;
   description: string;
   images: string[];
+  featured?: boolean;
   githubUrl: string;
   homepageUrl: string | null;
   language: string | null;
@@ -23,10 +24,21 @@ export interface GithubUser {
   bio: string | null;
 }
 
+export interface Package {
+  name: string;
+  description: string;
+  version: string;
+  language: string;
+  totalDownloads: number;
+  githubUrl: string;
+  npmUrl: string;
+}
+
 export interface CuratedProjectMetadata {
   repokey: string;
   name: string;
   subtitle: string;
   summary: string;
   images: string[];
+  featured?: boolean;
 }
