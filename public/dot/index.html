@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Make PNGs that look blank in the feed and show up when opened."
+    />
+    <meta name="theme-color" content="#f3efe5" />
+    <title>Dotmaker</title>
+    <script type="module" crossorigin src="/dot/assets/index-BpoUapp9.js"></script>
+    <link rel="stylesheet" crossorigin href="/dot/assets/index-DgNtZ7gJ.css">
+  </head>
+  <body>
+    <div id="app">
+      <header class="site-header">
+        <a class="brand" href="#" aria-label="Dotmaker home">
+          <span class="brand-mark" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </span>
+          <span>DOT<br />MAKER</span>
+        </a>
+
+      </header>
+
+      <main>
+        <section class="hero">
+          <div class="hero-copy">
+            <p class="eyebrow"><span>01</span> HIDDEN-IMAGE PNG</p>
+            <h1>BLANK IN FEED.<br /><em>VISIBLE OPENED.</em></h1>
+            <p class="hero-lead">
+              Makes PNGs that appear empty in the X timeline and reveal on tap.
+              Nothing is uploaded anywhere.
+            </p>
+            <a class="primary-cta" href="#editor">
+              OPEN EDITOR
+              <svg viewBox="0 0 20 20" aria-hidden="true">
+                <path d="M4 10h12M11 5l5 5-5 5" />
+              </svg>
+            </a>
+          </div>
+
+          <div class="hero-demo" aria-label="Interactive demo">
+            <div class="demo-head">
+              <div>
+                <span class="micro">DEMO</span>
+                <strong id="demoState">IN FEED</strong>
+              </div>
+              <button class="switch" id="demoSwitch" type="button" aria-pressed="false">
+                <span></span>
+                <b>SHOW</b>
+              </button>
+            </div>
+            <button class="demo-frame" id="demoFrame" type="button" aria-label="Toggle image">
+              <canvas id="demoCanvas" width="720" height="450"></canvas>
+              <div class="demo-empty">
+                <span class="empty-icon" aria-hidden="true">
+                  <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                </span>
+                <strong>Nothing here.</strong>
+                <small>Tap to reveal</small>
+              </div>
+            </button>
+            <p class="demo-caption"><span></span> CLICK THE CARD TO TOGGLE</p>
+          </div>
+        </section>
+
+        <section class="editor-section" id="editor">
+          <div class="section-heading">
+            <p class="eyebrow"><span>02</span> EDITOR</p>
+            <h2>MAKE ONE.</h2>
+            <p>Drop an image, adjust, download.</p>
+          </div>
+
+          <div class="workspace">
+            <aside class="control-panel">
+              <div class="control-step">
+                <div class="step-title"><span>1</span><strong>IMAGE</strong></div>
+                <label class="dropzone" id="dropzone" for="fileInput">
+                  <input id="fileInput" type="file" accept="image/png,image/jpeg,image/webp" />
+                  <span class="upload-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M12 16V4m0 0L7 9m5-5 5 5M5 14v5h14v-5" />
+                    </svg>
+                  </span>
+                  <strong id="dropTitle">Drop an image here</strong>
+                  <small id="dropHint">or click to browse · PNG, JPG, WEBP</small>
+                </label>
+              </div>
+
+              <div class="control-step">
+                <div class="step-title"><span>2</span><strong>ADJUST</strong></div>
+
+                <label class="field-label" for="sizeSelect">CANVAS SIZE</label>
+                <div class="select-wrap">
+                  <select id="sizeSelect">
+                    <option value="original">Auto · original ratio (recommended)</option>
+                    <option value="2560x1440">Landscape 16:9 · 2560 × 1440</option>
+                    <option value="2560x2560">Square 1:1 · 2560 × 2560</option>
+                    <option value="2048x2560">Portrait 4:5 · 2048 × 2560</option>
+                  </select>
+                  <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4" /></svg>
+                </div>
+
+                <div class="range-head">
+                  <label for="brightness">BRIGHTNESS BOOST</label>
+                  <output id="brightnessValue">1.35×</output>
+                </div>
+                <input id="brightness" class="range" type="range" min="100" max="180" value="135" step="5" />
+                <p class="field-note">Keeps the revealed image readable on a dark backdrop.</p>
+
+                <label class="check-row">
+                  <input id="edgeToggle" type="checkbox" />
+                  <span class="fake-check">
+                    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m3 8 3 3 7-7" /></svg>
+                  </span>
+                  <span><strong>Keep edges opaque</strong><small>Preserves fine detail.</small></span>
+                </label>
+              </div>
+
+              <div class="control-step download-step">
+                <div class="step-title"><span>3</span><strong>EXPORT</strong></div>
+                <button class="download-button" id="downloadButton" type="button">
+                  <span>
+                    <strong>DOWNLOAD PNG</strong>
+                    <small id="downloadMeta">2560 × 1440 · PNG8</small>
+                  </span>
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 4v11m0 0-4-4m4 4 4-4M5 19h14" />
+                  </svg>
+                </button>
+                <p class="privacy-note warning-note">
+                  ⚠️ Post from a desktop browser at <strong>x.com</strong>. The mobile app
+                  re-encodes uploads as JPEG, which breaks the effect. Feeds may take
+                  1–2 minutes to update after posting.
+                </p>
+                <p class="privacy-note">
+                  <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 9V7a4 4 0 0 1 8 0v2m-9 0h10v8H5z" /></svg>
+                  Everything runs locally.
+                </p>
+              </div>
+            </aside>
+
+            <div class="preview-panel">
+              <div class="preview-toolbar">
+                <div>
+                  <span class="micro">PREVIEW</span>
+                  <strong id="previewTitle">FEED VIEW</strong>
+                </div>
+                <div class="view-tabs" role="group" aria-label="Preview mode">
+                  <button class="active" type="button" data-view="feed">FEED</button>
+                  <button type="button" data-view="open">OPENED</button>
+                  <button type="button" data-view="dots">DOTS</button>
+                </div>
+              </div>
+
+              <div class="preview-stage" id="previewStage">
+                <div class="post-shell">
+                  <div class="post-head">
+                    <div class="avatar">D</div>
+                    <div><strong>dotmaker</strong><span>@dotmaker · now</span></div>
+                    <span class="more">•••</span>
+                  </div>
+                  <div class="post-image" id="postImage">
+                    <canvas id="previewCanvas" width="1200" height="675"></canvas>
+                    <div class="feed-placeholder" id="feedPlaceholder">
+                      <span class="placeholder-grid" aria-hidden="true">
+                        <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                      </span>
+                      <strong>Nothing to see here.</strong>
+                      <small>Shows up when opened.</small>
+                    </div>
+                  </div>
+                  <div class="post-actions" aria-hidden="true">
+                    <span>○</span><span>↻</span><span>♡</span><span>⌁</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="preview-footer">
+                <span><i></i> READY</span>
+                <p>Previews are approximate. Verify by posting to X.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer>
+        <a class="brand footer-brand" href="#">
+          <span class="brand-mark" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </span>
+          <span>DOTMAKER</span>
+        </a>
+        <p>A small browser tool.</p>
+        <span>2026 · BETA</span>
+      </footer>
+    </div>
+
+  </body>
+</html>
