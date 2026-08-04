@@ -25,7 +25,7 @@ export const workHistory: WorkEntry[] = [
     period: "Summer 2016",
     url: "https://www.comu.edu.tr/duyuru-12942.html",
     description:
-      "Where it all started. Jumped into a real codebase while still in university, shipped actual interfaces to actual users, and realized this is exactly what I want to do for a living. Most interns observe — I committed code.",
+      "Where it all started. Worked on a real codebase while still in university, shipped my first interfaces to real users, and figured out this is what I wanted to do for a living.",
   },
   {
     company: "Infusion Ltd.",
@@ -33,7 +33,7 @@ export const workHistory: WorkEntry[] = [
     period: "Jun 2017 – Oct 2018",
     url: "https://infusion.com.tr",
     description:
-      "First professional role straight out of university. Owned features end-to-end: Laravel backends, JavaScript frontends, REST APIs, database schemas. Learned what it means to write code that someone else has to maintain at 2am — and started writing it better because of that.",
+      "First professional role straight out of university. Worked on features end-to-end: Laravel backends, JavaScript frontends, REST APIs, database schemas. Learned a lot about writing code that other people have to maintain.",
   },
   {
     company: "Quart Bilişim",
@@ -41,7 +41,7 @@ export const workHistory: WorkEntry[] = [
     period: "Oct 2018 – May 2025",
     url: "https://issmanager.com",
     description:
-      "Nearly seven years building ISS Manager — an ISP management platform — from an early product into something that runs real subscriber infrastructure. Wrote the billing engine, the FreeRADIUS AAA integrations, the hotspot and PPPoE systems, the MikroTik RouterOS automation layer, and the network monitoring stack. Somewhere along the way the job title stopped meaning much and the scope just kept growing. By the end I was as much an infrastructure engineer as a developer.",
+      "Nearly seven years working on ISS Manager, an ISP management platform. Worked on the billing engine, FreeRADIUS AAA integrations, hotspot and PPPoE systems, MikroTik RouterOS automation, and network monitoring. Over time the scope grew from web work into systems and networking.",
   },
   {
     company: "ISSKONTROL ARGE / Quart Bilişim",
@@ -49,7 +49,7 @@ export const workHistory: WorkEntry[] = [
     period: "May 2025 – present",
     url: "https://isskontrol.com.tr",
     description:
-      "R&D work that spans mobile apps, smart POS hardware, and data pipelines processing traffic at a scale where minutes matter. The kind of role where the problem space keeps shifting and you have to keep up. Most challenging work of my career — and the most fun.",
+      "R&D work spanning mobile apps, smart POS hardware, and high-volume data pipelines. The problem space keeps shifting, which keeps it interesting.",
     current: true,
   },
 ];

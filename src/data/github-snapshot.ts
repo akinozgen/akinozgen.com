@@ -10,6 +10,74 @@ export const snapshotProfile: GithubUser = {
 
 export const snapshotProjects: Project[] = [
   {
+    repoKey: "akinozgen/navicloud",
+    name: "NaviCloud",
+    slug: "navicloud",
+    subtitle: "Navidrome client for Android + Windows",
+    description:
+      "A music client for Navidrome / Subsonic servers, built with Kotlin Multiplatform and Compose. Runs on Android and Windows.",
+    images: [],
+    githubUrl: "https://github.com/akinozgen/navicloud",
+    homepageUrl: null,
+    language: "Kotlin",
+    stars: 2,
+    fork: false,
+    archived: false,
+    topics: ["navidrome", "subsonic", "kotlin-multiplatform", "compose"],
+    updatedAt: "2026-07-19T16:11:01Z"
+  },
+  {
+    repoKey: "akinozgen/fallout1-ce-ps3",
+    name: "Fallout 1 CE — PS3",
+    slug: "fallout1-ce-ps3",
+    subtitle: "Fallout 1 running natively on PS3",
+    description:
+      "A native PlayStation 3 homebrew port of Fallout 1, built on Fallout Community Edition. Cross-compiled for the Cell PPU with an SDL2 backend.",
+    images: [],
+    githubUrl: "https://github.com/akinozgen/fallout1-ce-ps3",
+    homepageUrl: null,
+    language: "C",
+    stars: 0,
+    fork: false,
+    archived: false,
+    topics: ["ps3-homebrew", "fallout", "sdl2", "psl1ght"],
+    updatedAt: "2026-08-04T19:39:05Z"
+  },
+  {
+    repoKey: "akinozgen/snip",
+    name: "Snip",
+    slug: "snip",
+    subtitle: "Screenshot utility for Windows",
+    description:
+      "A small Rust utility for region screenshots that turn into floating, always-on-top reference windows. Also saves clipboard images as files on paste.",
+    images: [],
+    githubUrl: "https://github.com/akinozgen/snip",
+    homepageUrl: null,
+    language: "Rust",
+    stars: 0,
+    fork: false,
+    archived: false,
+    topics: ["rust", "windows", "screenshot", "clipboard"],
+    updatedAt: "2026-05-20T21:00:13Z"
+  },
+  {
+    repoKey: "akinozgen/fo4-ae-save-rescuer",
+    name: "Fallout 4 Save Rescuer",
+    slug: "fo4-ae-save-rescuer",
+    subtitle: "Fixes FO4 saves with missing mods",
+    description:
+      "A C# tool that repairs Fallout 4 saves that no longer load because their mods are gone, by rewriting the save so it stops depending on them.",
+    images: [],
+    githubUrl: "https://github.com/akinozgen/fo4-ae-save-rescuer",
+    homepageUrl: null,
+    language: "C#",
+    stars: 0,
+    fork: false,
+    archived: true,
+    topics: ["csharp", "fallout4", "save-editor", "modding"],
+    updatedAt: "2026-07-27T18:17:37Z"
+  },
+  {
     repoKey: "akinozgen/fm",
     name: "FM - File Manager",
     slug: "fm",

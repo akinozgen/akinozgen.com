@@ -14,6 +14,7 @@ export const skillGroups: SkillGroup[] = [
       "Python",
       "Go",
       "Rust",
+      "C#",
       "Node.js",
       "TypeScript",
       "JavaScript",
@@ -51,6 +52,8 @@ export const skillGroups: SkillGroup[] = [
   {
     category: "Mobile & Desktop",
     skills: [
+      "Kotlin Multiplatform",
+      "Compose Multiplatform",
       "React Native",
       "Expo",
       "Flutter",
@@ -76,6 +79,9 @@ export const skillGroups: SkillGroup[] = [
   {
     category: "Creative Engineering",
     skills: [
+      "C — Low-Level & Porting",
+      "Console Homebrew",
+      "Binary File Formats",
       "Unreal Engine — C++",
       "Unreal Engine — Blueprints",
       "Blender — 3D Modeling & Asset Pipeline",

@@ -14,7 +14,7 @@ export const GET: APIRoute = () => {
   lines.push(`GitHub: ${profile.html_url}`);
   lines.push(`Site: https://akinozgen.com`);
   lines.push(``);
-  lines.push(`Professionally works on backends, service integrations, and database-heavy systems — mostly in the ISP and networking space. Outside of that builds whatever seems interesting: desktop apps, mobile utilities, audio experiments, sometimes games.`);
+  lines.push(`Professionally works on backends, service integrations, and database-heavy systems — mostly in the ISP and networking space. Recent side projects lean lower-level and native: console homebrew, cross-platform apps, and small desktop tools.`);
   lines.push(``);
 
   // Work History

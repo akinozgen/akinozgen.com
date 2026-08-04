@@ -1,10 +1,51 @@
 [
   {
+    "repokey": "akinozgen/navicloud",
+    "name": "NaviCloud",
+    "subtitle": "Navidrome client for Android + Windows",
+    "summary": "A music client for Navidrome / Subsonic servers, built with Kotlin Multiplatform and Compose. Streaming, playlists, equalizer and audio effects — same app on Android and Windows. What I spend most of my side-project time on right now.",
+    "featured": true,
+    "images": [
+      "/projects/navicloud1.png",
+      "/projects/navicloud2.png",
+      "/projects/navicloud3.png",
+      "/projects/navicloud4.png"
+    ]
+  },
+  {
+    "repokey": "akinozgen/fallout1-ce-ps3",
+    "name": "Fallout 1 CE — PS3",
+    "subtitle": "Fallout 1 running natively on PS3",
+    "summary": "A native PS3 homebrew port of Fallout 1, built on Fallout Community Edition. Not an emulator — the engine is cross-compiled for the Cell PPU and rendered through an RSX-backed SDL2 backend. Runs on PS3HEN and RPCS3, tested on real hardware.",
+    "featured": true,
+    "images": [
+      "/projects/fallout1ps3-4.png",
+      "/projects/fallout1ps3-2.png",
+      "/projects/fallout1ps3-3.png",
+      "/projects/fallout1ps3-1.png"
+    ]
+  },
+  {
+    "repokey": "akinozgen/snip",
+    "name": "Snip",
+    "subtitle": "Screenshot utility for Windows",
+    "summary": "Region screenshots that become floating, always-on-top reference windows you can zoom and pan. Also drops clipboard images into the active Explorer folder as PNGs when you paste. Single static executable, lives in the tray.",
+    "images": []
+  },
+  {
+    "repokey": "akinozgen/fo4-ae-save-rescuer",
+    "name": "Fallout 4 Save Rescuer",
+    "subtitle": "Fixes FO4 saves with missing mods",
+    "summary": "Repairs Fallout 4 saves that stopped loading because their mods are gone — rewrites the plugin lists and form IDs so the save no longer depends on the missing content. Writes the result as a new save; the original is never touched.",
+    "images": [
+      "/projects/fo4rescuer1.png"
+    ]
+  },
+  {
     "repokey": "akinozgen/fm",
     "name": "FM - File Manager",
     "subtitle": "File manager in Tauri + Vue + Rust",
-    "summary": "A cross-platform file manager built with Tauri, Vue, and Rust. Handles navigation, multi-select, inline rename, file ops, virtual locations, and per-directory view persistence. Actively developed.",
-    "featured": true,
+    "summary": "A cross-platform file manager built with Tauri, Vue, and Rust. Handles navigation, multi-select, inline rename, file ops, virtual locations, and per-directory view persistence.",
     "images": [
       "/projects/fm1.png",
       "/projects/fm2.png",
