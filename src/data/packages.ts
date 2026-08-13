@@ -2,11 +2,20 @@ import type { Package } from "../types/project";
 
 export const packages: Package[] = [
   {
+    name: "@akinozgen17/selectablejs",
+    description: "A framework-agnostic, zero-dependency select component. Enhances the native <select> in place, renders the dropdown in the browser's top layer, virtualizes long lists.",
+    version: "0.3.0",
+    language: "TypeScript",
+    totalDownloads: 0,
+    githubUrl: "https://github.com/akinozgen/selectable",
+    npmUrl: "https://www.npmjs.com/package/@akinozgen17/selectablejs",
+  },
+  {
     name: "data-unit-converter",
     description: "Convert between data units — bytes, KB, MB, GB, TB and back. Works in both directions.",
     version: "0.1.2",
     language: "JavaScript",
-    totalDownloads: 204151,
+    totalDownloads: 373288,
     githubUrl: "https://github.com/akinozgen/data-unit-converter",
     npmUrl: "https://www.npmjs.com/package/data-unit-converter",
   },

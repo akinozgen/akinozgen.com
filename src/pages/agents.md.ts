@@ -71,7 +71,7 @@ export const GET: APIRoute = () => {
     lines.push(pkg.description);
     lines.push(``);
     lines.push(`- Language: ${pkg.language}`);
-    lines.push(`- All-time downloads: ${pkg.totalDownloads.toLocaleString()}`);
+    if (pkg.totalDownloads > 0) lines.push(`- All-time downloads: ${pkg.totalDownloads.toLocaleString("en-US")}`);
     lines.push(`- npm: ${pkg.npmUrl}`);
     lines.push(`- GitHub: ${pkg.githubUrl}`);
     lines.push(``);

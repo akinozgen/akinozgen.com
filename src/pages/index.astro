@@ -148,7 +148,7 @@ const displayName = profile.name ?? profile.login;
           <article class="pkg-card">
             <div class="pkg-topline">
               <span>{pkg.language}</span>
-              <span>{pkg.totalDownloads.toLocaleString()} downloads</span>
+              <span>{pkg.totalDownloads > 0 ? `${pkg.totalDownloads.toLocaleString("en-US")} downloads` : "just released"}</span>
             </div>
             <h3>{pkg.name}</h3>
             <p>{pkg.description}</p>
