@@ -28,33 +28,42 @@ const { name, githubUrl } = Astro.props;
     align-items: center;
     justify-content: space-between;
     padding: 0 2rem;
-    height: 56px;
-    background: rgba(250, 248, 244, 0.85);
+    height: 52px;
+    background: rgba(10, 9, 8, 0.85);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--line);
   }
 
   .nav-name {
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: var(--heading);
+    font-family: 'Syne', system-ui, sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--text);
   }
 
   .nav-links {
     display: flex;
     align-items: center;
-    gap: 1.75rem;
+    gap: 2rem;
   }
 
   .nav-links a {
-    font-size: 0.85rem;
+    font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     color: var(--muted);
     transition: color 0.15s;
   }
 
   .nav-links a:hover {
-    color: var(--heading);
+    color: var(--text);
+  }
+
+  .nav-github {
+    color: var(--accent) !important;
   }
 
   @media (max-width: 640px) {
