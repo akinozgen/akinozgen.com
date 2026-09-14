@@ -19,30 +19,25 @@ const displayName = profile.name ?? profile.login;
   <Nav name={displayName} githubUrl={profile.html_url} />
   <main class="page-shell">
     <section class="hero">
-      <div class="hero-left">
-        <p class="eyebrow">Software Developer</p>
-        <h1>{displayName}</h1>
-        <p class="lead">
-          Professionally I work on backends, service integrations, and database-heavy systems —
-          mostly in the ISP and networking space. Lately my side projects lean lower-level and
-          native: console homebrew, cross-platform apps, and small desktop tools.
-        </p>
-        <div class="hero-links">
-          <a href={profile.html_url} target="_blank" rel="noreferrer">
-            <Icon name="github" size={18} /> GitHub
-          </a>
-        </div>
-      </div>
-      <div class="hero-right">
-        <a class="stat-card" href="https://github.com/akinozgen/navicloud" target="_blank" rel="noreferrer">
-          <p class="stat-label">current focus</p>
-          <p class="stat-pkg">NaviCloud</p>
-          <p class="stat-number">Navidrome client · Android + Windows</p>
+      <p class="eyebrow">Software developer</p>
+      <h1>{displayName}</h1>
+      <p class="lead">
+        Professionally I work on backends, service integrations, and database-heavy systems —
+        mostly in the ISP and networking space. Lately my side projects lean lower-level and
+        native: console homebrew, cross-platform apps, and small desktop tools.
+      </p>
+      <div class="now">
+        <span class="now-label">Currently building</span>
+        <a href="https://github.com/akinozgen/navicloud" target="_blank" rel="noreferrer">
+          NaviCloud <span class="now-desc">— Navidrome client for Android + Windows</span>
         </a>
-        <a class="stat-card stat-card--project" href="https://github.com/akinozgen/fallout1-ce-ps3" target="_blank" rel="noreferrer">
-          <p class="stat-label">current focus</p>
-          <p class="stat-pkg">Fallout 1 CE — PS3</p>
-          <p class="stat-number">Native PS3 homebrew port</p>
+        <a href="https://github.com/akinozgen/fallout1-ce-ps3" target="_blank" rel="noreferrer">
+          Fallout 1 CE on PS3 <span class="now-desc">— native homebrew port</span>
+        </a>
+      </div>
+      <div class="hero-links">
+        <a href={profile.html_url} target="_blank" rel="noreferrer">
+          <Icon name="github" size={16} /> GitHub
         </a>
       </div>
     </section>
@@ -56,7 +51,7 @@ const displayName = profile.name ?? profile.login;
         {workHistory.map((job) => (
           <div class={`exp-row${job.current ? " exp-row--current" : ""}`}>
             <div class="exp-period">
-              {job.current && <span class="exp-now">NOW</span>}
+              {job.current && <span class="exp-now">current</span>}
               {job.period}
             </div>
             <div class="exp-body">
@@ -108,32 +103,35 @@ const displayName = profile.name ?? profile.login;
       </div>
       <div class="project-grid">
         {projects.map((project) => (
-          <article class={`project-card${project.featured ? " project-card--featured" : ""}`}>
-            <ImageSlider images={project.images} alt={`${project.name} preview`} />
-            <div class="card-topline">
-              <span>{project.language ?? "Project"}</span>
-              {project.stars > 0 && (
-                <span class="star-count"><Icon name="star" size={13} />{project.stars}</span>
-              )}
-            </div>
-            <h3>{project.name}</h3>
-            <p class="subtitle">{project.subtitle}</p>
-            <p>{project.description}</p>
-            <div class="tag-row">
-              {project.topics.slice(0, 4).map((tag) => (
-                <span class="tag">{tag}</span>
-              ))}
-            </div>
-            <div class="card-links">
-              <a href={project.githubUrl} target="_blank" rel="noreferrer">
-                <Icon name="github" size={14} /> Repo
-              </a>
-              {project.homepageUrl && (
-                <a href={project.homepageUrl} target="_blank" rel="noreferrer">
-                  <Icon name="external" size={14} /> Live
+          <article class={`project-card${project.images.length === 0 ? " project-card--text" : ""}`}>
+            <div class="project-info">
+              <div class="project-head">
+                <h3>{project.name}</h3>
+                <span class="project-meta">
+                  <span>{project.language ?? "Project"}</span>
+                  {project.stars > 0 && (
+                    <span class="star-count"><Icon name="star" size={12} />{project.stars}</span>
+                  )}
+                </span>
+              </div>
+              <p class="subtitle">{project.subtitle}</p>
+              <p class="project-desc">{project.description}</p>
+              <div class="card-links">
+                <a href={project.githubUrl} target="_blank" rel="noreferrer">
+                  <Icon name="github" size={13} /> Repo
                 </a>
-              )}
+                {project.homepageUrl && (
+                  <a href={project.homepageUrl} target="_blank" rel="noreferrer">
+                    <Icon name="external" size={13} /> Live
+                  </a>
+                )}
+              </div>
             </div>
+            {project.images.length > 0 && (
+              <div class="project-media">
+                <ImageSlider images={project.images} alt={`${project.name} preview`} />
+              </div>
+            )}
           </article>
         ))}
       </div>
@@ -145,24 +143,13 @@ const displayName = profile.name ?? profile.login;
       </div>
       <div class="pkg-grid">
         {packages.map((pkg) => (
-          <article class="pkg-card">
-            <div class="pkg-topline">
-              <span>{pkg.language}</span>
-              <span>{pkg.totalDownloads > 0 ? `${pkg.totalDownloads.toLocaleString("en-US")} downloads` : "just released"}</span>
+          <article class="pkg-row">
+            <div class="pkg-left">
+              <a class="pkg-name" href={pkg.npmUrl} target="_blank" rel="noreferrer">{pkg.name}</a>
+              <span class="pkg-sub">v{pkg.version} · <a href={pkg.githubUrl} target="_blank" rel="noreferrer">repo</a></span>
             </div>
-            <h3>{pkg.name}</h3>
-            <p>{pkg.description}</p>
-            <div class="pkg-footer">
-              <span class="pkg-version">v{pkg.version}</span>
-              <div class="card-links">
-                <a href={pkg.githubUrl} target="_blank" rel="noreferrer">
-                  <Icon name="github" size={13} /> Repo
-                </a>
-                <a href={pkg.npmUrl} target="_blank" rel="noreferrer">
-                  <Icon name="external" size={13} /> npm
-                </a>
-              </div>
-            </div>
+            <p class="pkg-desc">{pkg.description}</p>
+            <span class="pkg-dl">{pkg.totalDownloads > 0 ? `${pkg.totalDownloads.toLocaleString("en-US")} downloads` : "just released"}</span>
           </article>
         ))}
       </div>
@@ -172,14 +159,9 @@ const displayName = profile.name ?? profile.login;
         <h2>Skills</h2>
       </div>
       {skillGroups.map((group) => (
-        <div class="skill-group">
-          <p class="skill-category">{group.category}</p>
-          {group.skills.map((skill, i) => (
-            <div class="skill-row">
-              <span class="skill-index">{String(i + 1).padStart(2, "0")}</span>
-              <span class="skill-name">{skill}</span>
-            </div>
-          ))}
+        <div class="skill-line">
+          <span class="skill-cat">{group.category}</span>
+          <p class="skill-list">{group.skills.join(" · ")}</p>
         </div>
       ))}
     </section>
