@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Vidsum — Video Space-Time Cube</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%23e8b44a'/%3E%3C/svg%3E" />
+<link rel="stylesheet" href="src/style.css" />
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three/three.module.js",
+    "three/addons/controls/OrbitControls.js": "./vendor/three/OrbitControls.js"
+  }
+}
+</script>
+</head>
+<body>
+
+<div id="stage">
+  <canvas id="gl"></canvas>
+
+  <div id="drop" class="overlay">
+    <div class="drop-card">
+      <h1>Vidsum</h1>
+      <p class="sub">Videoyu uzay–zaman küpü olarak gez. <br>X–Y = kare, Z = zaman.</p>
+      <label class="btn primary">
+        Video seç
+        <input type="file" id="file" accept="video/*" hidden />
+      </label>
+      <p class="hint">…ya da dosyayı buraya sürükle. Kısa klipler (5–60 sn) en iyi sonucu verir.</p>
+    </div>
+  </div>
+
+  <div id="busy" class="overlay hidden">
+    <div class="drop-card">
+      <h2 id="busy-title">Kareler çıkarılıyor</h2>
+      <div class="bar"><div id="bar-fill"></div></div>
+      <p class="hint" id="busy-note">…</p>
+    </div>
+  </div>
+
+  <video id="preview" muted playsinline></video>
+  <div id="hud"></div>
+</div>
+
+<aside id="panel">
+  <header>
+    <span class="dot"></span>
+    <strong>vidsum</strong>
+    <button id="reload" class="mini" title="Başka video yükle">yeni</button>
+  </header>
+
+  <section>
+    <h3>Alfa penceresi</h3>
+    <p class="note">Hareketsiz arka planı sil, hareketli şeyler küpün içinde iz bıraksın.</p>
+    <label>eşik alt <output id="o-lo"></output>
+      <input type="range" id="lo" min="0" max="1" step="0.005" value="0.06" /></label>
+    <label>eşik üst <output id="o-hi"></output>
+      <input type="range" id="hi" min="0" max="1" step="0.005" value="0.30" /></label>
+    <label>yoğunluk <output id="o-den"></output>
+      <input type="range" id="den" min="0.1" max="12" step="0.1" value="3.0" /></label>
+    <label class="check"><input type="checkbox" id="invert" /> tersle (arka planı göster)</label>
+  </section>
+
+  <section>
+    <h3>Zaman ekseni</h3>
+    <label>derinlik <output id="o-depth"></output>
+      <input type="range" id="depth" min="0.3" max="4" step="0.05" value="1.4" /></label>
+    <label>kırpma baş <output id="o-c0"></output>
+      <input type="range" id="c0" min="0" max="1" step="0.005" value="0" /></label>
+    <label>kırpma son <output id="o-c1"></output>
+      <input type="range" id="c1" min="0" max="1" step="0.005" value="1" /></label>
+  </section>
+
+  <section>
+    <h3>Dilim</h3>
+    <label class="check"><input type="checkbox" id="showslice" checked /> kareyi göster</label>
+    <label>kalınlık <output id="o-sw"></output>
+      <input type="range" id="sw" min="0" max="0.08" step="0.001" value="0" /></label>
+  </section>
+
+  <section>
+    <h3>Görünüm</h3>
+    <label>mod
+      <select id="mode">
+        <option value="0">hacim (alpha blend)</option>
+        <option value="1">MIP (en parlak)</option>
+        <option value="2">x-ray (toplam)</option>
+      </select></label>
+    <label>renk
+      <select id="tint">
+        <option value="0">gerçek renk</option>
+        <option value="1">zamana göre</option>
+        <option value="2">tek renk</option>
+      </select></label>
+    <label>adım <output id="o-steps"></output>
+      <input type="range" id="steps" min="48" max="512" step="8" value="256" /></label>
+    <label class="check"><input type="checkbox" id="spin" /> kendi kendine dön</label>
+    <label class="check"><input type="checkbox" id="box" checked /> kutu çerçevesi</label>
+  </section>
+
+  <section>
+    <h3>Çözünürlük <span class="note-inline">(yeniden çıkarım ister)</span></h3>
+    <label>genişlik
+      <select id="res">
+        <option value="160">160 px</option>
+        <option value="256" selected>256 px</option>
+        <option value="384">384 px</option>
+      </select></label>
+    <label>kare sayısı
+      <select id="nframes">
+        <option value="96">96</option>
+        <option value="160" selected>160</option>
+        <option value="256">256</option>
+      </select></label>
+    <button id="reextract" class="btn">yeniden çıkar</button>
+  </section>
+
+  <footer>
+    <div id="stats"></div>
+    <p class="note">sol tık: döndür · sağ tık: kaydır · tekerlek: yakınlaş · <kbd>boşluk</kbd>: oynat</p>
+  </footer>
+</aside>
+
+<div id="transport">
+  <button id="play" class="mini">▶</button>
+  <input type="range" id="scrub" min="0" max="1" step="0.0005" value="0" />
+  <span id="time">0.00 / 0.00 sn</span>
+</div>
+
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
