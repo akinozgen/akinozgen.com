@@ -1,0 +1,10 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "travelle",
+  "compatibility_date": "2026-09-11",
+  // No Worker script: the built site is served straight off Cloudflare's edge.
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  }
+}

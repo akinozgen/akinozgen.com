@@ -1,0 +1,190 @@
+# Generated border report
+
+Source: Natural Earth 50m (admin_0_countries + admin_0_map_subunits)
+Regions: 262 (170 with land connections)
+Areas: 4274
+Edges: 4357 (390 adjacency, 10 bridges, 3957 island hops)
+
+## Bridges & tunnels
+- Channel Tunnel: area 3751 (united-kingdom) <-> area 1438 (france)
+- Øresund Bridge and Drogden Tunnel: area 1251 (denmark) <-> area 3568 (sweden)
+- Great Belt Bridge: area 1248 (denmark) <-> area 1251 (denmark)
+- Little Belt Bridge: area 1248 (denmark) <-> area 1240 (denmark)
+- Bridges over the Bosphorus: area 3706 (turkey) <-> area 3705 (turkey)
+- Pelješac Bridge: area 1159 (croatia) <-> area 1160 (croatia)
+- Shared ownership of Hans Island: area 1658 (greenland) <-> area 755 (canada)
+- Johor–Singapore Causeway: area 3379 (singapore) <-> area 2381 (malaysia)
+- Macau's border with Zhuhai, and the Hong Kong–Zhuhai–Macau Bridge: area 2367 (macao-s-a-r) <-> area 1056 (china)
+- King Fahd Causeway: area 338 (bahrain) <-> area 3336 (saudi-arabia)
+
+## Region neighbours
+- **Afghanistan**: china, iran, pakistan, tajikistan, turkmenistan, uzbekistan
+- **Albania**: greece, kosovo, montenegro, north-macedonia
+- **Algeria**: libya, mali, mauritania, morocco, niger, tunisia, western-sahara
+- **Andorra**: france, spain
+- **Angola**: democratic-republic-of-the-congo, namibia, republic-of-the-congo, zambia
+- **Argentina**: bolivia, brazil, chile, paraguay, uruguay
+- **Armenia**: azerbaijan, georgia, iran, turkey
+- **Austria**: czechia, germany, hungary, italy, liechtenstein, slovakia, slovenia, switzerland
+- **Azerbaijan**: armenia, georgia, iran, russia, turkey
+- **Bahrain**: saudi-arabia
+- **Bangladesh**: india, myanmar
+- **Belarus**: latvia, lithuania, poland, russia, ukraine
+- **Belgium**: france, germany, luxembourg, netherlands
+- **Belize**: guatemala, mexico
+- **Benin**: burkina-faso, niger, nigeria, togo
+- **Bhutan**: china, india
+- **Bolivia**: argentina, brazil, chile, paraguay, peru
+- **Bosnia and Herzegovina**: croatia, montenegro, republic-of-serbia
+- **Botswana**: namibia, south-africa, zambia, zimbabwe
+- **Brazil**: argentina, bolivia, colombia, french-guiana, guyana, paraguay, peru, suriname, uruguay, venezuela
+- **Brunei**: malaysia
+- **Bulgaria**: greece, north-macedonia, republic-of-serbia, romania, turkey
+- **Burkina Faso**: benin, ghana, ivory-coast, mali, niger, togo
+- **Burundi**: democratic-republic-of-the-congo, rwanda, united-republic-of-tanzania
+- **Cambodia**: laos, thailand, vietnam
+- **Cameroon**: central-african-republic, chad, equatorial-guinea, gabon, nigeria, republic-of-the-congo
+- **Canada**: greenland, united-states-of-america
+- **Central African Republic**: cameroon, chad, democratic-republic-of-the-congo, republic-of-the-congo, south-sudan, sudan
+- **Chad**: cameroon, central-african-republic, libya, niger, nigeria, sudan
+- **Chile**: argentina, bolivia, peru
+- **China**: afghanistan, bhutan, hong-kong-s-a-r, india, kazakhstan, kyrgyzstan, laos, macao-s-a-r, mongolia, myanmar, nepal, north-korea, pakistan, russia, siachen-glacier, tajikistan, vietnam
+- **Colombia**: brazil, ecuador, panama, peru, venezuela
+- **Costa Rica**: nicaragua, panama
+- **Croatia**: bosnia-and-herzegovina, hungary, montenegro, republic-of-serbia, slovenia
+- **Cyprus**: northern-cyprus
+- **Czechia**: austria, germany, poland, slovakia
+- **Democratic Republic of the Congo**: angola, burundi, central-african-republic, republic-of-the-congo, rwanda, south-sudan, uganda, united-republic-of-tanzania, zambia
+- **Denmark**: germany, sweden
+- **Djibouti**: eritrea, ethiopia, somaliland
+- **Dominican Republic**: haiti
+- **East Timor**: indonesia
+- **Ecuador**: colombia, peru
+- **Egypt**: israel, libya, palestine, sudan
+- **El Salvador**: guatemala, honduras
+- **Equatorial Guinea**: cameroon, gabon
+- **Eritrea**: djibouti, ethiopia, sudan
+- **Estonia**: latvia, russia
+- **eSwatini**: mozambique, south-africa
+- **Ethiopia**: djibouti, eritrea, kenya, somalia, somaliland, south-sudan, sudan
+- **Finland**: norway, russia, sweden
+- **France**: andorra, belgium, germany, italy, luxembourg, monaco, spain, switzerland, united-kingdom
+- **French Guiana**: brazil, suriname
+- **Gabon**: cameroon, equatorial-guinea, republic-of-the-congo
+- **Gambia**: senegal
+- **Georgia**: armenia, azerbaijan, russia, turkey
+- **Germany**: austria, belgium, czechia, denmark, france, luxembourg, netherlands, poland, switzerland
+- **Ghana**: burkina-faso, ivory-coast, togo
+- **Gibraltar**: spain
+- **Greece**: albania, bulgaria, north-macedonia, turkey
+- **Greenland**: canada
+- **Guatemala**: belize, el-salvador, honduras, mexico
+- **Guinea**: guinea-bissau, ivory-coast, liberia, mali, senegal, sierra-leone
+- **Guinea-Bissau**: guinea, senegal
+- **Guyana**: brazil, suriname, venezuela
+- **Haiti**: dominican-republic
+- **Honduras**: el-salvador, guatemala, nicaragua
+- **Hong Kong**: china
+- **Hungary**: austria, croatia, republic-of-serbia, romania, slovakia, slovenia, ukraine
+- **India**: bangladesh, bhutan, china, myanmar, nepal, pakistan, siachen-glacier
+- **Indonesia**: east-timor, malaysia, papua-new-guinea
+- **Iran**: afghanistan, armenia, azerbaijan, iraq, pakistan, turkey, turkmenistan
+- **Iraq**: iran, jordan, kuwait, saudi-arabia, syria, turkey
+- **Ireland**: united-kingdom
+- **Israel**: egypt, jordan, lebanon, palestine, syria
+- **Italy**: austria, france, san-marino, slovenia, switzerland, vatican
+- **Ivory Coast**: burkina-faso, ghana, guinea, liberia, mali
+- **Jordan**: iraq, israel, palestine, saudi-arabia, syria
+- **Kazakhstan**: china, kyrgyzstan, russia, turkmenistan, uzbekistan
+- **Kenya**: ethiopia, somalia, south-sudan, uganda, united-republic-of-tanzania
+- **Kosovo**: albania, montenegro, north-macedonia, republic-of-serbia
+- **Kuwait**: iraq, saudi-arabia
+- **Kyrgyzstan**: china, kazakhstan, tajikistan, uzbekistan
+- **Laos**: cambodia, china, myanmar, thailand, vietnam
+- **Latvia**: belarus, estonia, lithuania, russia
+- **Lebanon**: israel, syria
+- **Lesotho**: south-africa
+- **Liberia**: guinea, ivory-coast, sierra-leone
+- **Libya**: algeria, chad, egypt, niger, sudan, tunisia
+- **Liechtenstein**: austria, switzerland
+- **Lithuania**: belarus, latvia, poland, russia
+- **Luxembourg**: belgium, france, germany
+- **Macau**: china
+- **Malawi**: mozambique, united-republic-of-tanzania, zambia
+- **Malaysia**: brunei, indonesia, singapore, thailand
+- **Mali**: algeria, burkina-faso, guinea, ivory-coast, mauritania, niger, senegal
+- **Mauritania**: algeria, mali, senegal, western-sahara
+- **Mexico**: belize, guatemala, united-states-of-america
+- **Moldova**: romania, ukraine
+- **Monaco**: france
+- **Mongolia**: china, russia
+- **Montenegro**: albania, bosnia-and-herzegovina, croatia, kosovo, republic-of-serbia
+- **Morocco**: algeria, spain, western-sahara
+- **Mozambique**: eswatini, malawi, south-africa, united-republic-of-tanzania, zambia, zimbabwe
+- **Myanmar**: bangladesh, china, india, laos, thailand
+- **Namibia**: angola, botswana, south-africa, zambia, zimbabwe
+- **Nepal**: china, india
+- **Netherlands**: belgium, germany
+- **Nicaragua**: costa-rica, honduras
+- **Niger**: algeria, benin, burkina-faso, chad, libya, mali, nigeria
+- **Nigeria**: benin, cameroon, chad, niger
+- **North Korea**: china, russia, south-korea
+- **North Macedonia**: albania, bulgaria, greece, kosovo, republic-of-serbia
+- **Northern Cyprus**: cyprus
+- **Norway**: finland, russia, sweden
+- **Oman**: saudi-arabia, united-arab-emirates, yemen
+- **Pakistan**: afghanistan, china, india, iran, siachen-glacier
+- **Palestine**: egypt, israel, jordan
+- **Panama**: colombia, costa-rica
+- **Papua New Guinea**: indonesia
+- **Paraguay**: argentina, bolivia, brazil
+- **Peru**: bolivia, brazil, chile, colombia, ecuador
+- **Poland**: belarus, czechia, germany, lithuania, russia, slovakia, ukraine
+- **Portugal**: spain
+- **Qatar**: saudi-arabia
+- **Republic of Serbia**: bosnia-and-herzegovina, bulgaria, croatia, hungary, kosovo, montenegro, north-macedonia, romania
+- **Republic of the Congo**: angola, cameroon, central-african-republic, democratic-republic-of-the-congo, gabon
+- **Romania**: bulgaria, hungary, moldova, republic-of-serbia, ukraine
+- **Russia**: azerbaijan, belarus, china, estonia, finland, georgia, kazakhstan, latvia, lithuania, mongolia, north-korea, norway, poland, ukraine
+- **Rwanda**: burundi, democratic-republic-of-the-congo, uganda, united-republic-of-tanzania
+- **Saint Martin**: sint-maarten
+- **San Marino**: italy
+- **Saudi Arabia**: bahrain, iraq, jordan, kuwait, oman, qatar, united-arab-emirates, yemen
+- **Senegal**: gambia, guinea, guinea-bissau, mali, mauritania
+- **Sierra Leone**: guinea, liberia
+- **Singapore**: malaysia
+- **Sint Maarten**: saint-martin
+- **Slovakia**: austria, czechia, hungary, poland, ukraine
+- **Slovenia**: austria, croatia, hungary, italy
+- **Somalia**: ethiopia, kenya, somaliland
+- **Somaliland**: djibouti, ethiopia, somalia
+- **South Africa**: botswana, eswatini, lesotho, mozambique, namibia, zimbabwe
+- **South Korea**: north-korea
+- **South Sudan**: central-african-republic, democratic-republic-of-the-congo, ethiopia, kenya, sudan, uganda
+- **Spain**: andorra, france, gibraltar, morocco, portugal
+- **Sudan**: central-african-republic, chad, egypt, eritrea, ethiopia, libya, south-sudan
+- **Suriname**: brazil, french-guiana, guyana
+- **Sweden**: denmark, finland, norway
+- **Switzerland**: austria, france, germany, italy, liechtenstein
+- **Syria**: iraq, israel, jordan, lebanon, turkey
+- **Tajikistan**: afghanistan, china, kyrgyzstan, uzbekistan
+- **Thailand**: cambodia, laos, malaysia, myanmar
+- **Togo**: benin, burkina-faso, ghana
+- **Tunisia**: algeria, libya
+- **Turkey**: armenia, azerbaijan, bulgaria, georgia, greece, iran, iraq, syria
+- **Turkmenistan**: afghanistan, iran, kazakhstan, uzbekistan
+- **Uganda**: democratic-republic-of-the-congo, kenya, rwanda, south-sudan, united-republic-of-tanzania
+- **Ukraine**: belarus, hungary, moldova, poland, romania, russia, slovakia
+- **United Arab Emirates**: oman, saudi-arabia
+- **United Kingdom**: france, ireland
+- **United Republic of Tanzania**: burundi, democratic-republic-of-the-congo, kenya, malawi, mozambique, rwanda, uganda, zambia
+- **United States of America**: canada, mexico
+- **Uruguay**: argentina, brazil
+- **Uzbekistan**: afghanistan, kazakhstan, kyrgyzstan, tajikistan, turkmenistan
+- **Vatican**: italy
+- **Venezuela**: brazil, colombia, guyana
+- **Vietnam**: cambodia, china, laos
+- **Western Sahara**: algeria, mauritania, morocco
+- **Yemen**: oman, saudi-arabia
+- **Zambia**: angola, botswana, democratic-republic-of-the-congo, malawi, mozambique, namibia, united-republic-of-tanzania, zimbabwe
+- **Zimbabwe**: botswana, mozambique, namibia, south-africa, zambia

@@ -1,0 +1,193 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { games } from "../../data/games";
+---
+
+<BaseLayout
+  title="Games — Akın Özgen"
+  description="Small browser games. Daily puzzles, mostly geography."
+>
+  <header class="bar">
+    <a class="bar-name" href="/">Akın Özgen</a>
+    <nav class="bar-links">
+      <a href="/">← Back</a>
+    </nav>
+  </header>
+
+  <main class="page-shell">
+    <div class="intro">
+      <h1>Games</h1>
+      <p>
+        Small things to play in a browser. No accounts, no installs — the whole game is the page
+        you land on.
+      </p>
+    </div>
+
+    <ul class="grid">
+      {
+        games.map((game) => (
+          <li>
+            <a class="card" href={`/games/${game.slug}/`}>
+              <div class="card-top">
+                <h2>{game.name}</h2>
+                <span class="year">{game.year}</span>
+              </div>
+              <p class="tagline">{game.tagline}</p>
+              <p class="desc">{game.description}</p>
+              <ul class="tags">
+                {game.tags.map((tag) => (
+                  <li>{tag}</li>
+                ))}
+              </ul>
+              <span class="go">Play →</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </main>
+</BaseLayout>
+
+<style>
+  .bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2rem;
+    height: 52px;
+    background: rgba(10, 9, 8, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .bar-name {
+    font-family: "Syne", system-ui, sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .bar-links a {
+    font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    transition: color 0.15s;
+  }
+
+  .bar-links a:hover {
+    color: var(--text);
+  }
+
+  .intro {
+    padding: 4rem 0 3rem;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 3rem;
+  }
+
+  .intro h1 {
+    font-family: "Syne", system-ui, sans-serif;
+    font-size: clamp(2.5rem, 8vw, 4.5rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+
+  .intro p {
+    margin-top: 1.25rem;
+    max-width: 46ch;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .grid {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    height: 100%;
+    padding: 1.75rem;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    transition:
+      background 0.15s,
+      border-color 0.15s;
+  }
+
+  .card:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent);
+  }
+
+  .card-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .card h2 {
+    font-family: "Syne", system-ui, sans-serif;
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .year,
+  .tags li {
+    font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  .tagline {
+    color: var(--accent);
+    font-size: 0.9rem;
+  }
+
+  .desc {
+    color: var(--muted);
+    line-height: 1.6;
+    font-size: 0.95rem;
+  }
+
+  .tags {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: auto;
+    padding-top: 0.5rem;
+  }
+
+  .go {
+    font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  @media (max-width: 640px) {
+    .bar {
+      padding: 0 1rem;
+    }
+
+    .grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+.cache/
+packages/geo/.cache/
+
+# wrangler build cache and any local secrets
+.wrangler/
+.dev.vars

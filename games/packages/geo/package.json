@@ -1,0 +1,23 @@
+{
+  "name": "@travelle/geo",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./data/*": "./data/*"
+  },
+  "scripts": {
+    "fetch:data": "node scripts/fetch-source.ts",
+    "build:data": "node scripts/build-data.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build:puzzles": "node scripts/build-puzzles.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.2",
+    "mapshaper": "^0.7.61"
+  }
+}
