@@ -438,6 +438,8 @@ const TV_TICK = {
     [v => v.flags.towers, "Karakavak Towers'ın terasından seçim izleniyor; bina bir tarafa eğildi, kameraman da"],
     [v => v.flags.devkavun, "İlçe girişindeki dev kavun heykeline seçim gecesi için ışıklı zincir takıldı"],
     [v => v.flags.bisiklet, "Makam bisikleti sandık başında görüldü; zinciri çıkmış, pompa aranıyor"],
+    [v => v.flags.ankara_ret, "Ankara'ya hayır diyen başkan için genel merkezde pano açıldı; pano doldu, ikincisi sipariş edildi"],
+    [v => v.flags.ankara_ret, "Genel merkez Karakavak sonuçlarını izliyor; teklif mektubu çekmecede, zarfı hâlâ açılmadı"],
   ],
   yerel: [
     "KAVUN BORSASI: Çekirdekli kavun sabit; çekirdeksizde 'o kavun değil' tartışması yüzünden işlem durdu",

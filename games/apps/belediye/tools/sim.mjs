@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { lintContent } from "./lint.mjs";
 
 const src = ["cards.js", "engine.js"].map(f => readFileSync(new URL("../src/" + f, import.meta.url), "utf8")).join("\n");
-const E = new Function(src + "\nreturn { CARDS, CARD, CRISES, ENDINGS, INTRO, PEOPLE, SYN, newGame, draw, choose, METERS, pollOf, TERM, TUNE, edgeRisk };")();
+const E = new Function(src + "\nreturn { CARDS, CARD, CRISES, DAVET, ENDINGS, INTRO, PEOPLE, SYN, newGame, draw, choose, METERS, pollOf, TERM, TUNE, edgeRisk };")();
 // node sim.mjs 2000 damp=0.9 scale=1.1 → ayar düğmelerini geçici değiştir
 for (const a of process.argv.slice(3)) { const [k, v] = a.split("="); if (k in E.TUNE) E.TUNE[k] = Number(v); }
 console.log("TUNE", JSON.stringify(E.TUNE));
@@ -52,14 +52,23 @@ const policies = {
     const a = score("L"), b = score("R");
     return a === b ? (rng() < 0.5 ? "L" : "R") : a < b ? "L" : "R";
   },
+  // Ankara'yı seven ama makamı bırakmayan oyuncu: Ankara'yı hep yukarı iter, davetleri hep reddeder (davet yayını sınar)
+  ankaraci: (s, rng) => {
+    if (s.cur.kind === "davet") return "L";
+    if (rng() < 0.2) return rng() < 0.5 ? "L" : "R";
+    const score = side => { const e = s.cur[side].e; let r = 0; E.METERS.forEach((k, i) => { if (k !== "a") r = Math.max(r, E.edgeRisk(k, s.m[k] + e[i])); }); return r - e[3] * 0.8; };
+    const a = score("L"), b = score("R");
+    return a === b ? (rng() < 0.5 ? "L" : "R") : a < b ? "L" : "R";
+  },
 };
+const seenAll = {};
 
 const N = Number(process.argv[2] || 3000);
 const q = (arr, p) => arr[Math.floor(p * (arr.length - 1))];
 const medians = {}, sideTally = {};
 for (const [name, pol] of Object.entries(policies)) {
   const months = [], ends = {}, seen = {}, tally = (sideTally[name] = {});
-  const field = {}; let earlyE = 0, earlyW = 0, under50 = 0, tekirRan = 0, tekirWon = 0, rivalWins = {};
+  const field = {}, davet = {}; let earlyE = 0, earlyW = 0, under50 = 0, tekirRan = 0, tekirWon = 0, rivalWins = {};
   let term1 = 0, elections = 0, wins = 0, crises = 0, pols = 0, relHi = 0, relLo = 0, tekirSave = 0, dropped = 0, syn = 0, vaatAtElection = 0;
   for (let g = 0; g < N; g++) {
     const rng = mulberry(g * 7919 + 13);
@@ -67,7 +76,8 @@ for (const [name, pol] of Object.entries(policies)) {
     let guard = 0;
     while (!s.over && guard++ < 3000) {
       const c = E.draw(s, rng);
-      seen[c.id] = (seen[c.id] || 0) + 1;
+      seen[c.id] = (seen[c.id] || 0) + 1; seenAll[c.id] = 1;
+      if (c.kind === "davet") davet[c.id] = (davet[c.id] || 0) + 1;
       if (c.kind === "kriz") crises++;
       if (c.kind === "tekir") tekirSave++;
       if (c.kind === "sonuc") wins++;
@@ -103,12 +113,15 @@ for (const [name, pol] of Object.entries(policies)) {
   const fn = Object.values(field).reduce((a, b) => a + b, 0) || 1;
   console.log(`seçim: aday sayısı ${Object.entries(field).sort().map(([k, v]) => `${k}:%${Math.round(100 * v / fn)}`).join(" ")}   %50 altı zafer: %${wins ? Math.round(100 * under50 / wins) : 0}   Tekir aday: %${(100 * tekirRan / fn).toFixed(1)} (kazandı ${tekirWon})   erken seçim: ${(earlyE / N).toFixed(2)}/oyun (kazanma %${earlyE ? Math.round(100 * earlyW / earlyE) : "-"})   kaybettiren: ${Object.entries(rivalWins).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([k, v]) => k + ":" + v).join(" ")}`);
   medians[name] = q(months, .5);
+  if (Object.keys(davet).length) console.log(`Ankara daveti (oyun başına): ${Object.entries(davet).map(([k, v]) => `${k}:${(v / N).toFixed(2)}`).join("  ")}`);
   if (name === "gorerek") {
     const never = E.CARDS.filter(c => !seen[c.id]).map(c => c.id);
     console.log("hiç çıkmayan:", never.join(", ") || "-");
   }
 }
 
+// Hiçbir oyuncu tipinin görmediği evrak ölü içeriktir
+console.log("\nhiçbir oyuncu tipinde çıkmayan:", E.CARDS.filter(c => !seenAll[c.id]).map(c => c.id).join(", ") || "-");
 // Beceri önemli mi: usta oyuncu dikkatli oyuncudan belirgin uzun yaşamalı
 console.log(`\nusta/insan medyan oranı: ${(medians.usta / medians.insan).toFixed(2)}   usta/gorerek: ${(medians.usta / medians.gorerek).toFixed(2)}`);
 // Baskın seçenek: usta oyuncunun hep aynı tarafı seçtiği kartlar (tasarımda bir taraf bariz üstün demek)

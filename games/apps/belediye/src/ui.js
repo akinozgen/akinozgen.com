@@ -238,7 +238,7 @@ function toast(html, cls = "") {
 function dangerToast(before) {
   const risky = (k, v) => v <= 15 || (k !== "h" && v >= 85);
   const hot = METERS.filter(k => risky(k, S.m[k]) && !risky(k, before[k]));
-  hot.forEach((k, i) => setTimeout(() => toast(`<b>Dikkat</b>${METER_AD[k]} ${S.m[k] <= 15 ? "dibe yaklaşıyor" : k === "e" ? "tavana dayanıyor, erken seçim kapıda" : "tavana dayanıyor"}<span class="tr n">${S.m[k]}</span>`, "warn"), 900 + i * 250));
+  hot.forEach((k, i) => setTimeout(() => toast(`<b>Dikkat</b>${METER_AD[k]} ${S.m[k] <= 15 ? "dibe yaklaşıyor" : k === "e" ? "tavana dayanıyor, erken seçim kapıda" : k === "a" ? "tavana dayanıyor, sizi yukarı çağıracaklar" : "tavana dayanıyor"}<span class="tr n">${S.m[k]}</span>`, "warn"), 900 + i * 250));
   if (S.m.h >= 85 && before.h < 85) setTimeout(() => toast(`<b>Halk</b>sizi bağrına bastı; sandık kurulsa kazanırsınız<span class="tr p">${S.m.h}</span>`, "ev"), 900);
 }
 function reactions(c, res) {
@@ -297,7 +297,7 @@ function renderCard(c) {
   const el = document.createElement("article");
   el.className = "card enter"; el.id = "card";
   el.setAttribute("aria-label", `${P.ad}: ${c.konu}`);
-  const ivedi = c.kind === "ending" || c.kind === "secim" || c.konu === "ACİL";
+  const ivedi = c.kind === "ending" || c.kind === "secim" || c.kind === "davet" || c.konu === "ACİL";
   el.innerHTML = `
     <div class="doc-head"><div class="seal">${SEAL}</div>
       <div class="org"><b>T.C.</b>KARAKAVAK BELEDİYE BAŞKANLIĞI<small>${esc(BIRIM[c.who] || "Yazı İşleri · Gelen Evrak")}</small></div>
@@ -475,8 +475,15 @@ function tart(s, o, nearE) {
   if (nearE) r -= e[0] * 0.6;
   return r;
 }
+// Ankara'dan davet: hesap değil gönül işi; Fikret teklifin kademesine göre konuşur
+const DAVET_OGUT = [
+  "Başkanım, gidin derim; böyle kapı her gün açılmaz. Ama reddederseniz Ankara biraz küser, halk da sizi bağrına basar. Gitmezseniz çayınızı ben demlerim.",
+  "Milletvekilliği büyük iş başkanım. Yalnız Suat Bey'in yüzüne bir bakın; reddederseniz ömür boyu size borçlu kalır, o borç da bir gün ödenek olur.",
+  "Başkanım, bu sefer bakan yardımcılığı. Bir daha hayır derseniz Ankara denetçi gönderir, bilesiniz. Ama gönlünüz Karakavak'taysa ben de buradayım.",
+];
 function fikretAdvice(s) {
   const c = s.cur, left = TERM - 1 - (s.month % TERM), nearE = left <= 12 && s.term < MAX_TERMS;
+  if (c.kind === "davet") return DAVET_OGUT[Math.min(s.cnt.ankara_ret || 0, DAVET_OGUT.length - 1)];
   if (c.kind === "secim") {
     const p = pollOf(s), f = c.early ? s.earlyField : s.field, n = f ? f.extras.length + 2 : 2;
     const split = n > 2 ? ` ${n} aday var, oylar bölünecek; birinci çıkmak yeter.` : " Teke tek yarış; yüzde elliyi geçen kazanır.";
@@ -545,7 +552,7 @@ function renderPaper(lo) {
     </header>
     <div class="np-main">
       <div class="np-lead">
-        <div class="kicker">SON DAKİKA</div>
+        <div class="kicker">${E.win ? "MÜJDE" : "SON DAKİKA"}</div>
         <h2 class="headline">${esc(art.manset)}</h2>
         <div class="np-grid">
           <figure class="np-photo"><div class="ht">${photo(E.who)}</div><figcaption>${esc(P.ad)} (${esc(P.unvan)}) olayları gazetemize anlattı.</figcaption></figure>
@@ -577,7 +584,7 @@ function gameOver() {
   renderPaper(lastOver);
   show("over"); dropPaper();
   $("#scr-over").scrollTop = 0;
-  snd.hicaz();
+  if (ENDINGS[o.key].win) snd.win(); else snd.hicaz(); // terfi yenilgi gibi çalınmaz
 }
 
 // ─── Seçim gecesi: KARAKAVAK TV canlı yayını. Sonuç baştan belli (engine.js tally), ekran sandık sandık açar.

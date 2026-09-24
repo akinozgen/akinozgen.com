@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import { lintContent } from "../tools/lint.mjs";
 
 const src = ["cards.js", "engine.js"].map(f => readFileSync(new URL("../src/" + f, import.meta.url), "utf8")).join("\n");
-const load = () => new Function(src + "\nreturn { CARDS, CARD, CRISES, INTRO, PEOPLE, SYN };")();
+const load = () => new Function(src + "\nreturn { CARDS, CARD, CRISES, INTRO, PEOPLE, SYN, DAVET, ENDINGS };")();
 
 test("gerçek içerikte bağlantı, bayrak, sayaç ve etiket hatası yok", () => {
   const r = lintContent(load());

@@ -301,8 +301,8 @@ function electionCard(s, rng) {
 function endingCard(key, s, extra = {}) {
   const E = ENDINGS[key];
   return { id: "end_" + key, kind: "ending", key, who: E.who, konu: E.konu, text: E.text.replace("{oy}", extra.oy ?? "").replace("{rakip}", extra.rakip ?? ""),
-    L: { t: key === "emekli" ? "Hakkınızı helal edin" : "Ah be Fikret...", e: Z },
-    R: { t: key === "emekli" ? "Son bir çay" : "Bu da geçer", e: Z } };
+    L: { t: key === "emekli" ? "Hakkınızı helal edin" : E.win ? "Hayırlı olsun" : "Ah be Fikret...", e: Z },
+    R: { t: key === "emekli" ? "Son bir çay" : E.win ? "Karakavak'a selam" : "Bu da geçer", e: Z } };
 }
 
 function special(p, s, rng = Math.random) {
@@ -311,6 +311,7 @@ function special(p, s, rng = Math.random) {
     text: "(Tam o kararı mühürleyecekken Tekir masaya atladı, evrakın üstüne kıvrılıp uyudu. Mühür basılamadı, karar askıda kaldı. Kimse kediyi uyandırmaya kıyamadı.) Mırrr.",
     L: { t: "Aferin Tekir", e: Z }, R: { t: "Mamayı iki kat yapın", e: Z } };
   if (p.type === "erken") return earlyCard(s, rng);
+  if (p.type === "davet") return { ...DAVET[Math.min(s.cnt.ankara_ret || 0, DAVET.length - 1)], kind: "davet" };
   if (p.type === "sonuc") {
     const r = p.res, n = r ? r.cands.length : 2;
     if (!p.win) {
@@ -346,7 +347,7 @@ function materialize(c, s, rng) {
     const rel = {};
     if (people) rel[c.who] = key === fav ? 1 : -1;
     for (const [w, v] of Object.entries(x.rel || {})) rel[w] = (rel[w] || 0) + v;
-    return { t: x.t, e, rel, set: x.set, clr: x.clr, inc: x.inc, dec: x.dec, next: x.next, pol: x.pol, cut: x.cut };
+    return { t: x.t, e, rel, set: x.set, clr: x.clr, inc: x.inc, dec: x.dec, next: x.next, pol: x.pol, cut: x.cut, son: x.son };
   };
   let L = side("L"), R = side("R");
   // Kabul hep aynı tarafta olmasın: normal kartlar yarı yarıya ters çevrilir
@@ -430,6 +431,9 @@ function choose(s, side, rng = Math.random) {
     case "secim": if (!c.early) s.electionTerm = s.term; break;
     case "erkensonuc": s.m.e = Math.min(s.m.e, 70); s.earlyField = null; passMonth(); break; // oda kıraathaneye çekildi
     case "adaylar": s.fieldTerm = s.term; passMonth(); break;
+    case "davet": // kabul: terfi finali gelir · ret: normal evrak gibi işlenir (günlüğe ve gazeteye girer)
+      if (o.son) { s.pending = { type: "ending", key: o.son }; return out; }
+    // falls through
     default:
       s.used[c.id] = true; s.last[c.id] = s.month; s.lastWho = c.who; s.signed++;
       s.log.push({ m: s.month, who: c.who, konu: c.konu, t: o.t, e: out.d });
@@ -437,11 +441,12 @@ function choose(s, side, rng = Math.random) {
       passMonth();
   }
 
-  // seçim evrakında esnaf tavanı yeni bir erken seçim açmaz: sandık zaten kuruluyor, sonucu o belirler
-  const dead = METERS.find(k => s.m[k] <= 0 || (k !== "h" && s.m[k] >= 100 && !(k === "e" && c.kind === "secim")));
+  // seçim evrakında esnaf ya da Ankara tavanı sandığı bekletmez: önce seçim, davet ya da erken seçim sonra
+  const dead = METERS.find(k => s.m[k] <= 0 || (k !== "h" && s.m[k] >= 100 && !((k === "e" || k === "a") && c.kind === "secim")));
   if (dead) {
     const key = dead + (s.m[dead] <= 0 ? "0" : "100");
     if (key === "e100") s.pending = { type: "erken" };
+    else if (key === "a100") s.pending = { type: "davet" }; // Ankara tavan yapınca sizi yukarı çağırır; reddedebilirsiniz
     else if ((s.cnt.tekir || 0) >= 3 && !s.tekirUsed) s.pending = { type: "tekir", restore: before, cause: key };
     else s.pending = { type: "ending", key };
     out.dead = dead;

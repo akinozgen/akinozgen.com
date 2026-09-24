@@ -1227,7 +1227,7 @@ button { font: inherit; color: inherit; }
       <h2>Makamın kuralları</h2>
       <ol class="g-list">
         <li><b>Evrak.</b> Her ay bir evrak gelir. Sağa ya da sola kaydırın; <kbd>←</kbd> <kbd>→</kbd> tuşları da olur. Hangi kararın hangi tarafta olduğu evraktan evraka değişir.</li>
-        <li><b>Göstergeler.</b> Halk, Kasa, Esnaf ve Ankara 0 ile 100 arasında durur. Kasa ya da Ankara 0'a inerse de 100'e çıkarsa da makam gider. Esnaf 0'a inerse makam gider; 100'e çıkarsa esnaf odası belediyeyi ele geçirir, erken seçime gidilir. Halk ise yalnız dibe vurursa tehlikelidir; tepeye çıktıkça altın rengi yanar ve sandıkta size yarar. Tehlikeye giren gösterge kırmızı yanar.</li>
+        <li><b>Göstergeler.</b> Halk, Kasa, Esnaf ve Ankara 0 ile 100 arasında durur. Kasa 0'a inerse de 100'e çıkarsa da makam gider. Esnaf 0'a inerse makam gider; 100'e çıkarsa esnaf odası belediyeyi ele geçirir, erken seçime gidilir. Ankara 0'a inerse makam gider; 100'e çıkarsa sizi yukarı çağırırlar. Giderseniz terfiyle bitirirsiniz; reddederseniz Ankara küser, teklif de her seferinde büyür. Halk ise yalnız dibe vurursa tehlikelidir; tepeye çıktıkça altın rengi yanar ve sandıkta size yarar. Tehlikeye giren gösterge kırmızı yanar.</li>
         <li><b>Oklar.</b> Evrakı sürüklerken göstergelerin altında ok çıkar: <span class="lg neutral">▲</span> artar, <span class="lg neutral">▼</span> azalır; üç ok büyük etki demektir.
           Renkler: <span class="lg good">▲▲</span> dengeye yaklaştırır, <span class="lg warn">▲▲</span> uca götürür, <span class="lg bad">▲▲▲</span> tehlikeye sokar. Karar verilince tam sayılar göstergenin altında belirir; <b>↻</b> işaretli olanlar o ay işleyen kararlardan gelir.</li>
         <li><b>Yürürlükteki kararlar.</b> Kredi, kira, inşaat gibi bazı kararlar her ay işler. Üstteki "Yürürlükte" şeridinde ne kadar sürdüklerini ve ne getirdiklerini görürsünüz; seçenek düğmesindeki küçük not da önceden haber verir.</li>
@@ -1547,6 +1547,7 @@ const CARDS = [
     R: { t: "Arsayı verelim", e: [-5, -8, 6, 14], rel: { dursun: -1 }, pol: { id: "konut", ad: "Sosyal konut inşaatı", e: [0, 0, 1, 0], ay: 8, done: [10, 0, 0, 4], msg: "Sosyal konutlar teslim edildi; 500 aile anahtarını aldı." } } },
   { id: "odul", who: "vekil", konu: "Ödül töreni", months: [6, 7], cd: 12,
     text: "Ankara size 'Örnek Belediye' ödülü verecek! Tören Ankara'da, aynı gün de Kavun Festivali var. Hangisi?",
+    alt: [{ req: "ankara_ret", text: "Ankara, teklifine hayır diyen başkana 'Örnek Belediye' ödülü veriyor; 'gönlünü alalım' demişler. Tören Ankara'da, aynı gün de Kavun Festivali var. Bu sefer hangisi?" }],
     L: { t: "Festival bizim", e: [8, 0, 5, -12] },
     R: { t: "Ankara'ya gidiyorum", e: [-8, 0, -4, 12] } },
   { id: "millet", who: "vekil", konu: "Ankara projesi", once: true,
@@ -2329,6 +2330,32 @@ const CARDS = [
     alt: [{ if: { cnt: { kur: 4 } }, text: "Başkanım, kur yine uçtu. Artık rekor haberini vermiyorum; rekor olmayan günü haber veriyorum, o da yılda bir oluyor. Yatırımları erteleyelim mi, devam mı?" }],
     L: { t: "Yatırımları erteleyin", e: [-4, 5, -3, 0], inc: { kur: 1 } },
     R: { t: "Bu da geçer", e: [2, -5, 2, 0], inc: { kur: 1 } } },
+
+  // ── Ankara'ya hayır diyen başkan: DAVET'i reddedince gelenler
+  { id: "ret_manset", who: "tuncay", konu: "Yarının manşeti", chain: true,
+    text: "Karakavak Postası yarın şu manşetle çıkıyor başkanım: 'MAKAMINI ANKARA'YA DEĞİŞMEDİ.' Yanına büyük bir fotoğrafınızı koyacağım. Röportaj verirseniz fotoğraf daha da büyür.",
+    L: { t: "Mütevazı kalalım", e: [5, 0, 0, 0], next: { id: "ret_kus", in: [2, 3] } },
+    R: { t: "Röportaj verelim", e: [9, 0, 0, -5], next: { id: "ret_kus", in: [2, 3] } } },
+  { id: "ret_kus", who: "vekil", konu: "Genel merkez kırgın", chain: true, fav: "L",
+    text: "Başkanım, genel merkezde 'bize hayır denmez' havası var. Gönül almak lazım: bir ziyaret, bir kasa kavun, bir de uzun bir teşekkür konuşması. Yoksa ödenekler 'teknik sebeplerle' gecikir.",
+    L: { t: "Kavun kasası gitsin", e: [-3, -4, 3, 10] },
+    R: { t: "Hayır hayırdır", e: [4, 0, 0, -6], next: { id: "ret_odenek", in: [3, 5] } } },
+  { id: "ret_odenek", who: "sevim", konu: "Geciken ödenek", chain: true,
+    text: "Ankara'dan gelecek ödenek 'teknik bir aksaklık' yüzünden gecikti başkanım. Aksaklığın adını sordum, telefonu kapattılar. Maaşlar için ya kemer sıkacağız ya da bankaya gideceğiz.",
+    L: { t: "Kemer sıkalım", e: [-7, 8, -3, 0] },
+    R: { t: "Bankadan kredi", e: [0, 12, 0, 0], pol: { id: "odenek_kredi", ad: "Ödenek kredisi", e: [0, -1, 0, 0], ay: 12, msg: "Geciken Ankara ödeneği için çekilen kredinin son taksidi ödendi." } } },
+  { id: "ret_suat", who: "vekil", konu: "Vefa borcu", chain: true, fav: "L",
+    text: "Başkanım, listede sıra yine bana kaldı; size bir vefa borcum var. Karakavak'a bir ödenek ayarladım, adını da 'vefa ödeneği' koydum. Açılışta birbirimize teşekkür ederiz, olur biter.",
+    L: { t: "Vefa ödeneği gelsin", e: [3, 10, 0, 4] },
+    R: { t: "Borcunuz yok", e: [4, 0, 0, 2] } },
+  { id: "ret_denetim", who: "kaymakam", konu: "Rutin denetim", chain: true,
+    text: "Ankara'dan 'rutin' denetim geldi başkanım. Rutin olduğu için üç ay sürecekmiş. Müfettişler makam odanızı istedi; çay ocağına da bir göz atacaklarmış. Hüseyin titriyor.",
+    L: { t: "Kapılar açık", e: [3, -4, 0, 6], pol: { id: "rutin_denetim", ad: "Rutin denetim", e: [0, -1, 0, 1], ay: 3, msg: "Müfettişler üç ayın sonunda 'kavunu güzelmiş' diye rapor yazıp gitti." } },
+    R: { t: "Müfettişlere kavun", e: [-2, -2, 4, -8], next: { id: "ret_kavun", in: 2 } } },
+  { id: "ret_kavun", who: "tuncay", konu: "Kavun skandalı", chain: true,
+    text: "Başkanım, müfettişlere kavun ikram edildiği Ankara'da duyulmuş. Genel merkez 'kavunla denetçi mi ağırlanır' diye sormuş; ben de 'Karakavak kavunuyla ağırlanır' diye yazacağım.",
+    L: { t: "Yazma Tuncay", e: [-3, 0, 0, 3] },
+    R: { t: "Yaz, gurur duyarız", e: [6, 0, 3, -6] } },
 ];
 
 // ─── Seçimde karşınıza çıkabilecek adaylar ──────────────────────────────────
@@ -2411,6 +2438,25 @@ const CRISES = {
     R: { t: "Muhalefetle ortak proje", e: [6, -4, 0, -14] } },
 };
 
+// ─── Ankara'dan davet: Ankara tavan yapınca oyun bitmez, sizi yukarı çağırırlar ─
+// Sırası reddetme sayısına (ankara_ret) göre: genel merkez → milletvekilliği → bakan yardımcılığı (sonra hep o).
+// L: reddet (Ankara küser, halk sever, peşine evrak gelir) · R: kabul (son: terfiyle biten final). Taraflar çevrilmez.
+const DAVET = [
+  { id: "davet_gm", who: "vekil", konu: "Ankara'dan davet",
+    text: "Başkanım, genel merkez sizi istiyor: Yerel Yönetimlerden Sorumlu Genel Başkan Yardımcılığı. Makam aracı, plaka, koltuk; koltuğun arkalığı sizinkinden yüksek. Karakavak'a 'arada uğrarsınız' diyorlar.",
+    L: { t: "Karakavak'ı bırakmam", e: [8, 0, 2, -30], rel: { vekil: -1 }, set: "ankara_ret", inc: "ankara_ret", next: { id: "ret_manset", in: 0 } },
+    R: { t: "Ankara'ya gidiyorum", e: [0, 0, 0, 0], son: "a100_gm" } },
+  { id: "davet_mv", who: "vekil", konu: "İkinci davet",
+    text: "Başkanım, Ankara bu kez milletvekilliği teklif ediyor, hem de listenin seçilecek sırasından. Yalnız o sıra benimdi; genel merkez 'Suat Bey bir dönem dinlensin' demiş. Kabul ederseniz dinlenen ben olacağım.",
+    L: { t: "Sıra sizin Suat Bey", e: [6, 0, 0, -34], rel: { vekil: 2 }, set: "ankara_ret", inc: "ankara_ret", next: { id: "ret_suat", in: [2, 4] } },
+    R: { t: "Listeye yazın beni", e: [0, 0, 0, 0], son: "a100_mv" } },
+  { id: "davet_bakan", who: "kaymakam", konu: "Son davet",
+    text: "Başkanım, Ankara aradı, önce beni. Bakan yardımcılığı. Üç kez hayır diyen görülmemiş; 'başkan bizi beğenmiyor mu' diye sormuşlar. Cevabı ben vermeyeyim, siz verin.",
+    alt: [{ if: { cnt: { ankara_ret: 3 } }, text: "Başkanım, Ankara yine aradı; santral artık sizi sesinizden tanıyor. Teklif aynı: bakan yardımcılığı. Genel merkezde 'hayır diyen başkan' diye bir dosya açılmış, iki parmak kalınlığında." }],
+    L: { t: "Yine hayır", e: [10, -6, 0, -45], rel: { kaymakam: -1 }, set: "ankara_ret", inc: "ankara_ret", next: { id: "ret_denetim", in: [2, 4] } },
+    R: { t: "Bu sefer evet", e: [0, 0, 0, 0], son: "a100" } },
+];
+
 // ─── Sonlar ───────────────────────────────────────────────────────────────
 const ENDINGS = {
   h0: { who: "huseyin", konu: "Son çay",
@@ -2434,9 +2480,16 @@ const ENDINGS = {
   a0: { who: "vekil", konu: "Görevden uzaklaştırma",
     text: "Ankara telefonlarınıza çıkmıyor. Ödenekler kesildi, partiden ihraç edildiniz. Kaymakamlıktan son yazı geldi: görevden uzaklaştırma.",
     manset: "ANKARA FİŞİ ÇEKTİ", spot: "Ödenekleri kesilen başkan, Kaymakamlık yazısıyla görevden uzaklaştırıldı.", kisa: "Ankara'dan ihraç" },
-  a100: { who: "vekil", konu: "Atama müjdesi",
-    text: "Ankara sizi o kadar sevdi ki bir sabah kapınıza araç geldi: 'Bakan yardımcılığınız hayırlı olsun!' Karakavak'ı bir daha ancak bayramlarda gördünüz.",
-    manset: "BAŞKAN ANKARA'YA UÇTU", spot: "Karakavak'tan bakan yardımcılığına uzanan hikâye; ilçe başkansız kaldı.", kisa: "Ankara'ya terfi" },
+  // win: terfiyle biten finaller (Ankara'dan davet kabul edildi); yenilgi gibi değil, müjde gibi karşılanır
+  a100: { who: "kaymakam", konu: "Atama müjdesi", win: true,
+    text: "Bakan yardımcılığınız hayırlı olsun başkanım! Sabah kapıya makam aracı geldi; şoför bagaja önce semaveri koydu. Bakanlıkta herkes size hâlâ 'başkan' diyor. Karakavak'ı bayramlarda ziyaret ediyorsunuz.",
+    manset: "KARAKAVAK'TAN BAKANLIĞA", spot: "Ankara'nın 'bakan yardımcılığı' teklifini sonunda kabul eden başkan, ilçeden semaveriyle uğurlandı.", kisa: "Bakan yardımcısı oldu" },
+  a100_gm: { who: "vekil", konu: "Genel merkez", win: true,
+    text: "Genel merkezdeki odanız Karakavak'taki makamdan büyük çıktı başkanım. İlk toplantıda söze 'yerel yönetimler' diye girdiniz, 'Karakavak kavunu' diye bitirdiniz. Masanızdaki kavun fotoğrafı hâlâ duruyor.",
+    manset: "BAŞKAN GENEL MERKEZE UÇTU", spot: "Karakavak'ın başkanı Ankara'da genel başkan yardımcısı oldu; ilçe, veda çayında kavun kesti.", kisa: "Genel merkeze terfi" },
+  a100_mv: { who: "vekil", konu: "Mazbata", win: true,
+    text: "Milletvekili mazbatanızı aldınız başkanım! Meclisteki ilk konuşmanız Karakavak kavunu üzerineydi; tutanağa 'alkışlar' diye geçti. Suat Bey dinleniyor, arada arayıp çayınızı soruyor.",
+    manset: "KARAKAVAK'TAN MECLİSE", spot: "Başkan, listenin seçilecek sırasından milletvekili oldu; Suat Bey bir dönem dinlenmeye çekildi.", kisa: "Milletvekili oldu" },
   sandik: { who: "huseyin", konu: "Seçim sonucu",
     text: "Sandıktan %{oy} çıktı başkanım.{rakip} Yetmedi. Son çayınızı getirdim; bardak bile buğulandı.",
     manset: "SANDIK KONUŞTU", spot: "Karakavak halkı sandıkta değişim dedi; başkan makamı devretti.", kisa: "Sandıkta kaybetti" },
@@ -2454,7 +2507,7 @@ const INTRO = [
     L: { t: "Önce çay", e: [0, 0, 0, 0] },
     R: { t: "Anlat Fikret", e: [0, 0, 0, 0] } },
   { id: "intro2", who: "fikret", konu: "Göstergeler",
-    text: "Evrakı sürükleyince oklar çıkar: yukarı ok artar, aşağı ok azalır; üç ok büyük etki. Kasa ya da Ankara dibe vursa da tavan yapsa da makam gider; esnaf tavan yaparsa erken seçim olur. Halk ne kadar severse o kadar iyi, dibe inmesin yeter.",
+    text: "Evrakı sürükleyince oklar çıkar: yukarı ok artar, aşağı ok azalır; üç ok büyük etki. Kasa uca varırsa, Ankara dibe vurursa makam gider. Esnaf tavan yaparsa erken seçim olur; Ankara tavan yaparsa sizi yukarı çağırır. Halk dibe inmesin yeter.",
     L: { t: "Zor iş", e: [0, 0, 0, 0] },
     R: { t: "Devam", e: [0, 0, 0, 0] } },
   { id: "intro3", who: "fikret", konu: "Makamın incelikleri",
@@ -2801,8 +2854,8 @@ function electionCard(s, rng) {
 function endingCard(key, s, extra = {}) {
   const E = ENDINGS[key];
   return { id: "end_" + key, kind: "ending", key, who: E.who, konu: E.konu, text: E.text.replace("{oy}", extra.oy ?? "").replace("{rakip}", extra.rakip ?? ""),
-    L: { t: key === "emekli" ? "Hakkınızı helal edin" : "Ah be Fikret...", e: Z },
-    R: { t: key === "emekli" ? "Son bir çay" : "Bu da geçer", e: Z } };
+    L: { t: key === "emekli" ? "Hakkınızı helal edin" : E.win ? "Hayırlı olsun" : "Ah be Fikret...", e: Z },
+    R: { t: key === "emekli" ? "Son bir çay" : E.win ? "Karakavak'a selam" : "Bu da geçer", e: Z } };
 }
 
 function special(p, s, rng = Math.random) {
@@ -2811,6 +2864,7 @@ function special(p, s, rng = Math.random) {
     text: "(Tam o kararı mühürleyecekken Tekir masaya atladı, evrakın üstüne kıvrılıp uyudu. Mühür basılamadı, karar askıda kaldı. Kimse kediyi uyandırmaya kıyamadı.) Mırrr.",
     L: { t: "Aferin Tekir", e: Z }, R: { t: "Mamayı iki kat yapın", e: Z } };
   if (p.type === "erken") return earlyCard(s, rng);
+  if (p.type === "davet") return { ...DAVET[Math.min(s.cnt.ankara_ret || 0, DAVET.length - 1)], kind: "davet" };
   if (p.type === "sonuc") {
     const r = p.res, n = r ? r.cands.length : 2;
     if (!p.win) {
@@ -2846,7 +2900,7 @@ function materialize(c, s, rng) {
     const rel = {};
     if (people) rel[c.who] = key === fav ? 1 : -1;
     for (const [w, v] of Object.entries(x.rel || {})) rel[w] = (rel[w] || 0) + v;
-    return { t: x.t, e, rel, set: x.set, clr: x.clr, inc: x.inc, dec: x.dec, next: x.next, pol: x.pol, cut: x.cut };
+    return { t: x.t, e, rel, set: x.set, clr: x.clr, inc: x.inc, dec: x.dec, next: x.next, pol: x.pol, cut: x.cut, son: x.son };
   };
   let L = side("L"), R = side("R");
   // Kabul hep aynı tarafta olmasın: normal kartlar yarı yarıya ters çevrilir
@@ -2930,6 +2984,9 @@ function choose(s, side, rng = Math.random) {
     case "secim": if (!c.early) s.electionTerm = s.term; break;
     case "erkensonuc": s.m.e = Math.min(s.m.e, 70); s.earlyField = null; passMonth(); break; // oda kıraathaneye çekildi
     case "adaylar": s.fieldTerm = s.term; passMonth(); break;
+    case "davet": // kabul: terfi finali gelir · ret: normal evrak gibi işlenir (günlüğe ve gazeteye girer)
+      if (o.son) { s.pending = { type: "ending", key: o.son }; return out; }
+    // falls through
     default:
       s.used[c.id] = true; s.last[c.id] = s.month; s.lastWho = c.who; s.signed++;
       s.log.push({ m: s.month, who: c.who, konu: c.konu, t: o.t, e: out.d });
@@ -2937,11 +2994,12 @@ function choose(s, side, rng = Math.random) {
       passMonth();
   }
 
-  // seçim evrakında esnaf tavanı yeni bir erken seçim açmaz: sandık zaten kuruluyor, sonucu o belirler
-  const dead = METERS.find(k => s.m[k] <= 0 || (k !== "h" && s.m[k] >= 100 && !(k === "e" && c.kind === "secim")));
+  // seçim evrakında esnaf ya da Ankara tavanı sandığı bekletmez: önce seçim, davet ya da erken seçim sonra
+  const dead = METERS.find(k => s.m[k] <= 0 || (k !== "h" && s.m[k] >= 100 && !((k === "e" || k === "a") && c.kind === "secim")));
   if (dead) {
     const key = dead + (s.m[dead] <= 0 ? "0" : "100");
     if (key === "e100") s.pending = { type: "erken" };
+    else if (key === "a100") s.pending = { type: "davet" }; // Ankara tavan yapınca sizi yukarı çağırır; reddedebilirsiniz
     else if ((s.cnt.tekir || 0) >= 3 && !s.tekirUsed) s.pending = { type: "tekir", restore: before, cause: key };
     else s.pending = { type: "ending", key };
     out.dead = dead;
@@ -3705,6 +3763,8 @@ const TV_TICK = {
     [v => v.flags.towers, "Karakavak Towers'ın terasından seçim izleniyor; bina bir tarafa eğildi, kameraman da"],
     [v => v.flags.devkavun, "İlçe girişindeki dev kavun heykeline seçim gecesi için ışıklı zincir takıldı"],
     [v => v.flags.bisiklet, "Makam bisikleti sandık başında görüldü; zinciri çıkmış, pompa aranıyor"],
+    [v => v.flags.ankara_ret, "Ankara'ya hayır diyen başkan için genel merkezde pano açıldı; pano doldu, ikincisi sipariş edildi"],
+    [v => v.flags.ankara_ret, "Genel merkez Karakavak sonuçlarını izliyor; teklif mektubu çekmecede, zarfı hâlâ açılmadı"],
   ],
   yerel: [
     "KAVUN BORSASI: Çekirdekli kavun sabit; çekirdeksizde 'o kavun değil' tartışması yüzünden işlem durdu",
@@ -4198,7 +4258,7 @@ function toast(html, cls = "") {
 function dangerToast(before) {
   const risky = (k, v) => v <= 15 || (k !== "h" && v >= 85);
   const hot = METERS.filter(k => risky(k, S.m[k]) && !risky(k, before[k]));
-  hot.forEach((k, i) => setTimeout(() => toast(`<b>Dikkat</b>${METER_AD[k]} ${S.m[k] <= 15 ? "dibe yaklaşıyor" : k === "e" ? "tavana dayanıyor, erken seçim kapıda" : "tavana dayanıyor"}<span class="tr n">${S.m[k]}</span>`, "warn"), 900 + i * 250));
+  hot.forEach((k, i) => setTimeout(() => toast(`<b>Dikkat</b>${METER_AD[k]} ${S.m[k] <= 15 ? "dibe yaklaşıyor" : k === "e" ? "tavana dayanıyor, erken seçim kapıda" : k === "a" ? "tavana dayanıyor, sizi yukarı çağıracaklar" : "tavana dayanıyor"}<span class="tr n">${S.m[k]}</span>`, "warn"), 900 + i * 250));
   if (S.m.h >= 85 && before.h < 85) setTimeout(() => toast(`<b>Halk</b>sizi bağrına bastı; sandık kurulsa kazanırsınız<span class="tr p">${S.m.h}</span>`, "ev"), 900);
 }
 function reactions(c, res) {
@@ -4257,7 +4317,7 @@ function renderCard(c) {
   const el = document.createElement("article");
   el.className = "card enter"; el.id = "card";
   el.setAttribute("aria-label", `${P.ad}: ${c.konu}`);
-  const ivedi = c.kind === "ending" || c.kind === "secim" || c.konu === "ACİL";
+  const ivedi = c.kind === "ending" || c.kind === "secim" || c.kind === "davet" || c.konu === "ACİL";
   el.innerHTML = `
     <div class="doc-head"><div class="seal">${SEAL}</div>
       <div class="org"><b>T.C.</b>KARAKAVAK BELEDİYE BAŞKANLIĞI<small>${esc(BIRIM[c.who] || "Yazı İşleri · Gelen Evrak")}</small></div>
@@ -4435,8 +4495,15 @@ function tart(s, o, nearE) {
   if (nearE) r -= e[0] * 0.6;
   return r;
 }
+// Ankara'dan davet: hesap değil gönül işi; Fikret teklifin kademesine göre konuşur
+const DAVET_OGUT = [
+  "Başkanım, gidin derim; böyle kapı her gün açılmaz. Ama reddederseniz Ankara biraz küser, halk da sizi bağrına basar. Gitmezseniz çayınızı ben demlerim.",
+  "Milletvekilliği büyük iş başkanım. Yalnız Suat Bey'in yüzüne bir bakın; reddederseniz ömür boyu size borçlu kalır, o borç da bir gün ödenek olur.",
+  "Başkanım, bu sefer bakan yardımcılığı. Bir daha hayır derseniz Ankara denetçi gönderir, bilesiniz. Ama gönlünüz Karakavak'taysa ben de buradayım.",
+];
 function fikretAdvice(s) {
   const c = s.cur, left = TERM - 1 - (s.month % TERM), nearE = left <= 12 && s.term < MAX_TERMS;
+  if (c.kind === "davet") return DAVET_OGUT[Math.min(s.cnt.ankara_ret || 0, DAVET_OGUT.length - 1)];
   if (c.kind === "secim") {
     const p = pollOf(s), f = c.early ? s.earlyField : s.field, n = f ? f.extras.length + 2 : 2;
     const split = n > 2 ? ` ${n} aday var, oylar bölünecek; birinci çıkmak yeter.` : " Teke tek yarış; yüzde elliyi geçen kazanır.";
@@ -4505,7 +4572,7 @@ function renderPaper(lo) {
     </header>
     <div class="np-main">
       <div class="np-lead">
-        <div class="kicker">SON DAKİKA</div>
+        <div class="kicker">${E.win ? "MÜJDE" : "SON DAKİKA"}</div>
         <h2 class="headline">${esc(art.manset)}</h2>
         <div class="np-grid">
           <figure class="np-photo"><div class="ht">${photo(E.who)}</div><figcaption>${esc(P.ad)} (${esc(P.unvan)}) olayları gazetemize anlattı.</figcaption></figure>
@@ -4537,7 +4604,7 @@ function gameOver() {
   renderPaper(lastOver);
   show("over"); dropPaper();
   $("#scr-over").scrollTop = 0;
-  snd.hicaz();
+  if (ENDINGS[o.key].win) snd.win(); else snd.hicaz(); // terfi yenilgi gibi çalınmaz
 }
 
 // ─── Seçim gecesi: KARAKAVAK TV canlı yayını. Sonuç baştan belli (engine.js tally), ekran sandık sandık açar.

@@ -212,6 +212,7 @@ const CARDS = [
     R: { t: "Arsayı verelim", e: [-5, -8, 6, 14], rel: { dursun: -1 }, pol: { id: "konut", ad: "Sosyal konut inşaatı", e: [0, 0, 1, 0], ay: 8, done: [10, 0, 0, 4], msg: "Sosyal konutlar teslim edildi; 500 aile anahtarını aldı." } } },
   { id: "odul", who: "vekil", konu: "Ödül töreni", months: [6, 7], cd: 12,
     text: "Ankara size 'Örnek Belediye' ödülü verecek! Tören Ankara'da, aynı gün de Kavun Festivali var. Hangisi?",
+    alt: [{ req: "ankara_ret", text: "Ankara, teklifine hayır diyen başkana 'Örnek Belediye' ödülü veriyor; 'gönlünü alalım' demişler. Tören Ankara'da, aynı gün de Kavun Festivali var. Bu sefer hangisi?" }],
     L: { t: "Festival bizim", e: [8, 0, 5, -12] },
     R: { t: "Ankara'ya gidiyorum", e: [-8, 0, -4, 12] } },
   { id: "millet", who: "vekil", konu: "Ankara projesi", once: true,
@@ -994,6 +995,32 @@ const CARDS = [
     alt: [{ if: { cnt: { kur: 4 } }, text: "Başkanım, kur yine uçtu. Artık rekor haberini vermiyorum; rekor olmayan günü haber veriyorum, o da yılda bir oluyor. Yatırımları erteleyelim mi, devam mı?" }],
     L: { t: "Yatırımları erteleyin", e: [-4, 5, -3, 0], inc: { kur: 1 } },
     R: { t: "Bu da geçer", e: [2, -5, 2, 0], inc: { kur: 1 } } },
+
+  // ── Ankara'ya hayır diyen başkan: DAVET'i reddedince gelenler
+  { id: "ret_manset", who: "tuncay", konu: "Yarının manşeti", chain: true,
+    text: "Karakavak Postası yarın şu manşetle çıkıyor başkanım: 'MAKAMINI ANKARA'YA DEĞİŞMEDİ.' Yanına büyük bir fotoğrafınızı koyacağım. Röportaj verirseniz fotoğraf daha da büyür.",
+    L: { t: "Mütevazı kalalım", e: [5, 0, 0, 0], next: { id: "ret_kus", in: [2, 3] } },
+    R: { t: "Röportaj verelim", e: [9, 0, 0, -5], next: { id: "ret_kus", in: [2, 3] } } },
+  { id: "ret_kus", who: "vekil", konu: "Genel merkez kırgın", chain: true, fav: "L",
+    text: "Başkanım, genel merkezde 'bize hayır denmez' havası var. Gönül almak lazım: bir ziyaret, bir kasa kavun, bir de uzun bir teşekkür konuşması. Yoksa ödenekler 'teknik sebeplerle' gecikir.",
+    L: { t: "Kavun kasası gitsin", e: [-3, -4, 3, 10] },
+    R: { t: "Hayır hayırdır", e: [4, 0, 0, -6], next: { id: "ret_odenek", in: [3, 5] } } },
+  { id: "ret_odenek", who: "sevim", konu: "Geciken ödenek", chain: true,
+    text: "Ankara'dan gelecek ödenek 'teknik bir aksaklık' yüzünden gecikti başkanım. Aksaklığın adını sordum, telefonu kapattılar. Maaşlar için ya kemer sıkacağız ya da bankaya gideceğiz.",
+    L: { t: "Kemer sıkalım", e: [-7, 8, -3, 0] },
+    R: { t: "Bankadan kredi", e: [0, 12, 0, 0], pol: { id: "odenek_kredi", ad: "Ödenek kredisi", e: [0, -1, 0, 0], ay: 12, msg: "Geciken Ankara ödeneği için çekilen kredinin son taksidi ödendi." } } },
+  { id: "ret_suat", who: "vekil", konu: "Vefa borcu", chain: true, fav: "L",
+    text: "Başkanım, listede sıra yine bana kaldı; size bir vefa borcum var. Karakavak'a bir ödenek ayarladım, adını da 'vefa ödeneği' koydum. Açılışta birbirimize teşekkür ederiz, olur biter.",
+    L: { t: "Vefa ödeneği gelsin", e: [3, 10, 0, 4] },
+    R: { t: "Borcunuz yok", e: [4, 0, 0, 2] } },
+  { id: "ret_denetim", who: "kaymakam", konu: "Rutin denetim", chain: true,
+    text: "Ankara'dan 'rutin' denetim geldi başkanım. Rutin olduğu için üç ay sürecekmiş. Müfettişler makam odanızı istedi; çay ocağına da bir göz atacaklarmış. Hüseyin titriyor.",
+    L: { t: "Kapılar açık", e: [3, -4, 0, 6], pol: { id: "rutin_denetim", ad: "Rutin denetim", e: [0, -1, 0, 1], ay: 3, msg: "Müfettişler üç ayın sonunda 'kavunu güzelmiş' diye rapor yazıp gitti." } },
+    R: { t: "Müfettişlere kavun", e: [-2, -2, 4, -8], next: { id: "ret_kavun", in: 2 } } },
+  { id: "ret_kavun", who: "tuncay", konu: "Kavun skandalı", chain: true,
+    text: "Başkanım, müfettişlere kavun ikram edildiği Ankara'da duyulmuş. Genel merkez 'kavunla denetçi mi ağırlanır' diye sormuş; ben de 'Karakavak kavunuyla ağırlanır' diye yazacağım.",
+    L: { t: "Yazma Tuncay", e: [-3, 0, 0, 3] },
+    R: { t: "Yaz, gurur duyarız", e: [6, 0, 3, -6] } },
 ];
 
 // ─── Seçimde karşınıza çıkabilecek adaylar ──────────────────────────────────
@@ -1076,6 +1103,25 @@ const CRISES = {
     R: { t: "Muhalefetle ortak proje", e: [6, -4, 0, -14] } },
 };
 
+// ─── Ankara'dan davet: Ankara tavan yapınca oyun bitmez, sizi yukarı çağırırlar ─
+// Sırası reddetme sayısına (ankara_ret) göre: genel merkez → milletvekilliği → bakan yardımcılığı (sonra hep o).
+// L: reddet (Ankara küser, halk sever, peşine evrak gelir) · R: kabul (son: terfiyle biten final). Taraflar çevrilmez.
+const DAVET = [
+  { id: "davet_gm", who: "vekil", konu: "Ankara'dan davet",
+    text: "Başkanım, genel merkez sizi istiyor: Yerel Yönetimlerden Sorumlu Genel Başkan Yardımcılığı. Makam aracı, plaka, koltuk; koltuğun arkalığı sizinkinden yüksek. Karakavak'a 'arada uğrarsınız' diyorlar.",
+    L: { t: "Karakavak'ı bırakmam", e: [8, 0, 2, -30], rel: { vekil: -1 }, set: "ankara_ret", inc: "ankara_ret", next: { id: "ret_manset", in: 0 } },
+    R: { t: "Ankara'ya gidiyorum", e: [0, 0, 0, 0], son: "a100_gm" } },
+  { id: "davet_mv", who: "vekil", konu: "İkinci davet",
+    text: "Başkanım, Ankara bu kez milletvekilliği teklif ediyor, hem de listenin seçilecek sırasından. Yalnız o sıra benimdi; genel merkez 'Suat Bey bir dönem dinlensin' demiş. Kabul ederseniz dinlenen ben olacağım.",
+    L: { t: "Sıra sizin Suat Bey", e: [6, 0, 0, -34], rel: { vekil: 2 }, set: "ankara_ret", inc: "ankara_ret", next: { id: "ret_suat", in: [2, 4] } },
+    R: { t: "Listeye yazın beni", e: [0, 0, 0, 0], son: "a100_mv" } },
+  { id: "davet_bakan", who: "kaymakam", konu: "Son davet",
+    text: "Başkanım, Ankara aradı, önce beni. Bakan yardımcılığı. Üç kez hayır diyen görülmemiş; 'başkan bizi beğenmiyor mu' diye sormuşlar. Cevabı ben vermeyeyim, siz verin.",
+    alt: [{ if: { cnt: { ankara_ret: 3 } }, text: "Başkanım, Ankara yine aradı; santral artık sizi sesinizden tanıyor. Teklif aynı: bakan yardımcılığı. Genel merkezde 'hayır diyen başkan' diye bir dosya açılmış, iki parmak kalınlığında." }],
+    L: { t: "Yine hayır", e: [10, -6, 0, -45], rel: { kaymakam: -1 }, set: "ankara_ret", inc: "ankara_ret", next: { id: "ret_denetim", in: [2, 4] } },
+    R: { t: "Bu sefer evet", e: [0, 0, 0, 0], son: "a100" } },
+];
+
 // ─── Sonlar ───────────────────────────────────────────────────────────────
 const ENDINGS = {
   h0: { who: "huseyin", konu: "Son çay",
@@ -1099,9 +1145,16 @@ const ENDINGS = {
   a0: { who: "vekil", konu: "Görevden uzaklaştırma",
     text: "Ankara telefonlarınıza çıkmıyor. Ödenekler kesildi, partiden ihraç edildiniz. Kaymakamlıktan son yazı geldi: görevden uzaklaştırma.",
     manset: "ANKARA FİŞİ ÇEKTİ", spot: "Ödenekleri kesilen başkan, Kaymakamlık yazısıyla görevden uzaklaştırıldı.", kisa: "Ankara'dan ihraç" },
-  a100: { who: "vekil", konu: "Atama müjdesi",
-    text: "Ankara sizi o kadar sevdi ki bir sabah kapınıza araç geldi: 'Bakan yardımcılığınız hayırlı olsun!' Karakavak'ı bir daha ancak bayramlarda gördünüz.",
-    manset: "BAŞKAN ANKARA'YA UÇTU", spot: "Karakavak'tan bakan yardımcılığına uzanan hikâye; ilçe başkansız kaldı.", kisa: "Ankara'ya terfi" },
+  // win: terfiyle biten finaller (Ankara'dan davet kabul edildi); yenilgi gibi değil, müjde gibi karşılanır
+  a100: { who: "kaymakam", konu: "Atama müjdesi", win: true,
+    text: "Bakan yardımcılığınız hayırlı olsun başkanım! Sabah kapıya makam aracı geldi; şoför bagaja önce semaveri koydu. Bakanlıkta herkes size hâlâ 'başkan' diyor. Karakavak'ı bayramlarda ziyaret ediyorsunuz.",
+    manset: "KARAKAVAK'TAN BAKANLIĞA", spot: "Ankara'nın 'bakan yardımcılığı' teklifini sonunda kabul eden başkan, ilçeden semaveriyle uğurlandı.", kisa: "Bakan yardımcısı oldu" },
+  a100_gm: { who: "vekil", konu: "Genel merkez", win: true,
+    text: "Genel merkezdeki odanız Karakavak'taki makamdan büyük çıktı başkanım. İlk toplantıda söze 'yerel yönetimler' diye girdiniz, 'Karakavak kavunu' diye bitirdiniz. Masanızdaki kavun fotoğrafı hâlâ duruyor.",
+    manset: "BAŞKAN GENEL MERKEZE UÇTU", spot: "Karakavak'ın başkanı Ankara'da genel başkan yardımcısı oldu; ilçe, veda çayında kavun kesti.", kisa: "Genel merkeze terfi" },
+  a100_mv: { who: "vekil", konu: "Mazbata", win: true,
+    text: "Milletvekili mazbatanızı aldınız başkanım! Meclisteki ilk konuşmanız Karakavak kavunu üzerineydi; tutanağa 'alkışlar' diye geçti. Suat Bey dinleniyor, arada arayıp çayınızı soruyor.",
+    manset: "KARAKAVAK'TAN MECLİSE", spot: "Başkan, listenin seçilecek sırasından milletvekili oldu; Suat Bey bir dönem dinlenmeye çekildi.", kisa: "Milletvekili oldu" },
   sandik: { who: "huseyin", konu: "Seçim sonucu",
     text: "Sandıktan %{oy} çıktı başkanım.{rakip} Yetmedi. Son çayınızı getirdim; bardak bile buğulandı.",
     manset: "SANDIK KONUŞTU", spot: "Karakavak halkı sandıkta değişim dedi; başkan makamı devretti.", kisa: "Sandıkta kaybetti" },
@@ -1119,7 +1172,7 @@ const INTRO = [
     L: { t: "Önce çay", e: [0, 0, 0, 0] },
     R: { t: "Anlat Fikret", e: [0, 0, 0, 0] } },
   { id: "intro2", who: "fikret", konu: "Göstergeler",
-    text: "Evrakı sürükleyince oklar çıkar: yukarı ok artar, aşağı ok azalır; üç ok büyük etki. Kasa ya da Ankara dibe vursa da tavan yapsa da makam gider; esnaf tavan yaparsa erken seçim olur. Halk ne kadar severse o kadar iyi, dibe inmesin yeter.",
+    text: "Evrakı sürükleyince oklar çıkar: yukarı ok artar, aşağı ok azalır; üç ok büyük etki. Kasa uca varırsa, Ankara dibe vurursa makam gider. Esnaf tavan yaparsa erken seçim olur; Ankara tavan yaparsa sizi yukarı çağırır. Halk dibe inmesin yeter.",
     L: { t: "Zor iş", e: [0, 0, 0, 0] },
     R: { t: "Devam", e: [0, 0, 0, 0] } },
   { id: "intro3", who: "fikret", konu: "Makamın incelikleri",

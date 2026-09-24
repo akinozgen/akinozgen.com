@@ -1,5 +1,5 @@
 // İçerik denetimi: kart grafı, bayraklar, sayaçlar, etiketler, uzunluklar.
-// lintContent(E) → { errors: [], warnings: [] }. E: cards.js + engine.js'ten dönen nesne (CARDS, CARD, CRISES, INTRO, PEOPLE, SYN).
+// lintContent(E) → { errors: [], warnings: [] }. E: cards.js + engine.js'ten dönen nesne (CARDS, CARD, CRISES, INTRO, PEOPLE, SYN; varsa DAVET, ENDINGS).
 // test/content.test.mjs hata bırakmaz; tools/sim.mjs uyarıları da yazar.
 
 // Motorun kendisinin okuduğu sayaçlar (kartlarda kapı olarak geçmese de kullanılıyor)
@@ -40,7 +40,7 @@ const nextOf = n => (!n ? null : Array.isArray(n) ? { id: n[0], in: n[1] } : n);
 export function lintContent(E) {
   const errors = [], warnings = [];
   const err = m => errors.push(m), warn = m => warnings.push(m);
-  const all = [...E.CARDS, ...E.INTRO.map(c => ({ ...c, intro: true })), ...Object.entries(E.CRISES).map(([k, c]) => ({ ...c, id: "kriz_" + k, crisis: true }))];
+  const all = [...E.CARDS, ...E.INTRO.map(c => ({ ...c, intro: true })), ...Object.entries(E.CRISES).map(([k, c]) => ({ ...c, id: "kriz_" + k, crisis: true })), ...(E.DAVET || [])];
   const ids = new Set(), polIds = new Set();
   const flagW = new Set(), flagR = new Map(), cntW = new Set(), cntR = new Map(), tagW = new Set(), tagR = new Map();
   const readF = (f, by) => flagR.set(f, [...(flagR.get(f) || []), by]);
@@ -74,6 +74,7 @@ export function lintContent(E) {
       if (!o || !o.t || !Array.isArray(o.e) || o.e.length !== 4) { err(`${sb}: hatalı seçenek`); continue; }
       if (o.t.length > 26) err(`${sb}: "${o.t}" düğmeye sığmaz (${o.t.length})`);
       if (o.e.some(v => !Number.isFinite(v))) err(`${sb}: etki sayı değil`);
+      if (o.son && E.ENDINGS && !E.ENDINGS[o.son]) err(`${sb}: böyle bir son yok → ${o.son}`);
       arr(o.set).forEach(f => flagW.add(f)); arr(o.clr).forEach(f => flagW.add(f));
       keysOf(o.inc).forEach(k => cntW.add(k)); keysOf(o.dec).forEach(k => cntW.add(k));
       for (const w of Object.keys(o.rel || {})) if (!E.PEOPLE[w]) err(`${sb}: ilişkide bilinmeyen kişi ${w}`);
