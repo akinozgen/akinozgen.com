@@ -9,7 +9,8 @@
     "preview": "npm run build && wrangler dev",
     "check": "astro check",
     "generate-types": "wrangler types",
-    "deploy": "npm run build && wrangler deploy"
+    "deploy": "npm run build && wrangler deploy",
+    "build:games": "pnpm --dir games build"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^13.1.3",

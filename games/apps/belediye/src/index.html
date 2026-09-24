@@ -1,0 +1,126 @@
+<title>Çaylar Belediyeden</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Barlow+Condensed:wght@500;600;700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap">
+<style>/*STYLE*/</style>
+
+<div id="app" lang="tr">
+
+  <!-- Başlık -->
+  <section id="scr-title" class="screen" aria-label="Ana ekran">
+    <div class="poster">
+      <div class="stitch" aria-hidden="true"></div>
+      <svg class="glass" viewBox="0 -70 200 330" aria-hidden="true">
+        <defs>
+          <linearGradient id="tea" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0" stop-color="#6e1a0a"/><stop offset=".35" stop-color="#b8401c"/><stop offset=".55" stop-color="#d9642a"/><stop offset="1" stop-color="#7a200c"/>
+          </linearGradient>
+          <linearGradient id="porc" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d9d6cc"/></linearGradient>
+          <clipPath id="glassClip"><path d="M55 30 L145 30 C146 72 122 98 124 130 C126 160 150 182 140 212 C136 222 128 228 118 230 L82 230 C72 228 64 222 60 212 C50 182 74 160 76 130 C78 98 54 72 55 30 Z"/></clipPath>
+        </defs>
+        <g class="steam"><path d="M84 18 C74 2 96 -10 86 -30 S94 -54 88 -64"/><path d="M104 20 C96 2 116 -14 106 -34 S114 -56 108 -66"/><path d="M122 18 C114 4 132 -8 124 -26"/></g>
+        <ellipse cx="100" cy="240" rx="94" ry="18" fill="#0b1712" opacity=".45"/>
+        <ellipse cx="100" cy="234" rx="92" ry="17" fill="url(#porc)"/>
+        <ellipse cx="100" cy="234" rx="92" ry="17" fill="none" stroke="#c9a54c" stroke-width="2.4"/>
+        <ellipse cx="100" cy="232" rx="58" ry="9.5" fill="#e4e1d8"/>
+        <ellipse cx="100" cy="234" rx="78" ry="13.5" fill="none" stroke="#b3341f" stroke-width="1.4" stroke-dasharray="3 5"/>
+        <g clip-path="url(#glassClip)">
+          <rect x="40" y="56" width="120" height="180" fill="url(#tea)"/>
+          <ellipse cx="100" cy="57" rx="44" ry="4.5" fill="#e0763a"/>
+          <rect x="40" y="0" width="120" height="56" fill="rgba(255,255,255,.08)"/>
+        </g>
+        <path d="M55 30 L145 30 C146 72 122 98 124 130 C126 160 150 182 140 212 C136 222 128 228 118 230 L82 230 C72 228 64 222 60 212 C50 182 74 160 76 130 C78 98 54 72 55 30 Z" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="2.4"/>
+        <path d="M63 40 C64 76 84 100 84 128" stroke="rgba(255,255,255,.55)" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <path d="M66 176 C62 192 66 206 72 214" stroke="rgba(255,255,255,.45)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <ellipse cx="100" cy="30" rx="45" ry="3.4" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="1.6"/>
+        <path d="M150 226 L186 212" stroke="#cfd3d8" stroke-width="3.2" stroke-linecap="round"/>
+        <ellipse cx="189" cy="210.5" rx="5.5" ry="3.2" fill="#cfd3d8" transform="rotate(-22 189 210.5)"/>
+      </svg>
+      <div class="eyebrow">T.C. Karakavak Belediyesi</div>
+      <h1>Çaylar <span>Belediyeden</span></h1>
+      <p class="lede">Karakavak'ın yeni belediye başkanı sizsiniz. Evrak gelir; siz <b>sağa</b> ya da <b>sola</b> kaydırırsınız. Halkı, kasayı, esnafı ve Ankara'yı dengede tutun. Beş yılda bir de sandık var.</p>
+      <div class="actions">
+        <button id="btn-start" class="btn primary" type="button">Göreve başla</button>
+        <button id="btn-resume" class="btn" type="button" hidden>Kaldığım yerden</button>
+        <button id="btn-wall" class="btn" type="button">Eski başkanlarımız</button>
+        <button id="btn-help" class="btn" type="button">Nasıl oynanır</button>
+      </div>
+      <label class="namefield" for="in-name"><span>Başkanın adı</span><input id="in-name" type="text" maxlength="24" autocomplete="off" spellcheck="false" placeholder="Duvara ve gazeteye yazılır"></label>
+      <p class="best" id="best"></p>
+      <p class="keys">Sürükleyin ya da <kbd>←</kbd> <kbd>→</kbd> tuşlarını kullanın</p>
+    </div>
+  </section>
+
+  <!-- Makam -->
+  <section id="scr-game" class="screen" aria-label="Makam masası" hidden>
+    <header class="rail">
+      <div class="meters" id="meters"></div>
+      <div class="ongo" id="ongo"><span class="ongo-h">Yürürlükte</span><div class="ongo-list" id="ongo-list"></div></div>
+    </header>
+    <main class="desk">
+      <div class="toasts" id="toasts" aria-live="polite"></div>
+      <div class="stack" id="stack">
+        <div class="pile" aria-hidden="true"><i></i><i></i></div>
+      </div>
+    </main>
+    <div class="choices">
+      <button id="ch-L" class="choice L" type="button"><span class="ink" aria-hidden="true"></span><span class="tx"><span class="t"></span><small class="n"></small></span></button>
+      <button id="ch-R" class="choice R" type="button"><span class="tx"><span class="t"></span><small class="n"></small></span><span class="ink" aria-hidden="true"></span></button>
+    </div>
+    <footer class="plate">
+      <div class="tools">
+        <button id="btn-menu" class="tool" type="button" aria-label="Ana menü"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span class="t">Menü</span></button>
+      </div>
+      <div class="nameplate"><b>BELEDİYE BAŞKANI</b><span id="dateline">Nisan 2029</span><span id="pollline" class="poll"></span></div>
+      <div class="tools r">
+        <button id="btn-danis" class="tool" type="button"><span class="t">Fikret'e sor</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3h10v7H8l-3 3v-3H3z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><i id="danis-n">3</i></button>
+        <button id="btn-mute" class="tool" type="button" aria-label="Ses"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6h3l4-3v10L5 10H2z" fill="currentColor"/><path id="mute-wave" d="M11 5.5c1 .8 1 4.2 0 5M12.8 4c2 1.6 2 6.4 0 8" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/></svg></button>
+      </div>
+    </footer>
+    <div class="sr" aria-live="polite" id="announce"></div>
+  </section>
+
+  <!-- Gazete -->
+  <section id="scr-over" class="screen" aria-label="Karakavak Postası" hidden>
+    <article class="paper" id="paper"></article>
+    <div class="actions">
+      <button id="btn-again" class="btn primary" type="button">Yeniden aday ol</button>
+      <button id="btn-wall2" class="btn" type="button">Eski başkanlarımız</button>
+    </div>
+  </section>
+
+  <!-- Genelge: nasıl oynanır -->
+  <section id="scr-help" class="screen" aria-label="Nasıl oynanır" hidden>
+    <article class="genelge">
+      <header class="g-head"><div>T.C.<br>KARAKAVAK BELEDİYE BAŞKANLIĞI<br><small>Özel Kalem Müdürlüğü</small></div><span class="g-no">GENELGE 2029/1</span></header>
+      <h2>Makamın kuralları</h2>
+      <ol class="g-list">
+        <li><b>Evrak.</b> Her ay bir evrak gelir. Sağa ya da sola kaydırın; <kbd>←</kbd> <kbd>→</kbd> tuşları da olur. Hangi kararın hangi tarafta olduğu evraktan evraka değişir.</li>
+        <li><b>Göstergeler.</b> Halk, Kasa, Esnaf ve Ankara 0 ile 100 arasında durur. Kasa, Esnaf ya da Ankara 0'a inerse de 100'e çıkarsa da makam gider. Halk ise yalnız dibe vurursa tehlikelidir; tepeye çıktıkça altın rengi yanar ve sandıkta size yarar. Tehlikeye giren gösterge kırmızı yanar.</li>
+        <li><b>Oklar.</b> Evrakı sürüklerken göstergelerin altında ok çıkar: <span class="lg neutral">▲</span> artar, <span class="lg neutral">▼</span> azalır; üç ok büyük etki demektir.
+          Renkler: <span class="lg good">▲▲</span> dengeye yaklaştırır, <span class="lg warn">▲▲</span> uca götürür, <span class="lg bad">▲▲▲</span> tehlikeye sokar. Karar verilince tam sayılar göstergenin altında belirir; <b>↻</b> işaretli olanlar o ay işleyen kararlardan gelir.</li>
+        <li><b>Yürürlükteki kararlar.</b> Kredi, kira, inşaat gibi bazı kararlar her ay işler. Üstteki "Yürürlükte" şeridinde ne kadar sürdüklerini ve ne getirdiklerini görürsünüz; seçenek düğmesindeki küçük not da önceden haber verir.</li>
+        <li><b>İnsanlar unutmaz.</b> Her evrakta gönderenle aranızın nasıl olduğu yazar. Dostlarınız reddedilince anlayış gösterir, iyilik yapar; dargınlar daha çok kızar, köstek olur. Muhtar, Hayri Hoca, Hacı Bekir, Hatice Abla, Tuncay ve Nermin Hanım sandıkta oy getirir ya da götürür.</li>
+        <li><b>Sandık.</b> Beş yılda bir, mart ayında seçim var. Anketin %50'yi geçmesi lazım; en çok halk desteği işe yarar. Her yeni dönemde yıpranma payı artar.</li>
+        <li><b>Kriz.</b> Bir gösterge uca yaklaşınca Fikret bazen bir çıkış yolu getirir. Bedeli vardır.</li>
+        <li><b>Fikret'e sor.</b> Her dönem üç kez makam şefinizden akıl alabilirsiniz; hangi kararın neye mal olacağını söyler.</li>
+        <li><b>Son madde.</b> Belediye kedisine iyi bakın.</li>
+      </ol>
+      <p class="g-sign">Gereğini rica ederim. <span>Fikret, Makam Şefi</span></p>
+    </article>
+    <div class="actions"><button id="btn-help-back" class="btn primary" type="button">Anladım</button></div>
+  </section>
+
+  <!-- Koridor -->
+  <section id="scr-wall" class="screen" aria-label="Eski başkanlarımız" hidden>
+    <div class="wall-in">
+      <div class="plaque"><h2>Eski Belediye Başkanlarımız</h2><p>Bu tarayıcıda görev yapanlar</p></div>
+      <div class="frames" id="frames"></div>
+      <p class="wall-msg" id="wall-msg" hidden></p>
+      <button id="btn-back" class="btn" type="button">Makama dön</button>
+    </div>
+  </section>
+</div>
+
+<!--VENDOR-->
+<script>/*SCRIPT*/</script>

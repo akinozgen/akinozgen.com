@@ -18,4 +18,13 @@ export const games: Game[] = [
     year: "2026",
     tags: ["daily", "geography", "five languages"],
   },
+  {
+    slug: "belediye",
+    name: "Çaylar Belediyeden",
+    tagline: "tea's on the town hall",
+    description:
+      "You're the mayor of Karakavak, a made-up Anatolian town. Swipe each memo left or right and keep the people, the treasury, the shopkeepers and Ankara on side — with an election every five years.",
+    year: "2026",
+    tags: ["card game", "in Turkish", "works offline"],
+  },
 ];

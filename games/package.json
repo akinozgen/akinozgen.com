@@ -5,7 +5,8 @@
   "packageManager": "pnpm@12.3.4",
   "scripts": {
     "dev": "pnpm --filter @travelle/travelle dev",
-    "build": "pnpm -r build",
+    "build": "pnpm -r --if-present build:site",
+    "build:apps": "pnpm -r build",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",
     "geo:build": "pnpm --filter @travelle/geo build:data"

@@ -1,0 +1,10 @@
+Bu klasördeki yazı tipleri SIL Open Font License 1.1 ile lisanslıdır.
+Serbestçe kullanılabilir, gömülebilir ve dağıtılabilir; tek başına satılamaz.
+Lisans metni: https://openfontlicense.org/open-font-license-official-text/
+
+Alfa Slab One         © 2011 JM Solé
+Barlow Condensed      © 2017 The Barlow Project Authors (https://github.com/jpt/barlow)
+Courier Prime         © 2015 Quote-Unquote Apps
+Old Standard TT       © 2006-2011 Alexey Kryukov
+
+Kaynak: Google Fonts (latin ve latin-ext alt kümeleri)
