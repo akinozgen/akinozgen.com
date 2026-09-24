@@ -80,5 +80,24 @@ try {
   check(await screenNow() === "secim" && /Erken/.test(title), `erken seçim gecesi açılmadı (${title})`);
   await shot("erken-secim");
   console.log("erken seçim:", title);
+  // Prova kodu: oyunun ortasında klavyeden kod yazılınca seçim gecesi prova olarak açılır, oyun değişmez
+  const mid = E.newGame(); mid.month = 10; mid.cur = E.materialize({ id: "t", who: "sevim", konu: "Prova öncesi", text: "Deneme.", L: { t: "Sol", e: [0, 0, 0, 0] }, R: { t: "Sağ", e: [0, 0, 0, 0] } }, mid, rng);
+  await load(mid);
+  const saveBefore = await ev(`localStorage.getItem("cb.save")`);
+  for (const ch of "akparti") await ev(`document.dispatchEvent(new KeyboardEvent("keydown",{key:${JSON.stringify(ch)},bubbles:true}))`);
+  await sleep(900);
+  const pTitle = await ev(`document.querySelector("#scr-secim h2").textContent`);
+  check(await screenNow() === "secim" && /prova/.test(pTitle), `prova açılmadı (${await screenNow()} · ${pTitle})`);
+  await shot("prova");
+  await ev(`document.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",bubbles:true}))`); await sleep(700);
+  await ev(`document.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",bubbles:true}))`); await sleep(700);
+  const back = await ev(`document.querySelector("#card .doc-konu")?.textContent || ""`);
+  check(await screenNow() === "game" && /Prova öncesi/.test(back), `provadan sonra aynı evraka dönülmedi (${back})`);
+  check(await ev(`localStorage.getItem("cb.save")`) === saveBefore, "prova kaydı değiştirdi");
+  // "a" tek başına basılınca yine sol seçeneği imzalar (kısa beklemeyle)
+  await ev(`document.dispatchEvent(new KeyboardEvent("keydown",{key:"a",bubbles:true}))`); await sleep(1400);
+  const moved = JSON.parse(await ev(`localStorage.getItem("cb.save")`)).month;
+  check(moved === 11, `"a" kısayolu çalışmadı (ay ${moved})`);
+  console.log("prova:", pTitle, "· dönüş:", back, "· a kısayolu ay:", moved);
 } catch (e) { errors.push("TEST: " + e.message); }
 finally { console.log(errors.length ? errors.join("\n") : "hata yok"); try { ws?.close(); } catch { } chrome.kill(); setTimeout(() => process.exit(errors.length ? 1 : 0), 300); }

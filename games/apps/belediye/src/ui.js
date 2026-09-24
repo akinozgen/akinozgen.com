@@ -623,12 +623,12 @@ function anchorLine(mi, ids) {
     "Sandıkların %99,8'i açıldı. Son sandık Yukarıkavak'tan traktörle yolda; traktör çamura saplandı, muhtar sandığı omzunda getiriyor.",
   ][mi];
 }
-function electionNight(res) {
+function electionNight(res, preview = false) {
   return new Promise(done => {
     const r = rngOf(res.month * 131 + res.term * 7 + 3), boxes = ballotBoxes(res, r), N = boxes.length;
     // ekranda sabit sıra (sonucu ele vermesin): önce siz, sonra ilan sırası
     const ids = ["you", ...(res.order || res.cands.map(c => c.id).filter(id => id !== "you").sort())].filter(id => res.cands.some(c => c.id === id));
-    $("#scr-secim .ec-top h2").textContent = res.early ? "Karakavak Erken Seçim Gecesi" : "Karakavak Seçim Gecesi";
+    $("#scr-secim .ec-top h2").textContent = (res.early ? "Karakavak Erken Seçim Gecesi" : "Karakavak Seçim Gecesi") + (preview ? " (prova)" : "");
     const idx = id => res.cands.findIndex(c => c.id === id);
     const fast = LS.get("ecSeen", false), speed = fast ? 0.6 : 1;
     const cum = res.cands.map(() => 0), tileCum = MAHALLE.map(() => res.cands.map(() => 0));
@@ -690,6 +690,7 @@ function electionNight(res) {
       if (res.win) snd.win(); else snd.paper();
       renderElectionAfter(res, ids);
       $("#btn-ec-skip").hidden = true; const go = $("#btn-ec-go"); go.hidden = false; go.focus({ preventScroll: true });
+      if (preview) return; // prova: günlüğe yazılmaz, hızlı sayım hakkı da harcanmaz
       LS.set("ecSeen", true);
       journalNote(`<b>Seçim</b>${esc(line)}`, res.win ? "ev" : "warn");
     };
@@ -708,6 +709,19 @@ function electionNight(res) {
     $("#btn-ec-go").onclick = () => { $("#btn-ec-go").onclick = null; done(); };
   });
 }
+// Hile kodu: oyun masasında klavyeden "akparti" yazılınca seçim gecesi o anki gidişatla prova olarak açılır.
+// Oyunun bir kopyasıyla sayılır; ay, dönem, kayıt ve günlük değişmez. Devam deyince aynı evraka dönülür.
+const PROVA_KODU = "akparti";
+let kodBuf = "", kodT = 0;
+async function provaSecim() {
+  if (busy || !S || S.over || screen !== "game") return;
+  busy = true; closeNote();
+  const copy = JSON.parse(JSON.stringify(S)), r = rngOf((Date.now() % 1e9) | 0);
+  if (copy.field?.term !== copy.term) drawField(copy, r); // bu dönemin adayları ilan edildiyse onlarla, yoksa rastgele bir alanla
+  await electionNight(tally(copy, r), true);
+  show("game"); busy = false;
+}
+
 // Sonuçtan sonra: seçmen grubu dökümü ve "Neden?" satırları
 function renderElectionAfter(res, ids) {
   const seg = (b, id) => { const i = res.cands.findIndex(c => c.id === id); return `<i style="--c:${EC_RENK[id]};width:${b.pay[i]}%" title="${esc(candName(id))} ${b.pay[i]}%"></i>`; };
@@ -867,6 +881,18 @@ function wire() {
     const k = e.key.toLocaleLowerCase("tr");
     // çekmece açıkken masa kilitli: yalnız kapatma tuşları
     if ($("#log").classList.contains("open")) { if (e.key === "Escape" || k === "g") openLog(false); return; }
+    // prova kodu: harfler kodun başıyla örtüştükçe biriktirilir. "a" hem kodun ilk harfi hem sol kısayolu:
+    // hemen karar verilmez, arkasından kodun devamı gelmezse kısa bir beklemeyle sol seçilir.
+    const ch = e.key.length === 1 ? k.replace("ı", "i") : "";
+    if (ch && PROVA_KODU.startsWith(kodBuf + ch)) {
+      kodBuf += ch; clearTimeout(kodT);
+      if (kodBuf === PROVA_KODU) { kodBuf = ""; provaSecim(); return; }
+      if (kodBuf === "a") kodT = setTimeout(() => { kodBuf = ""; commit("L"); }, 350);
+      else kodT = setTimeout(() => { kodBuf = ""; }, 2500);
+      return;
+    }
+    if (kodBuf === "a") { clearTimeout(kodT); commit("L"); } // "a" kısayoldu, kod değil
+    kodBuf = "";
     if (k === "g" && !wideLog.matches) return openLog(true);
     if (e.key === "ArrowLeft" || k === "a") { e.preventDefault(); commit("L"); }
     else if (e.key === "ArrowRight" || k === "d") { e.preventDefault(); commit("R"); }
