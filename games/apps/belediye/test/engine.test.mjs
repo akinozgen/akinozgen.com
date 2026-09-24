@@ -1,10 +1,10 @@
 // Motor ve içerik testleri: node --test test/
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync, readdirSync } from "node:fs";
 
 const src = ["cards.js", "engine.js"].map(f => readFileSync(new URL("../src/" + f, import.meta.url), "utf8")).join("\n");
-const E = new Function(src + "\nreturn { CARDS, CARD, CRISES, ENDINGS, INTRO, PEOPLE, newGame, draw, choose, METERS, TERM };")();
+const E = new Function(src + "\nreturn { CARDS, CARD, CRISES, ENDINGS, INTRO, PEOPLE, BASKANLAR, newGame, draw, choose, METERS, TERM };")();
 const rng = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 const all = [...E.CARDS, ...Object.values(E.CRISES), ...E.INTRO];
 
@@ -55,4 +55,17 @@ test("rastgele oyunlar biter, takılmaz ve makul sürer", () => {
   months.sort((a, b) => a - b);
   const med = months[months.length >> 1];
   assert.ok(med >= 15 && med <= 80, `rastgele oyunun medyanı ${med} ay; denge kaymış (beklenen 15-80)`);
+});
+
+test("her kişinin ve başkanlık vesikalığının resmi var, başıboş resim yok", () => {
+  const dir = new URL("../web-src/portraits/", import.meta.url);
+  const ids = [...Object.keys(E.PEOPLE), ...Object.keys(E.BASKANLAR)];
+  for (const id of ids) assert.ok(existsSync(new URL(id + ".webp", dir)), `web-src/portraits/${id}.webp yok`);
+  assert.ok(Object.keys(E.BASKANLAR).length > 0, "BASKANLAR boş");
+  for (const [id, b] of Object.entries(E.BASKANLAR)) {
+    assert.ok(b.ad && b.ad.length <= 24, `${id}: ad boş ya da isim kutusuna sığmaz`);
+    assert.ok(b.lakap && b.lakap.length <= 34, `${id}: lakap boş ya da uzun`);
+    assert.ok(b.bio && b.bio.length <= 200, `${id}: biyografi boş ya da broşüre sığmaz (${b.bio?.length})`);
+  }
+  for (const f of readdirSync(dir)) assert.ok(ids.includes(f.replace(/\.webp$/, "")), `${f} hiçbir kişiye ya da BASKANLAR'a bağlı değil`);
 });

@@ -15,6 +15,11 @@ const vibrate = ms => { try { navigator.vibrate?.(ms); } catch { } };
 let S = null, busy = false, screen = "title", lastOver = null, wallFrom = "title";
 // Derlemede web sürümü için true yapılır (service worker kaydı)
 const STANDALONE = /*STANDALONE*/false;
+// Vesikalıklar web-src/portraits/ altındaki resimlerdir; tek dosyalık kopyalarda derleyici hepsini PORTRAITS'e gömer.
+const PORTRAITS = /*PORTRAITS*/null;
+const MAYORS = Object.keys(BASKANLAR);
+const photoSrc = id => PORTRAITS?.[id] || `portraits/${id}.webp`;
+const photo = id => `<img src="${photoSrc(id)}" alt="" decoding="async" draggable="false">`;
 
 // ─── Ses: hepsi WebAudio ile üretiliyor ───────────────────────────────────
 const snd = (() => {
@@ -68,16 +73,18 @@ const GLYPH = {
     d: "M8 5H32L36 12H4Z M4 12q2 4.2 4 0q2 4.2 4 0q2 4.2 4 0q2 4.2 4 0q2 4.2 4 0q2 4.2 4 0q2 4.2 4 0q2 4.2 4 0Z M7 17H33V35H7Z" },
   a: { box: [3, 36], det: `<circle cx="20" cy="8.2" r="1.5"/>`,
     d: "M20 3L37 11H3Z M4 12H36V15.5H4Z M7 17H11V31H7Z M14.3 17H18.3V31H14.3Z M21.7 17H25.7V31H21.7Z M29 17H33V31H29Z M3 32H37V36H3Z" },
+  // anket: sandık, içine oy pusulası giriyor
+  p: { box: [3, 36], det: `<path d="M12 18h16M16.5 9.2l2.4 2.4 4.6-5"/>`,
+    d: "M13 3H27V16H13Z M4 16H36V20H4Z M6 21H34V35a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1Z" },
 };
+const meterInner = (k, ad) => { const g = GLYPH[k]; return `
+  <div class="mi"><svg viewBox="0 0 40 40" aria-hidden="true"><defs><clipPath id="cp-${k}"><rect class="lvl" x="-2" y="20" width="44" height="44"/></clipPath></defs>
+  <path class="ghost" d="${g.d}"/><path class="fill" d="${g.d}" clip-path="url(#cp-${k})"/><g class="det">${g.det}</g></svg><span class="fx" aria-hidden="true"></span></div>
+  <div class="mv"><b class="num">50</b><span class="lbl">${ad}</span></div>
+  <span class="pv" aria-hidden="true"></span>`; };
 function buildMeters() {
-  $("#meters").innerHTML = METERS.map(k => {
-    const g = GLYPH[k];
-    return `<div class="meter" id="m-${k}" role="img" aria-label="${METER_AD[k]}">
-      <div class="mi"><svg viewBox="0 0 40 40" aria-hidden="true"><defs><clipPath id="cp-${k}"><rect class="lvl" x="-2" y="20" width="44" height="44"/></clipPath></defs>
-      <path class="ghost" d="${g.d}"/><path class="fill" d="${g.d}" clip-path="url(#cp-${k})"/><g class="det">${g.det}</g></svg><span class="fx" aria-hidden="true"></span></div>
-      <div class="mv"><b class="num">50</b><span class="lbl">${METER_AD[k]}</span></div>
-      <span class="pv" aria-hidden="true"></span></div>`;
-  }).join("");
+  $("#meters").innerHTML = METERS.map(k => `<div class="meter" id="m-${k}" role="img" aria-label="${METER_AD[k]}">${meterInner(k, METER_AD[k])}</div>`).join("");
+  $("#poll").innerHTML = meterInner("p", "Anket");
 }
 function tweenY(rect, to) {
   const from = rect._y ?? to, t0 = performance.now(), dur = reduced ? 1 : 700;
@@ -175,7 +182,51 @@ function fitTicker(at = 0) {
 }
 let fitT = 0;
 addEventListener("resize", () => { clearTimeout(fitT); fitT = setTimeout(() => { if (screen === "game") fitTicker(); }, 150); });
+// ─── Olay günlüğü: her karar bir kayıt, ardından gelen tepkiler altına eklenir ─
+// Geniş ekranda sağda hep açık (toast yerine geçer), dar ekranda çekmecede; kayıt oyunla birlikte saklanır.
+const LOG_MAX = 40, wideLog = matchMedia("(min-width: 1100px)");
+let logUnread = 0;
+function journalAdd(card, side, res, m) {
+  if (!S || card.kind === "intro" || card.kind === "ending") return;
+  (S.journal ||= []).push({ m, who: card.who, konu: card.konu, side, t: card[side].t, e: res.d, notes: [] });
+  if (S.journal.length > LOG_MAX) S.journal.shift();
+  renderLog(true);
+}
+function journalNote(html, cls) {
+  const last = S?.journal?.at(-1);
+  if (!last) return;
+  last.notes.push({ html, cls });
+  if (!S.over) LS.set("save", S);
+  renderLog(true);
+}
+function renderLog(fresh) {
+  const J = S?.journal || [];
+  // her evrak bir ay: tarih kaydın köşesinde, başlık olarak yalnız yıllar
+  let html = "", year = null;
+  for (let i = J.length - 1; i >= 0; i--) {
+    const j = J[i], P = PEOPLE[j.who], date = dateLabel(j.m), yr = date.split(" ").pop();
+    if (yr !== year) { year = yr; html += `<li class="lg-m">${esc(yr)}</li>`; }
+    const eff = METERS.map((k, n) => (j.e?.[n] ? `<span class="${j.e[n] > 0 ? "p" : "n"}">${METER_AD[k]} ${j.e[n] > 0 ? "+" : "−"}${Math.abs(j.e[n])}</span>` : "")).join("");
+    html += `<li class="lg-e${fresh && i === J.length - 1 ? " new" : ""}">
+      <div class="lg-d"><b>${esc(P?.ad || "")}</b><span>${esc(j.konu)}</span><time>${esc(date.replace(/ \d+$/, ""))}</time></div>
+      <div class="lg-t"><i class="ink ${j.side}" aria-hidden="true"></i>“${esc(j.t)}”</div>
+      ${eff ? `<div class="lg-x">${eff}</div>` : ""}${j.notes.map(n => `<div class="lg-n ${n.cls}">${n.html}</div>`).join("")}</li>`;
+  }
+  $("#log-list").innerHTML = html || `<li class="lg-empty">Masaya henüz evrak gelmedi. İmzaladığınız her karar ve ardından olanlar buraya yazılır.</li>`;
+  if (fresh && !wideLog.matches && !$("#log").classList.contains("open")) logUnread++;
+  const n = $("#log-n"); n.hidden = !logUnread; n.textContent = logUnread > 9 ? "9+" : logUnread;
+}
+function openLog(open) {
+  const log = $("#log"), btn = $("#btn-log");
+  if (open === log.classList.contains("open")) return;
+  log.classList.toggle("open", open); $("#log-scrim").classList.toggle("on", open);
+  btn.setAttribute("aria-expanded", String(open));
+  if (open) { logUnread = 0; renderLog(false); $("#log-list").scrollTop = 0; $("#btn-log-x").focus(); }
+  else if (!wideLog.matches) btn.focus();
+}
 function toast(html, cls = "") {
+  journalNote(html, cls);
+  if (wideLog.matches) return; // geniş ekranda günlük zaten görünüyor
   const box = $("#toasts"), t = document.createElement("div");
   t.className = "toast " + cls; t.innerHTML = html; box.appendChild(t);
   while (box.children.length > 2) box.firstChild.remove();
@@ -244,7 +295,7 @@ function renderCard(c) {
       ${ivedi ? `<div class="ivedi">İVEDİ</div>` : "<div></div>"}</div>
     <div class="doc-meta"><span>Sayı: ${esc(c.sayi)}</span><span>${esc(c.tarih)}</span></div>
     <div class="doc-konu"><b>Konu:</b> ${esc(c.konu)}</div>
-    <div class="who"><div class="photo">${portrait(P.p)}${CLIP}</div><div><div class="nm">${esc(P.ad)}</div><div class="un">${esc(P.unvan)}</div>${relHTML(c.rel)}</div></div>
+    <div class="who"><div class="photo">${photo(c.who)}${CLIP}</div><div><div class="nm">${esc(P.ad)}</div><div class="un">${esc(P.unvan)}</div>${relHTML(c.rel)}</div></div>
     ${moodOf(c.rel) ? `<p class="mood">(${moodOf(c.rel)})</p>` : ""}
     <p class="body">${esc(c.text)}</p>
     <div class="sign"><span>Gereğini arz ederim.</span>${signature(c.seed)}</div>
@@ -340,10 +391,11 @@ async function commit(side, dragged) {
   st.style.opacity = ""; st.classList.add("slam");
   el.querySelector(".stamp." + (side === "L" ? "R" : "L")).style.opacity = 0;
   snd.stamp(); vibrate(14);
-  const kind = S.cur.kind, card = S.cur, before = { ...S.m };
+  const kind = S.cur.kind, card = S.cur, before = { ...S.m }, month = S.month;
   const res = choose(S, side);
   showHints(null); setMeters(res.d, res.td);
-  reactions(card, res); renderOngoing(); updatePlate();
+  journalAdd(card, side, res, month);
+  reactions(card, res); renderOngoing(); updateHud();
   if (!res.dead) dangerToast(before);
   if (kind === "cay") snd.clink();
   if (kind === "sonuc") snd.win();
@@ -359,17 +411,23 @@ async function commit(side, dragged) {
 }
 function nextCard() {
   renderCard(draw(S));
-  updatePlate(); snd.paper();
+  updateHud(); snd.paper();
   LS.set("save", S);
 }
-function updatePlate() {
+// Üst bar: takvim, seçim geri sayımı, anket, dönem rozeti
+function updateHud() {
   if (!S) return;
   const left = TERM - 1 - (S.month % TERM), last = S.term >= MAX_TERMS, near = left <= 12 && !last;
   const poll = Math.round(pollOf(S));
-  $("#dateline").textContent = `${dateLabel(S.month)} · ${S.term}. dönem`;
-  const pl = $("#pollline");
-  pl.textContent = last ? `Son dönem · anket %${poll}` : `Seçime ${left ? left + " ay" : "bu ay"} · anket %${poll}`;
-  pl.classList.toggle("warn", near && poll <= 50);
+  $("#dateline").textContent = dateLabel(S.month);
+  $("#countdown").textContent = last ? "Son dönem" : `Seçime ${left ? left + " ay" : "bu ay"}`;
+  $("#countdown").classList.toggle("near", near);
+  $("#termline").textContent = `${S.term}. dönem`;
+  const pb = GLYPH.p.box;
+  tweenY($("#poll .lvl"), pb[0] + (1 - poll / 100) * (pb[1] - pb[0]));
+  tweenNum($("#poll .num"), poll);
+  $("#poll").classList.toggle("warn", near && poll <= 50);
+  $("#poll").setAttribute("aria-label", `Anket: yüzde ${poll}`);
   $("#danis-n").textContent = S.danis;
   $("#btn-danis").classList.toggle("spent", S.danis <= 0);
   $("#btn-danis").title = S.danis > 0 ? `Fikret'e danışın (bu dönem ${S.danis} hak)` : "Bu dönemki danışma hakkınız bitti";
@@ -435,7 +493,7 @@ function danis() {
   if ($("#note")) return closeNote();
   if (["intro", "ending", "tekir", "sonuc", "cay"].includes(S.cur.kind)) { openNote("Bu evrakta akıl verecek bir şey yok başkanım, gönül rahatlığıyla imzalayın."); return; }
   if (S.danis <= 0) { openNote("Bu dönem üç kere akıl verdim başkanım; gerisi sizin sezginize kalmış."); return; }
-  S.danis--; LS.set("save", S); updatePlate();
+  S.danis--; LS.set("save", S); updateHud();
   openNote(fikretAdvice(S)); snd.clink();
 }
 
@@ -469,7 +527,7 @@ function renderPaper(lo) {
         <div class="kicker">SON DAKİKA</div>
         <h2 class="headline">${esc(art.manset)}</h2>
         <div class="np-grid">
-          <figure class="np-photo"><div class="ht">${portrait(P.p)}</div><figcaption>${esc(P.ad)} (${esc(P.unvan)}) olayları gazetemize anlattı.</figcaption></figure>
+          <figure class="np-photo"><div class="ht">${photo(E.who)}</div><figcaption>${esc(P.ad)} (${esc(P.unvan)}) olayları gazetemize anlattı.</figcaption></figure>
           <p class="spot">${esc(art.spot)}</p><div class="haber">${art.haber.split(/\n+/).map(p => `<p>${esc(p)}</p>`).join("")}</div>
         </div>
       </div>
@@ -490,7 +548,7 @@ function gameOver() {
   const o = S.over, name = playerName();
   LS.del("save");
   const art = article(S, name);
-  const rec = { gid: S.gid, name, face: Math.floor(Math.random() * 1e9), months: o.months, key: o.key, term: o.term, headline: art.manset, at: Date.now() };
+  const rec = { gid: S.gid, name, avatar: playerAvatar(), months: o.months, key: o.key, term: o.term, headline: art.manset, at: Date.now() };
   const best = LS.get("best", null);
   if (!best || o.months > best.months) LS.set("best", rec);
   hallAdd(rec);
@@ -509,32 +567,12 @@ function hallAdd(rec) {
   h.sort((a, b) => b.months - a.months || b.at - a.at);
   LS.set("hall", h.slice(0, HALL_MAX));
 }
-// Her eski başkana tohumdan resmî bir vesikalık
-function mayorFace(seed) {
-  const r = rngOf(seed), pk = a => a[Math.floor(r() * a.length)];
-  const p = {
-    bg: pk(["#c9a54c", "#b0a58c", "#9aa9c4", "#a8c49a", "#d2c6a8", "#c7b8d8"]),
-    skin: pk(["#f0c9a6", "#e8b894", "#e0ad86", "#d9a27a", "#c68b5f", "#b57a52"]),
-    hc: pk(["#1f1a17", "#2a2420", "#3b2a20", "#5a3a2a", "#77726c", "#a3a09a", "#d8d4ca"]),
-    shirt: pk(["#23252e", "#2b3550", "#34384a", "#3d2f2a", "#1f3a33", "#4a2f3a"]),
-    tie: pk(["#7a2230", "#1f4a7a", "#2f5a3a", "#5a5f70"]),
-  };
-  if (r() < 0.5) {
-    p.fem = true; p.hair = pk(["bob", "uzun", "topuz", "atkuyrugu", "basortu"]); p.collar = pk(["blazer", "cardigan", "turtleneck"]);
-    if (p.hair === "basortu") p.scarf = pk(["#3f7a5a", "#8a5aa0", "#b8452e", "#2f6f73", "#c9a54c"]);
-  } else {
-    p.hair = pk(["kisa", "kisa", "slick", "kel", "kivircik", "undercut"]); p.collar = pk(["tie", "tie", "vest", "blazer"]);
-    p.must = pk(["pala", "kalem", "fircali", null, null]);
-    if (r() < 0.25) p.beard = pk(["short", "stubble", "full"]);
-  }
-  if (r() < 0.35) p.gl = pk(["round", "rect", "half"]);
-  if (r() < 0.25) p.acc = "rozet";
-  return p;
-}
 function frameEl(r, rank, fresh) {
   const mk = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
   const f = mk("div", "frame" + (fresh ? " me" : "")), gilt = mk("div", "gilt"), mat = mk("div", "mat"), pic = mk("div", "pic");
-  pic.innerHTML = portrait(mayorFace(Number(r.face) || 1)).replace("<svg ", "<svg preserveAspectRatio=\"xMidYMid slice\" ");
+  // eski kayıtlarda seçilmiş vesikalık yok, yalnız rastgele bir tohum (face) var
+  const face = mk("img"); face.alt = ""; face.src = photoSrc(BASKANLAR[r.avatar] ? r.avatar : MAYORS[(Number(r.face) || 1) % MAYORS.length]);
+  pic.appendChild(face);
   mat.appendChild(pic); gilt.appendChild(mat); f.appendChild(gilt);
   const cap = mk("div", "cap");
   cap.appendChild(mk("b", null, r.name || "İsimsiz başkan"));
@@ -555,20 +593,53 @@ function renderWall() {
 function openWall() { wallFrom = screen === "wall" ? wallFrom : screen; show("wall"); $("#scr-wall").scrollTop = 0; renderWall(); }
 
 // ─── Akış ─────────────────────────────────────────────────────────────────
-function playerName() { return (LS.get("name", "") || "").trim().slice(0, 24); }
+// Başkanın vesikalığı başlıkta seçilir; ad kutusu boşsa vesikalığın adı kullanılır
+function customName() { return (LS.get("name", "") || "").trim().slice(0, 24); }
+function playerAvatar() {
+  let a = LS.get("avatar", null);
+  if (!BASKANLAR[a]) { a = pickOne(MAYORS); LS.set("avatar", a); }
+  return a;
+}
+function playerName() { return customName() || BASKANLAR[playerAvatar()].ad; }
+function paintAvatar() {
+  const a = playerAvatar();
+  $("#avatar-img").src = $("#hud-img").src = photoSrc(a);
+  $("#in-name").placeholder = BASKANLAR[a].ad;
+  $("#leader-name").textContent = playerName();
+}
+function openPick() {
+  const box = $("#picks"), cur = playerAvatar(), own = customName();
+  box.textContent = "";
+  for (const id of MAYORS) {
+    const B = BASKANLAR[id], mk = (tag, txt) => { const e = document.createElement(tag); if (txt != null) e.textContent = txt; return e; };
+    const b = mk("button"), im = mk("img"), tx = mk("span");
+    b.type = "button"; b.className = "pick"; b.setAttribute("aria-pressed", String(id === cur));
+    im.src = photoSrc(id); im.alt = ""; im.draggable = false;
+    tx.className = "pk"; tx.append(mk("b", B.ad), mk("i", B.lakap), mk("small", B.bio));
+    b.append(im, tx);
+    b.addEventListener("click", () => { LS.set("avatar", id); showTitle(); $("#btn-avatar").focus(); });
+    box.appendChild(b);
+  }
+  $("#pick-note").textContent = own ? `Adınız “${own}” olarak kalır, yalnız vesikalık değişir.` : "Adını beğenmezseniz başlıktaki kutuya kendi adınızı yazın.";
+  show("pick"); $("#scr-pick").scrollTop = 0;
+}
 function show(name) {
   screen = name;
-  for (const s of ["title", "game", "over", "wall", "help"]) $("#scr-" + s).hidden = s !== name;
+  for (const s of ["title", "game", "over", "wall", "help", "pick"]) $("#scr-" + s).hidden = s !== name;
 }
 function showTitle() {
   closeNote();
   const best = LS.get("best", null), sv = LS.get("save", null);
   $("#best").textContent = best && ENDINGS[best.key] ? `Rekorunuz: ${durLabel(best.months)} · ${ENDINGS[best.key].kisa}` : "";
   $("#btn-resume").hidden = !(sv && sv.v === 2 && !sv.over && sv.cur);
-  $("#in-name").value = playerName();
+  $("#in-name").value = customName();
+  paintAvatar();
   show("title");
 }
-function enterGame() { show("game"); $("#toasts").textContent = ""; setMeters(); renderOngoing(); }
+function enterGame() {
+  show("game"); $("#toasts").textContent = ""; paintAvatar(); setMeters(); renderOngoing();
+  S.journal ||= []; logUnread = 0; openLog(false); renderLog(false);
+}
 function startNew() {
   snd.unlock();
   const intro = !LS.get("introSeen", false);
@@ -580,7 +651,7 @@ function resume() {
   snd.unlock();
   const s = LS.get("save", null);
   if (!s || s.v !== 2 || s.over || !s.cur) return startNew();
-  S = s; enterGame(); renderCard(S.cur); updatePlate();
+  S = s; enterGame(); renderCard(S.cur); updateHud();
 }
 
 function wire() {
@@ -595,7 +666,13 @@ function wire() {
   $("#btn-again").addEventListener("click", startNew);
   $("#btn-menu").addEventListener("click", showTitle);
   $("#btn-danis").addEventListener("click", danis);
+  $("#btn-log").addEventListener("click", () => openLog(!$("#log").classList.contains("open")));
+  $("#btn-log-x").addEventListener("click", () => openLog(false));
+  $("#log-scrim").addEventListener("click", () => openLog(false));
+  wideLog.addEventListener("change", () => { openLog(false); logUnread = 0; if (S) renderLog(false); });
   $("#in-name").addEventListener("input", e => LS.set("name", e.target.value.slice(0, 24)));
+  $("#btn-avatar").addEventListener("click", openPick);
+  $("#btn-pick-back").addEventListener("click", () => { showTitle(); $("#btn-avatar").focus(); });
   const mute = $("#btn-mute");
   const paintMute = () => { mute.setAttribute("aria-pressed", String(!snd.on)); mute.setAttribute("aria-label", snd.on ? "Sesi kapat" : "Sesi aç"); $("#mute-wave").style.opacity = snd.on ? 1 : .15; };
   mute.addEventListener("click", () => { snd.toggle(); paintMute(); });
@@ -614,8 +691,12 @@ function wire() {
     if (e.altKey || e.ctrlKey || e.metaKey || e.target.matches?.("input, textarea")) return;
     if (screen === "wall" && e.key === "Escape") return $("#btn-back").click();
     if (screen === "help" && e.key === "Escape") return showTitle();
+    if (screen === "pick" && e.key === "Escape") return $("#btn-pick-back").click();
     if (screen !== "game") return;
     const k = e.key.toLocaleLowerCase("tr");
+    // çekmece açıkken masa kilitli: yalnız kapatma tuşları
+    if ($("#log").classList.contains("open")) { if (e.key === "Escape" || k === "g") openLog(false); return; }
+    if (k === "g" && !wideLog.matches) return openLog(true);
     if (e.key === "ArrowLeft" || k === "a") { e.preventDefault(); commit("L"); }
     else if (e.key === "ArrowRight" || k === "d") { e.preventDefault(); commit("R"); }
     else if (k === "f") danis();
@@ -625,6 +706,8 @@ function wire() {
 
 wire();
 showTitle();
+// Evrak açılırken vesikalık beklemesin
+setTimeout(() => { for (const id of Object.keys(PEOPLE)) new Image().src = photoSrc(id); }, 1500);
 // Web sürümünde çevrimdışı çalışmak için (dosyadan açılınca kayıt denenmez)
 if (STANDALONE && "serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
   addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => { }));

@@ -43,6 +43,13 @@ try {
   await viewport(400, 820, true);
   await send("Page.navigate", { url: page }); await sleep(2500);
   await shot("1-baslik-telefon");
+  // vesikalık seçimi: üçüncüyü seç, başlıkta resim ve ad değişsin
+  await ev(`document.querySelector("#btn-avatar").click()`); await sleep(700);
+  await shot("1b-vesikalik-telefon");
+  await ev(`document.querySelectorAll("#picks .pick")[2].click()`); await sleep(400);
+  const av = JSON.parse(await ev(`JSON.stringify({ ls: localStorage.getItem("cb.avatar"), ph: document.querySelector("#in-name").placeholder, pick: document.querySelectorAll("#picks .pick b")[2].textContent, same: document.querySelector("#avatar-img").src === document.querySelectorAll("#picks .pick img")[2].src, title: !document.querySelector("#scr-title").hidden })`));
+  if (av.ls !== '"baskan-03"' || av.ph !== av.pick || !av.same || !av.title) errors.push("TEST: vesikalık seçimi başlığa yansımadı " + JSON.stringify(av));
+  console.log("vesikalık:", av.ph);
   await ev(`document.querySelector("#btn-start").click()`); await sleep(900);
   await shot("2-intro-telefon");
   for (let i = 0; i < 3; i++) { await key("ArrowRight"); await sleep(1300); }
@@ -57,7 +64,16 @@ try {
   while (n++ < 140) {
     const scr = await ev(`["title","game","over","wall"].find(s => !document.querySelector("#scr-" + s).hidden)`);
     if (scr !== "game") break;
-    if (n === 14) await shot("4-oyun-telefon");
+    if (n === 14) {
+      await shot("4-oyun-telefon");
+      // olay günlüğü: dar ekranda çekmece açılır, kayıtlar orada, Escape kapatır
+      await ev(`document.querySelector("#btn-log").click()`); await sleep(450);
+      await shot("4b-gunluk-telefon");
+      const lg = JSON.parse(await ev(`JSON.stringify({ open: document.querySelector("#log").classList.contains("open"), n: document.querySelectorAll("#log-list .lg-e").length })`));
+      if (!lg.open || lg.n < 5) errors.push("TEST: olay günlüğü açılmadı ya da boş " + JSON.stringify(lg));
+      await key("Escape"); await sleep(350);
+      if (await ev(`document.querySelector("#log").classList.contains("open")`)) errors.push("TEST: günlük Escape ile kapanmadı");
+    }
     await key(n % 3 ? "ArrowRight" : "ArrowLeft"); await sleep(950);
   }
   console.log("kart sayısı:", n);
@@ -65,6 +81,8 @@ try {
   await shot("5-gazete-telefon");
   await ev(`document.querySelector("#btn-wall2").click()`); await sleep(700);
   await shot("6-duvar-telefon");
+  const hall = JSON.parse(await ev(`localStorage.getItem("cb.hall")`) || "[]");
+  if (!hall.some(r => r.avatar === "baskan-03")) errors.push("TEST: duvara seçilen vesikalık yazılmadı " + JSON.stringify(hall.map(r => r.avatar)));
 
   await viewport(1280, 820, false);
   await ev(`document.querySelector("#btn-back").click()`); await sleep(400);
@@ -72,6 +90,9 @@ try {
   await shot("7-oyun-masaustu");
   await ev(`document.querySelector("#btn-menu").click()`); await sleep(600);
   await shot("8-baslik-masaustu");
+  await ev(`document.querySelector("#btn-avatar").click()`); await sleep(600);
+  await shot("8b-vesikalik-masaustu");
+  await key("Escape"); await sleep(300);
   await ev(`document.querySelector("#btn-help").click()`); await sleep(500);
   await shot("9-genelge-masaustu");
   const sw = await ev(`(async () => { const r = await navigator.serviceWorker?.getRegistration(); const k = self.caches ? await caches.keys() : []; const fonts = [...document.fonts].filter(f => f.status === "loaded").map(f => f.family.replace(/"/g, "") + " " + f.weight + (f.style === "italic" ? "i" : "")); return JSON.stringify({ sw: !!r, active: !!r?.active, caches: k, fonts: [...new Set(fonts)] }); })()`);

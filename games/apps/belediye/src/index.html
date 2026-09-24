@@ -10,29 +10,34 @@
   <section id="scr-title" class="screen" aria-label="Ana ekran">
     <div class="poster">
       <div class="stitch" aria-hidden="true"></div>
-      <svg class="glass" viewBox="0 -70 200 330" aria-hidden="true">
+      <svg class="glass" viewBox="0 -30 200 290" aria-hidden="true">
         <defs>
           <linearGradient id="tea" x1="0" x2="1" y1="0" y2="0">
-            <stop offset="0" stop-color="#6e1a0a"/><stop offset=".35" stop-color="#b8401c"/><stop offset=".55" stop-color="#d9642a"/><stop offset="1" stop-color="#7a200c"/>
+            <stop offset="0" stop-color="#5a1208"/><stop offset=".3" stop-color="#a0301a"/><stop offset=".52" stop-color="#c9482a"/><stop offset=".78" stop-color="#8e2412"/><stop offset="1" stop-color="#4e0f06"/>
           </linearGradient>
+          <radialGradient id="teaGlow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ef7a4a" stop-opacity=".8"/><stop offset="1" stop-color="#ef7a4a" stop-opacity="0"/></radialGradient>
           <linearGradient id="porc" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d9d6cc"/></linearGradient>
-          <clipPath id="glassClip"><path d="M55 30 L145 30 C146 72 122 98 124 130 C126 160 150 182 140 212 C136 222 128 228 118 230 L82 230 C72 228 64 222 60 212 C50 182 74 160 76 130 C78 98 54 72 55 30 Z"/></clipPath>
+          <clipPath id="glassClip"><path d="M52 80 L148 80 C146 112 131 128 131 152 C131 172 145 186 145 203 C145 214 139 221 127 222 L73 222 C61 221 55 214 55 203 C55 186 69 172 69 152 C69 128 54 112 52 80 Z"/></clipPath>
         </defs>
-        <g class="steam"><path d="M84 18 C74 2 96 -10 86 -30 S94 -54 88 -64"/><path d="M104 20 C96 2 116 -14 106 -34 S114 -56 108 -66"/><path d="M122 18 C114 4 132 -8 124 -26"/></g>
+        <g class="steam"><path d="M84 62 C74 46 96 34 86 14 S94 -10 88 -20"/><path d="M104 64 C96 46 116 30 106 10 S114 -12 108 -22"/><path d="M122 62 C114 48 132 36 124 18"/></g>
         <ellipse cx="100" cy="240" rx="94" ry="18" fill="#0b1712" opacity=".45"/>
         <ellipse cx="100" cy="234" rx="92" ry="17" fill="url(#porc)"/>
         <ellipse cx="100" cy="234" rx="92" ry="17" fill="none" stroke="#c9a54c" stroke-width="2.4"/>
         <ellipse cx="100" cy="232" rx="58" ry="9.5" fill="#e4e1d8"/>
         <ellipse cx="100" cy="234" rx="78" ry="13.5" fill="none" stroke="#b3341f" stroke-width="1.4" stroke-dasharray="3 5"/>
+        <path d="M48 80 A52 9 0 0 1 152 80 C150 112 135 128 135 152 C135 172 149 186 149 203 C149 218 142 229 128 230 L72 230 C58 229 51 218 51 203 C51 186 65 172 65 152 C65 128 50 112 48 80 Z" fill="rgba(255,255,255,.1)"/>
         <g clip-path="url(#glassClip)">
-          <rect x="40" y="56" width="120" height="180" fill="url(#tea)"/>
-          <ellipse cx="100" cy="57" rx="44" ry="4.5" fill="#e0763a"/>
-          <rect x="40" y="0" width="120" height="56" fill="rgba(255,255,255,.08)"/>
+          <rect x="40" y="98" width="120" height="130" fill="url(#tea)"/>
+          <ellipse cx="97" cy="196" rx="36" ry="22" fill="url(#teaGlow)" opacity=".6"/>
+          <ellipse cx="100" cy="98" rx="46" ry="8" fill="#862210"/>
+          <ellipse cx="94" cy="97" rx="24" ry="3.6" fill="#d8643a" opacity=".55"/>
         </g>
-        <path d="M55 30 L145 30 C146 72 122 98 124 130 C126 160 150 182 140 212 C136 222 128 228 118 230 L82 230 C72 228 64 222 60 212 C50 182 74 160 76 130 C78 98 54 72 55 30 Z" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="2.4"/>
-        <path d="M63 40 C64 76 84 100 84 128" stroke="rgba(255,255,255,.55)" stroke-width="4" fill="none" stroke-linecap="round"/>
-        <path d="M66 176 C62 192 66 206 72 214" stroke="rgba(255,255,255,.45)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-        <ellipse cx="100" cy="30" rx="45" ry="3.4" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="1.6"/>
+        <path d="M48 80 A52 9 0 0 1 152 80 C150 112 135 128 135 152 C135 172 149 186 149 203 C149 218 142 229 128 230 L72 230 C58 229 51 218 51 203 C51 186 65 172 65 152 C65 128 50 112 48 80 Z" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="2.2"/>
+        <ellipse cx="100" cy="80" rx="52" ry="9" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="1.6"/>
+        <path d="M138 104 C137 122 126 136 126 154" stroke="rgba(255,255,255,.5)" stroke-width="5" fill="none" stroke-linecap="round"/>
+        <path d="M58 96 C60 116 71 132 71 150" stroke="rgba(255,255,255,.4)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M59 190 C56 204 60 216 68 222" stroke="rgba(255,255,255,.4)" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M141 184 C145 194 145 206 141 214" stroke="rgba(255,255,255,.3)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
         <path d="M150 226 L186 212" stroke="#cfd3d8" stroke-width="3.2" stroke-linecap="round"/>
         <ellipse cx="189" cy="210.5" rx="5.5" ry="3.2" fill="#cfd3d8" transform="rotate(-22 189 210.5)"/>
       </svg>
@@ -45,7 +50,10 @@
         <button id="btn-wall" class="btn" type="button">Eski başkanlarımız</button>
         <button id="btn-help" class="btn" type="button">Nasıl oynanır</button>
       </div>
-      <label class="namefield" for="in-name"><span>Başkanın adı</span><input id="in-name" type="text" maxlength="24" autocomplete="off" spellcheck="false" placeholder="Duvara ve gazeteye yazılır"></label>
+      <div class="whoami">
+        <button id="btn-avatar" class="avatar" type="button" aria-label="Vesikalığı değiştir"><img id="avatar-img" alt="" draggable="false"><span>Değiştir</span></button>
+        <label class="namefield" for="in-name"><span>Başkanın adı</span><input id="in-name" type="text" maxlength="24" autocomplete="off" spellcheck="false"></label>
+      </div>
       <p class="best" id="best"></p>
       <p class="keys">Sürükleyin ya da <kbd>←</kbd> <kbd>→</kbd> tuşlarını kullanın</p>
     </div>
@@ -53,30 +61,43 @@
 
   <!-- Makam -->
   <section id="scr-game" class="screen" aria-label="Makam masası" hidden>
-    <header class="rail">
-      <div class="meters" id="meters"></div>
-      <div class="ongo" id="ongo"><span class="ongo-h">Yürürlükte</span><div class="ongo-list" id="ongo-list"></div></div>
-    </header>
-    <main class="desk">
-      <div class="toasts" id="toasts" aria-live="polite"></div>
-      <div class="stack" id="stack">
-        <div class="pile" aria-hidden="true"><i></i><i></i></div>
+    <!-- Üst bar (strateji oyunu gibi): solda başkan, ortada göstergeler, sağda takvim ve düğmeler -->
+    <header class="hud">
+      <div class="leader"><img id="hud-img" alt="" draggable="false"><span class="term" id="termline">1. dönem</span></div>
+      <div class="ident"><b id="leader-name">Başkan</b><span class="role">Belediye Başkanı</span></div>
+      <div class="cal"><b id="dateline">Nisan 2029</b><span id="countdown"></span></div>
+      <div class="gauges">
+        <div class="meters" id="meters"></div>
+        <div class="meter poll" id="poll" role="img" aria-label="Anket"></div>
       </div>
-    </main>
-    <div class="choices">
-      <button id="ch-L" class="choice L" type="button"><span class="ink" aria-hidden="true"></span><span class="tx"><span class="t"></span><small class="n"></small></span></button>
-      <button id="ch-R" class="choice R" type="button"><span class="tx"><span class="t"></span><small class="n"></small></span><span class="ink" aria-hidden="true"></span></button>
-    </div>
-    <footer class="plate">
       <div class="tools">
-        <button id="btn-menu" class="tool" type="button" aria-label="Ana menü"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span class="t">Menü</span></button>
-      </div>
-      <div class="nameplate"><b>BELEDİYE BAŞKANI</b><span id="dateline">Nisan 2029</span><span id="pollline" class="poll"></span></div>
-      <div class="tools r">
         <button id="btn-danis" class="tool" type="button"><span class="t">Fikret'e sor</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3h10v7H8l-3 3v-3H3z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><i id="danis-n">3</i></button>
         <button id="btn-mute" class="tool" type="button" aria-label="Ses"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6h3l4-3v10L5 10H2z" fill="currentColor"/><path id="mute-wave" d="M11 5.5c1 .8 1 4.2 0 5M12.8 4c2 1.6 2 6.4 0 8" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/></svg></button>
+        <button id="btn-menu" class="tool" type="button" aria-label="Ana menü"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span class="t">Menü</span></button>
       </div>
-    </footer>
+      <div class="ongo" id="ongo"><span class="ongo-h">Yürürlükte</span><div class="ongo-list" id="ongo-list"></div>
+        <button id="btn-log" class="tool logbtn" type="button" aria-label="Olay günlüğü" aria-expanded="false" aria-controls="log"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5h8.5v11H4a1.5 1.5 0 0 1-1.5-1.5V4A1.5 1.5 0 0 1 4 2.5ZM5.5 5.5h5M5.5 8h5M5.5 10.5h3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="t">Günlük</span><i id="log-n" hidden>0</i></button></div>
+      <!-- Haber şeridi: yeri ayrıldı, içeriği sonraki turda -->
+      <div class="ticker" id="ticker" aria-hidden="true"></div>
+    </header>
+    <div class="room">
+      <main class="desk">
+        <div class="toasts" id="toasts" aria-live="polite"></div>
+        <div class="stack" id="stack">
+          <div class="pile" aria-hidden="true"><i></i><i></i></div>
+        </div>
+      </main>
+      <div class="choices">
+        <button id="ch-L" class="choice L" type="button"><span class="ink" aria-hidden="true"></span><span class="tx"><span class="t"></span><small class="n"></small></span></button>
+        <button id="ch-R" class="choice R" type="button"><span class="tx"><span class="t"></span><small class="n"></small></span><span class="ink" aria-hidden="true"></span></button>
+      </div>
+      <!-- Olay günlüğü: geniş ekranda sağda sabit, dar ekranda çekmece -->
+      <aside class="log" id="log" aria-label="Olay günlüğü">
+        <header class="log-h"><b>Olay Günlüğü</b><button id="btn-log-x" class="tool" type="button" aria-label="Günlüğü kapat">✕</button></header>
+        <ol class="log-list" id="log-list"></ol>
+      </aside>
+      <div class="log-scrim" id="log-scrim"></div>
+    </div>
     <div class="sr" aria-live="polite" id="announce"></div>
   </section>
 
@@ -118,6 +139,16 @@
       <div class="frames" id="frames"></div>
       <p class="wall-msg" id="wall-msg" hidden></p>
       <button id="btn-back" class="btn" type="button">Makama dön</button>
+    </div>
+  </section>
+
+  <!-- Vesikalık seçimi -->
+  <section id="scr-pick" class="screen" aria-label="Vesikalık seçimi" hidden>
+    <div class="pick-in">
+      <div class="plaque"><h2>Başkanlık Vesikalığı</h2><p>Hangisi sizsiniz?</p></div>
+      <div class="picks" id="picks"></div>
+      <p class="pick-note" id="pick-note"></p>
+      <button id="btn-pick-back" class="btn" type="button">Vazgeç</button>
     </div>
   </section>
 </div>

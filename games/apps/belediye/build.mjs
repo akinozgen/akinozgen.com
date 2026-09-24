@@ -3,6 +3,7 @@
 //                             dist/caylar-belediyeden.html (claude.ai önizlemesi, Google Fonts bağlantılı)
 //   node build.mjs --site   → yalnız web uygulaması, doğrudan sitenin public/games/belediye/ klasörüne
 //                             (akinozgen.com/games/belediye/ adresinde yayınlanan kopya budur)
+// Vesikalıklar web-src/portraits/ altındadır: web sürümü onları dosya olarak yükler, tek dosyalık kopyalar içine gömer.
 import { readFileSync, writeFileSync, mkdirSync, rmSync, readdirSync, copyFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 
@@ -10,20 +11,24 @@ const root = new URL("./", import.meta.url);
 const SITE = process.argv.includes("--site");
 const SITE_URL = "https://akinozgen.com/games/belediye/";
 const read = p => readFileSync(new URL(p, root), "utf8");
-const js = ["cards.js", "engine.js", "portrait.js", "ui.js"].map(f => read("src/" + f)).join("\n\n");
+const js = ["cards.js", "engine.js", "ui.js"].map(f => read("src/" + f)).join("\n\n");
 new Function(js); // sözdizimi kontrolü (çalıştırmaz)
 
 const DESC = "Karakavak'ın belediye başkanı sizsiniz: evrakı sağa sola kaydırın, halkı, kasayı, esnafı ve Ankara'yı dengede tutun.";
 const tpl = read("src/index.html");
 const bodyOf = t => t.slice(t.indexOf("<style>/*STYLE*/</style>") + "<style>/*STYLE*/</style>".length);
-const script = standalone => `<script>(() => {\n"use strict";\n${js.replace("/*STANDALONE*/false", String(standalone))}\n})();</script>`;
+const PHOTOS = readdirSync(new URL("web-src/portraits/", root)).filter(f => f.endsWith(".webp")).sort();
+const PHOTOS_INLINE = Object.fromEntries(PHOTOS.map(f => [f.slice(0, -5), "data:image/webp;base64," + readFileSync(new URL("web-src/portraits/" + f, root)).toString("base64")]));
+// standalone: web sürümü (service worker) · inline: vesikalıklar sayfaya gömülsün
+const script = (standalone, inline) => `<script>(() => {\n"use strict";\n${js.replace("/*STANDALONE*/false", String(standalone))
+  .replace("/*PORTRAITS*/null", () => (inline ? JSON.stringify(PHOTOS_INLINE) : "null"))}\n})();</script>`;
 const INTERACT = read("web-src/vendor/interact.min.js");
 const VENDOR = {
   artifact: `<script src="https://cdnjs.cloudflare.com/ajax/libs/interact.js/1.10.27/interact.min.js"></script>`,
   web: `<script src="vendor/interact.min.js"></script>`,
   single: `<script>${INTERACT}</script>`,
 };
-const fill = (t, standalone, vendor) => t.replace("<!--VENDOR-->", () => VENDOR[vendor]).replace("<script>/*SCRIPT*/</script>", () => script(standalone));
+const fill = (t, standalone, vendor) => t.replace("<!--VENDOR-->", () => VENDOR[vendor]).replace("<script>/*SCRIPT*/</script>", () => script(standalone, vendor !== "web"));
 const css = read("src/style.css");
 
 // ── Artifact sürümü (iskeleti yayın sırasında eklenir)
@@ -39,9 +44,11 @@ rmSync(W, { recursive: true, force: true });
 mkdirSync(new URL("fonts/", W), { recursive: true });
 mkdirSync(new URL("icons/", W), { recursive: true });
 mkdirSync(new URL("vendor/", W), { recursive: true });
+mkdirSync(new URL("portraits/", W), { recursive: true });
 for (const f of readdirSync(new URL("web-src/vendor/", root))) copyFileSync(new URL("web-src/vendor/" + f, root), new URL("vendor/" + f, W));
 for (const f of readdirSync(new URL("web-src/fonts/", root))) copyFileSync(new URL("web-src/fonts/" + f, root), new URL("fonts/" + f, W));
 for (const f of readdirSync(new URL("web-src/icons/", root))) copyFileSync(new URL("web-src/icons/" + f, root), new URL("icons/" + f, W));
+for (const f of PHOTOS) copyFileSync(new URL("web-src/portraits/" + f, root), new URL("portraits/" + f, W));
 copyFileSync(new URL("web-src/fonts/OFL.txt", root), new URL("fonts/OFL.txt", W));
 
 const base = `html { box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
@@ -100,7 +107,7 @@ writeFileSync(new URL("manifest.webmanifest", W), JSON.stringify({
 // Service worker: önbellek adı içerikten türetilir; her derleme eskiyi temizler
 const assets = ["./", "index.html", "manifest.webmanifest", "vendor/interact.min.js",
   ...readdirSync(new URL("fonts/", W)).filter(f => f.endsWith(".woff2")).map(f => "fonts/" + f),
-  ...readdirSync(new URL("icons/", W)).map(f => "icons/" + f)];
+  ...readdirSync(new URL("icons/", W)).map(f => "icons/" + f), ...PHOTOS.map(f => "portraits/" + f)];
 const ver = createHash("sha1").update(web).digest("hex").slice(0, 10);
 writeFileSync(new URL("sw.js", W), `// Çaylar Belediyeden: çevrimdışı önbellek (derlemede üretilir)
 const CACHE = "caylar-${ver}";

@@ -13,6 +13,7 @@
     "smoke": "node tools/smoke.mjs",
     "gesture": "node tools/gesture.mjs",
     "fit": "node tools/fit.mjs",
-    "icons": "node tools/icons.mjs"
+    "icons": "node tools/icons.mjs",
+    "portraits": "node tools/portraits.mjs"
   }
 }

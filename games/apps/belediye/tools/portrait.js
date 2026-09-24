@@ -1,4 +1,7 @@
 // ─── Vesikalık üreteci: tariften düz renkli SVG portre ─────────────────────
+// Oyun bu dosyayı yüklemez; vesikalıklar web-src/portraits/ altındaki resimlerdir.
+// tools/portraits.mjs eksik resimleri buradaki tariflerden çizer. Şimdiki resimler bu çizimlerden SDXL img2img ile
+// parlak 3D stile çevrildi; --force onların üstüne düz çizim yazar.
 function shade(hex, amt) {
   const n = parseInt(hex.slice(1), 16);
   const f = amt < 0 ? 0 : 255, p = Math.abs(amt);
@@ -172,4 +175,64 @@ function portrait(p) {
   }
 
   return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="100" height="100" fill="${p.bg}"/><circle cx="50" cy="46" r="35" fill="${shade(p.bg, 0.2)}"/>${back}${body}${face}${hair}${top}</svg>`;
+}
+
+// Kişilerin tarifleri (anahtarlar cards.js'teki PEOPLE ile aynı)
+const RECIPES = {
+  fikret:   { bg: "#c9a54c", skin: "#d9a27a", hair: "kisa", hc: "#77726c", must: "kalem", shirt: "#5b4636", collar: "vest", acc: "cay" },
+  muhtar:   { bg: "#8fb3a3", skin: "#c68b5f", hair: "kasket", hat: "#4a4a52", hc: "#8f8a84", must: "pala", shirt: "#6b6f78", collar: "open" },
+  bekir:    { bg: "#d9b77a", skin: "#d9a27a", hair: "takke", hc: "#e8e4da", beard: "full", must: "pala", shirt: "#3d4a3a", collar: "open", acc: "tespih" },
+  huseyin:  { bg: "#e0a36a", skin: "#c68b5f", hair: "kisa", hc: "#1f1a17", must: "fircali", shirt: "#7a4a32", collar: "apron" },
+  kaymakam: { bg: "#9aa9c4", skin: "#e8b894", hair: "kisa", hc: "#2a2420", gl: "rect", shirt: "#2b3550", collar: "tie", tie: "#7a2230" },
+  vekil:    { bg: "#b7a6c9", skin: "#e0ad86", hair: "slick", hc: "#a3a09a", shirt: "#23252e", collar: "tie", tie: "#1f4a7a", acc: "rozet" },
+  nermin:   { bg: "#8cc0c0", skin: "#e8b894", hair: "bob", hc: "#5a3a2a", gl: "cat", shirt: "#2f6f73", collar: "blazer", fem: true },
+  hayri:    { bg: "#a8c49a", skin: "#d9a27a", hair: "takke", hc: "#3a3028", beard: "full", shirt: "#4a5a4a", collar: "cubbe" },
+  burak:    { bg: "#ee9a8a", skin: "#e8b894", hair: "quiff", hc: "#2a1d16", shirt: "#1d1d25", collar: "hoodie", acc: "telefon" },
+  albay:    { bg: "#b0a58c", skin: "#e0ad86", hair: "kel", hc: "#d8d4ca", must: "kalem", gl: "round", shirt: "#1f2a44", collar: "blazer" },
+  kemal:    { bg: "#e6c35c", skin: "#c68b5f", hair: "baret", hat: "#f2c230", hc: "#2a2420", must: "fircali", shirt: "#e8792a", collar: "yelek" },
+  sevim:    { bg: "#c7b8d8", skin: "#f0c9a6", hair: "topuz", hc: "#3b2a20", gl: "half", shirt: "#6a4c7a", collar: "blazer", fem: true, acc: "hesap" },
+  recep:    { bg: "#9fb4c8", skin: "#c68b5f", hair: "kepi", hat: "#23324f", hc: "#2a2420", must: "pala", shirt: "#2b3b5c", collar: "uniform" },
+  mahir:    { bg: "#8ea2b8", skin: "#d9a27a", hair: "kisa", hc: "#1f1a17", must: "fircali", beard: "stubble", shirt: "#3a4a66", collar: "tie", tie: "#22283a" },
+  tuncay:   { bg: "#d2c6a8", skin: "#e0ad86", hair: "fotr", hat: "#4a3a2c", hc: "#3a2e26", beard: "short", gl: "round", shirt: "#7a6a58", collar: "open" },
+  elif:     { bg: "#f2b880", skin: "#f0c9a6", hair: "uzun", hc: "#6b3e26", shirt: "#b8452e", collar: "cardigan", fem: true },
+  dursun:   { bg: "#b9c98a", skin: "#b57a52", hair: "kasket", hat: "#5a4632", hc: "#8a8a8a", must: "pala", beard: "stubble", shirt: "#6a5a3c", collar: "open" },
+  cengiz:   { bg: "#e2a05a", skin: "#e0ad86", hair: "slick", hc: "#161412", gl: "sun", shirt: "#e9e6de", collar: "chain" },
+  hatice:   { bg: "#e8a0a8", skin: "#e0ad86", hair: "basortu", scarf: "#3f7a5a", shirt: "#7a3f5a", collar: "cardigan", fem: true },
+  deniz:    { bg: "#9ad0c2", skin: "#e8b894", hair: "kivircik", hc: "#2a1d16", gl: "round", shirt: "#3f5aa0", collar: "tshirt" },
+  selin:    { bg: "#c3e0a6", skin: "#f0c9a6", hair: "atkuyrugu", hc: "#a8702e", shirt: "#eef2f0", collar: "coat", fem: true },
+  kaan:     { bg: "#a6b8e0", skin: "#e8b894", hair: "undercut", hc: "#2a2420", beard: "short", shirt: "#1d2433", collar: "turtleneck" },
+  naciye:   { bg: "#e6c7a0", skin: "#e0ad86", hair: "yazma", scarf: "#f1efe6", gl: "round", shirt: "#5a4a7a", collar: "cardigan", fem: true },
+  ferhat:   { bg: "#b8b0a0", skin: "#c68b5f", hair: "bere", hat: "#2f3a4a", hc: "#1f1a17", must: "fircali", beard: "stubble", shirt: "#34506e", collar: "tulum" },
+  hans:     { bg: "#f0d890", skin: "#f3cfb3", hair: "kisa", hc: "#e3dccb", gl: "round", shirt: "#d9573f", collar: "hawaii" },
+  orhan:    { bg: "#f0c040", skin: "#d9a27a", hair: "kisa", hc: "#1f1a17", must: "fircali", shirt: "#1f5a3a", collar: "esofman", acc: "duduk" },
+  levent:   { bg: "#c8c4bc", skin: "#e8b894", hair: "baret", hat: "#f4f4f0", hc: "#2a2420", gl: "rect", shirt: "#34384a", collar: "tie", tie: "#5a5f70" },
+  tekir:    { cat: true, bg: "#9fc0a0" },
+  fatma:    { bg: "#e0b8c8", skin: "#d9a27a", hair: "yazma", scarf: "#8a5aa0", shirt: "#3a5a7a", collar: "cardigan", fem: true },
+  rahmi:    { bg: "#c9a080", skin: "#c68b5f", hair: "kel", hc: "#8a8a8a", must: "pala", shirt: "#5a3a2a", collar: "vest" },
+  ayse:     { kid: true, bg: "#f5c26b", skin: "#f0c9a6", hair: "orgu", hc: "#6b3e26", shirt: "#e05a5a", collar: "tshirt", fem: true },
+  ingrid:   { bg: "#b4d0e6", skin: "#f3d5c0", hair: "uzun", hc: "#e7cf86", shirt: "#c0392b", collar: "turtleneck", fem: true },
+};
+
+// Eski başkanlar duvarı için tohumdan resmî bir vesikalık
+const rngOf = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+function mayorFace(seed) {
+  const r = rngOf(seed), pk = a => a[Math.floor(r() * a.length)];
+  const p = {
+    bg: pk(["#c9a54c", "#b0a58c", "#9aa9c4", "#a8c49a", "#d2c6a8", "#c7b8d8"]),
+    skin: pk(["#f0c9a6", "#e8b894", "#e0ad86", "#d9a27a", "#c68b5f", "#b57a52"]),
+    hc: pk(["#1f1a17", "#2a2420", "#3b2a20", "#5a3a2a", "#77726c", "#a3a09a", "#d8d4ca"]),
+    shirt: pk(["#23252e", "#2b3550", "#34384a", "#3d2f2a", "#1f3a33", "#4a2f3a"]),
+    tie: pk(["#7a2230", "#1f4a7a", "#2f5a3a", "#5a5f70"]),
+  };
+  if (r() < 0.5) {
+    p.fem = true; p.hair = pk(["bob", "uzun", "topuz", "atkuyrugu", "basortu"]); p.collar = pk(["blazer", "cardigan", "turtleneck"]);
+    if (p.hair === "basortu") p.scarf = pk(["#3f7a5a", "#8a5aa0", "#b8452e", "#2f6f73", "#c9a54c"]);
+  } else {
+    p.hair = pk(["kisa", "kisa", "slick", "kel", "kivircik", "undercut"]); p.collar = pk(["tie", "tie", "vest", "blazer"]);
+    p.must = pk(["pala", "kalem", "fircali", null, null]);
+    if (r() < 0.25) p.beard = pk(["short", "stubble", "full"]);
+  }
+  if (r() < 0.35) p.gl = pk(["round", "rect", "half"]);
+  if (r() < 0.25) p.acc = "rozet";
+  return p;
 }
