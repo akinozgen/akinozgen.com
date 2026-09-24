@@ -15,7 +15,8 @@ const INFLUENCE = { muhtar: 0.8, hayri: 0.8, bekir: 0.7, hatice: 0.7, tuncay: 0.
 // Ayar düğmeleri (sim.mjs ile ölçüldü)
 // salience: koşulu tutan her şart kartın ağırlığını bu oranda artırır (özgül kart genel kartı yener)
 // vaat: tutulmamış her vaat anketten bu kadar puan götürür (en çok vaatMax)
-const TUNE = { damp: 0.9, edge: 12, crisisP: 0.3, crisisCd: 18, crisisAt: 18, rescue: 1.4, fatigue: 7, base: 19, scale: 1.15,
+// 2026-09: 61 yeni kartla birlikte hafif sıkılaştırıldı (rescue 1.4→1.3, fatigue 7→6.5, base 19→17.5, scale 1.15→1.2)
+const TUNE = { damp: 0.9, edge: 12, crisisP: 0.3, crisisCd: 18, crisisAt: 18, rescue: 1.3, fatigue: 6.5, base: 17.5, scale: 1.2,
   salience: 0.5, vaat: 2, vaatMax: 8 };
 const MAX_ONGOING = 7;
 

@@ -6,7 +6,8 @@ import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 const OUT = process.argv[2] || fileURLToPath(new URL("../.cache/fit/", import.meta.url)), PAGE = process.argv[3] || new URL("../dist/oyna.html", import.meta.url).href;
 mkdirSync(OUT, { recursive: true });
 const E = new Function(["cards.js", "engine.js"].map(f => readFileSync(new URL("../src/" + f, import.meta.url), "utf8")).join("\n") + "\nreturn { CARDS, CRISES, ENDINGS, INTRO, CARD, PEOPLE, newGame, materialize };")();
-const texts = [...E.CARDS, ...Object.values(E.CRISES), ...Object.values(E.ENDINGS), ...E.INTRO].map(c => c.text);
+// hatırlama metinleri (alt) de sığmalı
+const texts = [...E.CARDS, ...Object.values(E.CRISES), ...Object.values(E.ENDINGS), ...E.INTRO].map(c => c.text).concat(E.CARDS.flatMap(c => (c.alt || []).map(a => a.text)));
 const labels = [...E.CARDS, ...Object.values(E.CRISES)].flatMap(c => [c.L.t, c.R.t]);
 const S = E.newGame(); let seed = 9; const rng = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 S.rel = { bekir: -2 }; S.month = 5; S.cur = E.materialize(E.CARD.tabela, S, rng); // uzun unvan + ruh hâli satırı: en kötü durum

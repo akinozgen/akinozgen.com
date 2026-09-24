@@ -278,9 +278,10 @@ const moodOf = r => (r == null ? "" : r <= -2 ? "Kaşları çatık; bir ret daha
 function optNote(o) {
   const bits = [];
   if (o.pol) {
+    // aylık etkisi olan karar hep görünür; bitişinde bir sonucu varsa "sonu var" diye telgraf çekilir
     const p = o.pol, per = etkiKisa(p.e);
-    if (p.done || p.doneCard) bits.push(`${p.ay} ay sürecek iş`);
-    else if (per) bits.push(`her ay ${per}${p.ay ? `, ${p.ay} ay` : ", süresiz"}`);
+    if (per) bits.push(`her ay ${per}${p.ay ? `, ${p.ay} ay` : ", süresiz"}`);
+    if (p.done || p.doneCard) bits.push(per ? "sonu var" : `${p.ay} ay sürecek iş`);
   }
   if (o.cut) bits.push("uygulamayı kaldırır");
   if (o.next) bits.push("devamı gelecek");
