@@ -142,36 +142,71 @@
     </div>
   </section>
 
-  <!-- Seçim gecesi: sandıklar açılırken canlı sonuç, ardından seçmen grubu dökümü -->
+  <!-- Seçim gecesi: Karakavak TV canlı yayını. Sandıklar açılırken sonuç, ardından seçmen dökümü. Sözleşme style.css "Seçim gecesi" bölümünde. -->
   <section id="scr-secim" class="screen" aria-label="Seçim gecesi" hidden>
-    <div class="ec">
-      <header class="ec-top">
-        <span class="ec-live">Canlı</span>
-        <h2>Karakavak Seçim Gecesi</h2>
-        <span class="ec-date" id="ec-date"></span>
-      </header>
-      <div class="ec-open">
-        <span class="ec-k">Açılan sandık</span><b id="ec-open">%0</b>
-        <div class="ec-prog" aria-hidden="true"><i id="ec-prog"></i></div>
-        <span class="ec-k" id="ec-turnout"></span>
+    <div class="tv" id="tv">
+      <div class="tv-left">
+        <div class="tv-sum">
+          <p class="tv-sum-h">Karakavak geneli</p>
+          <p class="tv-sum-diff"><span>Oy farkı</span><b id="tv-diff">0</b></p>
+          <div class="tv-sum-open"><span>Açılan sandık</span><b id="tv-open">%0</b><div class="tv-prog" aria-hidden="true"><i id="tv-prog"></i></div></div>
+        </div>
+        <ol class="tv-cands" id="tv-cands" aria-label="Adaylar"></ol>
       </div>
-      <div class="ec-main">
-        <ol class="ec-list" id="ec-list"></ol>
-        <div class="ec-side">
-          <div class="ec-map" id="ec-map" aria-hidden="true"></div>
-          <p class="ec-anchor" id="ec-anchor"></p>
+      <div class="tv-main">
+        <div class="tv-top">
+          <div class="tv-strip" id="tv-strip" aria-label="Mahalle sonuçları"></div>
+          <div class="tv-brand">
+            <div class="tv-logo" role="img" aria-label="Karakavak TV"><i></i><b>KTV</b><span>Karakavak</span></div>
+            <div class="tv-onair"><span class="tv-live" id="tv-live">Canlı</span><span class="tv-date" id="tv-date"></span></div>
+          </div>
+        </div>
+        <div class="tv-studio">
+          <div class="tv-screen">
+            <div class="tv-stage" id="tv-stage"></div>
+            <div class="tv-info" id="tv-info" hidden>
+              <div class="tv-info-col"><h3 class="tv-info-h">Kim kime oy verdi?</h3><div class="tv-blocs" id="tv-blocs"></div></div>
+              <div class="tv-info-col"><h3 class="tv-info-h why">Neden?</h3><ul class="tv-why" id="tv-why"></ul></div>
+            </div>
+          </div>
+        </div>
+        <div class="tv-kj">
+          <span class="tv-kj-tab">Son dakika</span>
+          <h2 class="tv-kj-title" id="tv-kj-title">Karakavak sandık başında</h2>
+          <p class="tv-kj-sub" id="tv-kj-sub">Sandıklar birazdan açılıyor</p>
         </div>
       </div>
-      <div class="ec-after" id="ec-after" hidden>
-        <div class="ec-blocs"><h3>Kim kime oy verdi?</h3><div id="ec-blocs"></div></div>
-        <div class="ec-why"><h3>Neden?</h3><ul id="ec-why"></ul></div>
-      </div>
-      <p class="sr" aria-live="polite" id="ec-say"></p>
-      <div class="ec-act">
-        <button id="btn-ec-skip" class="btn" type="button">Sonucu göster</button>
-        <button id="btn-ec-go" class="btn primary" type="button" hidden>Devam</button>
+      <div class="tv-tick">
+        <span class="tv-tick-lbl">Son dakika</span>
+        <div class="tv-tick-win"><p class="tv-tick-track" id="tv-ticker"></p></div>
+        <span class="tv-fx" id="tv-fx"><b>KAVUN/TL</b> 14,90</span>
       </div>
     </div>
+    <p class="sr" aria-live="polite" id="ec-say"></p>
+    <div class="tv-act">
+      <button id="btn-ec-skip" class="btn" type="button">Sonucu göster</button>
+      <button id="btn-ec-go" class="btn primary" type="button" hidden>Devam</button>
+    </div>
+    <!-- Entegrasyon örnekleri: klonlanır, doğrudan görünmez. Aday durumları: düz · önde · siz · seçildi -->
+    <template id="tv-cand-tpl">
+      <li class="tv-cand" data-id="bekir" style="--c:#5cc08a;--p:14.2"><div class="tv-pic"><img alt="" draggable="false"></div>
+        <div class="tv-body"><span class="tv-lbl">Esnafın adayı</span><span class="tv-nm"><b class="tv-name">Hacı Bekir</b></span><b class="tv-pct">%14,20</b><span class="tv-votes">1.284</span></div></li>
+      <li class="tv-cand lead" data-id="nermin" style="--c:#e8715a;--p:36.8"><div class="tv-pic"><img alt="" draggable="false"></div>
+        <div class="tv-body"><span class="tv-lbl">Muhalefetin adayı</span><span class="tv-nm"><b class="tv-name">Nermin Hanım</b></span><b class="tv-pct">%36,80</b><span class="tv-votes">3.327</span></div></li>
+      <li class="tv-cand you" data-id="you" style="--c:#e2bd5a;--p:34.1"><div class="tv-pic"><img alt="" draggable="false"></div>
+        <div class="tv-body"><span class="tv-lbl">Belediye Başkanı, yeniden aday</span><span class="tv-nm"><b class="tv-name">Aslı Kavaklıoğlu</b></span><b class="tv-pct">%34,10</b><span class="tv-votes">3.083</span></div></li>
+      <li class="tv-cand you lead won" data-id="you" style="--c:#e2bd5a;--p:41.27"><div class="tv-pic"><img alt="" draggable="false"></div>
+        <div class="tv-body"><span class="tv-lbl">Belediye Başkanı, yeniden aday</span><span class="tv-nm"><b class="tv-name">Aslı Kavaklıoğlu</b></span><b class="tv-pct">%41,27</b><span class="tv-votes">9.912</span></div></li>
+    </template>
+    <template id="tv-box-tpl">
+      <div class="tv-box" style="--c:#f5a94a"><span class="tv-box-ad">Öğrenci yurdu</span><span class="tv-box-open">Açılan %12,0</span>
+        <p class="tv-box-row" style="--c:#f5a94a"><b>Tekir</b><span>47,02</span></p><p class="tv-box-row you" style="--c:#e2bd5a"><b>A. Kavaklıoğlu</b><span>21,77</span></p></div>
+    </template>
+    <template id="tv-bloc-tpl">
+      <div class="tv-bloc"><span class="tv-bloc-ad">Halk<small>seçmenin %55'i</small></span>
+        <div class="tv-stack"><i style="--c:#e2bd5a;width:44%"><b>44</b></i><i style="--c:#e8715a;width:31%"><b>31</b></i><i style="--c:#f5a94a;width:25%"><b>25</b></i></div><em>%44,0</em></div>
+      <div class="tv-legend"><span style="--c:#e2bd5a">Aslı Kavaklıoğlu</span><span style="--c:#e8715a">Nermin Hanım</span></div>
+    </template>
   </section>
 
   <!-- Vesikalık seçimi -->
