@@ -13,8 +13,11 @@ const NOREL = new Set(["fikret", "tekir", "ingrid", "mahir"]);
 // Sandıkta sözü geçenler (ilişki başına oy puanı)
 const INFLUENCE = { muhtar: 0.8, hayri: 0.8, bekir: 0.7, hatice: 0.7, tuncay: 0.6, nermin: 0.6 };
 // Ayar düğmeleri (sim.mjs ile ölçüldü)
-const TUNE = { damp: 0.9, edge: 12, crisisP: 0.3, crisisCd: 18, crisisAt: 18, rescue: 1.4, fatigue: 7, base: 19, scale: 1.15 };
-const MAX_ONGOING = 6;
+// salience: koşulu tutan her şart kartın ağırlığını bu oranda artırır (özgül kart genel kartı yener)
+// vaat: tutulmamış her vaat anketten bu kadar puan götürür (en çok vaatMax)
+const TUNE = { damp: 0.9, edge: 12, crisisP: 0.3, crisisCd: 18, crisisAt: 18, rescue: 1.4, fatigue: 7, base: 19, scale: 1.15,
+  salience: 0.5, vaat: 2, vaatMax: 8 };
+const MAX_ONGOING = 7;
 
 const calOf = m => ({ mon: (3 + m) % 12, year: 2029 + Math.floor((3 + m) / 12) });
 const dateLabel = m => { const c = calOf(m); return AYLAR[c.mon] + " " + c.year; };
@@ -26,8 +29,36 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 // Uca uzaklık: halk için yalnız aşağısı tehlike (halkın sevgisi fazla gelmez)
 const edgeRisk = (k, v) => (k === "h" ? Math.max(0, 50 - v) : Math.abs(v - 50));
 const relBonus = s => clamp(Object.entries(INFLUENCE).reduce((a, [w, k]) => a + (s.rel[w] || 0) * k, 0), -8, 8);
+// Tutulmamış vaatler (s.cnt.vaat) sandıkta ödenir
+const vaatCost = s => Math.min(TUNE.vaatMax, (s.cnt?.vaat || 0) * TUNE.vaat);
 // Yıpranma: her yeni dönemde sandık biraz daha zorlaşır
-const pollOf = s => TUNE.base + s.m.h * 0.45 + s.m.e * 0.08 + s.m.a * 0.04 + relBonus(s) - (s.term - 1) * TUNE.fatigue;
+const pollOf = s => TUNE.base + s.m.h * 0.45 + s.m.e * 0.08 + s.m.a * 0.04 + relBonus(s) - (s.term - 1) * TUNE.fatigue - vaatCost(s);
+
+// ── Ortak koşul dili: kart kapıları, next.if ve alt.if hepsi bunu kullanır
+// { req: bayrak(lar), not: bayrak(lar), cnt: {sayaç: en az | [en az, en çok]}, pol: karar id(leri), nopol,
+//   tag: etiket(ler) (yürürlükteki kararlardan), notag, rel: {kişi: en az | [en az, en çok]} }
+const arr = x => [].concat(x ?? []);
+const inRange = (v, r) => (Array.isArray(r) ? v >= (r[0] ?? -Infinity) && v <= (r[1] ?? Infinity) : v >= r);
+const tagsOn = s => new Set(s.ongoing.flatMap(o => o.tags || []));
+function condOK(s, q) {
+  if (!q) return true;
+  if (q.req && !arr(q.req).every(f => s.flags[f])) return false;
+  if (q.not && arr(q.not).some(f => s.flags[f])) return false;
+  if (q.cnt && !Object.entries(q.cnt).every(([k, r]) => inRange(s.cnt[k] || 0, r))) return false;
+  if (q.pol && !arr(q.pol).every(id => s.ongoing.some(o => o.id === id))) return false;
+  if (q.nopol && arr(q.nopol).some(id => s.ongoing.some(o => o.id === id))) return false;
+  if (q.tag || q.notag) {
+    const t = tagsOn(s);
+    if (q.tag && !arr(q.tag).every(x => t.has(x))) return false;
+    if (q.notag && arr(q.notag).some(x => t.has(x))) return false;
+  }
+  if (q.rel && !Object.entries(q.rel).every(([w, r]) => inRange(s.rel[w] || 0, r))) return false;
+  return true;
+}
+// Kartın kendi kapıları ortak dile çevrilir
+const gateOf = c => ({ req: c.req, not: c.not, cnt: c.reqCnt, pol: c.reqPol, nopol: c.notPol, tag: c.reqTag, notag: c.notTag });
+// Kaç özel şartla açıldığı: özgül kartlar torbada daha ağır basar
+const specificity = c => arr(c.req).length + Object.keys(c.reqCnt || {}).length + arr(c.reqPol).length + arr(c.reqTag).length + Object.keys(c.relMin || {}).length;
 
 function newGame(opts = {}) {
   return {
@@ -58,15 +89,48 @@ function applyDelta(s, d) {
 
 function addPol(s, p) {
   s.ongoing = s.ongoing.filter(o => o.id !== p.id);
-  if (s.ongoing.length >= MAX_ONGOING) s.ongoing.shift();
+  // yer yoksa en eski sıradan karar kalkar (iş/inşaat değil), oyuncuya da haber verilir
+  if (s.ongoing.length >= MAX_ONGOING) {
+    const i = Math.max(0, s.ongoing.findIndex(o => !o.proj));
+    (s.dropped ||= []).push(s.ongoing.splice(i, 1)[0].ad);
+  }
   s.ongoing.push({ id: p.id, ad: p.ad, e: (p.e || Z).slice(), left: p.ay ?? null, total: p.ay ?? null,
-    done: p.done || null, msg: p.msg || null, doneCard: p.doneCard || null, proj: !!(p.done || p.doneCard) });
+    done: p.done || null, msg: p.msg || null, doneCard: p.doneCard || null, proj: !!(p.done || p.doneCard), tags: arr(p.tags) });
 }
 
-// Ay başı: yürürlükteki kararlar işler, süresi dolanlar biter
+// Sayaç: inc "ad" (+1) ya da {ad: n}; dec aynı biçimde düşürür, sayaç sıfırın altına inmez
+function bump(s, x, sign) {
+  if (!x) return;
+  const o = typeof x === "string" ? { [x]: 1 } : x;
+  for (const [k, v] of Object.entries(o)) s.cnt[k] = Math.max(0, (s.cnt[k] || 0) + sign * v);
+}
+// next: [kart, ay] ya da { id, in: ay | [en az, en çok], if: koşul, else: kart }
+// Koşul teslim anında yeniden sınanır; tutmazsa else gelir, else yoksa hiçbir şey gelmez (borç kapatıldıysa gibi)
+function schedule(s, n, rng) {
+  if (!n) return;
+  const [id, d] = Array.isArray(n) ? n : [n.id, n.in ?? 0];
+  const lag = Array.isArray(d) ? d[0] + Math.floor(rng() * (d[1] - d[0] + 1)) : d;
+  const q = { id, at: s.month + 1 + lag };
+  if (!Array.isArray(n)) { if (n.if) q.if = n.if; if (n.else) q.else = n.else; }
+  s.queue.push(q);
+}
+
+// Ay başı: yürürlükteki kararlar işler, süresi dolanlar biter, birbirine değen kararlar etkileşir
 function tick(s) {
   const sum = [0, 0, 0, 0], events = [];
+  for (const ad of s.dropped || []) events.push({ ad, msg: "Yeni karara yer açmak için yürürlükten kalktı." });
+  s.dropped = [];
   for (const o of s.ongoing) { o.e.forEach((v, i) => { sum[i] += v; }); if (o.left != null) o.left--; }
+  // Etkileşim tablosu (cards.js'teki SYN): iki etiket aynı anda yürürlükteyse her ay ek etki; ilk kez değince kart/haber
+  const tg = tagsOn(s);
+  for (const x of SYN) {
+    if (!tg.has(x.a) || !tg.has(x.b)) continue;
+    (x.e || Z).forEach((v, i) => { sum[i] += v; });
+    if (x.id in (s.syn ||= {})) continue; // ilk değdiği ay saklanır (0. ay da olabilir)
+    s.syn[x.id] = s.month;
+    if (x.card) s.queue.unshift({ id: x.card, at: s.month });
+    if (x.msg) events.push({ ad: x.ad, msg: x.msg, e: x.e && x.e.some(Boolean) ? x.e : null, syn: true });
+  }
   const ended = s.ongoing.filter(o => o.left != null && o.left <= 0);
   s.ongoing = s.ongoing.filter(o => !(o.left != null && o.left <= 0));
   for (const o of ended) {
@@ -82,9 +146,7 @@ function eligible(c, s) {
   if (c.chain) return false;
   if (c.once && s.used[c.id]) return false;
   if (s.last[c.id] != null && s.month - s.last[c.id] < (c.cd ?? 36)) return false;
-  if (c.req && !c.req.every(f => s.flags[f])) return false;
-  if (c.not && c.not.some(f => s.flags[f])) return false;
-  if (c.reqPol && !s.ongoing.some(o => o.id === c.reqPol)) return false;
+  if (!condOK(s, gateOf(c))) return false;
   if (c.relMin && !Object.entries(c.relMin).every(([w, v]) => (s.rel[w] || 0) >= v)) return false;
   if (c.relMax && !Object.entries(c.relMax).every(([w, v]) => (s.rel[w] || 0) <= v)) return false;
   if (c.months && !c.months.includes(calOf(s.month).mon)) return false;
@@ -116,7 +178,7 @@ function cayCard(s) {
 }
 
 function pick(s, rng) {
-  const items = CARDS.filter(c => eligible(c, s)).map(c => ({ c, w: (c.w ?? 1) * rescueW(c, s) }));
+  const items = CARDS.filter(c => eligible(c, s)).map(c => ({ c, w: (c.w ?? 1) * rescueW(c, s) * (1 + TUNE.salience * specificity(c)) }));
   const since = s.month - (s.last.cay ?? -4);
   if (since >= 8) items.push({ c: cayCard(s), w: 1 + (since - 8) * 0.35 });
   const fresh = items.filter(it => it.c.who !== s.lastWho);
@@ -190,13 +252,14 @@ function materialize(c, s, rng) {
     const rel = {};
     if (people) rel[c.who] = key === fav ? 1 : -1;
     for (const [w, v] of Object.entries(x.rel || {})) rel[w] = (rel[w] || 0) + v;
-    return { t: x.t, e, rel, set: x.set, clr: x.clr, inc: x.inc, next: x.next, pol: x.pol, cut: x.cut };
+    return { t: x.t, e, rel, set: x.set, clr: x.clr, inc: x.inc, dec: x.dec, next: x.next, pol: x.pol, cut: x.cut };
   };
   let L = side("L"), R = side("R");
   // Kabul hep aynı tarafta olmasın: normal kartlar yarı yarıya ters çevrilir
   const flip = (kind === "normal" || kind === "kriz") && rng() < 0.5;
   if (flip) [L, R] = [R, L];
-  const alt = (c.alt || []).find(a => [].concat(a.req).every(f => s.flags[f]));
+  // Hatırlama metni: ilk tutan varyant ({req: bayraklar} ya da {if: koşul}) asıl metnin yerine geçer
+  const alt = (c.alt || []).find(a => (a.if ? condOK(s, a.if) : arr(a.req).every(f => s.flags[f])));
   const cal = calOf(s.month);
   return {
     id: c.id, kind, key: c.key, restore: c.restore, oy: c.oy, who: c.who, konu: c.konu,
@@ -208,6 +271,17 @@ function materialize(c, s, rng) {
   };
 }
 
+// Vakti gelmiş zincir kartı: koşulu tutmayan kuyruk kaydı else kartına döner ya da düşer
+function due(s) {
+  for (;;) {
+    const i = s.queue.findIndex(q => q.at <= s.month);
+    if (i < 0) return null;
+    const q = s.queue.splice(i, 1)[0];
+    const id = !q.if || condOK(s, q.if) ? q.id : q.else;
+    if (id && CARD[id]) return CARD[id];
+  }
+}
+
 function draw(s, rng = Math.random) {
   let c;
   if (s.pending) { c = special(s.pending, s); s.pending = null; }
@@ -215,10 +289,8 @@ function draw(s, rng = Math.random) {
   else if (s.month % TERM === TERM - 1 && s.electionTerm !== s.term) c = electionCard(s);
   else {
     const ck = crisisKey(s);
-    const i = s.queue.findIndex(q => q.at <= s.month);
     if (ck && rng() < TUNE.crisisP) c = { ...CRISES[ck], id: "kriz_" + ck, kind: "kriz" };
-    else if (i >= 0) { c = CARD[s.queue[i].id]; s.queue.splice(i, 1); }
-    else c = pick(s, rng);
+    else c = due(s) || pick(s, rng);
   }
   s.cur = materialize(c, s, rng);
   return s.cur;
@@ -231,9 +303,9 @@ function choose(s, side, rng = Math.random) {
   const out = { d: applyDelta(s, o.e), td: Z, events: [], rel: {} };
   [].concat(o.set || []).forEach(f => { s.flags[f] = true; });
   [].concat(o.clr || []).forEach(f => { delete s.flags[f]; });
-  if (o.inc) s.cnt[o.inc] = (s.cnt[o.inc] || 0) + 1;
-  if (o.next) s.queue.push({ id: o.next[0], at: s.month + 1 + o.next[1] });
-  if (o.cut) s.ongoing = s.ongoing.filter(x => x.id !== o.cut);
+  bump(s, o.inc, 1); bump(s, o.dec, -1);
+  schedule(s, o.next, rng);
+  if (o.cut) s.ongoing = s.ongoing.filter(x => !arr(o.cut).includes(x.id));
   if (o.pol) addPol(s, o.pol);
   for (const [w, v] of Object.entries(o.rel || {})) {
     const nv = clamp((s.rel[w] || 0) + v, -3, 3);
@@ -256,6 +328,7 @@ function choose(s, side, rng = Math.random) {
       passMonth(); break;
     case "sonuc":
       s.term++; if (s.danisTerm !== s.term) { s.danis = 3; s.danisTerm = s.term; }
+      if (s.cnt.vaat) s.cnt.vaat = Math.floor(s.cnt.vaat / 2); // yeni dönemde eski vaatlerin yarısı unutulur
       passMonth(); break;
     case "cay": s.cay++; s.last.cay = s.month; passMonth(); break;
     case "secim": s.electionTerm = s.term; break;

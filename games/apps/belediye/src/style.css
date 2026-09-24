@@ -130,6 +130,7 @@ button { font: inherit; color: inherit; }
 .poll { border-left: 1px solid rgba(236, 213, 146, .18); }
 .poll .num::before { content: "%"; }
 .poll.warn .num { color: #ff9c86; }
+.poll.vaat .lbl::after { content: "•"; margin-left: .1875rem; color: #f2c46b; }
 .hud .tools { grid-area: tools; }
 .ticker { grid-area: tick; height: 1.5rem; margin-inline: calc(-1 * var(--gutter)); background: rgba(0, 0, 0, .3); border-top: 1px solid rgba(236, 213, 146, .16); }
 @media (min-width: 860px) {

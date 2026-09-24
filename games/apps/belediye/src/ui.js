@@ -247,7 +247,10 @@ function reactions(c, res) {
     const line = w === c.who ? `“${pickOne(pool)}”` : dv > 0 ? "bunu duydu, memnun kaldı." : "bunu duydu, kırıldı.";
     toast(`<b>${esc(P.ad)}</b>${esc(line)}<span class="tr ${dv > 0 ? "p" : "n"}">${dv > 0 ? "▲" : "▼"} ${esc(REL_AD[S.rel[w] || 0])}</span>`);
   }
-  (res.events || []).forEach((ev, i) => setTimeout(() => toast(`<b>${esc(ev.ad)}</b>${esc(ev.msg)}${ev.e ? `<span class="tr p">${esc(etkiKisa(ev.e))}</span>` : ""}`, "ev"), 650 + i * 300));
+  (res.events || []).forEach((ev, i) => {
+    const sum = ev.e ? ev.e.reduce((a, v) => a + v, 0) : 0;
+    setTimeout(() => toast(`<b>${esc(ev.ad)}</b>${esc(ev.msg)}${ev.e ? `<span class="tr ${sum < 0 ? "n" : "p"}">${esc(etkiKisa(ev.e))}${ev.syn ? "/ay" : ""}</span>` : ""}`, sum < 0 ? "warn" : "ev"), 650 + i * 300);
+  });
 }
 
 // ─── Evrak ────────────────────────────────────────────────────────────────
@@ -281,6 +284,10 @@ function optNote(o) {
   }
   if (o.cut) bits.push("uygulamayı kaldırır");
   if (o.next) bits.push("devamı gelecek");
+  // vaat defteri: tutulmayan vaat sandıkta ödenir, tutulan geri alınır
+  const cnt = x => (typeof x === "string" ? { [x]: 1 } : x || {});
+  if (cnt(o.inc).vaat) bits.push("vaat verilir");
+  if (cnt(o.dec).vaat) bits.push("vaat yerine gelir");
   return bits.join(" · ");
 }
 function renderCard(c) {
@@ -427,7 +434,10 @@ function updateHud() {
   tweenY($("#poll .lvl"), pb[0] + (1 - poll / 100) * (pb[1] - pb[0]));
   tweenNum($("#poll .num"), poll);
   $("#poll").classList.toggle("warn", near && poll <= 50);
+  const vaat = S.cnt?.vaat || 0, vc = vaatCost(S);
   $("#poll").setAttribute("aria-label", `Anket: yüzde ${poll}`);
+  $("#poll").title = `Anket %${poll}` + (vaat ? ` · tutulmamış ${vaat} vaat sandıkta −${vc} puan` : "");
+  $("#poll").classList.toggle("vaat", vaat > 0);
   $("#danis-n").textContent = S.danis;
   $("#btn-danis").classList.toggle("spent", S.danis <= 0);
   $("#btn-danis").title = S.danis > 0 ? `Fikret'e danışın (bu dönem ${S.danis} hak)` : "Bu dönemki danışma hakkınız bitti";
@@ -484,6 +494,9 @@ function fikretAdvice(s) {
     const per = b.pol.e || Z;
     t += b.pol.done || b.pol.doneCard ? " Yalnız iş uzun sürer, sabır ister." : per.some(v => v < 0) ? " Yalnız bu karar her ay cepten yer, unutmayın." : " Üstelik her ay bir getirisi olur.";
   } else if (b.next) t += " Bunun bir devamı olacak, bilesiniz.";
+  const vaatOf = x => (typeof x === "string" ? x === "vaat" : !!x?.vaat);
+  if (vaatOf(b.inc)) t += " Bu bir vaat ama; tutmazsak sandıkta hesabını sorarlar.";
+  else if (vaatOf(b.dec)) t += " Hem verdiğimiz bir sözü de yerine getirmiş oluruz.";
   if (c.rel != null && c.rel <= -2) t += ` ${PEOPLE[c.who].ad} zaten dargın; fazla üstüne gitmeyin.`;
   else if (nearE && b.e[0] < 0) t += " Seçim yakın ama; halk bunu unutmaz.";
   return t;

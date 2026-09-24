@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { readFileSync, existsSync, readdirSync } from "node:fs";
 
 const src = ["cards.js", "engine.js"].map(f => readFileSync(new URL("../src/" + f, import.meta.url), "utf8")).join("\n");
-const E = new Function(src + "\nreturn { CARDS, CARD, CRISES, ENDINGS, INTRO, PEOPLE, BASKANLAR, newGame, draw, choose, METERS, TERM };")();
+const E = new Function(src + "\nreturn { CARDS, CARD, CRISES, ENDINGS, INTRO, PEOPLE, BASKANLAR, SYN, newGame, draw, choose, METERS, TERM };")();
 const rng = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 const all = [...E.CARDS, ...Object.values(E.CRISES), ...E.INTRO];
 
@@ -22,12 +22,14 @@ test("her evrakın göndereni, iki seçeneği ve dört etkisi var", () => {
 
 test("zincirler, işler ve ilişkiler var olan kartlara ve kişilere bağlı", () => {
   const ids = new Set(E.CARDS.map(c => c.id)), linked = new Set();
+  const link = (c, id) => { assert.ok(ids.has(id), `${c.id} → ${id} yok`); linked.add(id); };
   for (const c of E.CARDS) for (const s of ["L", "R"]) {
-    const o = c[s];
-    if (o.next) { assert.ok(ids.has(o.next[0]), `${c.id} → ${o.next[0]} yok`); linked.add(o.next[0]); }
-    if (o.pol?.doneCard) { assert.ok(ids.has(o.pol.doneCard), `${c.id} → ${o.pol.doneCard} yok`); linked.add(o.pol.doneCard); }
+    const o = c[s], n = Array.isArray(o.next) ? { id: o.next[0] } : o.next;
+    if (n) { link(c, n.id); if (n.else) link(c, n.else); }
+    if (o.pol?.doneCard) link(c, o.pol.doneCard);
     for (const w of Object.keys(o.rel || {})) assert.ok(E.PEOPLE[w], `${c.id}: ilişkide bilinmeyen ${w}`);
   }
+  for (const x of E.SYN) if (x.card) linked.add(x.card);
   for (const c of E.CARDS) if (c.chain) assert.ok(linked.has(c.id), `${c.id} zincir kartı ama hiçbir yerden gelmiyor`);
 });
 

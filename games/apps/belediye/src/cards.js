@@ -63,8 +63,14 @@ const BASKANLAR = {
 // months: takvim ayı (0 = Ocak) · pre: seçim öncesi · req/not: bayrak · reqPol: yürürlükteki karar
 // relMin/relMax: {kişi: eşik} · fav: gönderenin istediği taraf (varsayılan R) · norel: ilişkiye dokunmaz
 // alt: [{req, text}] duruma göre metin
-// seçenek: set/clr bayrak · inc sayaç · next: [kart, kaç ay sonra] · rel: {kişi: ±n}
-//          pol: {id, ad, e (her ay), ay (süre; yoksa süresiz), done (bitişte), msg, doneCard} · cut: kaldırılan karar
+// kart:    once · chain (yalnız zincirle gelir) · cd (tekrar süresi, ay) · w (ağırlık) · months · minM · pre (seçim öncesi)
+//          kapılar: req/not (bayrak) · reqCnt {sayaç: en az | [en az, en çok]} · reqPol/notPol · reqTag/notTag · relMin/relMax
+//          alt: [{ req: bayrak | if: koşul, text }] hatırlama metni (ilk tutan geçer)
+// seçenek: set/clr bayrak · inc/dec sayaç ("ad" ya da {ad: n}) · rel: {kişi: ±n} · cut: kaldırılan karar(lar)
+//          next: [kart, ay] ya da {id, in: ay | [en az, en çok], if: koşul, else: kart} (koşul teslimde yeniden sınanır)
+//          pol: {id, ad, e (her ay), ay (süre; yoksa süresiz), done (bitişte), msg, doneCard, tags: [etiket]}
+// koşul:   {req, not, cnt, pol, nopol, tag, notag, rel}; ayrıntısı engine.js'teki condOK
+// sayaç vaat: tutulmamış vaatler, sandıkta anketten düşer (dec ile tutulur)
 const CARDS = [
   // ── Muhtar Rıza
   { id: "asfalt", who: "muhtar", konu: "Yol talebi", once: true,
@@ -716,6 +722,11 @@ const CARDS = [
     text: "Başkanım, açılışı yapılacak bir şey kalmadı. Geçen yıl açtığımız çeşmeyi bir daha açsak? Kurdele hazır.",
     L: { t: "Ayıp olur", e: [0, 0, 0, 0] },
     R: { t: "Kurdeleyi getir", e: [8, -5, 0, 5] } },
+];
+
+// ─── Etkileşim tablosu: iki etiketli karar aynı anda yürürlükteyse ─────────
+// e: her ay ek etki · card: ilk kez değdiklerinde gelen kart · msg/ad: günlüğe düşen haber
+const SYN = [
 ];
 
 // ─── Kriz kartları: bir gösterge uca yaklaşınca Fikret can simidi getirir ─

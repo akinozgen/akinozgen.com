@@ -1,9 +1,10 @@
 // Denge simülasyonu: motoru binlerce kez farklı oyuncu tipleriyle oynatır.
 // node tools/sim.mjs [oyunSayısı] [ayar=değer ...]
 import { readFileSync } from "node:fs";
+import { lintContent } from "./lint.mjs";
 
 const src = ["cards.js", "engine.js"].map(f => readFileSync(new URL("../src/" + f, import.meta.url), "utf8")).join("\n");
-const E = new Function(src + "\nreturn { CARDS, CARD, CRISES, ENDINGS, PEOPLE, newGame, draw, choose, METERS, pollOf, TERM, TUNE, edgeRisk };")();
+const E = new Function(src + "\nreturn { CARDS, CARD, CRISES, ENDINGS, INTRO, PEOPLE, SYN, newGame, draw, choose, METERS, pollOf, TERM, TUNE, edgeRisk };")();
 // node sim.mjs 2000 damp=0.9 scale=1.1 → ayar düğmelerini geçici değiştir
 for (const a of process.argv.slice(3)) { const [k, v] = a.split("="); if (k in E.TUNE) E.TUNE[k] = Number(v); }
 console.log("TUNE", JSON.stringify(E.TUNE));
@@ -12,25 +13,10 @@ function mulberry(seed) {
   return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 }
 
-// ── Tutarlılık kontrolleri
-const ids = new Set(E.CARDS.map(c => c.id));
-const polIds = new Set();
-for (const c of [...E.CARDS, ...Object.values(E.CRISES)]) {
-  if (c.who && !E.PEOPLE[c.who]) console.log("YOK kişi:", c.id, c.who);
-  for (const side of ["L", "R"]) {
-    const o = c[side];
-    if (!o || !o.t || !Array.isArray(o.e) || o.e.length !== 4) console.log("HATALI seçenek:", c.id, side);
-    if (o.next && !ids.has(o.next[0])) console.log("YOK zincir:", c.id, "→", o.next[0]);
-    if (o.pol?.doneCard && !ids.has(o.pol.doneCard)) console.log("YOK doneCard:", c.id, o.pol.doneCard);
-    if (o.pol) polIds.add(o.pol.id);
-    for (const w of Object.keys(o.rel || {})) if (!E.PEOPLE[w]) console.log("YOK rel kişi:", c.id, w);
-    if (o.t.length > 26) console.log("UZUN etiket:", c.id, side, o.t.length, o.t);
-  }
-  if (c.text.length > 240) console.log("UZUN metin:", c.id, c.text.length);
-}
-for (const c of E.CARDS) if (c.reqPol && !polIds.has(c.reqPol)) console.log("YOK reqPol:", c.id, c.reqPol);
-const chained = new Set(E.CARDS.flatMap(c => ["L", "R"].flatMap(s => [c[s].next?.[0], c[s].pol?.doneCard]).filter(Boolean)));
-for (const c of E.CARDS) if (c.chain && !chained.has(c.id)) console.log("Yetim zincir kartı:", c.id);
+// ── Tutarlılık kontrolleri (tools/lint.mjs; test/content.test.mjs de aynısını çalıştırır)
+const lint = lintContent(E);
+for (const m of lint.errors) console.log("HATA:", m);
+for (const m of lint.warnings) console.log("uyarı:", m);
 
 // ── Oyuncu tipleri
 const bucket = v => (v === 0 ? 0 : Math.sign(v) * (Math.abs(v) >= 15 ? 17 : Math.abs(v) >= 8 ? 11 : 5));
@@ -70,21 +56,26 @@ const policies = {
 
 const N = Number(process.argv[2] || 3000);
 const q = (arr, p) => arr[Math.floor(p * (arr.length - 1))];
+const medians = {}, sideTally = {};
 for (const [name, pol] of Object.entries(policies)) {
-  const months = [], ends = {}, seen = {};
-  let term1 = 0, elections = 0, wins = 0, crises = 0, pols = 0, relHi = 0, relLo = 0, tekirSave = 0;
+  const months = [], ends = {}, seen = {}, tally = (sideTally[name] = {});
+  let term1 = 0, elections = 0, wins = 0, crises = 0, pols = 0, relHi = 0, relLo = 0, tekirSave = 0, dropped = 0, syn = 0, vaatAtElection = 0;
   for (let g = 0; g < N; g++) {
     const rng = mulberry(g * 7919 + 13);
     const s = E.newGame();
-    let guard = 0, wasElection = false;
+    let guard = 0;
     while (!s.over && guard++ < 3000) {
       const c = E.draw(s, rng);
       seen[c.id] = (seen[c.id] || 0) + 1;
       if (c.kind === "kriz") crises++;
       if (c.kind === "tekir") tekirSave++;
       if (c.kind === "sonuc") wins++;
-      if (c.kind === "secim") elections++;
-      E.choose(s, pol(s, rng), rng);
+      if (c.kind === "secim") { elections++; vaatAtElection += s.cnt.vaat || 0; }
+      const side = pol(s, rng);
+      // kartın yazıldığı taraf (masada yarı yarıya ters çevrilir): baskın seçenek ölçümü için
+      if (c.kind === "normal") { const t = (tally[c.id] ||= { L: 0, R: 0 }); t[c.flip ? (side === "L" ? "R" : "L") : side]++; }
+      const res = E.choose(s, side, rng);
+      for (const ev of res.events || []) { if (ev.syn) syn++; if (/yer açmak/.test(ev.msg)) dropped++; }
       pols = Math.max(pols, s.ongoing.length);
     }
     if (s.over.months >= 59) term1++;
@@ -98,8 +89,17 @@ for (const [name, pol] of Object.entries(policies)) {
   console.log(`ay p10/medyan/p90: ${q(months, .1)} / ${q(months, .5)} / ${q(months, .9)}   1. dönemi bitiren: %${(100 * term1 / N).toFixed(0)}   seçim kazanma: %${elections ? (100 * wins / elections).toFixed(0) : "-"}`);
   console.log(`oyun başına kriz kartı: ${(crises / N).toFixed(2)}   Tekir kurtarışı: ${(tekirSave / N).toFixed(2)}   dost(≥2): ${(relHi / N).toFixed(1)}   dargın(≤-2): ${(relLo / N).toFixed(1)}`);
   console.log("sonlar:", Object.entries(ends).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k}:${(100 * v / N).toFixed(0)}%`).join("  "));
+  console.log(`oyun başına etkileşim: ${(syn / N).toFixed(2)}   yer açmak için kalkan karar: ${(dropped / N).toFixed(2)}   seçimde ortalama vaat: ${elections ? (vaatAtElection / elections).toFixed(1) : "-"}   en çok yürürlükte: ${pols}`);
+  medians[name] = q(months, .5);
   if (name === "gorerek") {
     const never = E.CARDS.filter(c => !seen[c.id]).map(c => c.id);
     console.log("hiç çıkmayan:", never.join(", ") || "-");
   }
 }
+
+// Beceri önemli mi: usta oyuncu dikkatli oyuncudan belirgin uzun yaşamalı
+console.log(`\nusta/insan medyan oranı: ${(medians.usta / medians.insan).toFixed(2)}   usta/gorerek: ${(medians.usta / medians.gorerek).toFixed(2)}`);
+// Baskın seçenek: usta oyuncunun hep aynı tarafı seçtiği kartlar (tasarımda bir taraf bariz üstün demek)
+const dom = Object.entries(sideTally.usta || {}).map(([id, t]) => ({ id, n: t.L + t.R, p: t.L / (t.L + t.R) }))
+  .filter(x => x.n >= 40 && (x.p >= 0.9 || x.p <= 0.1)).sort((a, b) => Math.abs(b.p - 0.5) - Math.abs(a.p - 0.5));
+console.log(`baskın seçenekli kart (usta ≥%90 aynı taraf, ≥40 kez): ${dom.length}` + (dom.length ? "\n  " + dom.slice(0, 25).map(x => `${x.id}:${x.p >= 0.5 ? "L" : "R"}%${Math.round(100 * Math.max(x.p, 1 - x.p))}`).join("  ") : ""));
