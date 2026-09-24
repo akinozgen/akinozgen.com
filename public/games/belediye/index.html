@@ -662,71 +662,395 @@ button { font: inherit; color: inherit; }
 .wall-msg { font: 400 1.0313rem/1.5 var(--f-type); text-align: center; max-width: 46ch; color: #2a2620; background: rgba(255, 255, 255, .5); padding: .625rem .875rem; border-radius: .25rem; }
 #scr-wall .btn { color: #2a2620; border-color: rgba(42, 38, 32, .45); background: rgba(255, 255, 255, .45); }
 
-/* ───────── Seçim gecesi ───────── */
-#scr-secim { overflow-y: auto; align-items: center; padding-block: 1rem 1.5rem; background: radial-gradient(120% 80% at 50% 0%, #1d2b3f 0%, #111a28 60%, #0b111b 100%); }
-.ec { width: 100%; max-width: 64rem; display: flex; flex-direction: column; gap: .875rem; }
-.ec-top { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; padding-bottom: .5rem; border-bottom: 2px solid var(--brass-lo); }
-.ec-top h2 { margin: 0; flex: 1; min-width: 0; font: 400 clamp(1.25rem, 5vw, 1.875rem)/1.05 var(--f-display); color: var(--paper); }
-.ec-live { flex: none; padding: .25rem .5rem .1875rem; border-radius: .1875rem; background: #c8321e; color: #fff; font: 700 .75rem/1 var(--f-ui); letter-spacing: .16em; text-transform: uppercase; }
-.ec-live::before { content: "●"; margin-right: .3125rem; animation: blink 1s steps(2) infinite; }
-@keyframes blink { 50% { opacity: .15; } }
-.ec-date { font: 700 .8125rem/1 var(--f-ui); letter-spacing: .12em; text-transform: uppercase; color: var(--brass-hi); }
-.ec-open { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; align-items: center; gap: .625rem; }
-.ec-k { font: 700 .75rem/1 var(--f-ui); letter-spacing: .14em; text-transform: uppercase; color: rgba(243, 242, 236, .7); }
-.ec-open b { min-width: 4.6ch; font: 700 1.5rem/1 var(--f-ui); font-variant-numeric: tabular-nums; color: var(--paper); }
-.ec-prog { height: .5rem; border-radius: .25rem; background: rgba(255, 255, 255, .12); overflow: hidden; }
-.ec-prog i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--brass-lo), var(--brass-hi)); }
-.ec-main { display: grid; gap: .875rem; }
-.ec-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .5rem; }
-.ec-row {
-  position: relative; display: grid; grid-template-columns: 3rem minmax(0, 1fr) auto; grid-template-areas: "pic name pct" "pic bar bar";
-  align-items: center; column-gap: .625rem; row-gap: .3125rem; padding: .5rem .625rem; border-radius: .375rem;
-  background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .08); border-left: .3125rem solid var(--c);
+/* ───────── Seçim gecesi: Karakavak TV canlı yayın ekranı ─────────
+   Masaüstünde (≥860px, en az 5:4) 16:9 yayın çerçevesi ekrana sığar, gerekirse kenarda siyah bant kalır.
+   Dar ekranda alt alta dizilir: logo · oy farkı · adaylar · stüdyo · KJ · mahalleler · kayan yazı.
+   Resim yok, her şey CSS. Renkler aşağıdaki --tv-* değişkenlerinde; oyuncunun altını pirinç (--brass) değişkenlerinden.
+
+   ENTEGRASYON SÖZLEŞMESİ (JS bu id ve sınıfları doldurur; hepsi #scr-secim içinde)
+   #tv-diff        1. ile 2. arasındaki oy farkı, metin ("1.284")
+   #tv-open        açılan sandık yüzdesi, metin ("%37,4")
+   #tv-prog        ilerleme çubuğunun dolgusu (<i>): style.width = yüzde + "%"
+   #tv-date        tarih ve aday sayısı ("Mart 2034 · 5 aday"; CSS büyük harfe çevirir)
+   #tv-live        "Canlı" hapı (yanıp sönen nokta CSS'ten). Sonuçta metni değiştirilebilir ("Kesin sonuç")
+   #tv-cands       <ol>; her aday bir li.tv-cand[data-id], inline style="--c:<aday rengi>; --p:<0–100 oy payı>"
+                   li > .tv-pic > img            kare vesikalık
+                   li > .tv-body > .tv-lbl       renk bandındaki etiket ("Muhalefetin adayı")
+                                 > .tv-nm > .tv-name   ad
+                                 > .tv-pct     büyük yüzde ("%54,03")
+                                 > .tv-votes   yalnız sayı ("4.698.782"); "OY SAYISI" yazısını CSS ekler
+                   .lead  önde giden: bantta "▲ ÖNDE", parlak çerçeve (sırayı JS belirler; DOM sırası ekrandaki sıradır)
+                   .you   oyuncu: altın çerçeve, fotoğrafta "SİZ" rozeti, adın yanında "SİZİN ADAYINIZ" (hepsi CSS'ten)
+                   .won   kazanan: bantta "✓ SEÇİLDİ", vesikalıkta "SEÇİLDİ" mührü; o an diğer adaylar soluklaşır
+                   --p verilmezse kartın altındaki pay çizgisi görünmez.
+                   2–3 aday büyük kart, 4–5 aday sıkışık kart olur (CSS kendi sayar).
+   #tv-strip       mahalle kutuları (2–3 tane): div.tv-box[style="--c:<öndekinin rengi>"] >
+                     span.tv-box-ad ("Çarşı") · span.tv-box-open ("Açılan %99,7") ·
+                     p.tv-box-row[style="--c:…"] > b (kısaltılmış ad "N. Hanım") + span ("56,61"); oyuncunun satırına .you
+   #tv-stage       stüdyo sahnesi (16:9, masaüstünde KJ alt kenarını biraz örter). Sunucu SVG'si buraya takılır;
+                   arka plan ve duvar yazısı CSS'tedir, içerik silinse de kalır.
+   #tv-info        sonuçtan sonra sahnenin üstüne açılan döküm paneli, başta hidden. Dar ekranda sahnenin altına iner.
+                   #tv-blocs > div.tv-bloc > span.tv-bloc-ad (+ small) · div.tv-stack > i[style="--c;width:%"] (> b sayı, dar dilimde gizlenir) · em (sizin payınız)
+                             + sonda div.tv-legend > span[style="--c"] ad
+                   #tv-why   <ul>, her gerekçe bir <li> (whyLines). Masaüstünde sığmayan liste kendi içinde kayar.
+   #tv-kj-title    alt bant başlığı, kj().title (≤34 harf; CSS büyük harfe çevirir, en çok 2 satır)
+   #tv-kj-sub      alt bant alt satırı, kj().sub (≤90 harf; koyu yazı, beyaz zemin, en çok 2 satır). Boşsa gizlenir.
+   #tv-ticker      kayan yazı; ticker() satırları birer <span> (aralarına CSS ayraç koyar) ya da düz metin.
+                   Hız: --tv-tick-s (varsayılan 60s) inline verilebilir. Üstüne gelince durur, hareket azaltmada kaymaz.
+   #tv-fx          sağdaki kur kutusu, fx(): "<b>{ad}</b> {deger} <i class=up|down>{yon}</i>" (i isteğe bağlı).
+                   Dar ekranda kayan yazının üstünde ince bir satıra iner.
+   #btn-ec-skip, #btn-ec-go (hidden)   çerçevenin dışında; dar ekranda altta yapışık
+   #ec-say         görünmez aria-live duyuru
+   Klonlanacak örnekler: <template id="tv-cand-tpl"> (4 durum), #tv-box-tpl, #tv-bloc-tpl */
+#scr-secim {
+  --tv-ink: #07112a; --tv-white: #f6f8fc; --tv-cyan: #62c6ff; --tv-dim: rgba(222, 232, 250, .72);
+  --tv-red: #e3151e;
+  --tv-xs: max(11px, .75rem); --tv-s: max(11px, .875rem); --tv-m: max(12px, 1rem);
+  --tv-gloss: linear-gradient(180deg, rgba(255, 255, 255, .3) 0%, rgba(255, 255, 255, .08) 46%, rgba(255, 255, 255, 0) 52%, rgba(0, 0, 0, .16) 100%);
+  --tv-bar: linear-gradient(180deg, #2f6fd8 0%, #1648a8 50%, #0e3180 100%);
+  --tv-deep: linear-gradient(180deg, #11306f 0%, #0a1f52 55%, #071640 100%);
+  --tv-redbar: linear-gradient(180deg, #ff5145 0%, #e3151e 50%, #a90b12 100%);
+  --tv-panel: rgba(3, 11, 34, .78);
+  --tv-line: rgba(120, 175, 255, .22);
+  overflow-y: auto; overflow-x: hidden; align-items: center; gap: .625rem; padding-block: .75rem;
+  background: radial-gradient(110% 80% at 50% 35%, #0d1528 0%, #070b16 60%, #020409 100%);
 }
-.ec-row.you { background: rgba(236, 213, 146, .1); border-color: rgba(236, 213, 146, .35); border-left-color: var(--c); }
-.ec-row img { grid-area: pic; width: 3rem; height: 3rem; object-fit: cover; border-radius: .25rem; background: #f2efe6; }
-.ec-nm { grid-area: name; min-width: 0; }
-.ec-nm b { display: block; font: 400 1rem/1.15 var(--f-display); color: var(--paper); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ec-nm > span { display: block; font: 600 .75rem/1.25 var(--f-ui); letter-spacing: .05em; color: rgba(243, 242, 236, .65); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ec-pct { grid-area: pct; text-align: right; }
-.ec-pct b { display: block; font: 700 1.375rem/1 var(--f-ui); font-variant-numeric: tabular-nums; color: var(--paper); }
-.ec-pct span { font: 600 .6875rem/1 var(--f-ui); font-variant-numeric: tabular-nums; color: rgba(243, 242, 236, .55); }
-.ec-bar { grid-area: bar; position: relative; height: .5625rem; border-radius: .25rem; background: rgba(255, 255, 255, .08); overflow: hidden; }
-.ec-bar i { display: block; height: 100%; width: 0; background: var(--c); transition: width .25s ease-out; }
-.ec-bar::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: rgba(255, 255, 255, .28); } /* %50 çizgisi: yalnız başvuru, çoğunluk sistemi */
-.ec-nm .ec-lead { display: none; margin-left: .375rem; padding: .125rem .3125rem; border-radius: .1875rem; background: rgba(255, 255, 255, .16); font: 700 .625rem/1 var(--f-ui); letter-spacing: .12em; text-transform: uppercase; color: var(--paper); vertical-align: .125rem; }
-.ec-row.lead .ec-nm .ec-lead { display: inline-block; }
-.ec-row.won::after {
-  content: "Seçildi"; position: absolute; right: 5rem; top: 50%; padding: .25rem .5rem .1875rem; border: 3px solid #e0503a; border-radius: .25rem;
-  background: rgba(11, 17, 27, .75); color: #ff6a50; font: 700 1rem/1 var(--f-ui); letter-spacing: .18em; text-transform: uppercase;
-  transform: translateY(-50%) rotate(-7deg); animation: ecslam .4s cubic-bezier(.2, 1.5, .4, 1);
+.tv {
+  position: relative; flex: none; width: 100%; max-width: 40rem; display: flex; flex-direction: column; gap: .5rem;
+  padding: .5rem; border-radius: .375rem; overflow: hidden; color: var(--tv-white); font-family: var(--f-ui);
+  background:
+    linear-gradient(112deg, rgba(98, 198, 255, .07) 0 22%, transparent 22% 58%, rgba(98, 198, 255, .05) 58% 63%, transparent 63%),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, .025) 0 1px, transparent 1px 4px),
+    radial-gradient(130% 95% at 70% 12%, #1c4a9e 0%, #0e2a66 36%, #081a44 68%, #040c24 100%);
+  box-shadow: 0 0 0 1px rgba(120, 175, 255, .2), 0 1.5rem 3rem rgba(0, 0, 0, .65);
 }
-@keyframes ecslam { from { transform: translateY(-50%) rotate(-7deg) scale(2.2); opacity: 0; } }
-.ec-map { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .3125rem; }
-.ec-tile {
-  display: flex; flex-direction: column; justify-content: space-between; gap: .25rem; min-height: 3.25rem; padding: .375rem .4375rem; border-radius: .25rem;
-  background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .08); font: 600 .6875rem/1.15 var(--f-ui); color: rgba(243, 242, 236, .75); transition: background .4s, color .4s;
+.tv p, .tv h2, .tv h3 { margin: 0; }
+/* dar ekran: sarmalayıcılar çözülür, sıra order ile */
+.tv-left, .tv-main, .tv-top { display: contents; }
+.tv-brand { order: 1; } .tv-sum { order: 2; } .tv-cands { order: 3; } .tv-studio { order: 4; } .tv-kj { order: 5; } .tv-strip { order: 6; } .tv-tick { order: 7; }
+
+/* ── Kanal logosu ve CANLI */
+.tv-brand { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .125rem .25rem 0; }
+.tv-logo { display: grid; grid-template-columns: auto auto; align-items: center; column-gap: .4375rem; line-height: 1; }
+.tv-logo i { /* kavun */
+  grid-row: 1 / 3; width: 2.25rem; aspect-ratio: 1; border-radius: 50%;
+  background:
+    repeating-linear-gradient(64deg, transparent 0 .25rem, rgba(104, 112, 28, .42) .25rem .3125rem),
+    repeating-linear-gradient(-64deg, transparent 0 .25rem, rgba(104, 112, 28, .32) .25rem .3125rem),
+    radial-gradient(circle at 34% 30%, #fffbe2 0 7%, #f3de7e 28%, #cdb247 62%, #807520 100%);
+  box-shadow: inset 0 -.1875rem .375rem rgba(0, 0, 0, .3), 0 0 .75rem rgba(243, 222, 126, .35);
 }
-.ec-tile b { font: 700 .75rem/1 var(--f-ui); letter-spacing: .03em; }
-.ec-tile.on { background: var(--c); color: #0b111b; }
-.ec-anchor { margin: .625rem 0 0; min-height: 4.4em; padding: .625rem .75rem; border-left: 3px solid #c8321e; background: rgba(0, 0, 0, .3); font: 400 .9375rem/1.45 var(--f-type); color: var(--paper); }
-.ec-after { display: grid; gap: .875rem; }
-.ec-after h3 { margin: 0 0 .5rem; font: 700 .8125rem/1 var(--f-ui); letter-spacing: .16em; text-transform: uppercase; color: var(--brass-hi); }
-.ec-bloc { display: grid; grid-template-columns: 6.25rem minmax(0, 1fr) 3.25rem; align-items: center; gap: .5rem; margin-bottom: .4375rem; font: 600 .8125rem/1.2 var(--f-ui); color: var(--paper); }
-.ec-bloc small { display: block; font-weight: 500; font-size: .6875rem; color: rgba(243, 242, 236, .55); }
-.ec-stack { display: flex; height: .875rem; border-radius: .25rem; overflow: hidden; background: rgba(255, 255, 255, .08); }
-.ec-stack i { display: block; height: 100%; background: var(--c); }
-.ec-bloc em { font-style: normal; text-align: right; font-variant-numeric: tabular-nums; color: var(--brass-hi); }
-.ec-legend { display: flex; flex-wrap: wrap; gap: .25rem .75rem; margin-top: .375rem; font: 600 .75rem/1.2 var(--f-ui); color: rgba(243, 242, 236, .75); }
-.ec-legend span::before { content: ""; display: inline-block; width: .625rem; height: .625rem; margin-right: .3125rem; border-radius: .125rem; background: var(--c); vertical-align: -.0625rem; }
-.ec-why ul { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: .3125rem; font: 400 .9063rem/1.45 var(--f-type); color: rgba(243, 242, 236, .9); }
-.ec-act { display: flex; justify-content: center; gap: .625rem; }
-@media (min-width: 860px) {
-  .ec-main { grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); align-items: start; }
-  .ec-anchor { margin-top: .75rem; }
-  .ec-after { grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); align-items: start; }
+.tv-logo b { font: 400 1.75rem/.9 var(--f-display); letter-spacing: .02em; color: #fff; text-shadow: 0 .125rem .375rem rgba(0, 0, 0, .55), 0 0 1rem rgba(98, 198, 255, .35); }
+.tv-logo span { font: 700 var(--tv-xs)/1 var(--f-ui); letter-spacing: .3em; text-transform: uppercase; color: rgba(255, 255, 255, .82); }
+.tv-onair { display: flex; flex-direction: column; align-items: flex-end; gap: .3125rem; min-width: 0; }
+.tv-live {
+  display: inline-flex; align-items: center; gap: .375rem; padding: .3125rem .625rem .25rem; border-radius: 1rem;
+  background: var(--tv-redbar); color: #fff; font: 700 var(--tv-s)/1 var(--f-ui); letter-spacing: .16em; text-transform: uppercase;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .28), 0 .1875rem .625rem rgba(227, 21, 30, .45);
 }
-@media (prefers-reduced-motion: reduce) { .ec-live::before, .ec-row.won::after { animation: none; } .ec-bar i, .ec-tile { transition: none; } }
+.tv-live::before { content: ""; flex: none; width: .5rem; height: .5rem; border-radius: 50%; background: #fff; box-shadow: 0 0 .375rem #fff; animation: tvblink 1.1s ease-in-out infinite; }
+@keyframes tvblink { 50% { opacity: .12; } }
+.tv-date { font: 700 var(--tv-xs)/1 var(--f-ui); letter-spacing: .12em; text-transform: uppercase; color: var(--tv-dim); white-space: nowrap; }
+
+/* ── KARAKAVAK GENELİ · OY FARKI · AÇILAN SANDIK */
+.tv-sum { display: grid; border-radius: .25rem; overflow: hidden; background: var(--tv-panel); box-shadow: inset 0 0 0 1px var(--tv-line), 0 .25rem .75rem rgba(0, 0, 0, .35); }
+.tv-sum-h {
+  padding: .375rem .75rem .3125rem; border-left: .3125rem solid var(--tv-red); background: var(--tv-gloss), var(--tv-bar);
+  font: 700 var(--tv-m)/1 var(--f-ui); letter-spacing: .16em; text-transform: uppercase; text-shadow: 0 1px 0 rgba(0, 0, 0, .35);
+}
+.tv-sum-diff { display: flex; align-items: baseline; justify-content: space-between; gap: .75rem; padding: .375rem .75rem .125rem; }
+.tv-sum-diff span, .tv-sum-open span { font: 700 var(--tv-s)/1 var(--f-ui); letter-spacing: .14em; text-transform: uppercase; color: var(--tv-cyan); }
+.tv-sum-diff b { font: 700 2.375rem/1 var(--f-ui); font-variant-numeric: tabular-nums; letter-spacing: .01em; text-shadow: 0 .125rem .5rem rgba(0, 0, 0, .45); }
+.tv-sum-open { display: grid; grid-template-columns: auto auto minmax(3rem, 1fr); align-items: center; gap: .5rem; padding: .3125rem .75rem .5rem; border-top: 1px solid rgba(255, 255, 255, .08); }
+.tv-sum-open b { font: 700 1.125rem/1 var(--f-ui); font-variant-numeric: tabular-nums; }
+.tv-prog { height: .3125rem; border-radius: 1rem; background: rgba(255, 255, 255, .14); overflow: hidden; }
+.tv-prog i { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, #2f6fd8, var(--tv-cyan) 70%, #fff); box-shadow: 0 0 .5rem var(--tv-cyan); transition: width .3s ease-out; }
+
+/* ── Aday kartları */
+.tv-cands { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .4375rem; }
+.tv-cand {
+  --ph: 4.75rem;
+  position: relative; display: flex; min-height: var(--ph); border-radius: .25rem;
+  background: var(--tv-deep); box-shadow: inset 0 0 0 1px var(--tv-line), 0 .1875rem .5rem rgba(0, 0, 0, .35);
+  transition: filter .5s, opacity .5s;
+}
+.tv-pic { flex: none; position: relative; width: var(--ph); border-radius: .25rem 0 0 .25rem; background: var(--c); }
+.tv-pic img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+.tv-body {
+  position: relative; flex: 1; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "lbl lbl" "nm pct" "votes pct"; align-content: start; column-gap: .5rem; padding-bottom: .375rem;
+}
+.tv-body::after { /* oy payı çizgisi: --p */
+  content: ""; position: absolute; left: 0; bottom: 0; height: .1875rem; width: calc(var(--p, 0) * 1%); max-width: 100%;
+  background: var(--c); box-shadow: 0 0 .375rem var(--c); transition: width .3s ease-out;
+}
+.tv-lbl {
+  grid-area: lbl; position: relative; display: block; padding: .25rem .625rem .1875rem; border-top-right-radius: .25rem;
+  background: var(--tv-gloss), var(--c); color: var(--tv-ink);
+  font: 700 var(--tv-xs)/1.15 var(--f-ui); letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.tv-nm { grid-area: nm; display: flex; align-items: baseline; gap: .4375rem; min-width: 0; padding: .3125rem 0 0 .625rem; }
+.tv-name { min-width: 0; font: 700 1.1875rem/1.05 var(--f-ui); letter-spacing: .02em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tv-pct { grid-area: pct; align-self: center; padding: .25rem .625rem 0 0; font: 700 1.875rem/1 var(--f-ui); font-variant-numeric: tabular-nums; letter-spacing: .01em; text-shadow: 0 .125rem .5rem rgba(0, 0, 0, .5); }
+.tv-votes { grid-area: votes; padding: .1875rem 0 0 .625rem; font: 600 var(--tv-xs)/1.2 var(--f-ui); font-variant-numeric: tabular-nums; color: var(--tv-white); white-space: nowrap; }
+.tv-votes::before { content: "OY SAYISI "; font-weight: 700; letter-spacing: .08em; color: var(--tv-cyan); }
+/* önde */
+.tv-cand.lead { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .5), 0 0 1rem rgba(98, 198, 255, .25), 0 .1875rem .5rem rgba(0, 0, 0, .35); }
+.tv-cand.lead .tv-lbl { padding-right: 4.25rem; }
+.tv-cand.lead .tv-lbl::after, .tv-cand.won .tv-lbl::after {
+  content: "▲ ÖNDE"; position: absolute; right: .25rem; top: 50%; transform: translateY(-50%); padding: .125rem .375rem .0625rem; border-radius: .1875rem;
+  background: var(--tv-ink); color: #fff; font: 700 var(--tv-xs)/1 var(--f-ui); letter-spacing: .08em;
+}
+/* siz: altın çerçeve, rozet, alt yazı */
+.tv-cand.you {
+  background: linear-gradient(90deg, rgba(201, 165, 76, .3), rgba(201, 165, 76, .08) 70%), var(--tv-deep);
+  box-shadow: 0 0 0 .125rem var(--brass-hi), 0 0 0 .25rem var(--brass-lo), 0 0 1.25rem .25rem rgba(236, 213, 146, .38);
+}
+.tv-cand.you .tv-name { color: var(--brass-hi); }
+.tv-cand.you .tv-nm::after { content: "SİZİN ADAYINIZ"; flex: none; font: 700 var(--tv-xs)/1 var(--f-ui); letter-spacing: .08em; color: var(--brass-hi); opacity: .9; }
+.tv-cand.you .tv-pic::after {
+  content: "★ SİZ"; position: absolute; left: 0; top: 0; padding: .25rem .4375rem .1875rem .375rem; border-radius: .25rem 0 .25rem 0;
+  background: linear-gradient(180deg, var(--brass-hi), var(--brass) 55%, var(--brass-lo)); color: #2a1d08;
+  font: 700 var(--tv-s)/1 var(--f-ui); letter-spacing: .1em; box-shadow: 0 .125rem .375rem rgba(0, 0, 0, .45);
+}
+/* seçildi: bantta kırmızı çip, vesikalığa mühür */
+.tv-cand.won .tv-lbl { padding-right: 5.5rem; }
+.tv-cand.won .tv-lbl::after { content: "✓ SEÇİLDİ"; background: var(--tv-red); box-shadow: 0 0 .5rem rgba(227, 21, 30, .6); }
+.tv-cand.won .tv-pic::before {
+  content: "SEÇİLDİ"; position: absolute; z-index: 3; left: 50%; bottom: 9%; padding: .2em .35em .1em; border: max(2px, .09em) solid #ff4f3a; border-radius: .25em;
+  background: rgba(6, 14, 36, .74); color: #ff5b45; font: 400 max(11px, .8125rem)/1 var(--f-display); white-space: nowrap;
+  transform: translateX(-50%) rotate(-10deg); box-shadow: 0 0 0 .1em rgba(6, 14, 36, .45), 0 .2em .6em rgba(0, 0, 0, .5);
+  animation: tvslam .45s cubic-bezier(.2, 1.5, .4, 1) both;
+}
+@keyframes tvslam { from { transform: translateX(-50%) rotate(-10deg) scale(2.4); opacity: 0; } }
+.tv-cand.won { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .6), 0 0 1.25rem rgba(255, 91, 69, .35), 0 .1875rem .5rem rgba(0, 0, 0, .35); }
+.tv-cand.won.you { box-shadow: 0 0 0 .125rem var(--brass-hi), 0 0 0 .25rem var(--brass-lo), 0 0 1.5rem .375rem rgba(236, 213, 146, .5); }
+.tv-cands:has(> .won) > .tv-cand:not(.won) { filter: saturate(.45) brightness(.72); }
+.tv-cands:has(> .won) > .tv-cand.you:not(.won) { filter: saturate(.8) brightness(.92); }
+
+/* ── Mahalle kutuları: dar ekranda her kutu tek satır (ad | 1. | 2.), genişte yan yana dikey kutular */
+.tv-strip { display: grid; grid-template-columns: minmax(0, 1fr); gap: .375rem; }
+.tv-box {
+  display: grid; grid-template-columns: minmax(0, 6.5rem) minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: 1fr auto; border-radius: .25rem; overflow: hidden;
+  background: var(--tv-panel); box-shadow: inset 0 0 0 1px var(--tv-line); border-left: .1875rem solid var(--c, var(--tv-cyan));
+}
+.tv-box-ad, .tv-box-open { grid-column: 1; background: var(--tv-gloss), var(--tv-bar); }
+.tv-box-ad { grid-row: 1; align-self: stretch; min-width: 0; padding: .3125rem .4375rem .0625rem; font: 700 var(--tv-s)/1.05 var(--f-ui); letter-spacing: .04em; text-transform: uppercase; overflow-wrap: anywhere; }
+.tv-box-open { grid-row: 2; padding: .125rem .4375rem .25rem; font: 700 var(--tv-xs)/1.15 var(--f-ui); letter-spacing: .04em; text-transform: uppercase; color: var(--tv-cyan); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tv-box-row { grid-row: 1 / 3; display: flex; align-items: center; gap: .375rem; min-width: 0; padding: .25rem .5rem .1875rem; font: 600 var(--tv-s)/1.1 var(--f-ui); }
+.tv-box-row + .tv-box-row { border-left: 1px solid rgba(255, 255, 255, .1); }
+.tv-box-row::before { content: ""; flex: none; width: .3125rem; height: 1em; border-radius: 1px; background: var(--c); }
+.tv-box-row b { flex: 1; min-width: 0; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tv-box-row span { flex: none; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tv-box-row.you b, .tv-box-row.you span { color: var(--brass-hi); }
+@media (min-width: 560px) {
+  .tv-strip { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
+  .tv-box { grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto; grid-auto-rows: 1fr; border-left: 0; border-top: .1875rem solid var(--c, var(--tv-cyan)); }
+  .tv-box-ad, .tv-box-open { grid-row: 1; padding-block: .3125rem .25rem; }
+  .tv-box-ad { padding-inline: .5rem; letter-spacing: .08em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal; }
+  .tv-box-open { grid-column: 2; padding-inline: .5rem; }
+  .tv-box-row { grid-row: auto; grid-column: 1 / -1; padding-left: 0; }
+  .tv-box-row::before { align-self: stretch; height: auto; margin: -.25rem 0 -.1875rem; border-radius: 0; }
+  .tv-box-row + .tv-box-row { border-left: 0; border-top: 1px solid rgba(255, 255, 255, .08); }
+}
+
+/* ── Stüdyo: sunucu buraya takılır; arka plan CSS, içerik değişse de kalır */
+.tv-studio { min-width: 0; }
+.tv-screen { position: relative; container-type: inline-size; }
+.tv-stage {
+  position: relative; width: 100%; aspect-ratio: 16 / 9; isolation: isolate; overflow: hidden; border-radius: .25rem;
+  background:
+    radial-gradient(38% 55% at 50% 44%, rgba(98, 198, 255, .28), transparent 70%),
+    conic-gradient(from 180deg at 50% -12%, transparent 0 150deg, rgba(150, 205, 255, .13) 158deg, transparent 166deg 176deg, rgba(150, 205, 255, .11) 184deg, transparent 192deg 202deg, rgba(150, 205, 255, .13) 210deg, transparent 218deg),
+    linear-gradient(180deg, transparent 0 71%, #0b1a44 71%, #050d28 100%),
+    radial-gradient(120% 90% at 50% 30%, #2a5fc2 0%, #143b8e 38%, #0a2260 70%, #06143a 100%);
+  box-shadow: inset 0 0 0 1px rgba(120, 175, 255, .3), inset 0 -2rem 3rem rgba(0, 0, 0, .35);
+}
+.tv-stage::before { /* LED duvar */
+  content: ""; position: absolute; z-index: -1; left: 8%; right: 8%; top: 9%; height: 58%; border-radius: .375rem;
+  background:
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, .28) 0 1px, transparent 1px 2.2cqw),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, .28) 0 1px, transparent 1px 2.2cqw),
+    radial-gradient(60% 80% at 50% 40%, rgba(120, 200, 255, .35), transparent 75%),
+    linear-gradient(180deg, #1f56b8, #0f2f78);
+  box-shadow: 0 0 0 .25rem rgba(4, 12, 34, .7), 0 0 2.5rem rgba(98, 198, 255, .3);
+}
+.tv-stage::after { /* duvar yazısı */
+  content: "KARAKAVAK SEÇİYOR"; position: absolute; z-index: -1; left: 0; right: 0; top: 17%; text-align: center; white-space: nowrap;
+  font: 400 clamp(1rem, 5.2cqw, 4.5rem)/1 var(--f-display); letter-spacing: .06em; color: rgba(255, 255, 255, .13);
+  text-shadow: 0 0 1.5rem rgba(98, 198, 255, .45);
+}
+
+/* ── Döküm paneli (sonuçtan sonra): dar ekranda sahnenin altında, genişte sahnenin üstünde */
+.tv-info {
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; margin-top: .5rem; padding: .75rem;
+  border-radius: .25rem; background: linear-gradient(180deg, rgba(8, 24, 62, .95), rgba(4, 12, 34, .96)); box-shadow: inset 0 0 0 1px var(--tv-line);
+  animation: tvinfo .5s ease-out both;
+}
+@keyframes tvinfo { from { opacity: 0; transform: translateY(.75rem); } }
+.tv-info-col { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; }
+.tv-info-col:first-child::before { /* panel başlığı */
+  content: "SEÇMEN DÖKÜMÜ"; margin-bottom: .75rem; padding-bottom: .3125rem; border-bottom: .1875rem solid var(--tv-red);
+  font: 700 1.25rem/1 var(--f-ui); letter-spacing: .14em; color: #fff; text-shadow: 0 .125rem .375rem rgba(0, 0, 0, .5);
+}
+.tv-blocs, .tv-why { align-self: stretch; }
+.tv-info-h {
+  display: inline-block; margin-bottom: .625rem; padding: .3125rem .75rem .25rem; border-left: .3125rem solid var(--tv-red);
+  background: var(--tv-gloss), var(--tv-bar); font: 700 var(--tv-m)/1 var(--f-ui); letter-spacing: .12em; text-transform: uppercase; box-shadow: 0 .125rem .5rem rgba(0, 0, 0, .35);
+}
+.tv-info-h.why { border-left-color: #fff; background: var(--tv-gloss), var(--tv-redbar); }
+/* blok: üstte ad ve sizin payınız, altta tam genişlik yığılı çubuk */
+.tv-bloc { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "ad em" "bar bar"; align-items: end; gap: .3125rem .625rem; margin-bottom: .625rem; }
+.tv-bloc-ad { grid-area: ad; min-width: 0; font: 700 var(--tv-m)/1.1 var(--f-ui); letter-spacing: .04em; text-transform: uppercase; }
+.tv-bloc-ad small { margin-left: .4375rem; font: 500 var(--tv-xs)/1.15 var(--f-ui); letter-spacing: 0; text-transform: none; color: var(--tv-dim); }
+.tv-stack { grid-area: bar; display: flex; height: 1.5rem; border-radius: .1875rem; overflow: hidden; background: rgba(255, 255, 255, .1); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12); }
+.tv-stack i { flex: none; min-width: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; background: var(--tv-gloss), var(--c); container-type: inline-size; }
+.tv-stack i + i { box-shadow: inset 1px 0 0 rgba(4, 12, 34, .55); }
+.tv-stack b { font: 700 var(--tv-xs)/1 var(--f-ui); color: var(--tv-ink); font-variant-numeric: tabular-nums; }
+@container (max-width: 1.625rem) { .tv-stack b { display: none; } }
+.tv-bloc em { grid-area: em; display: flex; align-items: center; justify-content: flex-end; gap: .3125rem; font: 700 1.0625rem/1 var(--f-ui); font-style: normal; font-variant-numeric: tabular-nums; color: var(--brass-hi); white-space: nowrap; }
+.tv-bloc em::before { /* sizin payınız */
+  content: "SİZ"; padding: .1875rem .3125rem .125rem; border-radius: .125rem; background: linear-gradient(180deg, var(--brass-hi), var(--brass) 55%, var(--brass-lo));
+  color: #2a1d08; font-size: var(--tv-xs); letter-spacing: .08em;
+}
+.tv-legend { display: flex; flex-wrap: wrap; gap: .25rem .875rem; margin-top: .125rem; font: 600 var(--tv-xs)/1.2 var(--f-ui); letter-spacing: .04em; text-transform: uppercase; color: var(--tv-dim); }
+.tv-legend span::before { content: ""; display: inline-block; width: .625rem; height: .625rem; margin-right: .3125rem; border-radius: .125rem; background: var(--c); vertical-align: -.0625rem; }
+.tv-why { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .375rem; }
+.tv-why li {
+  position: relative; padding: .375rem .625rem .375rem 1.625rem; border-left: .1875rem solid var(--tv-red); background: rgba(255, 255, 255, .06);
+  font: 600 var(--tv-m)/1.3 var(--f-ui); letter-spacing: .01em; text-wrap: pretty;
+}
+.tv-why li::before { content: ""; position: absolute; left: .625rem; top: .8em; width: .4375rem; height: .4375rem; background: var(--tv-red); transform: rotate(45deg); }
+
+/* ── Alt bant (KJ) */
+.tv-kj { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: flex-start; filter: drop-shadow(0 .25rem .625rem rgba(0, 0, 0, .5)); }
+.tv-kj-tab { padding: .3125rem .75rem .25rem; border-radius: .1875rem .1875rem 0 0; background: var(--tv-gloss), var(--tv-redbar); font: 700 var(--tv-s)/1 var(--f-ui); letter-spacing: .16em; text-transform: uppercase; }
+.tv-kj-title, .tv-kj-sub { align-self: stretch; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; text-wrap: balance; }
+.tv-kj-title {
+  padding: .375rem .75rem .3125rem; border-left: .3125rem solid var(--tv-red); background: var(--tv-gloss), linear-gradient(180deg, #123683, #0a1f55 60%, #061540);
+  font: 700 1.5rem/1.05 var(--f-ui); letter-spacing: .02em; text-transform: uppercase; text-shadow: 0 .125rem .25rem rgba(0, 0, 0, .5);
+}
+.tv-kj-sub { padding: .3125rem .75rem .25rem 1.0625rem; background: linear-gradient(180deg, #ffffff, #dde5f2); color: var(--tv-ink); font: 600 var(--tv-m)/1.25 var(--f-ui); letter-spacing: .01em; }
+.tv-kj-sub:empty { display: none; }
+
+/* ── Kayan yazı */
+.tv-tick { display: flex; align-items: stretch; height: 2.5rem; border-radius: .1875rem; overflow: hidden; background: linear-gradient(180deg, #ffffff, #d7dfec); color: var(--tv-ink); }
+.tv-tick-lbl { flex: none; display: flex; align-items: center; padding: 0 .625rem; background: var(--tv-gloss), var(--tv-redbar); color: #fff; font: 700 var(--tv-s)/1 var(--f-ui); letter-spacing: .12em; text-transform: uppercase; }
+.tv-tick-win { flex: 1; min-width: 0; display: flex; align-items: center; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 .75rem, #000 calc(100% - .75rem), transparent); mask-image: linear-gradient(90deg, transparent, #000 .75rem, #000 calc(100% - .75rem), transparent); }
+.tv-tick-track { flex: none; padding-left: 100%; white-space: nowrap; font: 600 var(--tv-m)/1 var(--f-ui); letter-spacing: .01em; animation: tvmarq var(--tv-tick-s, 60s) linear infinite; }
+.tv-tick-track > span + span::before { content: "◆"; display: inline-block; margin: 0 .875rem; color: var(--tv-red); font-size: var(--tv-xs); vertical-align: .1em; }
+.tv-tick:hover .tv-tick-track { animation-play-state: paused; }
+@keyframes tvmarq { to { transform: translateX(-100%); } }
+.tv-fx {
+  flex: none; display: flex; align-items: center; gap: .3125rem; padding: 0 .625rem; background: var(--tv-gloss), linear-gradient(180deg, #123683, #071640);
+  color: #ffe27a; font: 700 var(--tv-m)/1 var(--f-ui); font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.tv-fx b { color: #fff; font-weight: 700; letter-spacing: .06em; }
+.tv-fx i { font-style: normal; font-size: var(--tv-s); }
+.tv-fx .up { color: #6ee58c; } .tv-fx .down { color: #ff6b5c; }
+/* dar ekran: kur kutusu şeridin üstünde ince bir satır olur, kayan yazıya yer kalsın */
+@media (max-width: 559px) {
+  .tv-tick { flex-wrap: wrap; height: auto; }
+  .tv-tick-lbl, .tv-tick-win { height: 2.5rem; }
+  .tv-fx { order: -1; flex: 1 0 100%; justify-content: flex-end; height: 1.75rem; }
+}
+
+/* ── Düğmeler: çerçevenin dışında; dar ekranda altta yapışık bir çubuk */
+.tv-act {
+  position: sticky; bottom: 0; z-index: 5; flex: none; width: calc(100% + 2 * var(--gutter)); max-width: none; margin: auto calc(-1 * var(--gutter)) -.75rem;
+  display: flex; justify-content: center; gap: .625rem; padding: .625rem var(--gutter) calc(.625rem + env(safe-area-inset-bottom, 0px));
+  background: rgba(4, 7, 14, .94); border-top: 1px solid rgba(236, 213, 146, .2); box-shadow: 0 -.5rem 1.25rem rgba(0, 0, 0, .5);
+  -webkit-backdrop-filter: blur(.375rem); backdrop-filter: blur(.375rem);
+}
+.tv-act .btn { flex: 1; max-width: 18rem; padding: .75rem 1.125rem .6875rem; }
+
+/* ── Masaüstü: 16:9 yayın çerçevesi, kaydırmadan sığar */
+@media (min-width: 860px) and (min-aspect-ratio: 5/4) {
+  #scr-secim { --tv-act: 3.25rem; container-type: size; overflow: hidden; justify-content: center; }
+  .tv, .tv-act { width: min(100cqw, (100cqh - var(--tv-act)) * 16 / 9); }
+  /* tek ızgara: üst sıra (özet | mahalleler + logo) aynı boyda, altında adaylar | stüdyo + KJ, en altta kayan yazı */
+  .tv {
+    max-width: none; aspect-ratio: 16 / 9; display: grid; grid-template-columns: minmax(0, clamp(21rem, 30%, 28rem)) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto auto; gap: .625rem 1rem; padding: .875rem 1rem 0; border-radius: .25rem;
+  }
+  .tv-left, .tv-main { display: contents; }
+  .tv-brand, .tv-sum, .tv-cands, .tv-studio, .tv-kj, .tv-strip, .tv-tick { order: 0; }
+  .tv-sum { grid-area: 1 / 1; }
+  .tv-cands { grid-area: 2 / 1 / 4 / 2; min-height: 0; gap: .5rem; }
+  .tv-top { grid-area: 1 / 2; display: flex; align-items: stretch; gap: .875rem; min-width: 0; }
+  .tv-studio { grid-area: 2 / 2; }
+  .tv-kj { grid-area: 3 / 2; }
+  .tv-tick { grid-area: 4 / 1 / 5 / 3; }
+
+  .tv-strip { flex: 1; min-width: 0; gap: .5rem; }
+  .tv-box-ad { font-size: var(--tv-m); }
+  .tv-box-row { font-size: var(--tv-m); }
+  .tv-brand { flex: none; flex-direction: column; align-items: flex-end; justify-content: space-between; gap: .4375rem; padding: .125rem 0 0; }
+  .tv-logo b { font-size: 2rem; }
+  .tv-logo i { width: 2.5rem; }
+  .tv-sum-diff b { font-size: 2.75rem; }
+
+  .tv-cand { --ph: min(100cqh, 36cqw); flex: 1 1 0; min-height: 5.25rem; max-height: 8rem; container-type: size; } /* vesikalık kare, uzun kartta dikey kırpılır */
+  .tv-body { grid-template-areas: "lbl lbl" "nm nm" "pct votes"; grid-template-rows: auto auto minmax(0, 1fr); padding-bottom: .3125rem; }
+  .tv-lbl { padding-block: .3125rem .25rem; }
+  .tv-nm { padding-top: .375rem; }
+  .tv-name { font-size: 1.3125rem; }
+  .tv-pct { align-self: end; padding: 0 0 0 .625rem; font-size: 2.5rem; }
+  .tv-votes { align-self: end; display: flex; flex-direction: column; align-items: flex-end; padding: 0 .625rem .25rem 0; font-size: var(--tv-s); line-height: 1.1; }
+  .tv-votes::before { content: "OY SAYISI"; font-size: var(--tv-xs); }
+  .tv-cand.you .tv-pic::after { font-size: var(--tv-m); padding: .3125rem .5rem .25rem .4375rem; }
+  .tv-cand.won .tv-pic::before { font-size: clamp(11px, 15cqh, 2.25rem); }
+  /* 2–3 aday: büyük kart */
+  .tv-cands:not(:has(> .tv-cand:nth-child(4))) > .tv-cand { max-height: 13rem; }
+  .tv-cands:not(:has(> .tv-cand:nth-child(4))) .tv-nm { flex-wrap: wrap; row-gap: .25rem; }
+  .tv-cands:not(:has(> .tv-cand:nth-child(4))) .tv-name { font-size: 1.625rem; }
+  .tv-cands:not(:has(> .tv-cand:nth-child(4))) .tv-pct { font-size: 3.25rem; }
+  .tv-cands:not(:has(> .tv-cand:nth-child(4))) .tv-lbl { font-size: var(--tv-s); }
+
+  .tv-studio { container-type: size; min-height: 0; display: grid; place-items: end center; }
+  .tv-screen { width: min(100cqw, 100cqh * 16 / 9); aspect-ratio: 16 / 9; }
+  .tv-stage { position: absolute; inset: 0; aspect-ratio: auto; }
+  .tv-info {
+    position: absolute; inset: 0; margin: 0; padding: 1rem 1.25rem 2.5rem; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); grid-template-rows: minmax(0, 1fr); gap: 1rem;
+    background: linear-gradient(180deg, rgba(8, 24, 62, .93), rgba(4, 12, 34, .95)); -webkit-backdrop-filter: blur(.375rem); backdrop-filter: blur(.375rem);
+  }
+  .tv-info-col { min-height: 0; padding: .875rem 1rem; border-radius: .25rem; background: rgba(255, 255, 255, .035); box-shadow: inset 0 0 0 1px var(--tv-line); }
+  .tv-info-col:first-child::before { font-size: 1.5rem; margin-bottom: .875rem; }
+  .tv-info-h { margin-bottom: .75rem; padding: .375rem .875rem .3125rem; font-size: 1.125rem; }
+  .tv-bloc { gap: .375rem .75rem; margin-bottom: .75rem; }
+  .tv-bloc-ad { font-size: 1.125rem; }
+  .tv-bloc-ad small { font-size: var(--tv-s); }
+  .tv-stack { height: 1.875rem; }
+  .tv-stack b { font-size: var(--tv-s); }
+  .tv-bloc em { font-size: 1.25rem; }
+  .tv-legend { gap: .375rem 1rem; margin-top: .125rem; font-size: var(--tv-s); }
+  /* uzun gerekçe listesi sahneye sığmazsa kendi içinde kayar (sayfa kaymaz) */
+  .tv-why { flex: 1; min-height: 0; gap: .3125rem; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(98, 198, 255, .45) transparent; }
+  .tv-why li { flex: none; padding: .3125rem .625rem .3125rem 1.5rem; font-size: .9375rem; line-height: 1.25; }
+  .tv-why li::before { left: .625rem; top: .75em; }
+
+  .tv-kj { margin-top: -2.25rem; }
+  .tv-kj-title { font-size: 2rem; padding: .4375rem 1rem .375rem; }
+  .tv-kj-sub { padding: .375rem 1rem .3125rem 1.3125rem; font-size: 1.125rem; }
+  .tv-kj-tab { padding: .375rem .875rem .3125rem; }
+
+  .tv-tick { height: 2.625rem; margin-inline: -1rem; border-radius: 0; }
+  .tv-tick-lbl { padding: 0 1rem; }
+  .tv-tick-track { font-size: 1.125rem; }
+  .tv-fx { padding: 0 1rem; font-size: 1.125rem; }
+
+  .tv-act {
+    position: static; height: calc(var(--tv-act) - .625rem); margin: 0; padding: 0; justify-content: flex-end; align-items: center;
+    background: none; border: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
+  .tv-act .btn { flex: none; padding: .5625rem 1.125rem .5rem; font-size: .9375rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tv-live::before, .tv-cand.won .tv-pic::before, .tv-info { animation: none; }
+  .tv-tick-track { animation: none; padding-left: 0; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; }
+  .tv-prog i, .tv-body::after, .tv-cand { transition: none; }
+}
 
 /* ───────── Vesikalık seçimi ───────── */
 #scr-pick { overflow-y: auto; align-items: center; padding-block: 1.375rem 1.75rem; }
@@ -928,36 +1252,71 @@ button { font: inherit; color: inherit; }
     </div>
   </section>
 
-  <!-- Seçim gecesi: sandıklar açılırken canlı sonuç, ardından seçmen grubu dökümü -->
+  <!-- Seçim gecesi: Karakavak TV canlı yayını. Sandıklar açılırken sonuç, ardından seçmen dökümü. Sözleşme style.css "Seçim gecesi" bölümünde. -->
   <section id="scr-secim" class="screen" aria-label="Seçim gecesi" hidden>
-    <div class="ec">
-      <header class="ec-top">
-        <span class="ec-live">Canlı</span>
-        <h2>Karakavak Seçim Gecesi</h2>
-        <span class="ec-date" id="ec-date"></span>
-      </header>
-      <div class="ec-open">
-        <span class="ec-k">Açılan sandık</span><b id="ec-open">%0</b>
-        <div class="ec-prog" aria-hidden="true"><i id="ec-prog"></i></div>
-        <span class="ec-k" id="ec-turnout"></span>
+    <div class="tv" id="tv">
+      <div class="tv-left">
+        <div class="tv-sum">
+          <p class="tv-sum-h">Karakavak geneli</p>
+          <p class="tv-sum-diff"><span>Oy farkı</span><b id="tv-diff">0</b></p>
+          <div class="tv-sum-open"><span>Açılan sandık</span><b id="tv-open">%0</b><div class="tv-prog" aria-hidden="true"><i id="tv-prog"></i></div></div>
+        </div>
+        <ol class="tv-cands" id="tv-cands" aria-label="Adaylar"></ol>
       </div>
-      <div class="ec-main">
-        <ol class="ec-list" id="ec-list"></ol>
-        <div class="ec-side">
-          <div class="ec-map" id="ec-map" aria-hidden="true"></div>
-          <p class="ec-anchor" id="ec-anchor"></p>
+      <div class="tv-main">
+        <div class="tv-top">
+          <div class="tv-strip" id="tv-strip" aria-label="Mahalle sonuçları"></div>
+          <div class="tv-brand">
+            <div class="tv-logo" role="img" aria-label="Karakavak TV"><i></i><b>KTV</b><span>Karakavak</span></div>
+            <div class="tv-onair"><span class="tv-live" id="tv-live">Canlı</span><span class="tv-date" id="tv-date"></span></div>
+          </div>
+        </div>
+        <div class="tv-studio">
+          <div class="tv-screen">
+            <div class="tv-stage" id="tv-stage"></div>
+            <div class="tv-info" id="tv-info" hidden>
+              <div class="tv-info-col"><h3 class="tv-info-h">Kim kime oy verdi?</h3><div class="tv-blocs" id="tv-blocs"></div></div>
+              <div class="tv-info-col"><h3 class="tv-info-h why">Neden?</h3><ul class="tv-why" id="tv-why"></ul></div>
+            </div>
+          </div>
+        </div>
+        <div class="tv-kj">
+          <span class="tv-kj-tab">Son dakika</span>
+          <h2 class="tv-kj-title" id="tv-kj-title">Karakavak sandık başında</h2>
+          <p class="tv-kj-sub" id="tv-kj-sub">Sandıklar birazdan açılıyor</p>
         </div>
       </div>
-      <div class="ec-after" id="ec-after" hidden>
-        <div class="ec-blocs"><h3>Kim kime oy verdi?</h3><div id="ec-blocs"></div></div>
-        <div class="ec-why"><h3>Neden?</h3><ul id="ec-why"></ul></div>
-      </div>
-      <p class="sr" aria-live="polite" id="ec-say"></p>
-      <div class="ec-act">
-        <button id="btn-ec-skip" class="btn" type="button">Sonucu göster</button>
-        <button id="btn-ec-go" class="btn primary" type="button" hidden>Devam</button>
+      <div class="tv-tick">
+        <span class="tv-tick-lbl">Son dakika</span>
+        <div class="tv-tick-win"><p class="tv-tick-track" id="tv-ticker"></p></div>
+        <span class="tv-fx" id="tv-fx"><b>KAVUN/TL</b> 14,90</span>
       </div>
     </div>
+    <p class="sr" aria-live="polite" id="ec-say"></p>
+    <div class="tv-act">
+      <button id="btn-ec-skip" class="btn" type="button">Sonucu göster</button>
+      <button id="btn-ec-go" class="btn primary" type="button" hidden>Devam</button>
+    </div>
+    <!-- Entegrasyon örnekleri: klonlanır, doğrudan görünmez. Aday durumları: düz · önde · siz · seçildi -->
+    <template id="tv-cand-tpl">
+      <li class="tv-cand" data-id="bekir" style="--c:#5cc08a;--p:14.2"><div class="tv-pic"><img alt="" draggable="false"></div>
+        <div class="tv-body"><span class="tv-lbl">Esnafın adayı</span><span class="tv-nm"><b class="tv-name">Hacı Bekir</b></span><b class="tv-pct">%14,20</b><span class="tv-votes">1.284</span></div></li>
+      <li class="tv-cand lead" data-id="nermin" style="--c:#e8715a;--p:36.8"><div class="tv-pic"><img alt="" draggable="false"></div>
+        <div class="tv-body"><span class="tv-lbl">Muhalefetin adayı</span><span class="tv-nm"><b class="tv-name">Nermin Hanım</b></span><b class="tv-pct">%36,80</b><span class="tv-votes">3.327</span></div></li>
+      <li class="tv-cand you" data-id="you" style="--c:#e2bd5a;--p:34.1"><div class="tv-pic"><img alt="" draggable="false"></div>
+        <div class="tv-body"><span class="tv-lbl">Belediye Başkanı, yeniden aday</span><span class="tv-nm"><b class="tv-name">Aslı Kavaklıoğlu</b></span><b class="tv-pct">%34,10</b><span class="tv-votes">3.083</span></div></li>
+      <li class="tv-cand you lead won" data-id="you" style="--c:#e2bd5a;--p:41.27"><div class="tv-pic"><img alt="" draggable="false"></div>
+        <div class="tv-body"><span class="tv-lbl">Belediye Başkanı, yeniden aday</span><span class="tv-nm"><b class="tv-name">Aslı Kavaklıoğlu</b></span><b class="tv-pct">%41,27</b><span class="tv-votes">9.912</span></div></li>
+    </template>
+    <template id="tv-box-tpl">
+      <div class="tv-box" style="--c:#f5a94a"><span class="tv-box-ad">Öğrenci yurdu</span><span class="tv-box-open">Açılan %12,0</span>
+        <p class="tv-box-row" style="--c:#f5a94a"><b>Tekir</b><span>47,02</span></p><p class="tv-box-row you" style="--c:#e2bd5a"><b>A. Kavaklıoğlu</b><span>21,77</span></p></div>
+    </template>
+    <template id="tv-bloc-tpl">
+      <div class="tv-bloc"><span class="tv-bloc-ad">Halk<small>seçmenin %55'i</small></span>
+        <div class="tv-stack"><i style="--c:#e2bd5a;width:44%"><b>44</b></i><i style="--c:#e8715a;width:31%"><b>31</b></i><i style="--c:#f5a94a;width:25%"><b>25</b></i></div><em>%44,0</em></div>
+      <div class="tv-legend"><span style="--c:#e2bd5a">Aslı Kavaklıoğlu</span><span style="--c:#e8715a">Nermin Hanım</span></div>
+    </template>
   </section>
 
   <!-- Vesikalık seçimi -->
@@ -2595,6 +2954,1010 @@ function choose(s, side, rng = Math.random) {
 }
 
 
+// Seçim gecesi stüdyosu (KTV)
+// studioSVG(): 1600×900 SVG metni. Harici dosya yok; sınıflar, kimlikler ve animasyonlar "st-" önekli.
+// studio(kök): spiker denetimi → { talk, say, mood, react, setWall, year, stop }
+let ST_N = 0;
+const ST_REST = { neutral: "n", excited: "x", shocked: "s", happy: "h", sad: "d", smug: "m" };
+
+function studioSVG() {
+  const p = "st" + ++ST_N + "-", u = n => `url(#${p}${n})`; // gradyan kimlikleri her kopyada ayrı
+  const S = (o, c, a) => `<stop offset="${o}" stop-color="${c}"${a != null ? ` stop-opacity="${a}"` : ""}/>`;
+  const L = (n, ...s) => `<linearGradient id="${p}${n}" x2="0" y2="1">${s.join("")}</linearGradient>`;
+  const RG = (n, ...s) => `<radialGradient id="${p}${n}">${s.join("")}</radialGradient>`;
+  const SK = "#f7cba6", SKD = "#e8a883", HAIR = "#2e1d17", INK = "#2b1a17", LIP = "#6e2629", TONG = "#ea7a80";
+  const rep = (xs, f) => xs.map(f).join("");
+  const ln = (d, c, w, k = "") => `<path class="st-r${k}" d="${d}" stroke="${c}" stroke-width="${w}"/>`; // yuvarlak uçlu çizgi
+
+  // Karakavak silueti: ev gövdeleri renk renk tek yol, damlar ve pencereler tek yol
+  const HOUSES = [[700, 84, 80, 0, 1], [784, 82, 104, 1, 0], [934, 84, 70, 2, 1], [1018, 86, 96, 0, 0], [1104, 88, 76, 1, 1],
+    [1192, 78, 112, 2, 0], [1270, 60, 64, 0, 1], [1486, 50, 72, 2, 1]];
+  const B = 492, body = ["", "", ""];
+  let roofs = "", caps = "", wins = "";
+  HOUSES.forEach(([x, w, h, c, pitched], i) => {
+    const t = B - h;
+    body[c] += `M${x} ${t}h${w}V${B}H${x}z`;
+    if (pitched) roofs += `M${x - 6} ${t}L${x + w / 2} ${t - 26}L${x + w + 6} ${t}z`;
+    else caps += `M${x - 3} ${t - 7}h${w + 6}v8h${-w - 6}z`;
+    for (let r = 0; r < (h > 80 ? 2 : 1); r++) for (const fx of [.28, .72]) if ((i + r + (fx > .5)) % 3) wins += `M${Math.round(x + w * fx - 6)} ${t + 16 + r * 30}h12v16h-12z`;
+  });
+  // kavun biçimli sokak lambası
+  const lamp = x => `<circle cx="${x}" cy="404" r="38" fill="${u("gy")}"/><path d="M${x} 492V414" stroke="#1d2757" stroke-width="6"/><ellipse cx="${x}" cy="404" rx="14" ry="11" fill="#eee37c"/>`
+    + ln(`M${x - 13} 404Q${x} 394 ${x + 13} 404M${x - 13} 404Q${x} 414 ${x + 13} 404M${x} 394V414`, "#8fae45", 2.2);
+  const star = (x, y, r) => `M${x} ${y - r}Q${x + r * .2} ${y - r * .2} ${x + r} ${y}Q${x + r * .2} ${y + r * .2} ${x} ${y + r}Q${x - r * .2} ${y + r * .2} ${x - r} ${y}Q${x - r * .2} ${y - r * .2} ${x} ${y - r}z`;
+  const drop = (x, y, s) => `M${x} ${y}q${-9 * s} ${14 * s} 0 ${19 * s}q${9 * s} ${-5 * s} 0 ${-19 * s}z`;
+  // göz: beyaz (şaşkın), bebek + parıltı, mutlu yay, kırpılmış kapak
+  const eye = (x, s) => `<g class="st-eye"><ellipse class="st-scl" cx="${x}" cy="338" rx="21" ry="24" fill="#fff"/>
+<g class="st-pup"><ellipse cx="${x}" cy="338" rx="14.5" ry="18.5" fill="${INK}"/><circle cx="${x - 5}" cy="330" r="5.5" fill="#fff"/><circle cx="${x + 5}" cy="347" r="2.6" fill="#fff"/><path class="st-spk" d="${star(x + 5, 327, 6)}" fill="#fff"/></g>
+${ln(`M${x - 15} 345Q${x} 322 ${x + 15} 345`, INK, 7, " st-hap")}<g clip-path="${u("e" + s)}"><rect class="st-lid${s}" x="${x - 22}" y="294" width="44" height="26" fill="${SK}"/></g></g>`;
+  // kol: omuzdan +x yönüne uzanır, CSS dönüşüyle masaya ya da duvara
+  const arm = f => `${ln("M0 0H112", "#5c1826", 62)}${ln("M132 0H140", "#f6f4ee", 40)}${ln("M0 0H112", "#8a2c3c", 54)}${f ? `<rect class="st-fing" x="172" y="-7.5" width="40" height="15" rx="7.5" fill="${SK}"/>` : ""}<circle cx="164" r="22" fill="${SK}"/>`;
+  const mouth = (k, s) => `<g class="st-mo st-q${k}">${s}</g>`;
+  const D = (w, t, c, b) => `<path d="M${470 - w} ${t}Q470 ${c} ${470 + w} ${t}Q${467 + w} ${b - 2} 470 ${b}Q${473 - w} ${b - 2} ${470 - w} ${t}z" fill="${LIP}"/>`;
+  const TE = (w, t, c) => `<path d="M${474 - w} ${t + 1}Q470 ${c + 1} ${466 + w} ${t + 1}V${t + 9}Q470 ${c + 9} ${474 - w} ${t + 9}z" fill="#fff"/>`;
+  const TG = (y, w) => `<path d="M${470 - w} ${y}Q470 ${y - 11} ${470 + w} ${y}Q${463 + w} ${y + 9} 470 ${y + 9}Q${477 - w} ${y + 9} ${470 - w} ${y}z" fill="${TONG}"/>`;
+  const LAMPS = [270, 540, 810, 1080, 1350];
+  const PX = [46, 150, 254, 1558];
+  const TICK = ["Kavun fiyatları sabit, pazarcılar sandık başında", "Sandık görevlilerine çay servisi başladı", "Yukarıkavak sandığı traktörle yolda",
+    "Muhtarlık: Sonuçları biz de merakla bekliyoruz", "Hava durumu: Gece açık, kavun bol"].join("  ✦  ").toLocaleUpperCase("tr-TR");
+
+  return `<svg class="st-root st-m-neutral st-v-n" viewBox="0 0 1600 900" width="100%" height="100%" style="width:100%;height:100%;display:block" preserveAspectRatio="xMidYMid meet" role="img" aria-label="KTV seçim stüdyosu: spiker canlı yayında" xmlns="http://www.w3.org/2000/svg">
+<style>${studioCSS()}</style>
+<defs>
+<radialGradient id="${p}bg" cx=".36" cy=".42" r=".78">${S(0, "#23498f")}${S(.55, "#0e2150")}${S(1, "#050c1e")}</radialGradient>
+${L("pan", S(0, "#9ccbff"), S(.45, "#4686ff"), S(1, "#1c3f9e"))}${L("sky", S(0, "#132364"), S(.5, "#2d3d93"), S(.8, "#7e4f9b"), S(1, "#f39a6a"))}
+${L("cone", S(0, "#cfe3ff", .32), S(1, "#cfe3ff", 0))}${L("dt", S(0, "#a86e46"), S(1, "#74432a"))}${L("df", S(0, "#51301e"), S(1, "#1d110a"))}
+${L("br", S(0, "#f3dc97"), S(.5, "#c9a54c"), S(1, "#8a6a26"))}${L("jk", S(0, "#a23a4b"), S(1, "#7a2436"))}
+${L("band", S(0, "#fff", 0), S(.5, "#fff", .1), S(1, "#fff", 0))}${RG("gy", S(0, "#fff3a0", .75), S(1, "#fff3a0", 0))}${RG("gw", S(0, "#fff6d8", .6), S(1, "#fff6d8", 0))}
+<radialGradient id="${p}vig" r=".75">${S(.6, "#000", 0)}${S(1, "#00030d", .55)}</radialGradient>
+<pattern id="${p}gr" width="80" height="80" patternUnits="userSpaceOnUse"><path d="M80 0H0V80" fill="none" stroke="#7aa8ff" stroke-opacity=".08" stroke-width="2"/></pattern>
+<pattern id="${p}sl" width="8" height="6" patternUnits="userSpaceOnUse"><rect width="8" height="2"/></pattern>
+<clipPath id="${p}scr"><rect x="702" y="82" width="826" height="456" rx="10"/></clipPath>
+<clipPath id="${p}eL"><ellipse cx="425" cy="338" rx="15" ry="19"/></clipPath><clipPath id="${p}eR"><ellipse cx="515" cy="338" rx="15" ry="19"/></clipPath>
+</defs>
+<rect width="1600" height="900" fill="${u("bg")}"/><rect width="1600" height="640" fill="${u("gr")}"/>
+<path class="st-lit" d="${rep(LAMPS, x => `M${x - 16} 40L${x + 16} 40L${x + 160} 640L${x - 160} 640z`)}" fill="${u("cone")}"/>
+<rect width="1600" height="30" fill="#0a132b"/><path d="M0 30${rep([...Array(40)], (_, i) => `L${i * 40 + 20} 4L${i * 40 + 40} 30`)}" fill="none" stroke="#223a70" stroke-width="3"/>
+<path d="${rep(LAMPS, x => `M${x - 20} 20h40v22h-40z`)}" fill="#1b2a52"/>${ln(rep(LAMPS, x => `M${x} 42h0`), "#eaf3ff", 18, " st-lit")}
+<g class="st-lit">${rep(PX, x => `<rect x="${x}" y="110" width="70" height="530" rx="14" fill="${u("pan")}" stroke="#3a78ff" stroke-opacity=".14" stroke-width="28"/>`)}
+<path d="${rep(PX, x => rep([200, 290, 380, 470, 560], y => `M${x} ${y}h70`))}" stroke="#0b1f5c" stroke-opacity=".35" stroke-width="3"/><g opacity=".35">${ln(rep(PX, x => `M${x + 14} 128V620`), "#fff", 9)}</g></g>
+
+<rect x="690" y="70" width="850" height="480" rx="18" fill="#070e1f" stroke="#2c5cb8" stroke-width="4"/>
+<g clip-path="${u("scr")}"><g class="st-wall">
+<rect x="702" y="82" width="826" height="456" fill="${u("sky")}"/>
+${ln("M752 200h0M812 250h0M1030 196h0M1098 262h0M1290 204h0M1420 240h0M1500 190h0M968 236h0M1160 300h0", "#fff", 4)}
+<circle cx="1206" cy="226" r="74" fill="${u("gw")}"/><circle cx="1206" cy="226" r="30" fill="#fff2c6"/>
+<path d="M702 430Q790 396 880 418T1060 414T1240 404T1420 414T1528 408V492H702z" fill="#3a3f8e"/>
+<path d="${body[0]}" fill="#4a5eae"/><path d="${body[1]}" fill="#3b4c97"/><path d="${body[2]}" fill="#57509f"/>
+<path d="${roofs}" fill="#bb523f"/><path d="${caps}" fill="#2c3a7c"/><path d="${wins}" fill="#ffd772"/>
+<rect x="872" y="290" width="56" height="202" fill="#5a6cc0"/><rect x="864" y="272" width="72" height="20" fill="#7082d4"/><path d="M864 272L900 218L936 272z" fill="#c25a44"/><path d="M900 218V202" stroke="#c9a54c" stroke-width="4"/>
+<circle cx="900" cy="320" r="20" fill="#fff5d6" stroke="#c9a54c" stroke-width="4"/>${ln("M900 320V306", "#28304f", 3.5)}${ln("M900 320H912", "#28304f", 3, " st-clk")}
+<path d="M892 400a8 8 0 0 1 16 0v22h-16z" fill="#ffd772"/>
+<path d="M1334 452A61 56 0 0 1 1456 452z" fill="#6a73c4"/><rect x="1328" y="450" width="134" height="42" fill="#4f5bab"/><path d="M1395 396V380" stroke="#c9a54c" stroke-width="4"/><circle cx="1395" cy="377" r="5" fill="#c9a54c"/>
+<rect x="1466" y="262" width="16" height="230" fill="#6a73c4"/><rect x="1459" y="324" width="30" height="9" rx="2" fill="#8c95de"/><path d="M1466 262L1474 212L1482 262z" fill="#8c95de"/><circle cx="1474" cy="208" r="4" fill="#c9a54c"/>
+${lamp(990)}${lamp(1244)}
+<rect x="702" y="82" width="826" height="456" fill="${u("sl")}" opacity=".16"/><rect class="st-scan" x="702" y="82" width="826" height="90" fill="${u("band")}"/>
+<path d="M908 82V538M1115 82V538M1322 82V538M702 310H1528" stroke="#000" stroke-opacity=".22" stroke-width="2"/>
+<rect x="702" y="82" width="826" height="72" fill="#081744" opacity=".8"/><rect x="702" y="152" width="826" height="4" fill="${u("br")}"/>
+<text x="1115" y="134" class="st-f1 st-c" font-size="46" fill="#fff">KARAKAVAK <tspan fill="#ecd592">SEÇİM <tspan id="st-year">2034</tspan></tspan></text>
+<g class="st-sd"><rect x="702" y="426" width="206" height="42" fill="#d62f22"/><text x="805" y="456" class="st-f2 st-c" font-size="28" fill="#fff">SON DAKİKA</text></g>
+<rect x="702" y="468" width="826" height="70" fill="#0a1a48" opacity=".94"/><rect x="702" y="468" width="86" height="70" fill="${u("br")}"/>
+<path d="M737 476h18v22h-18z" fill="#fff"/><path d="M741 487l4 4 7-8" fill="none" stroke="#c8321e" stroke-width="3"/><path d="M722 494h48v32h-48z" fill="#15275e"/><path d="M734 494h24" stroke="#c9a54c" stroke-width="4"/>
+<text class="st-cap st-f2" x="808" y="516" font-size="40" fill="#fff">SANDIKLAR AÇILIYOR</text>
+</g></g>
+<rect x="40" y="46" width="134" height="42" rx="8" fill="#d62f22"/><circle class="st-rec" cx="64" cy="67" r="8" fill="#fff"/><text x="82" y="78" class="st-f2" font-size="28" fill="#fff">CANLI</text>
+
+<g class="st-post"><g class="st-br">
+<path d="M440 426v60q30 16 60 0v-60z" fill="${SKD}"/>
+<path d="M316 720L320 584C320 528 348 500 398 488L442 478H498L542 488C592 500 620 528 620 584L624 720z" fill="${u("jk")}" stroke="#5c1826" stroke-width="4"/>
+<path d="M440 476H500L470 576z" fill="#f6f4ee"/>
+<path d="M461 494h18l-3 16h-12z" fill="#b8872a"/><path d="M464 508h12l12 92-18 20-18-20z" fill="#dcb14a"/><path d="M462 538l16-9M459 566l22-12M457 594l26-14" stroke="#b8872a" stroke-width="5"/>
+<path d="M440 474l30 26-16 14-24-30zM500 474l-30 26 16 14 24-30z" fill="#fff"/>
+<path d="M438 478L470 580L462 606L418 548L432 530L408 512zM502 478L470 580L478 606L522 548L508 530L532 512z" fill="#6e1f2d"/>
+<path d="M538 554h30l-4 8-6-7-5 8-5-8-6 7z" fill="#ecd592"/><rect x="507" y="532" width="9" height="13" rx="4" fill="#1b1b1b"/><circle cx="470" cy="622" r="4.5" fill="#4a1520"/>
+<g class="st-hd"><g class="st-bob"><g class="st-hd2">
+<ellipse cx="352" cy="348" rx="18" ry="25" fill="${SK}"/><ellipse cx="588" cy="348" rx="18" ry="25" fill="${SK}"/>${ln("M350 336q-8 12 0 26M590 336q8 12 0 26", SKD, 5)}
+<path d="M470 212C548 212 592 262 592 336C592 408 540 454 470 454C400 454 348 408 348 336C348 262 392 212 470 212z" fill="${SK}"/>
+<path d="M552 240C602 296 598 402 516 450C574 414 588 330 552 240z" fill="${SKD}" opacity=".6"/>
+<ellipse class="st-chk" cx="392" cy="392" rx="25" ry="14" fill="#f2857c"/><ellipse class="st-chk" cx="548" cy="392" rx="25" ry="14" fill="#f2857c"/>
+<path d="M358 348C350 316 350 282 366 250L386 262C372 290 370 318 368 348zM582 348C590 316 590 282 574 250L554 262C568 290 570 318 572 348z" fill="${HAIR}"/>
+<g class="st-quiff"><path d="M366 262C350 222 362 150 420 118C474 90 566 90 606 130C634 160 624 214 594 238C584 246 572 250 562 256C530 236 480 232 446 248C420 258 392 256 366 262z" fill="${HAIR}"/>
+${ln("M392 180C418 136 482 110 548 114", "#5d4136", 16)}${ln("M432 250C414 206 428 150 480 118M522 240C518 196 540 152 590 134", "#4a3129", 5)}${ln("M478 108C506 100 536 102 560 110", "#9a786a", 6)}</g>
+<g class="st-brows">${ln("M398 300C408 286 432 282 450 290", HAIR, 13, " st-brL")}${ln("M542 300C532 286 508 282 490 290", HAIR, 13, " st-brR")}</g>
+<g class="st-eyes">${eye(425, "L")}${eye(515, "R")}</g>
+<ellipse cx="470" cy="372" rx="17" ry="13" fill="#efa27e"/><ellipse cx="464" cy="367" rx="6" ry="4" fill="#fff" opacity=".5"/>
+${mouth("n", ln("M450 425Q470 440 490 425", LIP, 6))}
+${mouth("h", D(30, 418, 424, 454) + TG(443, 18))}${mouth("x", D(38, 414, 422, 470) + TE(38, 414, 422) + TG(457, 20))}
+${mouth("s", `<ellipse cx="470" cy="434" rx="14" ry="19" fill="${LIP}"/><ellipse cx="470" cy="444" rx="8" ry="6" fill="${TONG}"/>`)}
+${mouth("d", ln("M449 437Q470 420 491 437", LIP, 6))}${mouth("m", ln("M446 428Q472 438 496 418l7 4", LIP, 6))}
+${mouth("a", D(24, 416, 410, 457) + TE(24, 416, 410) + TG(448, 15))}${mouth("e", D(28, 418, 413, 442) + TE(28, 418, 413))}
+${mouth("o", `<ellipse cx="470" cy="430" rx="11" ry="13" fill="${LIP}"/><ellipse cx="470" cy="437" rx="6" ry="4" fill="${TONG}"/>`)}
+<path class="st-stache" d="M470 388C450 378 422 378 404 392C396 399 388 397 384 388C382 405 398 419 420 417C442 415 459 408 470 401C481 408 498 415 520 417C542 419 558 405 556 388C552 397 544 399 536 392C518 378 490 378 470 388z" fill="${HAIR}"/>
+<path class="st-fx st-fxx" d="${star(332, 214, 16)}${star(622, 180, 13)}${star(648, 292, 9)}" fill="#ffe79a"/>
+<path class="st-fx st-fxs" d="${drop(610, 250, 1.3)}" fill="#a5d8ff"/><path class="st-fx st-fxd" d="${drop(404, 360, 1)}" fill="#a5d8ff"/><path class="st-fx st-fxm" d="${star(570, 376, 10)}" fill="#fff4c2"/>
+</g></g></g>
+</g></g>
+
+<path d="M-10 622Q800 640 1610 622V690Q800 730 -10 690z" fill="${u("dt")}"/><path d="M-10 632Q800 650 1610 632V644Q800 664 -10 644z" fill="#fff" opacity=".12"/>
+<g class="st-post st-arms">
+<g class="st-cards"><rect x="420" y="590" width="100" height="72" rx="6" fill="#d8d5c8" transform="rotate(-7 470 626)"/><rect x="420" y="590" width="100" height="72" rx="6" fill="#e9e7de" transform="rotate(4 470 626)"/>
+<g class="st-c1"><rect x="420" y="590" width="100" height="72" rx="6" fill="#f8f7f1"/>${ln("M432 601h30", "#c8321e", 5)}${ln("M432 617h62M432 631h76M432 645h50", "#9aa6c8", 4)}</g></g>
+<g transform="translate(340 525)"><g class="st-armL"><g class="st-tapL">${arm(0)}</g></g></g>
+<g transform="translate(600 525)"><g class="st-armR"><g class="st-tapR">${arm(1)}</g></g></g>
+</g>
+<path d="M-10 690Q800 730 1610 690V900H-10z" fill="${u("df")}"/><path d="M-10 700Q800 740 1610 700V718Q800 758 -10 718z" fill="#fff" opacity=".07"/>
+${ln("M-10 814Q800 846 1610 814", "#62b0ff", 16)}${ln("M-10 814Q800 846 1610 814", "#8cc6ff", 4)}
+<path class="st-r" d="M-10 690Q800 730 1610 690" stroke="${u("br")}" stroke-width="6"/>
+<rect x="404" y="738" width="132" height="54" rx="12" fill="${u("br")}"/><rect x="411" y="745" width="118" height="40" rx="7" fill="none" stroke="#6b5018" stroke-width="2"/><text x="470" y="778" class="st-f1 st-c" font-size="33" fill="#1b2446" letter-spacing="3">KTV</text>
+
+<g transform="translate(0 16)"><ellipse cx="258" cy="648" rx="38" ry="8" fill="#f3f2ec"/><ellipse cx="258" cy="645" rx="24" ry="4" fill="#d6d0bf"/>
+<path d="M242 598C241 611 250 617 248 627C246 635 241 639 245 643H271C275 639 270 635 268 627C266 617 275 611 274 598z" fill="#b8461c"/>
+<path d="M239 584C238 604 248 612 246 624C244 634 238 638 243 644H273C278 638 272 634 270 624C268 612 278 604 277 584z" fill="#fff" fill-opacity=".16" stroke="#fff" stroke-opacity=".65" stroke-width="2.5"/>
+${ln("M246 592q0 14 6 22", "#fff", 3)}${ln("M252 572q-8-10 0-20t0-20", "#fff", 4, " st-stm")}${ln("M266 574q8-10 0-20t0-20", "#fff", 4, " st-stm st-stm2")}</g>
+
+<g transform="translate(990 676)"><g class="st-catX"><g class="st-catF"><g class="st-catB">
+${ln("M48 -44C80 -50 84 -92 68 -110", "#a48b70", 13, " st-tail")}<path class="st-tail" d="M48 -44C80 -50 84 -92 68 -110" fill="none" stroke="#6b5642" stroke-width="13" stroke-dasharray="9 11"/>
+${ln("M-30 -30V-4", "#7d6852", 13, " st-leg st-lg2")}${ln("M34 -30V-4", "#7d6852", 13, " st-leg")}
+<ellipse cx="0" cy="-40" rx="54" ry="25" fill="#a48b70"/><ellipse cx="-4" cy="-24" rx="34" ry="9" fill="#e9dcc6"/>
+${ln("M-18 -63q5 10 0 18M2 -65q5 10 0 18M22 -63q5 10 0 18", "#6b5642", 5)}${ln("M-42 -30V-4", "#a48b70", 13, " st-leg st-paw")}${ln("M22 -30V-4", "#a48b70", 13, " st-leg st-lg2")}
+<g class="st-cath"><path d="M-92 -86L-88 -120L-66 -98zM-62 -98L-40 -120L-36 -86z" fill="#a48b70"/><path d="M-87 -94L-85 -111L-74 -99zM-54 -99L-43 -111L-41 -94z" fill="#f2a7a0"/>
+<ellipse cx="-64" cy="-76" rx="31" ry="27" fill="#a48b70"/>${ln("M-64 -102v9M-73 -100l2 8M-55 -100l-2 8", "#6b5642", 4)}
+<ellipse cx="-64" cy="-63" rx="13" ry="9" fill="#efe4d0"/><ellipse cx="-76" cy="-78" rx="5" ry="6.5" fill="${INK}"/><ellipse cx="-52" cy="-78" rx="5" ry="6.5" fill="${INK}"/>
+<path d="M-67 -69h6l-3 4z" fill="#e7888a"/>${ln("M-71 -61q3.5 4 7 0q3.5 4 7 0M-82 -66l-20 -3M-82 -62l-20 3M-46 -66l20 -3M-46 -62l20 3", "#3b2c22", 2)}</g>
+</g></g></g></g>
+<g class="st-pen"><g class="st-penM">${ln("M880 694l62-7", "#27408f", 10)}${ln("M872 695l10-1", "#c9a54c", 6)}${ln("M928 686l12-1", "#c9a54c", 3)}</g></g>
+
+<rect y="848" width="1600" height="52" fill="#0a1a48"/><rect y="848" width="1600" height="3" fill="${u("br")}"/>
+<text class="st-tick st-f2" x="214" y="885" font-size="28" fill="#fff">${TICK}</text>
+<rect y="851" width="196" height="49" fill="#d62f22"/><text x="98" y="885" class="st-f2 st-c" font-size="28" fill="#fff">KTV HABER</text>
+<rect class="st-dim" width="1600" height="900" fill="#01040d"/><rect width="1600" height="900" fill="${u("vig")}"/>
+</svg>`;
+}
+
+// Bütün dönüşümler ve animasyonlar yalnız transform ve opacity kullanır
+function studioCSS() {
+  const Y = v => `translateY(${v}px) `, R = v => `rotate(${v}deg) `, t = (s, v) => `${s}{transform:${v}}`, K = (n, b) => `@keyframes st-${n}{${b}}`;
+  const E = "cubic-bezier(.3,1.5,.5,1)", I = " infinite", N = "none";
+  const T = { // ruh hâli → gövde, baş, kaş L, kaş R, bebek, kapak L, kapak R, perçem, yanak, görünenler
+    excited: [Y(-8) + "scale(1.02)", R(-3), Y(-12), Y(-12), "scale(1.12)", "", "", "", .8, "spk,fxx"],
+    shocked: [Y(-14), Y(-6), Y(-16) + "scale(1.05)", Y(-16) + "scale(1.05)", "scale(.48)", "", "", "scale(1.03,1.1)", .1, "scl,fxs"],
+    happy: [R(-1), R(-5), Y(-6), Y(-6), "", "", "", "", .85, "hap"],
+    sad: [Y(10), R(5) + Y(6), Y(-4) + R(-16), Y(-4) + R(16), "", Y(11) + R(-14), Y(11) + R(14), "", .2, "fxd"],
+    smug: [R(1.5), R(4) + Y(-3), Y(4) + R(5), Y(-12) + R(-7), "", Y(15), Y(15), "", .5, "fxm"],
+  };
+  const sel = ["post", "hd", "brL", "brR", "pup", "lidL", "lidR", "quiff"];
+  let m = ".st-m-happy .st-pup{opacity:0}";
+  for (const [k, v] of Object.entries(T)) {
+    const r = `.st-m-${k} .st-`;
+    sel.forEach((s, i) => { if (v[i]) m += t(r + s, v[i]); });
+    m += `${r}chk{opacity:${v[8]}}` + v[9].split(",").map(s => r + s).join() + "{opacity:1}";
+  }
+  m += [..."nxshdmaeo"].map(k => `.st-v-${k} .st-q${k}`).join() + "{opacity:1}";
+  return `.st-f1{font-family:"Alfa Slab One",Rockwell,Georgia,serif}.st-f2{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:700;letter-spacing:1.5px}.st-c{text-anchor:middle}
+.st-r{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.st-post{transform-origin:470px 700px;transition:transform .55s ${E}}.st-br{transform-origin:470px 690px;animation:st-breathe 4.4s ease-in-out${I}}
+.st-hd,.st-bob,.st-hd2{transform-origin:470px 455px}.st-hd{transition:transform .45s ${E}}.st-hd2{transition:transform .35s}.st-eyes,.st-brows{transition:transform .22s}
+.st-eye,.st-pup,.st-brL,.st-brR,.st-lidL,.st-lidR,.st-stache,.st-fx,.st-spk,.st-fing,.st-penM,.st-cath,.st-quiff,.st-leg{transform-box:fill-box;transform-origin:center}
+.st-quiff{transform-origin:50% 100%;transition:transform .35s cubic-bezier(.3,1.8,.5,1)}
+.st-eye{transition:transform .07s}${t(".st-blink .st-eye", "scaleY(.08)")}
+.st-pup,.st-scl,.st-hap,.st-spk,.st-chk,.st-fx{transition:opacity .2s,transform .3s ${E}}.st-brL,.st-brR,.st-lidL,.st-lidR{transition:transform .3s ${E}}
+.st-scl,.st-hap,.st-spk,.st-fx,.st-mo,.st-sd,.st-dim{opacity:0}.st-chk{opacity:.45}
+.st-stache{transition:transform .08s}${t(".st-v-a .st-stache", Y(-5))}${t(".st-v-e .st-stache", Y(-3))}${t(".st-v-o .st-stache", Y(-2) + "scaleX(.94)")}${t(".st-v-s .st-stache,.st-v-x .st-stache", Y(-4))}
+${m}
+.st-m-excited .st-fxx{animation:st-tw 1s${I}}.st-talk .st-bob{animation:st-bob 2.4s${I}}${t(".st-emph .st-brows", Y(-8))}
+${t(".st-glance .st-eyes,.st-papers .st-eyes", Y(10))}${t(".st-glance .st-hd2,.st-papers .st-hd2", Y(5) + R(-1.5))}
+${t(".st-armL", R(56.7))}.st-armR{transform:${R(123.3)};transition:transform .5s cubic-bezier(.35,1.3,.5,1)}
+.st-fing{transform:scaleX(0);transform-origin:0 50%;transition:transform .2s .25s}
+${t(".st-point .st-armR", R(-38))}${t(".st-point .st-fing", N)}${t(".st-point .st-eyes", "translate(10px,-4px)")}${t(".st-point .st-hd2", R(2.5) + "translateX(4px)")}
+${["cards:tap", "tapL:tapL", "tapR:tapR", "c1:shuf"].map(x => x.split(":")).map(([a, b]) => `.st-papers .st-${a}{animation:st-${b} .95s}`).join("")}
+${t(".st-lean .st-post", Y(30) + "scale(1.1)")}${t(".st-lean .st-brL", Y(3) + R(10))}${t(".st-lean .st-brR", Y(3) + R(-10))}${t(".st-lean .st-lidL,.st-lean .st-lidR", Y(6))}
+.st-lean .st-sd{opacity:1;animation:st-op .5s steps(1) 4}
+.st-lights .st-dim{animation:st-flick 1.4s linear}.st-lights .st-lit{animation:st-flick2 1.4s linear}${t(".st-lights .st-eyes", Y(-10))}${t(".st-lights .st-brows", Y(-8))}
+${t(".st-catX", "translateX(760px)")}.st-cat1 .st-catX,.st-cat2 .st-catX{transform:none;transition:transform 2.2s linear}.st-cat3 .st-catX{transition:transform 2.4s linear}${t(".st-cat3 .st-catF", "scaleX(-1)")}
+.st-leg{transform-origin:50% 0}.st-cat1 .st-leg,.st-cat3 .st-leg{animation:st-walk .3s${I} alternate}.st-cat1 .st-lg2,.st-cat3 .st-lg2{animation-direction:alternate-reverse}
+.st-cat1 .st-catB,.st-cat3 .st-catB{animation:st-cbob .15s${I} alternate}
+.st-tail{transform-origin:48px -44px}.st-cat2 .st-tail{animation:st-tail .8s 2}.st-cat2 .st-paw{animation:st-swipe .45s 2}.st-cat2 .st-cath{transform:${R(-10)};transition:transform .3s}
+${t(".st-cat1 .st-eyes,.st-cat2 .st-eyes", "translate(11px,6px)")}${t(".st-cat3 .st-eyes", "translate(12px,3px)")}${t(".st-cat2 .st-brows", Y(-9))}
+.st-penoff .st-penM{animation:st-penfall 1.3s .4s ease-in forwards}.st-penin .st-pen{animation:st-fadein .7s}
+.st-scan{animation:st-scan 6.5s linear${I}}.st-wall{animation:st-live 5s step-end${I}}.st-rec{animation:st-op 1.2s steps(1)${I}}
+.st-stm{animation:st-steam 3.2s ease-out${I};opacity:0}.st-stm2{animation-delay:-1.6s}.st-clk{transform-origin:900px 320px;animation:st-spin 60s linear${I}}
+.st-tick{animation:st-tick 40s -10s linear${I}}.st-capin .st-cap{animation:st-capin .45s ease-out}
+${K("breathe", t("50%", "scale(1.01,1.014)"))}
+${K("bob", t("0%,100%", N) + t("17%", R(1.4) + Y(-2)) + t("33%", R(-.6)) + t("52%", R(.8) + Y(-3)) + t("70%", R(-1.2) + Y(-1)) + t("86%", R(.4)))}
+${K("tap", t("20%,60%", Y(-15)) + t("40%,80%", N))}${K("tapL", t("20%,60%", R(-9)) + t("40%,80%", N))}${K("tapR", t("20%,60%", R(9)) + t("40%,80%", N))}
+${K("shuf", t("25%", "translate(6px,-26px) " + R(-7)) + t("55%", "translate(-3px,-10px) " + R(3)))}
+${K("flick", "0%,100%{opacity:0}8%{opacity:.62}12%{opacity:.08}20%{opacity:.72}27%{opacity:.15}42%{opacity:.5}50%{opacity:0}62%{opacity:.35}68%{opacity:0}")}
+${K("flick2", "0%,100%{opacity:1}8%,20%{opacity:.15}12%{opacity:.9}42%{opacity:.3}50%{opacity:1}62%{opacity:.5}")}
+${K("op", "50%{opacity:.25}")}${K("live", "0%{opacity:1}47%{opacity:.94}50%{opacity:1}83%{opacity:.97}88%{opacity:1}")}
+${K("scan", t("from", Y(-100)) + t("to", Y(560)))}${K("steam", `0%{transform:${Y(10)};opacity:0}35%{opacity:.8}100%{transform:${Y(-28)};opacity:0}`)}
+${K("walk", t("from", R(24)) + t("to", R(-24)))}${K("cbob", t("to", Y(-3)))}${K("swipe", t("50%", R(68)))}${K("tail", t("50%", R(-16)))}
+${K("penfall", t("22%", "translateX(-46px) " + R(-12)) + `100%{transform:translate(-120px,300px) ${R(-250)};opacity:0}`)}
+${K("fadein", "from{opacity:0}")}${K("tw", "50%{opacity:.35}")}${K("spin", t("to", R(360)))}${K("capin", `from{transform:${Y(30)};opacity:0}`)}
+${K("tick", t("from", "translateX(1420px)") + t("to", "translateX(-2850px)"))}
+.st-rm.st-lights .st-dim{opacity:.4}.st-rm.st-penoff .st-penM{opacity:0}.st-rm *{animation:none!important;transition:none!important}
+@media (prefers-reduced-motion:reduce){.st-root *{animation:none!important;transition:none!important}}`;
+}
+
+// Denetim: studio(kök) → { talk, say, mood, react, setWall, year, stop }
+function studio(rootEl) {
+  const svg = rootEl?.matches?.("svg.st-root") ? rootEl : rootEl?.querySelector("svg.st-root");
+  if (!svg) throw new Error("studio: stüdyo SVG'si bulunamadı");
+  const mq = typeof matchMedia === "function" ? matchMedia("(prefers-reduced-motion: reduce)") : null;
+  const rm = () => !!mq?.matches, T = new Set(), rnd = (a, b) => a + Math.random() * (b - a);
+  const on = (c, v = true) => svg.classList.toggle(c, v);
+  const later = (f, ms) => { const t = setTimeout(() => { T.delete(t); f(); }, ms); T.add(t); return t; };
+  const cancel = t => { clearTimeout(t); T.delete(t); };
+  const restart = c => { on(c, false); void svg.getBoundingClientRect(); on(c); };
+  const REACT = { point: 1800, papers: 1000, lean: 2200, lights: 1500 }, rt = {};
+  const BUSY = ["st-point", "st-papers", "st-lean", "st-lights", "st-cat1", "st-cat2", "st-cat3"];
+  let mood = [...svg.classList].find(c => c.startsWith("st-m-"))?.slice(5) || "neutral", shape = "", talking = false, talkT = 0, sayT = 0, sayDone = null, catOn = false;
+  const paint = () => {
+    for (const c of [...svg.classList]) if (c.startsWith("st-v-")) svg.classList.remove(c);
+    on("st-v-" + (shape || ST_REST[mood]));
+  };
+  const sync = () => on("st-rm", rm());
+  sync(); mq?.addEventListener?.("change", sync);
+
+  // Konuşma: 3 ağız şekli + kapalı ağız (ruh hâlininki), düzensiz hece süreleri, arada kelime boşlukları
+  const syll = () => {
+    if (!talking) return;
+    let d;
+    if (shape && Math.random() < .2) { shape = ""; d = rnd(80, 220) + (Math.random() < .15 ? 320 : 0); }
+    else { let s; do s = "aaeeeoo"[Math.random() * 7 | 0]; while (s === shape); shape = s; d = rnd(70, 170); }
+    if (Math.random() < .05) { on("st-emph"); later(() => on("st-emph", false), 320); }
+    paint(); talkT = later(syll, d);
+  };
+  const talk = v => {
+    v = !!v;
+    if (v === talking) return;
+    talking = v; on("st-talk", v); cancel(talkT);
+    shape = v && rm() ? "e" : ""; paint();
+    if (v && !rm()) syll();
+  };
+  const say = (ms = 1500) => {
+    cancel(sayT); sayDone?.(); talk(true);
+    return new Promise(res => { sayDone = res; sayT = later(() => { sayDone = null; talk(false); res(); }, ms); });
+  };
+
+  // Boşta: 2-6 sn arayla göz kırpma, ara sıra kartlara göz atma. Nefes, yayın parıltısı ve kayan yazı CSS'te.
+  const blink = () => { on("st-blink"); later(() => on("st-blink", false), 120); };
+  const blinkLoop = () => later(() => { if (!rm()) { blink(); if (Math.random() < .2) later(blink, 280); } blinkLoop(); }, rnd(2000, 6000));
+  const glanceLoop = () => later(() => {
+    if (!rm() && !BUSY.some(c => svg.classList.contains(c))) { on("st-glance"); later(() => on("st-glance", false), rnd(700, 1300)); }
+    glanceLoop();
+  }, rnd(7000, 14000));
+  blinkLoop(); glanceLoop();
+
+  const cat = () => { // Tekir masaya çıkar, kalemi düşürür, geri döner
+    if (catOn) return;
+    catOn = true;
+    const end = () => { on("st-cat3", false); on("st-cat2", false); on("st-penoff", false); catOn = false; };
+    if (rm()) { on("st-cat2"); on("st-penoff"); later(end, 3000); return; }
+    on("st-cat1");
+    later(() => { on("st-cat1", false); on("st-cat2"); on("st-penoff"); }, 2300);
+    later(() => { on("st-cat2", false); on("st-cat3"); }, 4000);
+    later(() => { end(); on("st-penin"); later(() => on("st-penin", false), 800); }, 6500);
+  };
+  const react = kind => {
+    if (kind === "cat") return cat();
+    const ms = REACT[kind], c = "st-" + kind;
+    if (!ms) return;
+    cancel(rt[kind]); restart(c);
+    rt[kind] = later(() => on(c, false), ms);
+  };
+  const setWall = text => {
+    const t = svg.querySelector(".st-cap"), W = 700;
+    if (!t) return;
+    t.textContent = String(text ?? "").toLocaleUpperCase("tr-TR");
+    t.removeAttribute("textLength"); t.removeAttribute("lengthAdjust");
+    try { if (t.getComputedTextLength() > W) { t.setAttribute("textLength", W); t.setAttribute("lengthAdjust", "spacingAndGlyphs"); } } catch { /* görünmüyorsa ölçülemez */ }
+    if (!rm()) { restart("st-capin"); later(() => on("st-capin", false), 500); }
+  };
+  const year = y => { const t = svg.querySelector("#st-year"); if (t) t.textContent = String(y); };
+  const setMood = n => { if (!ST_REST[n]) n = "neutral"; on("st-m-" + mood, false); mood = n; on("st-m-" + n); paint(); };
+  const stop = () => {
+    for (const t of T) clearTimeout(t);
+    T.clear(); sayDone?.(); sayDone = null; talking = false; shape = ""; catOn = false;
+    for (const c of ["st-talk", "st-blink", "st-glance", "st-emph", "st-capin", "st-penoff", "st-penin", ...BUSY]) on(c, false);
+    paint(); mq?.removeEventListener?.("change", sync);
+  };
+  return { talk, say, mood: setMood, react, setWall, year, stop };
+}
+
+
+// ─── Seçim gecesi yayını: KARAKAVAK TV ────────────────────────────────────
+// Alt bant (KJ), son dakika bandı, döviz kutusu, kazanan sözleri ve "Neden?" satırları.
+// DOM'suz, saf fonksiyonlar. Bütün rastlantı dışarıdan verilen rng'den gelir: aynı tohum, aynı yayın.
+// Okuduğu globaller: PEOPLE, ADAYLAR, dateLabel. Gerçek kişi, parti, kurum ya da marka adı yok.
+//
+// ctx: { res, playerName, pct, leader, prev, opened, mahalle, early, preview, flags, seen }
+//   res       tally() sonucu
+//   pct       o ana kadar açılan sandıklara göre yüzdeler {id: yüzde}; leader o anki birinci
+//   prev      (isteğe bağlı) bir önceki lider; "lider" evresinde liderliği kaptıranı anmak için
+//   opened    açılan sandık oranı (0..1). Sonuç yalnız "sonuc" evresinde ya da opened = 1'de ele verilir;
+//             pct/leader verilmezse ara evreler kesin sonucu kullanmaz, lidere bağlı satırlar atlanır.
+//   mahalle   o an açılan mahalle (MAHALLE adları)
+//   flags     (isteğe bağlı) s.flags: Karaca, itfaiye, Towers, dev kavun gibi şakalar yalnız o olay yaşandıysa gelir
+//   seen      (isteğe bağlı) bir Set; aynı yayında kullanılan satırları tutar, verilirse satırlar tekrar etmez
+//
+// Satırlar: düz metin ya da [koşul(v), metin, ağırlık?]. Koşullu satırlar duruma özgü olduğundan daha sık seçilir.
+// Yer tutucular: {you} {lider} {ikinci} {kazanan} {prev} {a} {b} {n} {nY} (yazıyla) {nY1} (bir fazlası) {fark} {oran} {oranEk} {youf} {kpct}
+// {sira} {tarih} {mah} {mahs} (sandık önünde: Lojman) {mahde}; ek almak için {lider:in} (in, i, e, de, den). Değeri olmayan yer tutucu
+// satırı eler; başlıkta tam ad sığmazsa kısa ad (tvShort) denenir.
+
+const KANAL = { ad: "KARAKAVAK TV", kisa: "KTV" };
+const TV_MAX = { title: 34, sub: 90, tick: 110, quote: 70 };
+const TV_W = 2.5; // duruma özgü satırın ağırlığı (genel satır 1)
+
+// ── Yardımcılar
+const tvUp = s => String(s).toLocaleUpperCase("tr");
+const tvCap = s => (s ? s[0].toLocaleUpperCase("tr") + s.slice(1) : s);
+function tvNum(v, d = 1) {
+  const [i, f] = Math.abs(v).toFixed(d).split(".");
+  return (v < 0 ? "−" : "") + i.replace(/\B(?=(\d{3})+(?!\d))/g, ".") + (f ? "," + f : "");
+}
+const tvDec = v => tvNum(v, 1).replace(/,0$/, ""); // 41,0 → 41
+const TV_SAYI = ["sıfır", "bir", "iki", "üç", "dört", "beş", "altı", "yedi"];
+// Sayıya iyelik eki: %37'si, %40'ı, %99,8'i, %100'ü (son okunan sözcüğe göre)
+const TV_EK1 = ["", "i", "si", "ü", "ü", "i", "sı", "si", "i", "u"];   // bir iki üç dört beş altı yedi sekiz dokuz
+const TV_EK10 = ["", "u", "si", "u", "ı", "si", "ı", "i", "i", "ı"];  // on yirmi otuz kırk elli altmış yetmiş seksen doksan
+function tvNumEk(s) {
+  const d = String(s).replace(/\D/g, "");
+  if (!/[1-9]/.test(d)) return "'ı";
+  const t = d.replace(/0+$/, ""), z = d.length - t.length, last = +t[t.length - 1];
+  return "'" + (z === 0 ? TV_EK1[last] : z === 1 ? TV_EK10[last] : z === 2 ? "ü" : z < 6 ? "i" : "u");
+}
+// Özel ada ek (ünlü uyumu, kaynaştırma, sertleşme): Nermin Hanım'ın, Rıza'ya, Burak'ta
+function tvEk(w, k) {
+  const s = String(w).trim(), low = s.toLocaleLowerCase("tr");
+  const vs = low.match(/[aıoueiöü]/g), last = vs ? vs[vs.length - 1] : "e";
+  const endV = /[aıoueiöü]$/.test(low), hard = "çfhkpsşt".includes(low.slice(-1));
+  const back = "aıou".includes(last), round = "ouöü".includes(last);
+  const i4 = back ? (round ? "u" : "ı") : (round ? "ü" : "i"), a2 = back ? "a" : "e";
+  const ek = { in: (endV ? "n" : "") + i4 + "n", i: (endV ? "y" : "") + i4, e: (endV ? "y" : "") + a2,
+    de: (hard ? "t" : "d") + a2, den: (hard ? "t" : "d") + a2 + "n" }[k];
+  return ek == null ? s : s + "'" + ek;
+}
+function tvFill(t, vars, short) {
+  return t.replace(/\{(\w+)(?::(\w+))?\}/g, (m, k, ek) => {
+    const x = short && vars["_" + k] != null ? vars["_" + k] : vars[k];
+    if (x == null || x === "") return m; // eksik değer: satır elenir
+    return ek ? tvEk(x, ek) : String(x);
+  });
+}
+const tvOk = (s, max) => !!s && s.length <= max && !/[{}]|undefined|null|NaN/.test(s);
+const tvYes = () => true;
+// Havuzdan ağırlıklı seçim. mode: "title" (büyük harf, sığmazsa kısa ad), "sub" (cümle başı büyük), "tick", "raw"
+function tvPool(list, v, max, mode) {
+  const pool = [];
+  for (const e of list) {
+    const [p, t, w] = typeof e === "string" ? [null, e] : e;
+    if (p && !p(v)) continue;
+    let s = tvFill(t, v.vars, false);
+    if (mode === "title") { s = tvUp(s); if (s.length > max) s = tvUp(tvFill(t, v.vars, true)); }
+    else if (mode === "sub" || mode === "tick") { if (s.length > max) s = tvFill(t, v.vars, true); if (mode === "sub") s = tvCap(s); }
+    if (tvOk(s, max)) pool.push({ s, w: w ?? (p ? TV_W : 1) });
+  }
+  return pool;
+}
+function tvDraw(pool, rng, seen) {
+  const fresh = seen ? pool.filter(x => !seen.has(x.s)) : pool, from = fresh.length ? fresh : pool;
+  if (!from.length) return null;
+  let r = rng() * from.reduce((a, x) => a + x.w, 0), pick = from[from.length - 1];
+  for (const x of from) if ((r -= x.w) < 0) { pick = x; break; }
+  seen?.add?.(pick.s);
+  return pick.s;
+}
+const tvChoose = (list, v, rng, max, mode, fallback) => tvDraw(tvPool(list, v, max, mode), rng, v.seen) ?? fallback;
+
+// ── Adlar
+// Mahalle şeridi için kısa ad. Bey'ler adıyla anılır (S. BEY ile N. BEY karışmasın).
+const TV_KISA = { vekil: "SUAT BEY", cengiz: "CENGİZ BEY", kaan: "KAAN BEY", albay: "NURİ BEY", burak: "BURAK", tekir: "TEKİR", tuncay: "TUNCAY" };
+function tvName(id, playerName) {
+  if (id === "you") return String(playerName || "").trim() || "Başkan";
+  return PEOPLE[id]?.ad || String(id);
+}
+function tvShort(id, playerName) {
+  if (TV_KISA[id]) return TV_KISA[id];
+  const w = tvName(id, playerName).split(/\s+/).filter(Boolean);
+  if (w.length <= 1) return tvUp(w[0] || "BAŞKAN").slice(0, 16);
+  const s = tvUp(w[0][0] + ". " + w[w.length - 1]); // Nermin Hanım → N. HANIM
+  return s.length <= 16 ? s : tvUp(w[w.length - 1]).slice(0, 16);
+}
+
+// ── Mahalleler: ek almış hâlleri ve kendi satırları
+const TV_MAH = {
+  "Kavun Ovası": { de: "Kavun Ovası'nda", sub: [
+    "Köylerden ilk tutanaklar geldi; kavun kasasında taşındı, hâlâ kavun kokuyor",
+    "Ovada katılım yüksek; seçmen hasat molasında sandığa uğramış",
+    "Bir tutanak kavunlarla karışmış; kurul ayıklıyor, kavunlar sayılmayacak",
+    "Dursun Ağa: 'Kim kazanırsa kazansın, kavunun fiyatı yine bize sorulur'",
+  ] },
+  "Çarşı": { de: "Çarşı'da", sub: [
+    [v => v.has("bekir"), "Hacı Bekir'in kalesi açılıyor; kepenkler kapalı, herkes ekran başında"],
+    [v => v.has("bekir"), "Çarşı sandığından 'bereketli olsun' yazılı iki pusula çıktı; geçersiz"],
+    "Esnaf sandık başında nöbette; kapıda 'veresiye oy yok' yazıyor",
+    "Kahveci Rahmi sayım boyunca kırk çay dağıttı, otuz sekizi veresiye",
+    "Çarşı sandığından pusulayla birlikte bir fiyat etiketi çıktı; üç kez değişmiş",
+  ] },
+  "Sanayi": { de: "Sanayi'de", sub: [
+    "Sanayi sandığında itiraz: zarftan bakkal fişi çıktı. İtiraz reddedildi, çay kabul",
+    "Ferhat Usta tutanağı yağlı elle imzaladı; parmak izi mühürden net çıktı",
+    "Sanayi sandığı akü takviyesiyle açıldı; tutanak el feneriyle okundu",
+    "Sanayide sayım molasında bir müşahidin arabası da tamir edildi",
+  ] },
+  "Lojmanlar": { de: "Lojmanlar'da", s: "Lojman", sub: [
+    [v => v.has("vekil"), "Lojmanlar Suat Bey'e yakın; kendisi 'talimat gelmedi' diyerek yorum yapmıyor"],
+    "Memurlar sandığa mesai saatinde gitmiş; öğle arası üç saat sürmüş",
+    "Lojman sandığından pusulalar dilekçe gibi katlanmış çıktı, üç nüsha",
+    "Lojmanlarda sayım evrak kayıt sırasıyla yapılıyor; sıra 4.182'de",
+  ] },
+  "Merkez": { de: "Merkez'de", sub: [
+    "Merkez açılıyor; uzmanımız: 'Kesin konuşmak için erken, yine de konuşacağım'",
+    "Merkezde balkonlardan tencere değil çaydanlık sesi geliyor",
+    "Merkez sandığından bir dilek notu çıktı: 'Yollar düzelsin, gerisi kolay'",
+    [v => v.has("nermin"), "Nermin Hanım'ın müşahitleri merkezde her pusulayı ışığa tutuyor"],
+    [v => v.has("cengiz"), "Cengiz Bey'in merkezdeki afişleri iskeleye asılmış; iskele de kiralık"],
+  ] },
+  "Kavaklı": { de: "Kavaklı'da", sub: [
+    [v => v.has("muhtar"), "Muhtar Rıza oyları kendisi sayıyor; üç kez saydı, üçü de başka çıktı"],
+    [v => !v.has("muhtar"), "Muhtar Rıza tutanakları tek tek imzaladı; birine kaşe yerine tespih bastı"],
+    "Kavaklı'da kahvehane sandığın yanına taşındı; okey sayımla aynı hızda",
+    "Kavaklı'nın yaşlıları sandığa bayramlıklarıyla gitmiş; kurul ayağa kalktı",
+  ] },
+  "Öğrenci yurdu": { de: "Öğrenci yurdunda", sub: [
+    [v => v.has("burak"), "Yurtta Burak canlı yayın açtı: 'KAZANDIK'. İzleyici 12, biri kendisi"],
+    "Yurt sandığından oy pusulası yerine ders notu çıktı; kurul geçersiz saydı",
+    "Yurtta katılım yüksek; sandık, Wi-Fi'ın çektiği tek köşeye kurulmuş",
+    "Gençler pusulanın fotoğrafını çekmek istedi; kurul 'hikâye yok' dedi",
+  ] },
+  "Yukarıkavak": { de: "Yukarıkavak'ta", sub: [
+    "Yukarıkavak sandığı nihayet geldi; traktör alkışlarla karşılandı",
+    "Son sandık masada; mühür çamurlu, tutanak sağlam",
+    "Muhtar sandığı omzunda getirdi; kurul 'önce çay, sonra sayım' dedi",
+  ] },
+};
+
+// ── Öndeki adaya özgü satırlar (sayım ve liderlik evrelerinde)
+const TV_ONDE = {
+  you: ["{you} önde; makam odasında semaver ikinci kez kaynadı",
+    "{you} önde; Fikret yine de 'Yukarıkavak gelmeden konuşmayalım' diyor",
+    "{you} önde; kayınvalide Naciye Hanım dolmaları ocağa koydu"],
+  nermin: ["Nermin Hanım önde; tutanakları kendi defterine de ayrıca yazıyor",
+    "Nermin Hanım önde; ekibi şeffaf çay bardaklarını dağıtmaya başladı",
+    "Nermin Hanım önde; 'Meclise taşıyacağım' demeden geçen ilk gece"],
+  vekil: ["Suat Bey önde; Ankara'dan tebrik mesajı hazır, gönder tuşuna basılmadı",
+    "Suat Bey önde; kendisi 'talimat gelmeden sevinmiyorum' dedi",
+    "Suat Bey önde; makam aracının plakası şimdiden ezberlendi"],
+  cengiz: ["Cengiz Bey önde; sandık başına şimdiden iskele kuruldu",
+    "Cengiz Bey önde; ekibi kutlama için beton mikseri kiraladı",
+    "Cengiz Bey önde; kutlama pastası üç blok, havuzlu"],
+  kaan: ["Kaan Bey önde; 'Karakavak 4.0' sunumunun 38. slaydı açıldı",
+    "Kaan Bey önde; sonucu 'win-win' diye yorumladı, iki kez",
+    "Kaan Bey önde; İstanbul'daki ortaklar görüntülü aramada, çekmiyor"],
+  bekir: ["Hacı Bekir önde; çarşıda kepenkler yarıya kadar açıldı",
+    "Hacı Bekir önde; kıraathanede 'meclis salonu' tabelası hazırlanıyor",
+    "Hacı Bekir önde; tespihin hızı dakikada 90 taneye çıktı"],
+  muhtar: ["Muhtar Rıza önde; hâlâ parmakla sayıyor, sonuçtan kendisi de emin değil",
+    "Muhtar Rıza önde; kahvede 'ben demiştim' on ikinci kez söylendi",
+    "Muhtar Rıza önde; Kavaklı'da kutlama başladı, gerisi sonra"],
+  tuncay: ["Tuncay önde; yarınki manşette kendi fotoğrafını büyüttü",
+    "Tuncay önde; Karakavak Postası özel baskıya geçti, tiraj 400",
+    "Tuncay önde; haberi kendisi yazıyor, kendisi okuyor"],
+  burak: ["Burak canlı yayında: 'Kazandık' dedi, izleyici 12",
+    "Burak önde; takipçisi üç arttı, ikisi kendi hesabı",
+    "Burak önde; zafer videosu için ağır çekim hazırlanıyor"],
+  albay: ["Nuri Bey önde; destekçileri sayımı hazır olda izliyor",
+    "Nuri Bey önde; kutlama marşının on beşinci kıtası yazılıyor",
+    "Nuri Bey önde; sandık kuruluna yoklama aldı, eksik yok"],
+  tekir: ["Tekir önde; kendisi sandığın üstünde uyuyor, yorum yapmadı",
+    "Tekir önde; Mırnav Partisi genel merkezinde mama dağıtılıyor",
+    "Tekir önde; rakipler 'kediye oy olmaz' dedi, seçmen dinlemedi"],
+};
+
+// ── Kazanan sözleri ve yenilgi açıklamaları (≤ 70)
+const TV_SOZ = {
+  you: {
+    win: ["Bu zafer Karakavak'ın; çaylar benden.", "Oy vermeyenlerin de başkanıyım, çay vermeyenlerin de.",
+      "Seçim bitti, evrak bekliyor. Fikret, çay!", "İlk iş Yukarıkavak'ın yolu; traktör yoruldu.",
+      "Rakiplerime geçmiş olsun; çaylar benden, simitler onlardan.", "Beş yıl daha evrak, beş yıl daha çay. Hayırlı olsun.",
+      [v => v.early, "Erken seçim de seçimdir; kepenkler açılsın, çaylar belediyeden."],
+      [v => v.res.you < 50, "Yüzde elli şart değilmiş; birinci birincidir."]],
+    lose: ["Halkın kararı başımızın üstünde; semaveri yanımda götürüyorum.", "Kaybetmedik, beş yıl mola verdik.",
+      "Fikret, son çayı demle; iki şekerli olsun.", "Yukarıkavak geç kaldı; traktörü affediyorum.",
+      "Makamı devrediyorum; Tekir'i devretmiyorum.", "Sandık haklıdır. Ben de haklıydım ama sandık daha haklı."],
+  },
+  nermin: {
+    win: ["Şeffaf belediye bugün başlıyor; ilk iş çay bardaklarını sayacağız.", "Tutanakları okudum, hepsini. Kazandık.",
+      "Meclise taşıdık, sandıktan çıktı.", "Kasayı boş bulursak basın toplantısı yarın saat onda.",
+      "Beş yıldır tutanağa yazdırıyordum; bu gece sandık yazdı.", "İlk icraat: makam odasına cam kapı. Şeffaflık kapıdan başlar.",
+      "Muhalefete sesleniyorum: beni benim kadar denetleyemezsiniz.", "Çaylar artık fişli; fişi herkes görecek."],
+    lose: ["Tutanağa yazdırıyorum: itirazım var.", "Meclise taşıyacağım; bu kez sandığı.", "Şeffaf kaybettik, alnımız ak."],
+  },
+  vekil: {
+    win: ["Ankara'ya teşekkür ederim; Karakavak'a da. Önce Ankara'ya.", "Talimat geldi: kazandık.",
+      "Genel merkez duydu; şimdi Karakavak da duysun.", "Ankara'yla el ele; elim biraz yoruldu ama."],
+    lose: ["Ankara'ya iletirim; Ankara da bana iletir.", "Talimat gelmediği için yorum yapmıyorum.", "Sonucu yukarıya arz ettim."],
+  },
+  cengiz: {
+    win: ["Beton geleceğimizdir; gelecek yarın sabah dökülüyor.", "Her mahalleye bir Towers; ilk temel pazartesi.",
+      "Oy verenlere daire, vermeyenlere manzara.", "Makam odası dar; iki kat çıkıyoruz."],
+    lose: ["Başka ilçeler de var; hepsinde arsa var.", "Pişman olacaksınız; projeyi saklıyorum.", "Seçimi kaybettim, iskeleyi bırakmam."],
+  },
+  kaan: {
+    win: ["Karakavak 4.0 yüklendi; güncelleme sabah başlıyor.", "Bu bir win-win; en çok ben kazandım.",
+      "Sinerjiyi sandığa taşıdık, sandık da bize.", "Yatırımcılar mutlu; seçmen de sonra mutlu olur."],
+    lose: ["Pazar hazır değildi; 5.0'da görüşürüz.", "Yatırımcı küstü, ben de küstüm.", "Sunumu herkes beğendi, oyu kimse."],
+  },
+  bekir: {
+    win: ["Kepenk değil bereket! Meclis yarın kıraathanede.", "Esnaf bunu unutmaz; veresiye defteri kapandı.",
+      "Belediye çarşıya taşındı; çaylar benden.", "Bereketli olsun; meclis kararları okey masasında."],
+    lose: ["Çarşıda konuşulur bu, hem de uzun uzun.", "Esnaf da bunu unutmaz.", "Kepenkleri açıyoruz; kırgınız ama açıyoruz."],
+  },
+  muhtar: {
+    win: ["Önce Kavaklı, sonra gerisi; gerisini de sonra konuşuruz.", "Üç kez saydım, üçünde de kazandım.",
+      "Kahvede anlatacağım; bu kez güzel şeyler.", "Mühür bende, tespih bende; hayırlı olsun."],
+    lose: ["Kahvede anlatırım bunu.", "Parmak hesabıyla ben kazanmıştım.", "Kırk yıllık hatırı sandık da saymadı."],
+  },
+  tuncay: {
+    win: ["Manşet hazır: Tuncay Başkan. İkinci baskı yolda.", "Kalemim sizden yanaydı; artık mühür de.",
+      "Yarınki gazetede fotoğrafım büyük çıkacak.", "Bu haberi ben yazdım, siz de oyladınız."],
+    lose: ["Bunu da yazarım, birinci sayfadan.", "Arşivime not düştüm.", "Manşet hazırdı; boşa gitmesin, başkasına basarım."],
+  },
+  burak: {
+    win: ["Efsane! Hikâyeye atıyorum; belediyeyi de.", "Beğen, paylaş, oy ver; oy verdiniz, sağ olun!",
+      "Canlı yayındayım, izleyici 14 oldu, rekor!", "Makam koltuğunda ilk içerik geliyor, takipte kalın."],
+    lose: ["Takipten çıkıyorum; Karakavak'ı.", "Cringe bir sonuç ama yine de içerik.", "Algoritma bizi sevmedi."],
+  },
+  albay: {
+    win: ["Saat tam dokuzda makamdayım; geç kalan olmasın.", "Nizam geldi, intizam yolda.",
+      "Yaşa! Var ol Karakavak!", "İlk icraat: bütün saatler aynı saati gösterecek."],
+    lose: ["Böyle sandık görmedim.", "Rahat! Beş yıl sonra yine hazır ol.", "Geri çekilmiyoruz, mevzi değiştiriyoruz."],
+  },
+  tekir: {
+    win: ["Mırr.", "Mırrr. (Tercüme: Mama saatleri değişmeyecek.)",
+      "Miyav. (Tercüme: Masadaki bardak yere düşecek.)", "Tısss. (Tercüme: Muhalefete selamlar.)"],
+    lose: ["Tısss!", "Mırr. (Tercüme: Seneye yine buradayım.)", "(Sandığın üstünde uyumaya devam ediyor.)"],
+  },
+  _: { win: ["Hayırlı olsun Karakavak.", "Kazanan Karakavak oldu.", "Çaylar bizden."],
+    lose: ["Halkın kararına saygı duyuyoruz.", "Yolumuza devam ediyoruz.", "Hayırlısı olsun."] },
+};
+
+// ── Alt bant (KJ) satırları
+const TV_KJ = {
+  acilis: {
+    title: ["Yayın yasağı kalktı", "Yayın yasağı kalktı", "Karakavak sandık başında", "Seçim gecesi başladı",
+      "İlk sandıklar geliyor", "KTV seçim özel",
+      [v => v.early, "Erken seçim gecesi"], [v => v.early, "Esnaf istedi, sandık geldi"],
+      [v => v.preview, "Prova yayını"], [v => v.preview, "Seçim gecesi provası"],
+      [v => v.has("tekir"), "Adaylardan biri kedi"]],
+    sub: ["İlk sandıklar Kavun Ovası köylerinden geliyor; tutanaklar kavun kasasında",
+      "Stüdyoda üç uzman, iki görüş ve bir semaver var; sayım başlıyor",
+      "Kahvehanelerde okey masaları ekrana çevrildi; taşlar ters kapatıldı",
+      "Fikret stüdyoya ilk çayı getirdi; kameraman da bir tane istedi",
+      "Sandık kurulları mühürleri, çayları ve simitleri teslim aldı",
+      "{tarih} yerel seçimi: {nY} aday, sekiz mahalle, bir traktör",
+      "Karakavak TV'nin tek kamerası hazır; jeneratör hâlâ düşünüyor",
+      [v => v.n >= 4, "{nY} adaylı pusula masa örtüsü boyunda; katlamak başlı başına beceri"],
+      [v => v.n === 2, "İki aday, tek kuyruk; Karakavak teke tek yarışı izliyor"],
+      [v => v.has("tekir"), "Pusulada bir ilk: Mırnav Partisi. Kurul pati izini imza saydı"],
+      [v => v.has("bekir") && !v.early, "Çarşı ekran başında; Hacı Bekir kepenkleri yarıya indirdi"],
+      [v => v.early, "Esnaf odası belediyeyi okey masasına taşıyınca sandık erken kuruldu"],
+      [v => v.early, "Erken seçim kararı kıraathanede alındı; sandıklar okey masasından kalktı"],
+      [v => v.preview, "Prova yayınıdır: sandıklar gerçek, oylar hayalî, çaylar sıcak"],
+      [v => v.preview, "Bu gece prova; sonuç deftere yazılmayacak, çaylar yazılacak"],
+      [v => v.has("burak"), "Burak yayını kendi hesabından da veriyor; gecikme 40 saniye"],
+      [v => v.has("kaan"), "Kaan Bey sonuçları 'Karakavak 4.0' panelinden izleyecek; panel yükleniyor"]],
+  },
+  sayim: {
+    title: [[v => v.mid, "Sandıkların {oranEk} açıldı"], [v => v.mid, "Sandıkların {oranEk} açıldı"],
+      [v => v.mid, "Açılan sandık oranı {oran}"], [v => v.mid && v.leader, "{oran} açıldı, {lider} önde"],
+      [v => v.mid, "Sayım sürüyor: {oran}"], [v => v.mid && v.early, "Erken seçimde {oran} açıldı"],
+      [v => v.opened > 0 && v.opened < 0.15, "İlk sandıklar açıldı"],
+      [v => v.opened > 0.8 && v.opened < 1, "Sayımda son viraj"],
+      [v => v.youLead, "{you} önde"], [v => v.youBehind, "{lider} önde"],
+      [v => v.close, "Başa baş yarış"], [v => v.gap >= 10, "Fark açılıyor"],
+      [v => v.opened >= 1, "Sandıkların tamamı açıldı"], [v => v.opened === 0, "Sayım başladı"],
+      "Karakavak'ta sayım sürüyor"],
+    sub: ["Uzman stüdyoda: 'Kesin konuşmak için erken, yine de konuşacağım'",
+      "İlk sandıklar yanıltıcı olabilir; ortadakiler de, sondakiler de",
+      "Oylar sayılıyor, çay bardakları da; şimdilik çay önde",
+      "Müşahitler sandık başında nöbette; Fikret nöbet çayı dağıtıyor",
+      "Sandık kurulu simit istedi; sayım simit gelene kadar ağırdan alınacak",
+      "Uzmanımız grafiği ters tutuyormuş; düzeltince sonuç değişmedi",
+      "Kahvehanelerde okey durdu; taşlar masada, gözler ekranda",
+      "Geçersiz oylardan birinde 'hepinizi seviyorum ama' yazıyor; devamı yok",
+      "Oylar {nY} adaya bölündü, stüdyodaki uzmanlar {nY1} görüşe",
+      "Stüdyo uzmanı 'trend belli' dedi; trendin haberi yok",
+      "Kurul üyesi 'mühür nerede' diye soruyor; mühür çay tepsisinin altında",
+      "Sandık kurulu oyları iki kez saydı, bir kez de çay molası verdi",
+      "Kesin olmayan sonuçlar geliyor; kesinleri Yukarıkavak'la birlikte",
+      "Uzman 'bu sandık sürpriz yapar' dedi; hangi sandık olduğunu söylemedi",
+      [v => v.youLead, "{you} önde; Fikret 'daha Yukarıkavak gelmedi' diyerek çayı tazeledi"],
+      [v => v.youBehind, "{you} geride; Fikret 'daha Yukarıkavak gelmedi' diyor"],
+      [v => v.youBehind, "{lider} önde; {you} cephesinden açıklama: 'Erken, çok erken'"],
+      [v => v.close, "Fark {fark} puan; iki taraf da zafer konuşmasını cebinde tutuyor"],
+      [v => v.close, "Fark bir çay ocağı kuyruğu kadar: {fark} puan"],
+      [v => v.gap >= 10, "Fark {fark} puan; öndeki adayın ekibi pastayı şimdiden sipariş etti"],
+      [v => v.opened > 0 && v.opened < 0.2, "Daha {oran} açık; iki aday şimdiden balkona çıktı"],
+      [v => v.has("tekir"), "Geçersiz oyların bir kısmında pati izi var; kurul 'niyet belli' dedi"],
+      [v => v.early, "Erken seçimde sayım hızlı; esnaf 'dükkânı açmamız lazım' diyor"],
+      [v => v.preview, "Prova sayımı sürüyor; sonuç deftere yazılmayacak, çaylar yazılacak"]],
+  },
+  lider: {
+    title: ["Liderlik el değiştirdi", "Liderlik el değiştirdi", [tvYes, "{lider} öne geçti"], "Zirvede değişiklik",
+      [v => v.youLead, "{you} zirvede"], [v => v.prev === "you" && !v.youLead, "{you} liderliği kaptırdı"],
+      [v => v.close, "Başa baş: sıra değişti"]],
+    sub: ["{lider} öne geçti; stüdyodaki uzman gözlüğünü çıkarıp tekrar taktı",
+      "Sıralama değişti; uzman grafiği ters çevirdi, yine aynı çıktı",
+      "Liderlik el değiştirdi; iki tarafın da basın bildirisi yazıcıda",
+      "Liderlik el değiştirdi; kahvede okey taşları bırakıldı, herkes ekranda",
+      [v => v.youLead, "{you} öne geçti; Fikret sevinçten çayı tabağa döktü"],
+      [v => v.youLead, "{you} öne geçti; makam odasında ikinci semaver yakıldı"],
+      [v => v.prev === "you" && !v.youLead, "{you} liderliği kaptırdı; makam odasında çaylar soğuyor"],
+      [v => v.prev === "you" && !v.youLead, "{you} geriye düştü; Fikret 'daha Yukarıkavak var' diyor"],
+      [v => v.prev && v.prev !== "you" && v.prev !== v.leader, "{prev} liderliği kaptırdı; ekibi pastayı buzdolabına geri koydu"],
+      [v => v.close, "Fark yalnızca {fark} puan; stüdyoda nefesler tutuldu, çaylar soğudu"]],
+  },
+  mahalle: {
+    title: ["{mahs} sandıkları açıldı", "{mahs} sandıkları açıldı", "Gözler {mahde}", "Sıra {mahde}",
+      [v => v.mah === "Çarşı" && v.has("bekir"), "Hacı Bekir'in kalesi açılıyor"],
+      [v => v.mah === "Kavaklı" && v.has("muhtar"), "Kavaklı: muhtarın sahası"],
+      [v => v.mah === "Lojmanlar" && v.has("vekil"), "Lojmanlarda Ankara havası"],
+      [v => v.mah === "Öğrenci yurdu", "Gençlik sandığı açıldı"],
+      [v => v.mah === "Yukarıkavak", "Traktör geldi"],
+      [v => v.leader, "{mah}: {lider} önde", 0.7]],
+    // genel satırlar düşük ağırlıkta: mahallenin kendi satırları (TV_MAH) öne çıksın
+    sub: [[tvYes, "{mahs} sandıkları geldi; tutanaklar masada, çaylar yolda", 0.4],
+      [tvYes, "{mahde} sayım sürüyor; müşahitler semaverin başında nöbette", 0.4],
+      [v => v.has("tekir"), "{mahde} geçersiz oyların yarısına kedi resmi çizilmiş", 0.8],
+      [v => v.youLead, "{mahde} sandıklar açılırken {you} önde; Fikret çayları tazeledi", 0.5],
+      [v => v.youBehind, "{mahde} sandıklar açılıyor; {you} cephesi hesap makinesine sarıldı", 0.5]],
+  },
+  son: {
+    title: ["Son sandık yolda", "Gözler Yukarıkavak'ta", "Traktör bekleniyor", "Son sandık: Yukarıkavak",
+      [v => v.opened >= 0.98 && v.opened < 1, "Sandıkların {oranEk} açıldı"],
+      [v => v.close, "Her şey traktöre bağlı"]],
+    sub: ["Yukarıkavak sandığı traktörle yolda; traktör çamura saplandı, muhtar sandığı omzunda getiriyor",
+      "Traktör Yukarıkavak'tan çıktı, hızı saatte 12 km; stüdyoda çaylar üçüncü kez tazelendi",
+      "Son sandık yolda; traktörün farı yanmıyor, önden bir motosiklet ışık tutuyor",
+      "Yukarıkavak'ta bir sandık, bir traktör; karar mazotun elinde",
+      "Traktör köprüden geçerken kurul 'yavaş' diye bağırdı; zaten yavaştı",
+      "Son sandığı getiren traktörün ardında 14 araçlık konvoy; biri düğün konvoyu",
+      [v => v.close, "Fark {fark} puan; kararı Yukarıkavak'tan gelen traktör verecek"],
+      [v => v.youLead, "{you} önde ama Yukarıkavak gelmedi; Fikret semaverin başından ayrılmıyor"],
+      [v => v.youBehind, "{you} geride; umut Yukarıkavak'ta, traktör de hâlâ yolda"],
+      [v => v.has("tekir"), "Yukarıkavak sandığının üstünde Tekir uyuyor; kurul uyandırmaya kıyamadı"],
+      [v => v.flags.karaca, "Traktör çamura saplandı; son sandığı eşek Karaca taşıyor, mesai dışı"]],
+  },
+  sonuc: {
+    title: [[v => !v.tekirWon, "Karakavak seçimini yaptı"], [v => !v.tekirWon, "Karakavak seçimini yaptı"],
+      [v => !v.tekirWon, "Sandık konuştu"], [v => !v.tekirWon, "Karakavak kararını verdi"],
+      [v => v.early, "Erken seçim sonuçlandı"], [v => v.early, "Erken seçimde sonuç belli"],
+      [v => v.win, "{you} yeniden başkan"], [v => v.win, "Makam yerinde kaldı"], [v => v.win, "Çaylar yine belediyeden"],
+      [v => v.win && v.margin < 1, "Kıl payı zafer"], [v => v.win && v.margin < 1, "Foto finiş"],
+      [v => v.win && v.margin >= 25, "Sandıktan fark çıktı"], [v => v.win && v.res.you < 50, "Birinci birincidir"],
+      [v => v.win && v.early, "Erken seçimde makam korundu"],
+      [v => v.lost, "{kazanan} kazandı"], [v => v.lost, "Yeni başkan: {kazanan}"],
+      [v => v.lost, "Makam el değiştirdi"], [v => v.lost, "Karakavak'ta değişim"],
+      [v => v.lost && v.early && v.winner === "bekir", "Belediye çarşıya taşındı"],
+      [v => v.tekirWon, "Tekir başkan!"], [v => v.tekirWon, "Karakavak'ın ilk tüylü başkanı"],
+      [v => v.tekirWon, "Mırnav Partisi iktidarda"]],
+    sub: [[v => v.win, "{you} {youf} ile yeniden seçildi; {nY} adaylı yarışta fark {fark} puan"],
+      [v => v.win && v.res.you < 50, "Oylar bölündü, {youf} yetti. Fikret: 'Birinci birincidir'"],
+      [v => v.win && v.margin < 1, "Fark {fark} puan; Yukarıkavak traktörüne teşekkür plaketi hazırlanıyor"],
+      [v => v.lost, "{kazanan} {kpct} ile yeni başkan; {you} {youf} ile {sira}. sırada"],
+      [v => v.lost, "{kazanan} kazandı; Fikret makam odasındaki bardakları toplamaya başladı"],
+      [v => v.tekirWon, "Tekir mazbatasını dişleriyle aldı; ilk icraatı masadaki bardağı yere itmek"],
+      [v => v.tekirWon, "Mazbata töreninde Tekir kurdeleyi kesmedi, kovaladı"],
+      [v => v.tekirWon, "Tekir'in ilk genelgesi: 'Mama saatleri değişmeyecek.' Meclis oybirliğiyle kabul etti"],
+      [v => v.tekirWon, "Tekir zafer konuşması yerine balkonda güneşlendi; kalabalık yine de alkışladı"],
+      [v => v.early && v.win, "Erken seçim bitti; okey masası meclis salonundan çıkarıldı"],
+      [v => v.early && v.winner === "bekir", "Meclis yarın kıraathanede; gündem: çay, okey, çay"],
+      [v => v.preview, "Prova yayınıdır; sonuç deftere yazılmadı, çaylar yazıldı"]],
+  },
+};
+
+// ── Son dakika bandı. Kategori: secim + yerel (≈%40), ulusal (≈%30), dunya (≈%30)
+const TV_TICK = {
+  secim: [
+    "Yukarıkavak sandığını getiren traktör çamura saplandı; muhtar 'sandık bende, traktör sizde' dedi",
+    "Sanayi sandığında itiraz: zarftan bakkal fişi çıktı. Fiş de sayıldı: 3 simit, 1 ayran",
+    "Müşahitler sandık başında nöbette; nöbet çayı üçüncü kez tazelendi",
+    "Sandık kurulu başkanı mührü bulamadı; mühür Fikret'in çay tepsisinin altından çıktı",
+    "Seçim kurulu: 'Sonuçlar kesinleşmeden kutlama yapılmasın.' Davul zurna ekibi beklemeye alındı",
+    "Oy verme süresi doldu; kuyruktaki üç emekli 'biz sabahtan beri çay kuyruğundaydık' diye itiraz etti",
+    "Kavun Ovası'ndan gelen tutanaklar kavun kasasında taşındı; iki tutanak hâlâ kavun kokuyor",
+    "Bir seçmen sandığa kimlik yerine kavun getirdi; kurul 'bu sezon olgun' diyerek iade etti",
+    "Geçersiz oylardan birinde 'hepinizi seviyorum ama' yazıyor; devamı yok",
+    "Katılım rekor seviyede; kahvehaneler boşaldı, okey taşları masada kaldı",
+    "Seçim kurulu açıkladı: kesin sonuç, Yukarıkavak traktörünün hızına bağlı",
+    "Karakavakspor'un maçı seçim yüzünden ertelendi; kaleci sandık kurulunda görevli",
+    "KARAKAVAK TV: Tek kameramız ısındı; görüntüler bir süre Kahveci Rahmi'nin telefonundan",
+    "Sandıkların %3'ü açılmışken iki aday da zafer ilan etti; ikisi de pastayı aynı pastaneden aldı",
+    [v => v.opened < 0.5 && v.a && v.b, "Sandıkların %3'ü açıkken {a} ve {b} ayrı ayrı zafer ilan etti; pastalar aynı pastaneden"],
+    [v => v.has("tekir"), "Geçersiz oyların önemli kısmına kedi resmi çizilmiş; Mırnav Partisi 'niyet okunuyor' dedi"],
+    [v => v.has("tekir"), "Tekir sandık kurulunun masasına yattı; tutanaklar bir saat gecikti, uyandırmaya kimse kıyamadı"],
+    [v => v.has("tekir"), "Tekir'in afişi ilçede yırtılmayan tek afiş oldu; kimse elini kaldıramadı"],
+    [v => v.has("burak"), "Burak, sandıkların %1'i açılmışken canlı yayında 'KAZANDIK' dedi; izleyici 12, biri kendisi"],
+    [v => v.has("bekir"), "Çarşıda kepenkler yarıya indi; esnaf ekran başında, Hacı Bekir tespihi hızlandırdı"],
+    [v => v.has("vekil"), "Suat Bey'in ekibi Ankara'ya iki rapor hazırladı: 'Kazandık' ve 'Aslında kazandık'"],
+    [v => v.has("cengiz"), "Cengiz Bey sandık başına şantiye konteyneri kurdurdu: 'Kazanırsak ofis, kaybedersek çay ocağı'"],
+    [v => v.has("kaan"), "Kaan Bey sonuçları 'sinerji paneli'nden izliyor; panel şimdiye kadar üç kez yeniden başladı"],
+    [v => v.has("muhtar"), "Muhtar Rıza oyları parmak hesabıyla saydı; üç kez saydı, üçü de başka çıktı"],
+    [v => v.has("tuncay"), "Karakavak Postası yarının manşetini iki ayrı baskıyla hazırladı; ikisinde de 'Tarihi Gece' yazıyor"],
+    [v => v.has("albay"), "Nuri Bey sandık kuruluna yoklama aldı; 'burada' diyen müşahit 'mevcut' demediği için uyarıldı"],
+    [v => v.has("nermin"), "Nermin Hanım tutanakları kendi defterine de yazıyor; kalem üçüncü kez değişti"],
+    [v => v.early, "Erken seçim kararı okey masasında alındığı için sandıklardan biri kıraathaneye kuruldu"],
+    [v => v.early, "Esnaf odası sandık başına 'veresiye oy yok' tabelası astı; kurul tabelayı indirtti"],
+    [v => v.preview, "Bu bir prova yayınıdır: sonuçlar gerçek değildir, çaylar gerçektir"],
+    [v => v.preview, "Prova sayımı sürüyor; seçim kurulu 'bir daha, bu sefer daha heyecanlı' istedi"],
+    [v => v.youLead && v.opened < 1, "{you} cephesinde bayram havası; Fikret semaveri ikinci kez yaktı"],
+    [v => v.youBehind && v.opened < 1, "{lider} önde; {you} cephesinden açıklama: 'Yukarıkavak daha gelmedi'"],
+    [v => v.close && v.opened < 1, "Fark daralıyor; Kahveci Rahmi çay siparişlerini 'sonuç belli olunca' diye bekletiyor"],
+    [v => v.n >= 4, "Seçim kurulu: {nY} adaylı pusula masa örtüsü boyunda, katlamak için ek personel istendi"],
+    [v => v.opened >= 1 && v.leader, "Kesin olmayan sonuçlara göre {lider} kazandı; kahvede 'ben demiştim' diyenler seçmeni geçti"],
+    [v => v.opened >= 1 && v.youBehind, "{you} yenilgiyi kabul etti; Fikret son çayı iki şekerli getirdi"],
+    [v => v.opened >= 1 && v.youLead, "{you} balkona çıktı; balkon belediyenin değil, Kahveci Rahmi'nin"],
+    [v => v.flags.karaca, "Eşek Karaca'nın sandık taşıma teklifi reddedildi; gerekçe: sendikası yok"],
+    [v => v.flags.itfaiye_muze, "Müzedeki 1974 model itfaiye aracı seçim gecesi için ışıklandırıldı; hâlâ yağ sızdırıyor"],
+    [v => v.flags.itfaiye_satildi, "Hurdaya satılan 1974 model itfaiye aracı komşu ilçenin seçim konvoyunda görüldü"],
+    [v => v.flags.towers, "Karakavak Towers'ın terasından seçim izleniyor; bina bir tarafa eğildi, kameraman da"],
+    [v => v.flags.devkavun, "İlçe girişindeki dev kavun heykeline seçim gecesi için ışıklı zincir takıldı"],
+    [v => v.flags.bisiklet, "Makam bisikleti sandık başında görüldü; zinciri çıkmış, pompa aranıyor"],
+  ],
+  yerel: [
+    "KAVUN BORSASI: Çekirdekli kavun sabit; çekirdeksizde 'o kavun değil' tartışması yüzünden işlem durdu",
+    "Çaycı Hüseyin seçim gecesi için 600 bardak yıkadı; 601. bardağı Tekir masadan itti",
+    "Karakavakspor forma sponsoru arıyor; 'kavun kokulu forma' teklifi yönetim kurulunda",
+    "Kıraathanede okey masası seçim yüzünden ikiye bölündü; taşlar da",
+    "Belediye hoparlöründen anons: 'Duyduk duymadık demeyin, sandık kurulunun semaveri kaybolmuştur'",
+    "Tekir, belediyede sabah toplantısına en erken gelen personel seçildi; ödülü mama",
+    "Karakavak Postası seçim özel sayısını erken bastı; manşet boş, altında 'buraya kazanan' yazıyor",
+    "Hans Bey sonuçları Almanya'daki komşularına canlı çeviriyor: 'Kavun... sehr gut'",
+    "Başkanın kayınvalidesi Naciye Hanım 40 kişilik dolma sardı: 'Kim kazanırsa kazansın, soğumasın'",
+    "Cumhuriyet İlkokulu'nda sınıf başkanlığı seçimi de bugün; Çocuk Başkan Ayşe 'bizde itiraz yok' dedi",
+    "Pati Derneği uyardı: 'Konfeti atmayın, kediler yiyor.' Tekir yorum yapmadı",
+    "Ferhat Usta sanayideki dev ekranı aküye bağladı; ekran, Sanayi sandığından önce söndü",
+    "Kadın Kooperatifi seçim gecesi için 300 gözleme açtı: 'Kim kazanırsa kazansın, hamur kabarıyor'",
+    "Karakavak'ta elektrikler dört saniye gitti; Tekir olay yerinin yakınında görüldü",
+    "Hayri Hoca'dan açıklama: 'Hayırlısı neyse o olsun.' Açıklama bütün adaylarca tarafsız bulundu",
+    "Kavun Ovası'nın kâhin kavunu iki sandıktan birini seçti; sonra kesilip yendi, sır da gitti",
+    "Sevim Hanım seçim gecesinin masrafını çıkardı: 1.200 bardak çay, 40 simit, bir traktör mazotu",
+    "Öğrenci yurdunda Wi-Fi yalnız sandığın yanında çekiyor; katılım %100",
+    "Emekli Albay Nuri Bey sandık görevlilerine sabah 06.00'da içtima yaptırdı; üç görevli uyuya kaldı",
+    "Muhtar Rıza kahvede 'ben demiştim' cümlesini bu akşam şimdiden on iki kez kurdu",
+    "Veteriner Selin: 'Tekir seçim döneminde 400 gram aldı; her aday ona mama verdi'",
+    "Kahveci Rahmi, sonucu bilene bir hafta bedava çay sözü verdi; herkes bildiğini iddia ediyor",
+    "Karakavak'ın tek trafik lambası seçim gecesi sarıda kaldı; sürücüler 'kararsız' diye yorumladı",
+    "Kaymakam Selim Bey seçim gecesi için tutanak tuttu; tutanağın da tutanağını tuttu",
+  ],
+  ulusal: [
+    "EKONOMİ: Dolar güne yeni rekorla başladı; uzmanlar 'rekorlar da eskisi gibi değil' diyor",
+    "MÜJDE: Bir tarlada çay, bor ve umut rezervi bulundu; rezervin ömrü 'seçime kadar' olarak açıklandı",
+    "Bayram tatili dokuz güne tamamlandı; onuncu gün için köprü yetmedi, viyadük kuruluyor",
+    "Simidin fiyatı ekmeği geçti; fırıncılar 'simit artık ana yemek' açıklaması yaptı",
+    "Asgari ücret komisyonu toplandı; ilk karar olarak toplantı çayının fiyatı güncellendi",
+    "Bir ilçede kedi trafoya girdi, üç mahalle karanlıkta kaldı. Karakavak: 'Tekir o saatte makamdaydı'",
+    "Trafikte yeni rekor: 12 kilometrelik yol 3 saat 40 dakikada alındı; iki sürücü yolda nişanlandı",
+    "Vergi dairesinde sıra numarası B-947'ye geldi; bekleyenlerden biri sırada emekli oldu",
+    "e-Devlet'te yoğunluk: sistem 'lütfen daha sonra, tercihen yarın deneyiniz' uyarısı verdi",
+    "DİZİ: Başrol 146. bölümde de komadan uyanmadı; senarist 'finalde gözünü kırpacak' dedi",
+    "TRANSFER: Yıldızspor 38 yaşındaki golcüye 5 yıllık imza attırdı; oyuncu 'emekliliği bekliyordum' dedi",
+    "HAVA: Aynı gün için kar, kavurucu sıcak ve dolu uyarısı yapıldı; vatandaş hırkayla şortu birlikte giydi",
+    "Bir markette fiyat etiketinin üstüne yedinci etiket yapıştırıldı; raf ağırlığı taşıyamadı",
+    "KİRA: Bir ev sahibi kiracıdan referans mektubu, niyet mektubu ve bir de aşk mektubu istedi",
+    "Tasarruf genelgesi: resmî toplantılarda çay bardakları küçültüldü; bardak artık yüksük boyunda",
+    "Yerli ve milli arama motoru tanıtıldı; ilk aramada 'aradığınız sonuç şu an meşgul' yanıtı geldi",
+    "Bir kripto borsasının kurucusu 'kısa bir tatile' çıktı; müşterilere bakiye yerine kartpostal geldi",
+    "IMEI harcı: harcı ödenmeyen yurt dışı telefonlar yalnız hesap makinesi olarak çalışacak",
+    "Akaryakıta gece yarısı zam; istasyon kuyruğunda sabahlayanlar bir dernek kurdu",
+    "Garantili köprüden bugün de araç geçmedi; işletmeci geçmeyen araçlara teşekkür etti",
+    "Tanzim satış çadırında soğan kuyruğu; sıradakiler 'biz aslında patatese gelmiştik' dedi",
+    "Maaş promosyonu yarışında bankalar emekliye tost makinesi, çaydanlık ve sevgi teklif etti",
+    "Enflasyon rakamları açıklandı; vatandaş 'benim enflasyonum başka' diyerek kendi rakamını açıkladı",
+    "Çay tüketiminde rekor: kişi başı günde 14 bardak. Bardaklar küçüldüğü için rekor tartışmalı",
+    "'Müjde Verme Müdürlüğü' kuruldu; ilk müjdesini kendi kuruluşu için verdi",
+    "Otoyol ücretlerine zam; gişenin önüne yeni bir gişe kuruldu, o da ücretli",
+    "Vergi affı müjdesi: borcunu dün ödeyen vatandaş 'beni de affedin' dilekçesi verdi",
+    "Doğal gaz sayaçları akıllı oldu; bir abone sayaçla tartıştı, sayaç haklı çıktı",
+    "SPOR: Derbi sonrası iki kulüp başkanı hakemi, hakem VAR'ı, VAR da havayı suçladı",
+    "Dizi finali 3 saat sürdü; 2 saat 40 dakikası reklamdı, izleyici reklamları daha çok sevdi",
+    "Konut kampanyasında kura çekildi; kazananlar anahtar yerine anahtarlık aldı, daire 2041'de",
+    "Bir ilçe 'dünyanın en büyük kavun heykeli'ni dikti. Karakavak'tan açıklama: 'Bizde kavunun kendisi var'",
+    "'Yüzde yüz meyveli' içeceğin yüzde 3 meyve içerdiği ortaya çıktı; üretici 'kalanı umut' dedi",
+  ],
+  dunya: [
+    "UZAY: Bir milyarder kendi roketiyle Ay'a gitti, park yeri bulamayınca geri döndü",
+    "UZAY: İki ülke Ay'da aynı krateri 'bizim' diye işaretledi; krater yorum yapmadı",
+    "Bir milyarder Mars'ta ilk kahvehaneyi açacağını duyurdu; okey taşları yer çekimsiz ortamda dağıldı",
+    "Bir milyarder kendine bir gezegen satın aldı; tapuda 'hisseli' çıktı",
+    "Bir milyarder kendi sosyal ağını kurdu; ilk gün tek kullanıcı vardı, o da kendisi",
+    "YAPAY ZEKÂ: Robot garson ilk gün bahşiş istedi, ikinci gün sendika kurdu",
+    "YAPAY ZEKÂ: Şirketin başına getirilen yapay zekâ, ilk iş bütün toplantıları e-postaya çevirdi",
+    "Bir yapay zekâ ödevi yaparken öğretmene 'ben de yoruldum' notu bıraktı",
+    "Yapay zekâ kendi dilini geliştirdi; bilim insanları ilk cümleyi çözdü: 'Şarjım bitiyor'",
+    "Bir yapay zekâya en verimli çalışma saati soruldu; cevap 'öğle uykusundan sonra' oldu",
+    "REKOR: Dünyanın en uzun baklavası kesildi; son dilimi iki komşu ülke 'bizim' diyerek paylaşamadı",
+    "REKOR: Dünyanın en büyük pizzası fırına sığmadı; 'dünyanın en büyük hamuru' olarak tescillendi",
+    "Kuzey Fiordistan Krallığı'nda kraliyet düğünü: pasta on iki kat, on ikinci kat saraya sığmadı",
+    "Fiordistan'daki kraliyet düğününün menüsünde kavun yoktu; Karakavak'tan 40 kasa yola çıktı",
+    "KRİPTO: KavunCoin bir gecede %800 yükseldi, sabah %99 düştü; kurucusu 'kavun sezonu kısadır' dedi",
+    "ZİRVE: Dünya liderleri çayın demlik mi poşet mi olacağında uzlaşamadı; ortak bildiri ertelendi",
+    "Kıtalararası Şarkı Yarışması'nda komşular yine birbirine 12 puan verdi; şaşıran olmadı",
+    "DÜNYA OYUNLARI: 'Tepside çay taşıma' resmî branş oldu; Fikret milli takım kampına çağrıldı",
+    "İKLİM: Liderler zirveye 42 özel jetle geldi, bildiriyi imzalamaya bisikletle gitti",
+    "İKLİM: Kar yağmayınca bir kayak merkezi 'çamur kızağı' sezonunu açtı",
+    "Uzay istasyonunda ilk kez ince belli bardakta çay içildi; çay havada süzüldü, şeker aranıyor",
+    "Kuzey Kutbu'nda seradaki ilk kavun hasat edildi: boyu fındık, fiyatı altın. Karakavak: 'Bizde de var'",
+    "Bir ülkede seçim sonuçları üç hafta sonra açıklandı; Karakavak'tan açıklama: 'Bizim traktör daha hızlı'",
+    "SATRANÇ: Dünya şampiyonası finalinde bir oyuncu hamle yerine 'bir çay alalım' dedi; maç 9 saat sürdü",
+    "Bir teknoloji şirketi akıllı çaydanlık tanıttı; çaydanlık demlemeden önce kullanıcı sözleşmesi imzalatıyor",
+    "Uluslararası zirvede tercümanlar 'hayırlısı' kelimesini çeviremedi; toplantı üç saat uzadı",
+    "Uzaydan gelen gizemli sinyalin kaynağı bulundu: gözlemevinin mutfağındaki mikrodalga fırın",
+    "Yeni akıllı telefon tanıtıldı; tek yenilik 0,2 milimetre incelmesi. Mağaza önünde 3 km kuyruk",
+    "Sosyal medyada yeni akım: telefonsuz on dakika geçirip bunu telefonla paylaşmak",
+    "BORSA: Bir yapay zekâ 'kavun' kelimesini 'kaçın' diye okudu; dünyada tarım hisseleri eridi",
+    "Mars'taki keşif robotu fotoğraf yerine mesaj yolladı: 'Burası bizim köye benziyor, yalnız çay yok'",
+    "Kutuplardan kopan buzdağı bir ülkenin yüzölçümünü geçti; bağımsızlık ilan etmedi, şimdilik",
+  ],
+};
+const TV_GRUP = { secim: "karakavak", yerel: "karakavak", ulusal: "ulusal", dunya: "dunya" };
+
+// ── Döviz ve fiyat kutusu: [ad, taban, oynaklık, yön (yoksa rastgele), yuvarlama adımı]
+// Dolar hep çıkar, sabır hep iner; simit ve çay esnaf fiyatıyla (yuvarlak) yazılır.
+const TV_FX = [
+  ["KAVUN/TL", 14.9, 0.12, null, 0.1], ["ÇAY/BARDAK", 17.5, 0.06, "▲", 0.5], ["DOLAR", 74.35, 0.02, "▲"], ["EURO", 81.9, 0.03],
+  ["ALTIN/GR", 7412, 0.03], ["SİMİT", 45, 0.08, "▲", 2.5], ["TEKİR MAMASI/KG", 389.9, 0.06, null, 0.1], ["MAZOT/LT", 88.4, 0.04],
+  ["SABIR/GÜN", 0.04, 0.5, "▼"], ["OKEY TAŞI", 12.75, 0.1, null, 0.25], ["MÜJDE/HAFTA", 4, 0.4, "▲", 1], ["KİRA/ODA", 18500, 0.05, "▲", 250],
+];
+
+// ── Durum görünümü: satırların koşulları ve yer tutucuları buradan beslenir
+function tvView(ctx, phase) {
+  ctx = ctx || {};
+  const res = ctx.res || {}, cands = Array.isArray(res.cands) ? res.cands : [];
+  const ids = cands.map(c => c.id), fin = Object.fromEntries(cands.map(c => [c.id, c.pct]));
+  const opened = Math.max(0, Math.min(1, Number(ctx.opened) || 0));
+  const done = phase === "sonuc" || opened >= 1;
+  const given = ctx.pct && typeof ctx.pct === "object" && Object.keys(ctx.pct).length ? ctx.pct : null;
+  const pct = phase === "sonuc" ? fin : given || (done ? fin : null);
+  const run = pct ? ids.filter(id => Number.isFinite(pct[id])).sort((a, b) => pct[b] - pct[a]) : [];
+  const winner = res.winner || ids[0] || null;
+  const leader = phase === "sonuc" ? winner : ids.includes(ctx.leader) ? ctx.leader : run[0] || null;
+  const second = pct ? run.find(id => id !== leader) || null : null;
+  const gap = phase === "sonuc" && Number.isFinite(res.margin) ? res.margin
+    : leader && second && pct ? Math.max(0, pct[leader] - pct[second]) : null;
+  const nm = id => tvName(id, ctx.playerName), sh = id => tvShort(id, ctx.playerName);
+  const oranV = opened >= 1 ? 100 : opened * 100 >= 99.5 ? Math.floor(opened * 1000) / 10 : Math.max(1, Math.round(opened * 100));
+  const oranS = tvDec(oranV), rank = ids.indexOf("you") + 1;
+  const vars = { you: nm("you"), _you: sh("you"), n: ids.length || null, nY: TV_SAYI[ids.length], nY1: TV_SAYI[ids.length + 1] };
+  const put = (k, id) => { if (id) { vars[k] = nm(id); vars["_" + k] = sh(id); } };
+  put("lider", leader); put("ikinci", second); put("kazanan", done ? winner : null);
+  put("prev", ids.includes(ctx.prev) ? ctx.prev : null);
+  if (run.length >= 2) { put("a", run[0]); put("b", run[1]); }
+  if (gap != null) vars.fark = tvDec(gap);
+  if (opened > 0) { vars.oran = "%" + oranS; vars.oranEk = "%" + oranS + tvNumEk(oranS); }
+  if (done && Number.isFinite(res.you)) vars.youf = "%" + tvDec(res.you);
+  if (done && winner && Number.isFinite(fin[winner])) vars.kpct = "%" + tvDec(fin[winner]);
+  if (done && rank) vars.sira = rank;
+  if (Number.isFinite(res.month) && typeof dateLabel === "function") vars.tarih = dateLabel(res.month);
+  const mah = ctx.mahalle || null;
+  if (mah) { vars.mah = mah; vars.mahs = TV_MAH[mah]?.s || mah; vars.mahde = TV_MAH[mah]?.de || tvEk(mah, "de"); }
+  const early = !!(ctx.early ?? res.early);
+  return {
+    ctx, res, ids, has: id => ids.includes(id), n: ids.length, leader, second, gap, opened, mah, early,
+    preview: !!ctx.preview, flags: ctx.flags || {}, prev: ctx.prev || null, seen: ctx.seen,
+    youLead: leader === "you", youBehind: !!leader && leader !== "you",
+    close: gap != null && gap < 1.5, mid: opened > 0 && opened < 1,
+    win: done && !!res.win, lost: done && !res.win && winner !== "tekir", tekirWon: done && winner === "tekir",
+    winner, margin: Number.isFinite(res.margin) ? res.margin : 0,
+    a: vars.a, b: vars.b, vars,
+  };
+}
+
+// ── Alt bant
+function kj(phase, ctx, rng) {
+  const v = tvView(ctx, phase), P = TV_KJ[phase] || TV_KJ.sayim;
+  let titles = P.title, subs = P.sub;
+  if (phase === "sayim" || phase === "lider") subs = [...subs, ...(TV_ONDE[v.leader] || []).map(t => [tvYes, t])];
+  if (phase === "mahalle") subs = [...subs, ...(TV_MAH[v.mah]?.sub || [])];
+  if (phase === "sonuc") {
+    const q = id => (TV_SOZ[id] || TV_SOZ._)[id === v.winner ? "win" : "lose"];
+    // gerçek yayınlardaki gibi "KAZANAN: '…'" ağır basar; kaybeden oyuncunun açıklaması arada bir gelir
+    const said = (who, list, w) => list.map(e => (typeof e === "string" ? [tvYes, `{${who}}: '${e}'`, w] : [e[0], `{${who}}: '${e[1]}'`, w]));
+    subs = [...subs, ...said("kazanan", q(v.winner), 4), ...(v.win ? [] : said("you", q("you"), 0.8))];
+    if (v.preview) {
+      const pv = tvPool(titles, v, TV_MAX.title - 6, "title").map(x => ({ ...x, s: "PROVA: " + x.s }));
+      const t = tvDraw(pv, rng, v.seen);
+      if (t) return { title: t, sub: tvChoose(subs, v, rng, TV_MAX.sub, "sub", "Karakavak seçimini yaptı") };
+    }
+  }
+  const title = tvChoose(titles, v, rng, TV_MAX.title, "title", tvUp(KANAL.ad + " SEÇİM GECESİ"));
+  const sub = tvChoose(subs, v, rng, TV_MAX.sub, "sub", "Karakavak seçim gecesi sürüyor");
+  return { title, sub };
+}
+
+// ── Son dakika bandı: [{ t, cat }]; ticker() yalnız metinleri döndürür
+function tickerTagged(ctx, rng) {
+  const v = tvView(ctx, "ticker");
+  const n = 8 + Math.floor(rng() * 5);
+  const nK = Math.round(n * 0.4), nU = Math.round(n * 0.3), nD = n - nK - nU;
+  const nS = Math.max(2, Math.ceil(nK * 0.6)), want = { secim: nS, yerel: nK - nS, ulusal: nU, dunya: nD };
+  // ağırlıklı, yerine koymadan seçim (Efraimidis-Spirakis): duruma özgü satır öne çıkar
+  const take = (cat, k) => tvPool(TV_TICK[cat], v, TV_MAX.tick, "tick")
+    .filter(x => !v.seen?.has?.(x.s))
+    .map(x => ({ t: x.s, cat, key: Math.pow(rng(), 1 / x.w) })).sort((a, b) => b.key - a.key).slice(0, k);
+  const bag = Object.fromEntries(Object.keys(want).map(c => [c, take(c, want[c])]));
+  // sıralama: ilk haber seçimden; sonra aynı kümeden iki haber art arda gelmesin
+  const out = [];
+  let last = null;
+  while (Object.values(bag).some(a => a.length)) {
+    const cats = Object.keys(bag).filter(c => bag[c].length);
+    let opts = out.length ? cats.filter(c => TV_GRUP[c] !== last) : cats.filter(c => c === "secim");
+    if (!opts.length) opts = cats;
+    const most = Math.max(...opts.map(c => bag[c].length)), top = opts.filter(c => bag[c].length >= most - 1);
+    const c = top[Math.floor(rng() * top.length)], item = bag[c].shift();
+    out.push({ t: item.t, cat: c }); last = TV_GRUP[c]; v.seen?.add?.(item.t);
+  }
+  return out;
+}
+const ticker = (ctx, rng) => tickerTagged(ctx, rng).map(x => x.t);
+
+// ── Döviz kutusu (i ile döner)
+function fx(i, rng) {
+  const N = TV_FX.length, [ad, base, vol, dir, step] = TV_FX[((Math.floor(i) || 0) % N + N) % N];
+  let val = base * (1 + (rng() * 2 - 1) * vol);
+  if (step) val = Math.round(val / step) * step;
+  const yon = dir || (rng() < 0.55 ? "▲" : "▼");
+  return { ad, deger: tvNum(Math.max(0.01, val), 2), yon };
+}
+
+// ── Kazanan sözü ya da yenilgi açıklaması (≤ 70)
+function winnerQuote(id, ctx, rng) {
+  const v = tvView(ctx, "sonuc"), q = TV_SOZ[id] || TV_SOZ._;
+  const won = !v.res.cands ? true : v.winner === id;
+  return tvChoose(won ? q.win : q.lose, v, rng, TV_MAX.quote, "raw", won ? TV_SOZ._.win[0] : TV_SOZ._.lose[0]);
+}
+
+// ── "Neden?" paneli: TV diliyle sonuç okuması
+const TV_CALDI = {
+  nermin: "Nermin Hanım sizden {v} puan aldı; muhalefetin oyu bu kez sandığa geldi.",
+  vekil: "Suat Bey sizden {v} puan aldı; Ankara'nın selamı sandığa kadar ulaştı.",
+  cengiz: "Cengiz Bey sizden {v} puan aldı; beton her mahallede biraz oy döktü.",
+  kaan: "Kaan Bey sizden {v} puan aldı; 'Karakavak 4.0' bazı seçmenlere yüklendi.",
+  bekir: "Hacı Bekir sizden {v} puan aldı; çarşının oyu çarşıda kaldı.",
+  muhtar: "Muhtar Rıza sizden {v} puan aldı; Kavaklı önce kendi muhtarını düşündü.",
+  tuncay: "Tuncay sizden {v} puan aldı; manşet bazı oyları çevirdi.",
+  burak: "Burak sizden {v} puan aldı; gençler beğenmekle kalmadı, oy da verdi.",
+  albay: "Nuri Bey sizden {v} puan aldı; nizam intizam sevenler hazır ola geçti.",
+  tekir: "Tekir sizden {v} puan aldı; kediye kızamayan seçmen oyunu ona verdi.",
+};
+function whyLines(res, playerName) {
+  if (!res || !Array.isArray(res.cands)) return [];
+  const out = [], d = x => tvDec(Number(x) || 0), w = res.cands[0];
+  if (w && Number.isFinite(w.pct)) out.push(`Kesin sonuç: ${tvName(w.id, playerName)} %${d(w.pct)}${Number.isFinite(res.margin) ? `, fark ${d(res.margin)} puan` : ""}.`);
+  const ek = res.cands.length - 2;
+  if (Number.isFinite(res.p0)) out.push(ek <= 0 ? (Math.abs(res.p0 - res.you) < 0.5
+    ? `Teke tek yarış; sandık ankete birebir uydu: %${d(res.you)}. Anketçi zam istedi.`
+    : `Teke tek yarış: anket %${d(res.p0)} diyordu, sandık %${d(res.you)} dedi.`)
+    : res.p0 >= 50 ? `Teke tek yarışsaydınız anket %${d(res.p0)} diyordu; ${TV_SAYI[ek] || ek} aday daha girince oylar bölündü.`
+    : res.win ? `Teke tek ankette %${d(res.p0)} idiniz; oyların bölünmesi işinize yaradı.`
+    : `Teke tek ankette %${d(res.p0)} idiniz; yokuş yukarı bir seçimdi.`);
+  for (const x of res.steal || []) if (x.v >= 1)
+    out.push(tvFill(TV_CALDI[x.id] || `${tvName(x.id)} sizden yaklaşık {v} puan aldı.`, { v: d(x.v) }));
+  if (res.win && res.you < 50) out.push(`Oylar bölündü; %${d(res.you)} ile birinci çıktınız. Birinci birincidir.`);
+  if (!res.win && w && w.id !== "you") out.push(`Siz %${d(res.you)} ile ${res.cands.findIndex(c => c.id === "you") + 1}. sıradasınız; makam el değiştirdi.`);
+  if (Number.isFinite(res.margin) && res.margin < 1) out.push(`Fark ${d(res.margin)} puan: bir sandık kurulunun çay molası kadar.`);
+  else if (res.win && res.margin >= 25) out.push(`Fark ${d(res.margin)} puan; rakipler sandığı değil, takvimi suçluyor.`);
+  if (res.vaat) out.push(`Tutulmamış vaatler sandıkta ${d(res.vaat)} puan götürdü; seçmen not defteri tutuyormuş.`);
+  if (res.rel >= 1) out.push(`Kanaat önderleri arkanızdaydı: +${d(res.rel)} puan. Kahvede adınız hayırla anıldı.`);
+  else if (res.rel <= -1) out.push(`Küs olduğunuz kanaat önderleri kahvede konuştu: −${d(-res.rel)} puan.`);
+  if (res.fatigue) out.push(`${res.term}. dönem yorgunluğu: −${d(res.fatigue)} puan. Seçmen afişteki yüzünüzü ezberledi.`);
+  if (res.early) out.push("Erken seçimdi; esnaf odası sandığa güçlü girdi.");
+  return out;
+}
+
+
 // ─── Arayüz ───────────────────────────────────────────────────────────────
 const $ = s => document.querySelector(s);
 const wait = ms => new Promise(r => setTimeout(r, ms));
@@ -2607,7 +3970,8 @@ const LS = {
   del(k) { try { localStorage.removeItem("cb." + k); } catch { } },
 };
 const rngOf = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
-const vibrate = ms => { try { navigator.vibrate?.(ms); } catch { } };
+// dokunmadan (klavyeyle) oynayanda tarayıcı titreşimi engeller ve konsola hata yazar; hiç çağırmayalım
+const vibrate = ms => { try { if (navigator.userActivation?.hasBeenActive !== false) navigator.vibrate?.(ms); } catch { } };
 
 let S = null, busy = false, screen = "title", lastOver = null, wallFrom = "title";
 // Derlemede web sürümü için true yapılır (service worker kaydı)
@@ -3176,25 +4540,29 @@ function gameOver() {
   snd.hicaz();
 }
 
-// ─── Seçim gecesi: sonuç baştan belli (engine.js tally), ekran sandık sandık açar ─
+// ─── Seçim gecesi: KARAKAVAK TV canlı yayını. Sonuç baştan belli (engine.js tally), ekran sandık sandık açar.
+// Yazılar broadcast.js'ten (KJ, kayan yazı, kur, "Neden?"), spiker anchor.js'ten; yerleşim style.css'teki sözleşmede.
 const EC_RENK = { you: "#e2bd5a", nermin: "#e8715a", vekil: "#6f9be6", cengiz: "#c09a70", kaan: "#a78cf0", bekir: "#5cc08a",
   muhtar: "#e0a860", tuncay: "#a9b2bf", burak: "#ef7fb4", albay: "#a3b86a", tekir: "#f5a94a" };
-// mahalle: blok karışımı [halk, esnaf, parti tabanı, kararsız], sandık sayısı. Açılış sırası köylerden merkeze, en son traktörlü köy.
+// mahalle: blok karışımı [halk, esnaf, parti tabanı, kararsız], sandık sayısı, sandık büyüklüğü çarpanı.
+// Açılış sırası köylerden merkeze; en son traktörlü Yukarıkavak'ın tek küçük sandığı (o gelmeden sayım %99'u geçer).
 const MAHALLE = [
   ["Kavun Ovası", [.7, .1, .1, .1], 4], ["Çarşı", [.3, .55, .05, .1], 3], ["Sanayi", [.45, .4, .05, .1], 2],
   ["Lojmanlar", [.3, .05, .55, .1], 2], ["Merkez", [.5, .15, .2, .15], 4], ["Kavaklı", [.8, .05, .05, .1], 3],
-  ["Öğrenci yurdu", [.3, .02, .03, .65], 2], ["Yukarıkavak", [.75, .05, .15, .05], 1],
+  ["Öğrenci yurdu", [.3, .02, .03, .65], 2], ["Yukarıkavak", [.75, .05, .15, .05], 1, 0.12],
 ];
 const candName = id => (id === "you" ? playerName() : PEOPLE[id].ad);
 const candLabel = id => (id === "you" ? "Belediye Başkanı, yeniden aday" : ADAYLAR[id].etiket);
 const candPic = id => photoSrc(id === "you" ? playerAvatar() : id);
 const pctTR = v => "%" + v.toFixed(1).replace(".", ",");
+const pct2 = v => v.toFixed(2).replace(".", ",");
+const oyTR = v => Math.round(v).toLocaleString("tr");
 // Sandıklar mahallenin seçmen karışımından üretilir; her adayın toplamı kesin sonuca eşitlenir (ekran gerçeği gösterir, yalnız sırasını dramatize eder)
 function ballotBoxes(res, rng) {
   const boxes = [];
-  MAHALLE.forEach(([, mix, k], mi) => {
+  MAHALLE.forEach(([, mix, k, olcek = 1], mi) => {
     for (let j = 0; j < k; j++) {
-      const size = 380 + Math.floor(rng() * 320);
+      const size = (380 + Math.floor(rng() * 320)) * olcek;
       boxes.push({ mi, v: res.cands.map((c, i) => size * Math.max(0.002, mix.reduce((a, m, b) => a + m * res.blocs[b].pay[i] / 100, 0)) * (0.8 + rng() * 0.4)) });
     }
   });
@@ -3202,90 +4570,172 @@ function ballotBoxes(res, rng) {
   res.cands.forEach((c, i) => { const col = boxes.reduce((a, b) => a + b.v[i], 0); boxes.forEach(b => { b.v[i] *= (c.pct / 100) * total / col; }); });
   return boxes;
 }
-// Spikerin mahalle mahalle söyledikleri (yarışanlara göre)
-function anchorLine(mi, ids) {
-  const has = id => ids.includes(id);
-  return [
-    "Yayın yasağı kalktı! İlk sandıklar Kavun Ovası köylerinden geliyor; tutanaklar kavun kasasında.",
-    has("bekir") ? "Çarşı sandıkları açılıyor: burası Hacı Bekir'in kalesi, kepenkler kapalı, herkes ekran başında."
-      : "Çarşıda esnaf sandık başında nöbette. Fikret bütün müşahitlere çay dağıtıyor, 'nöbetçi müşahit' diyor.",
-    "Sanayi sandığında itiraz: 'Zarftan bakkal fişi çıktı.' İtiraz reddedildi, çay kabul edildi.",
-    has("vekil") ? "Lojman sandıkları Suat Bey'e yakın. Kendisi 'talimat henüz gelmedi' diyerek yorum yapmıyor."
-      : "Lojmanlarda memurlar sandığa mesai saatinde gitmiş; öğle arası üç saat sürmüş.",
-    "Merkez mahalleler açılıyor. Uzmanımız stüdyoda: 'Kesin konuşmak için erken, yine de konuşacağım.'",
-    has("muhtar") ? "Kavaklı'da Muhtar Rıza oyları kendisi sayıyor, parmak hesabıyla. Üç kere saydı, üçü de başka çıktı."
-      : "Kavaklı sandıkları geldi. Muhtar hepsini tek tek imzaladı, bir tanesine de kaşe yerine tespih bastı.",
-    has("burak") ? "Burak %1 açılmışken canlı yayın açıp 'KAZANDIK' diye bağırdı. İzleyici sayısı: 12, biri kendisi."
-      : "Yurt sandığından oy pusulası yerine ders notu çıktı; kurul geçersiz saydı, öğrenci itiraz etti.",
-    "Sandıkların %99,8'i açıldı. Son sandık Yukarıkavak'tan traktörle yolda; traktör çamura saplandı, muhtar sandığı omzunda getiriyor.",
-  ][mi];
-}
+let tvStop = null; // açık yayının zamanlayıcılarını ve spikeri durdurur
 function electionNight(res, preview = false) {
+  tvStop?.();
   return new Promise(done => {
     const r = rngOf(res.month * 131 + res.term * 7 + 3), boxes = ballotBoxes(res, r), N = boxes.length;
-    // ekranda sabit sıra (sonucu ele vermesin): önce siz, sonra ilan sırası
-    const ids = ["you", ...(res.order || res.cands.map(c => c.id).filter(id => id !== "you").sort())].filter(id => res.cands.some(c => c.id === id));
-    $("#scr-secim .ec-top h2").textContent = (res.early ? "Karakavak Erken Seçim Gecesi" : "Karakavak Seçim Gecesi") + (preview ? " (prova)" : "");
-    const idx = id => res.cands.findIndex(c => c.id === id);
-    const fast = LS.get("ecSeen", false), speed = fast ? 0.6 : 1;
-    const cum = res.cands.map(() => 0), tileCum = MAHALLE.map(() => res.cands.map(() => 0));
-    let opened = 0, leader = null, finished = false, timer = 0;
+    const name = playerName(), speed = LS.get("ecSeen", false) ? 0.6 : 1;
+    const ids = res.cands.map(c => c.id), idx = Object.fromEntries(ids.map((id, i) => [id, i]));
+    // sayım başlamadan sıra: önce siz, sonra ilan sırası (sonucu ele vermesin); oy geldikçe kartlar oya göre dizilir
+    const start = ["you", ...(res.order || ids.filter(id => id !== "you").sort())].filter(id => id in idx);
+    const sum = a => a.reduce((x, y) => x + y, 0), all = sum(boxes.map(b => sum(b.v)));
+    const mahTot = MAHALLE.map((_, m) => sum(boxes.filter(b => b.mi === m).map(b => sum(b.v))));
+    const cum = ids.map(() => 0), disp = ids.map(() => 0), mahCum = MAHALLE.map(() => ids.map(() => 0));
+    const seen = new Set(), T = new Set();
+    let opened = 0, leader = null, finished = false, raf = 0, rollT = 0, mahNow = 0, fxi = Math.floor(r() * 12);
+    let kjAt = -1e9, kjWant = null, kjT = 0;
+    const later = (f, ms) => { const t = setTimeout(() => { T.delete(t); f(); }, ms); T.add(t); return t; };
+    const halt = () => { for (const t of T) clearTimeout(t); T.clear(); cancelAnimationFrame(raf); raf = 0; kjT = 0; kjWant = null; };
     const say = t => { $("#ec-say").textContent = t; };
-    const anchor = t => { $("#ec-anchor").textContent = t; };
-    $("#ec-date").textContent = `${dateLabel(res.month)} · ${res.cands.length} aday`;
-    $("#ec-turnout").textContent = `Katılım %${70 + Math.floor(r() * 16)}`;
-    $("#ec-list").innerHTML = ids.map(id => `<li class="ec-row${id === "you" ? " you" : ""}" data-id="${id}" style="--c:${EC_RENK[id] || "#aaa"}">
-      <img src="${candPic(id)}" alt="" draggable="false">
-      <div class="ec-nm"><b>${esc(candName(id))}<span class="ec-lead">▲ önde</span></b><span>${esc(candLabel(id))}</span></div>
-      <div class="ec-pct"><b>%0</b><span>0 oy</span></div><div class="ec-bar"><i></i></div></li>`).join("");
-    $("#ec-map").innerHTML = MAHALLE.map(([ad]) => `<div class="ec-tile"><span>${esc(ad)}</span><b></b></div>`).join("");
-    $("#ec-after").hidden = true; $("#btn-ec-go").hidden = true; $("#btn-ec-skip").hidden = false;
-    show("secim"); $("#scr-secim").scrollTop = 0;
-    const paint = () => {
-      const tot = cum.reduce((a, v) => a + v, 0) || 1, all = boxes.reduce((a, b) => a + b.v.reduce((x, y) => x + y, 0), 0);
-      const frac = finished ? 100 : Math.min(opened === N - 1 ? 99.8 : 99.7, 100 * boxes.slice(0, opened).reduce((a, b) => a + b.v.reduce((x, y) => x + y, 0), 0) / all);
-      $("#ec-open").textContent = pctTR(frac); $("#ec-prog").style.width = frac + "%";
-      let lead = null, best = -1;
-      for (const id of ids) {
-        const i = idx(id), p = opened ? 100 * cum[i] / tot : 0, row = $(`.ec-row[data-id="${id}"]`);
-        row.querySelector(".ec-pct b").textContent = pctTR(p);
-        row.querySelector(".ec-pct span").textContent = `${Math.round(cum[i]).toLocaleString("tr")} oy`;
-        row.querySelector(".ec-bar i").style.width = p + "%";
-        if (cum[i] > best) { best = cum[i]; lead = id; }
+
+    // stüdyo: spiker SVG'si sahneye takılır; kendi alt bandı kırpılır (yayının kayan yazısı yeter)
+    const stage = $("#tv-stage");
+    stage.innerHTML = studioSVG();
+    const svg = stage.querySelector("svg");
+    svg.setAttribute("viewBox", "0 0 1600 851"); svg.setAttribute("preserveAspectRatio", "xMidYMid slice");
+    const st = studio(stage);
+    tvStop = () => { halt(); st.stop(); tvStop = null; };
+
+    const rows = {};
+    $("#tv-cands").replaceChildren(...start.map(id => {
+      const li = document.createElement("li");
+      li.className = "tv-cand" + (id === "you" ? " you" : ""); li.dataset.id = id; li.style.setProperty("--c", EC_RENK[id] || "#aaa");
+      li.innerHTML = `<div class="tv-pic"><img src="${candPic(id)}" alt="" draggable="false"></div><div class="tv-body"><span class="tv-lbl">${esc(candLabel(id))}</span>`
+        + `<span class="tv-nm"><b class="tv-name">${esc(tvName(id, name))}</b></span><b class="tv-pct">%0,00</b><span class="tv-votes">0</span></div>`;
+      rows[id] = { li, pct: li.querySelector(".tv-pct"), votes: li.querySelector(".tv-votes") };
+      return li;
+    }));
+    // sıra değişince kartlar yerlerine kayar (FLIP)
+    const reorder = order => {
+      const list = $("#tv-cands"), kids = [...list.children];
+      if (order.every((id, i) => kids[i] === rows[id].li)) return;
+      const y0 = reduced ? null : new Map(kids.map(el => [el, el.getBoundingClientRect().top]));
+      list.append(...order.map(id => rows[id].li));
+      if (y0) for (const el of kids) {
+        const d = y0.get(el) - el.getBoundingClientRect().top;
+        if (Math.abs(d) > 1) el.animate([{ transform: `translateY(${d}px)` }, { transform: "none" }], { duration: 480, easing: "cubic-bezier(.3,1.25,.5,1)" });
       }
-      document.querySelectorAll(".ec-row").forEach(el => el.classList.toggle("lead", opened > 0 && el.dataset.id === lead));
-      MAHALLE.forEach((_, m) => {
-        const t = tileCum[m], s = t.reduce((a, v) => a + v, 0), el = $("#ec-map").children[m];
-        if (!s) return;
-        const w = res.cands[t.indexOf(Math.max(...t))].id;
-        el.classList.add("on"); el.style.setProperty("--c", EC_RENK[w] || "#aaa"); el.querySelector("b").textContent = candName(w);
-      });
-      if (opened > 1 && lead !== leader) { anchor(`Liderlik el değiştirdi: ${candName(lead)} öne geçti!`); say(`${candName(lead)} öne geçti.`); }
-      leader = lead;
     };
-    const open = k => {
-      const b = boxes[k]; b.v.forEach((v, i) => { cum[i] += v; tileCum[b.mi][i] += v; });
-      opened = k + 1;
-      if (k === 0 || boxes[k - 1].mi !== b.mi) anchor(anchorLine(b.mi, ids));
-      if (ids.includes("tekir") && k === Math.floor(N / 2)) anchor("Geçersiz oyların yarısına kedi resmi çizilmiş. Miyav Hareketi genel merkezinde mama dağıtılıyor.");
+    const paint = () => {
+      const tot = sum(disp), frac = finished ? 100 : Math.min(99.9, 100 * tot / all);
+      $("#tv-open").textContent = "%" + frac.toFixed(1).replace(".", ","); $("#tv-prog").style.width = frac + "%";
+      const order = tot ? [...start].sort((a, b) => disp[idx[b]] - disp[idx[a]] || start.indexOf(a) - start.indexOf(b)) : start;
+      for (const id of start) {
+        const p = tot ? 100 * disp[idx[id]] / tot : 0, o = rows[id];
+        o.li.style.setProperty("--p", p.toFixed(2));
+        o.pct.textContent = "%" + pct2(p); o.votes.textContent = oyTR(disp[idx[id]]);
+        o.li.classList.toggle("lead", tot > 0 && id === order[0]);
+      }
+      $("#tv-diff").textContent = tot ? oyTR(Math.round(disp[idx[order[0]]]) - Math.round(disp[idx[order[1]]])) : "0";
+      reorder(order);
+    };
+    // sayılar sandık gelince bir anda değil, yayındaki gibi yuvarlanarak artar
+    const roll = now => {
+      const a = rollT ? 1 - Math.exp(-(now - rollT) / 120) : 0.2;
+      let moving = false;
+      cum.forEach((v, i) => { const d = v - disp[i]; if (Math.abs(d) < 0.5) disp[i] = v; else { disp[i] += d * a; moving = true; } });
       paint();
-      const pr = Math.round(100 * opened / N);
-      if ([25, 50, 75].some(x => pr >= x && Math.round(100 * (opened - 1) / N) < x)) say(`Sandıkların yüzde ${pr}'i açıldı, ${candName(leader)} önde.`);
+      rollT = moving ? now : 0; raf = moving ? requestAnimationFrame(roll) : 0;
+    };
+    const kick = () => { if (reduced) { cum.forEach((v, i) => { disp[i] = v; }); paint(); } else if (!raf) raf = requestAnimationFrame(roll); };
+
+    // mahalle kutuları: sayımda açılmakta olan ve önceki iki mahalle, sonuçta hepsi üçer üçer döner
+    const box = m => {
+      const t = mahCum[m], s = sum(t), ad = MAHALLE[m][0];
+      const acik = finished || s >= mahTot[m] - 0.5 ? 100 : 100 * s / mahTot[m];
+      const top = s ? ids.map((id, i) => [id, 100 * t[i] / s]).sort((a, b) => b[1] - a[1]).slice(0, 2) : [];
+      const c = top.length ? EC_RENK[top[0][0]] : "#3d4c6e";
+      return `<div class="tv-box" style="--c:${c}"><span class="tv-box-ad">${esc(ad)}</span><span class="tv-box-open">Açılan %${acik.toFixed(1).replace(".", ",")}</span>`
+        + (top.length ? top.map(([id, p]) => `<p class="tv-box-row${id === "you" ? " you" : ""}" style="--c:${EC_RENK[id] || "#aaa"}"><b>${esc(tvShort(id, name))}</b><span>${pct2(p)}</span></p>`).join("")
+          : `<p class="tv-box-row" style="--c:${c}"><b>Sayım bekleniyor</b><span></span></p>`) + "</div>";
+    };
+    const strip = list => { $("#tv-strip").innerHTML = list.map(box).join(""); };
+    const near = m => (m < 2 ? [0, 1, 2] : [m - 2, m - 1, m]);
+
+    // alt bant: her KJ en az HOLD kalır; bekleyen haberlerden önceliklisi, eşitse en yenisi gelir
+    const HOLD = 2600 * speed;
+    const ctxOf = (extra = {}) => {
+      const tot = sum(cum);
+      return { res, playerName: name, pct: tot ? Object.fromEntries(ids.map((id, i) => [id, 100 * cum[i] / tot])) : {}, leader, opened: finished ? 1 : tot / all,
+        mahalle: MAHALLE[mahNow][0], early: !!res.early, preview, flags: S?.flags || {}, seen, ...extra };
+    };
+    const showKJ = (phase, extra = {}) => {
+      if (phase === "lider" && extra.lead !== leader) phase = "sayim"; // öne geçen yeniden geriye düştüyse haber bayatladı
+      const o = kj(phase, ctxOf(extra), r);
+      $("#tv-kj-title").textContent = o.title; $("#tv-kj-sub").textContent = o.sub;
+      kjAt = performance.now();
+      st.say(Math.min(4200, 900 + (o.title.length + o.sub.length) * 30));
+    };
+    const kjPush = (phase, prio, extra = {}, now = false) => {
+      if (now) { clearTimeout(kjT); kjT = 0; kjWant = null; showKJ(phase, extra); return; }
+      if (kjWant && kjWant.prio > prio) return;
+      kjWant = { phase, prio, extra };
+      if (!kjT) kjT = later(() => { kjT = 0; const w = kjWant; kjWant = null; if (w && !finished) showKJ(w.phase, w.extra); }, Math.max(0, kjAt + HOLD - performance.now()));
+    };
+    const setTicker = () => {
+      const tr = $("#tv-ticker");
+      tr.innerHTML = [...new Set(ticker(ctxOf(), r))].map(t => `<span>${esc(t)}</span>`).join("");
+      tr.style.animation = "none"; void tr.offsetWidth; tr.style.animation = "";
+      tr.style.setProperty("--tv-tick-s", Math.max(30, tr.scrollWidth / 95).toFixed(1) + "s"); // ~95 px/sn, ekran genişliğinden bağımsız hız
+    };
+    const fxShow = () => {
+      const f = fx(fxi++, r);
+      $("#tv-fx").innerHTML = `<b>${esc(f.ad)}</b> ${esc(f.deger)} <i class="${f.yon === "▲" ? "up" : "down"}">${f.yon}</i>`;
+      later(fxShow, 4200);
+    };
+    // şok geçince spiker yarış başa başsa heyecanlı, değilse sakin
+    const calm = () => {
+      if (finished) return;
+      const tot = sum(cum), l = cum[idx[leader]], s2 = Math.max(...cum.filter((_, i) => i !== idx[leader]));
+      st.mood(tot && (l - s2) / tot < 0.02 ? "excited" : "neutral");
+    };
+
+    const open = k => {
+      const b = boxes[k], before = sum(cum);
+      b.v.forEach((v, i) => { cum[i] += v; mahCum[b.mi][i] += v; });
+      opened = k + 1; mahNow = b.mi;
+      const prev = leader; leader = ids[cum.indexOf(Math.max(...cum))];
+      if (finished) return;
+      strip(near(b.mi)); kick();
+      const x = [25, 50, 75].find(p => before / all < p / 100 && sum(cum) / all >= p / 100);
+      if (opened > 2 && prev && leader !== prev) {
+        kjPush("lider", 2, { prev, lead: leader });
+        st.mood("shocked"); st.react("lean"); st.setWall(`${tvShort(leader, name)} öne geçti`); later(calm, 2600);
+        say(`${tvName(leader, name)} öne geçti.`);
+      } else if (x) {
+        kjPush("sayim", 1); st.react("point"); st.setWall(`Sandıkların %${x}${tvNumEk(x)} açıldı`);
+        say(`Sandıkların yüzde ${x}${tvNumEk(x)} açıldı, ${tvName(leader, name)} önde.`);
+      } else if (k === 0 || boxes[k - 1].mi !== b.mi) {
+        kjPush("mahalle", 1, { mahalle: MAHALLE[b.mi][0] }); st.react("papers"); st.setWall(`${MAHALLE[b.mi][0]} sandıkları`);
+      }
+      if (ids.includes("tekir") && k === Math.floor(N / 2)) st.react("cat");
     };
     const finish = () => {
       if (finished) return;
-      finished = true; clearTimeout(timer);
+      halt(); finished = true;
       for (let k = opened; k < N; k++) open(k); // sandık toplamları kesin sonuca eşit, son hâl birebir tutar
-      paint();
-      const w = res.cands[0], row = $(`.ec-row[data-id="${w.id}"]`);
-      row.classList.add("won");
+      cum.forEach((v, i) => { disp[i] = v; }); paint();
+      const w = res.cands[0], tekirWon = w.id === "tekir";
+      rows[w.id].li.classList.add("won");
+      $("#tv-live").textContent = preview ? "Prova sonucu" : "Kesin sonuç";
+      $(".tv-kj-tab").textContent = "Seçim sonucu";
+      st.mood(tekirWon ? "smug" : res.win ? "happy" : "sad");
+      st.setWall(tekirWon ? "Tekir başkan!" : `Kazanan: ${tvShort(w.id, name)}`);
+      showKJ("sonuc"); setTicker(); fxShow();
+      // sonuçtan sonra yayın akar: KJ'ler döner, mahalleler üçer üçer geçer, biraz sonra döküm paneli açılır
+      let pg = 0;
+      const pages = () => { strip([0, 1, 2].map(j => (pg + j) % MAHALLE.length)); pg = (pg + 3) % MAHALLE.length; later(pages, 5000); };
+      pages();
+      for (let j = 1; j <= 3; j++) later(() => showKJ("sonuc"), j * 6500);
+      later(() => { $("#tv-info").hidden = false; }, reduced ? 800 : 3800 * speed);
       const n = res.cands.length;
-      const line = w.id === "tekir" ? "Karakavak'ın ilk tüylü başkanı: Tekir! İlk icraatı masadaki bardağı yere itmek oldu."
+      const line = tekirWon ? "Karakavak'ın ilk tüylü başkanı: Tekir! İlk icraatı masadaki bardağı yere itmek oldu."
         : res.win ? `${candName("you")} ${pctTR(res.you)} ile yeniden seçildi! ${n} adaylı yarışta fark ${String(res.margin).replace(".", ",")} puan.`
         : `${candName(w.id)} ${pctTR(w.pct)} ile Karakavak'ın yeni belediye başkanı. Siz ${pctTR(res.you)} aldınız.`;
-      anchor(line); say(line);
+      say(line);
       if (res.win) snd.win(); else snd.paper();
-      renderElectionAfter(res, ids);
+      renderElectionAfter(res);
       $("#btn-ec-skip").hidden = true; const go = $("#btn-ec-go"); go.hidden = false; go.focus({ preventScroll: true });
       if (preview) return; // prova: günlüğe yazılmaz, hızlı sayım hakkı da harcanmaz
       LS.set("ecSeen", true);
@@ -3295,15 +4745,27 @@ function electionNight(res, preview = false) {
     const steps = reduced ? [Math.round(N * 0.3), Math.round(N * 0.7), N - 1] : null;
     const next = () => {
       if (finished) return;
-      if (opened >= N - 1) { anchor(anchorLine(MAHALLE.length - 1, ids)); paint(); timer = setTimeout(finish, (reduced ? 600 : 1500) * speed); return; }
-      if (steps) { const to = steps.find(x => x > opened) ?? N - 1; while (opened < to) open(opened); timer = setTimeout(next, 700); return; }
+      if (opened >= N - 1) {
+        kjPush("son", 3, {}, true); st.react("lights"); st.setWall("Son sandık yolda");
+        later(finish, (reduced ? 1200 : 3400) * speed); return;
+      }
+      if (steps) { const to = steps.find(x => x > opened) ?? N - 1; while (opened < to) open(opened); later(next, 1600); return; }
       open(opened);
-      timer = setTimeout(next, (170 + 420 * Math.pow(opened / (N - 1), 1.6)) * speed);
+      later(next, (520 + 760 * Math.pow(opened / (N - 1), 1.6)) * speed);
     };
-    anchor(anchorLine(0, ids)); paint();
-    timer = setTimeout(next, (reduced ? 300 : 1100) * speed);
+
+    $("#scr-secim").setAttribute("aria-label", (res.early ? "Erken seçim gecesi" : "Seçim gecesi") + (preview ? " (prova)" : ""));
+    $("#tv-date").textContent = `${res.early ? "Erken seçim · " : ""}${dateLabel(res.month)} · ${ids.length} aday`;
+    $("#tv-live").textContent = preview ? "Prova" : "Canlı";
+    $(".tv-kj-tab").textContent = "Son dakika";
+    $("#tv-info").hidden = true; $("#btn-ec-go").hidden = true; $("#btn-ec-skip").hidden = false;
+    strip(near(0)); paint();
+    show("secim"); $("#scr-secim").scrollTop = 0;
+    st.year(calOf(res.month).year); st.mood("excited"); st.setWall(res.early ? "Erken seçim gecesi" : preview ? "Prova yayını" : "Sandıklar açılıyor");
+    showKJ("acilis"); setTicker(); fxShow();
+    later(next, (reduced ? 600 : 2400) * speed);
     $("#btn-ec-skip").onclick = finish;
-    $("#btn-ec-go").onclick = () => { $("#btn-ec-go").onclick = null; done(); };
+    $("#btn-ec-go").onclick = () => { $("#btn-ec-go").onclick = null; tvStop?.(); done(); };
   });
 }
 // Hile kodu: oyun masasında klavyeden "akparti" yazılınca seçim gecesi o anki gidişatla prova olarak açılır.
@@ -3319,22 +4781,16 @@ async function provaSecim() {
   show("game"); busy = false;
 }
 
-// Sonuçtan sonra: seçmen grubu dökümü ve "Neden?" satırları
-function renderElectionAfter(res, ids) {
-  const seg = (b, id) => { const i = res.cands.findIndex(c => c.id === id); return `<i style="--c:${EC_RENK[id]};width:${b.pay[i]}%" title="${esc(candName(id))} ${b.pay[i]}%"></i>`; };
-  const yi = res.cands.findIndex(c => c.id === "you");
-  $("#ec-blocs").innerHTML = res.blocs.map(b => `<div class="ec-bloc"><span>${esc(b.ad)}<small>seçmenin %${Math.round(b.w * 100)}'i</small></span>
-      <div class="ec-stack">${ids.map(id => seg(b, id)).join("")}</div><em>${pctTR(b.pay[yi])}</em></div>`).join("")
-    + `<div class="ec-legend">${ids.map(id => `<span style="--c:${EC_RENK[id]}">${esc(candName(id))}</span>`).join("")}</div>`;
-  const why = [`Teke tek ankette %${String(res.p0).replace(".", ",")} idiniz.`];
-  for (const x of res.steal || []) if (x.v >= 1) why.push(`${PEOPLE[x.id].ad} sizden yaklaşık ${String(x.v).replace(".", ",")} puan aldı.`);
-  if (res.win && res.you < 50) why.push("Oylar bölündü; yüzde elliyi bulmadan birinci çıktınız.");
-  if (res.vaat) why.push(`Tutulmamış vaatler sandıkta ${res.vaat} puan götürdü.`);
-  if (res.rel >= 1) why.push(`Dostlarınızın desteği +${String(res.rel).replace(".", ",")} puan getirdi.`);
-  else if (res.rel <= -1) why.push(`Aranızın bozuk olduğu kanaat önderleri ${String(res.rel).replace(".", ",")} puana mal oldu.`);
-  if (res.fatigue) why.push(`${res.term}. dönem yorgunluğu: −${String(res.fatigue).replace(".", ",")} puan.`);
-  $("#ec-why").innerHTML = why.map(t => `<li>${esc(t)}</li>`).join("");
-  $("#ec-after").hidden = false;
+// Sonuçtan sonra: seçmen grubu dökümü (kazanandan başlayarak) ve "Neden?" satırları
+function renderElectionAfter(res) {
+  const name = playerName(), yi = res.cands.findIndex(c => c.id === "you"), sayi = v => String(v).replace(".", ",");
+  $("#tv-blocs").innerHTML = res.blocs.map(b => {
+    const w = Math.round(b.w * 100);
+    return `<div class="tv-bloc"><span class="tv-bloc-ad">${esc(b.ad)}<small>seçmenin %${w}${tvNumEk(w)}</small></span><div class="tv-stack">`
+      + res.cands.map((c, i) => `<i style="--c:${EC_RENK[c.id] || "#aaa"};width:${b.pay[i]}%" title="${esc(tvName(c.id, name))} %${sayi(b.pay[i])}"><b>${Math.round(b.pay[i])}</b></i>`).join("")
+      + `</div><em>${pctTR(b.pay[yi])}</em></div>`;
+  }).join("") + `<div class="tv-legend">${res.cands.map(c => `<span style="--c:${EC_RENK[c.id] || "#aaa"}">${esc(tvName(c.id, name))}</span>`).join("")}</div>`;
+  $("#tv-why").innerHTML = whyLines(res, name).map(t => `<li>${esc(t)}</li>`).join("");
 }
 
 // ─── Eski Belediye Başkanlarımız (bu tarayıcıdaki dönemler) ───────────────

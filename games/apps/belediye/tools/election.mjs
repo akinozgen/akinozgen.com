@@ -39,26 +39,47 @@ try {
   for (const [w, h, mob] of [[390, 844, true], [1280, 800, false]]) {
     await send("Emulation.setDeviceMetricsOverride", { width: w, height: h, deviceScaleFactor: 1, mobile: mob });
     await load(setup());
-    await ev(`document.dispatchEvent(new KeyboardEvent("keydown",{key:"ArrowRight",bubbles:true}))`); await sleep(3200);
+    await ev(`document.dispatchEvent(new KeyboardEvent("keydown",{key:"ArrowRight",bubbles:true}))`); await sleep(7000);
     check(await screenNow() === "secim", `${w}: seçim gecesi açılmadı`);
-    const mid = await ev(`parseFloat(document.querySelector("#ec-open").textContent.slice(1).replace(",", "."))`);
-    check(mid > 0 && mid < 100, `${w}: sayım ortada değil (${mid})`);
+    const live = JSON.parse(await ev(`JSON.stringify({ open: parseFloat(document.querySelector("#tv-open").textContent.slice(1).replace(",", ".")),
+      order: [...document.querySelectorAll(".tv-cand")].map(r => ({ id: r.dataset.id, v: +r.querySelector(".tv-votes").textContent.split(".").join("") })),
+      you: [...document.querySelectorAll(".tv-cand.you")].map(r => r.dataset.id), boxes: document.querySelectorAll("#tv-strip .tv-box").length,
+      kj: document.querySelector("#tv-kj-title").textContent, tick: [...document.querySelectorAll("#tv-ticker span")].map(x => x.textContent),
+      svg: !!document.querySelector("#tv-stage svg.st-root"), fx: document.querySelector("#tv-fx b")?.textContent || "" })`));
+    check(live.open > 0 && live.open < 100, `${w}: sayım ortada değil (${live.open})`);
+    check(live.order.every((x, i) => !i || live.order[i - 1].v >= x.v), `${w}: adaylar oya göre dizilmemiş ${JSON.stringify(live.order)}`);
+    check(live.you.join() === "you", `${w}: oyuncunun kartı işaretli değil`);
+    check(live.boxes === 3 && live.kj && live.svg && live.fx, `${w}: mahalle kutusu, KJ, stüdyo ya da kur eksik`);
+    check(live.tick.length >= 8 && new Set(live.tick).size === live.tick.length, `${w}: kayan yazı kısa ya da tekrarlı (${live.tick.length})`);
     await shot(`secim-orta-${w}`);
     await ev(`document.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",bubbles:true}))`); await sleep(900); // atla
-    const fin = JSON.parse(await ev(`JSON.stringify({ res: JSON.parse(localStorage.getItem("cb.save")).pending.res, rows: [...document.querySelectorAll(".ec-row")].map(r => ({ id: r.dataset.id, pct: r.querySelector(".ec-pct b").textContent, won: r.classList.contains("won"), lead: r.classList.contains("lead") })), open: document.querySelector("#ec-open").textContent, go: !document.querySelector("#btn-ec-go").hidden, blocs: document.querySelectorAll(".ec-bloc").length, why: document.querySelectorAll("#ec-why li").length })`));
-    check(fin.open === "%100,0", `${w}: sonuçta açılan sandık ${fin.open}`);
+    const fin = JSON.parse(await ev(`JSON.stringify({ res: JSON.parse(localStorage.getItem("cb.save")).pending.res, rows: [...document.querySelectorAll(".tv-cand")].map(r => ({ id: r.dataset.id, pct: r.querySelector(".tv-pct").textContent, won: r.classList.contains("won"), lead: r.classList.contains("lead") })), open: document.querySelector("#tv-open").textContent, live: document.querySelector("#tv-live").textContent, go: !document.querySelector("#btn-ec-go").hidden, blocs: document.querySelectorAll(".tv-bloc").length, why: document.querySelectorAll("#tv-why li").length })`));
+    check(fin.open === "%100,0" && fin.live === "Kesin sonuç", `${w}: sonuçta açılan sandık ${fin.open} · ${fin.live}`);
     for (const c of fin.res.cands) {
       const row = fin.rows.find(r => r.id === c.id);
-      check(row && row.pct === "%" + c.pct.toFixed(1).replace(".", ","), `${w}: ${c.id} ekranda ${row?.pct}, motorda ${c.pct}`);
+      check(row && row.pct === "%" + c.pct.toFixed(2).replace(".", ","), `${w}: ${c.id} ekranda ${row?.pct}, motorda ${c.pct}`);
     }
-    check(fin.rows.filter(r => r.won).map(r => r.id).join() === fin.res.winner, `${w}: mühür yanlış satırda`);
+    check(fin.rows.map(r => r.id).join() === fin.res.cands.map(c => c.id).join(), `${w}: sonuç sırası motordan farklı`);
+    check(fin.rows.filter(r => r.won).map(r => r.id).join() === fin.res.winner && fin.rows[0].lead, `${w}: mühür yanlış satırda`);
     check(fin.go && fin.blocs === 4 && fin.why >= 1, `${w}: döküm ya da Devam eksik`);
     await shot(`secim-son-${w}`);
+    await sleep(3600);
+    check(await ev(`!document.querySelector("#tv-info").hidden`), `${w}: döküm paneli açılmadı`);
+    await shot(`secim-dokum-${w}`);
     await ev(`document.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",bubbles:true}))`); await sleep(800);
     const after = await ev(`document.querySelector("#card .doc-konu")?.textContent || ""`);
     check(await screenNow() === "game" && /Seçim sonucu/.test(after), `${w}: Devam'dan sonra seçim sonucu kartı gelmedi (${after})`);
     console.log(w, fin.res.cands.map(c => `${c.id}:${c.pct}`).join(" "), "→", fin.res.winner);
   }
+  // Hareket azaltmada sayım üç adımda kendi kendine biter, sonuç yine motorla aynı
+  await send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: "reduce" }] });
+  await load(setup());
+  await ev(`document.dispatchEvent(new KeyboardEvent("keydown",{key:"ArrowRight",bubbles:true}))`); await sleep(9500);
+  const rm = JSON.parse(await ev(`JSON.stringify({ go: !document.querySelector("#btn-ec-go").hidden, open: document.querySelector("#tv-open").textContent, won: document.querySelector(".tv-cand.won")?.dataset.id, res: JSON.parse(localStorage.getItem("cb.save")).pending.res.winner })`));
+  check(rm.go && rm.open === "%100,0" && rm.won === rm.res, `hareket azaltmada sayım bitmedi ${JSON.stringify(rm)}`);
+  await ev(`document.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",bubbles:true}))`); await sleep(600);
+  await send("Emulation.setEmulatedMedia", { features: [] });
+  console.log("hareket azaltma:", rm.open, rm.won);
   // Seçim gecesinin ortasında sayfa kapanırsa "Kaldığım yerden" ekranı yeniden açar
   await load(setup());
   await ev(`document.dispatchEvent(new KeyboardEvent("keydown",{key:"ArrowRight",bubbles:true}))`); await sleep(2500);
@@ -76,7 +97,7 @@ try {
   const early = await ev(`document.querySelector("#card .doc-konu")?.textContent || ""`);
   check(/Erken seçim/.test(early), `erken seçim kartı gelmedi (${early})`);
   await ev(`document.dispatchEvent(new KeyboardEvent("keydown",{key:"ArrowRight",bubbles:true}))`); await sleep(1800);
-  const title = await ev(`document.querySelector("#scr-secim h2").textContent`);
+  const title = await ev(`document.querySelector("#tv-date").textContent`);
   check(await screenNow() === "secim" && /Erken/.test(title), `erken seçim gecesi açılmadı (${title})`);
   await shot("erken-secim");
   console.log("erken seçim:", title);
@@ -86,8 +107,8 @@ try {
   const saveBefore = await ev(`localStorage.getItem("cb.save")`);
   for (const ch of "akparti") await ev(`document.dispatchEvent(new KeyboardEvent("keydown",{key:${JSON.stringify(ch)},bubbles:true}))`);
   await sleep(900);
-  const pTitle = await ev(`document.querySelector("#scr-secim h2").textContent`);
-  check(await screenNow() === "secim" && /prova/.test(pTitle), `prova açılmadı (${await screenNow()} · ${pTitle})`);
+  const pTitle = await ev(`document.querySelector("#tv-live").textContent`);
+  check(await screenNow() === "secim" && /Prova/.test(pTitle),`prova açılmadı (${await screenNow()} · ${pTitle})`);
   await shot("prova");
   await ev(`document.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",bubbles:true}))`); await sleep(700);
   await ev(`document.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",bubbles:true}))`); await sleep(700);

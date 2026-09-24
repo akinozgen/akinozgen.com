@@ -10,7 +10,8 @@ const LS = {
   del(k) { try { localStorage.removeItem("cb." + k); } catch { } },
 };
 const rngOf = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
-const vibrate = ms => { try { navigator.vibrate?.(ms); } catch { } };
+// dokunmadan (klavyeyle) oynayanda tarayıcı titreşimi engeller ve konsola hata yazar; hiç çağırmayalım
+const vibrate = ms => { try { if (navigator.userActivation?.hasBeenActive !== false) navigator.vibrate?.(ms); } catch { } };
 
 let S = null, busy = false, screen = "title", lastOver = null, wallFrom = "title";
 // Derlemede web sürümü için true yapılır (service worker kaydı)
@@ -579,25 +580,29 @@ function gameOver() {
   snd.hicaz();
 }
 
-// ─── Seçim gecesi: sonuç baştan belli (engine.js tally), ekran sandık sandık açar ─
+// ─── Seçim gecesi: KARAKAVAK TV canlı yayını. Sonuç baştan belli (engine.js tally), ekran sandık sandık açar.
+// Yazılar broadcast.js'ten (KJ, kayan yazı, kur, "Neden?"), spiker anchor.js'ten; yerleşim style.css'teki sözleşmede.
 const EC_RENK = { you: "#e2bd5a", nermin: "#e8715a", vekil: "#6f9be6", cengiz: "#c09a70", kaan: "#a78cf0", bekir: "#5cc08a",
   muhtar: "#e0a860", tuncay: "#a9b2bf", burak: "#ef7fb4", albay: "#a3b86a", tekir: "#f5a94a" };
-// mahalle: blok karışımı [halk, esnaf, parti tabanı, kararsız], sandık sayısı. Açılış sırası köylerden merkeze, en son traktörlü köy.
+// mahalle: blok karışımı [halk, esnaf, parti tabanı, kararsız], sandık sayısı, sandık büyüklüğü çarpanı.
+// Açılış sırası köylerden merkeze; en son traktörlü Yukarıkavak'ın tek küçük sandığı (o gelmeden sayım %99'u geçer).
 const MAHALLE = [
   ["Kavun Ovası", [.7, .1, .1, .1], 4], ["Çarşı", [.3, .55, .05, .1], 3], ["Sanayi", [.45, .4, .05, .1], 2],
   ["Lojmanlar", [.3, .05, .55, .1], 2], ["Merkez", [.5, .15, .2, .15], 4], ["Kavaklı", [.8, .05, .05, .1], 3],
-  ["Öğrenci yurdu", [.3, .02, .03, .65], 2], ["Yukarıkavak", [.75, .05, .15, .05], 1],
+  ["Öğrenci yurdu", [.3, .02, .03, .65], 2], ["Yukarıkavak", [.75, .05, .15, .05], 1, 0.12],
 ];
 const candName = id => (id === "you" ? playerName() : PEOPLE[id].ad);
 const candLabel = id => (id === "you" ? "Belediye Başkanı, yeniden aday" : ADAYLAR[id].etiket);
 const candPic = id => photoSrc(id === "you" ? playerAvatar() : id);
 const pctTR = v => "%" + v.toFixed(1).replace(".", ",");
+const pct2 = v => v.toFixed(2).replace(".", ",");
+const oyTR = v => Math.round(v).toLocaleString("tr");
 // Sandıklar mahallenin seçmen karışımından üretilir; her adayın toplamı kesin sonuca eşitlenir (ekran gerçeği gösterir, yalnız sırasını dramatize eder)
 function ballotBoxes(res, rng) {
   const boxes = [];
-  MAHALLE.forEach(([, mix, k], mi) => {
+  MAHALLE.forEach(([, mix, k, olcek = 1], mi) => {
     for (let j = 0; j < k; j++) {
-      const size = 380 + Math.floor(rng() * 320);
+      const size = (380 + Math.floor(rng() * 320)) * olcek;
       boxes.push({ mi, v: res.cands.map((c, i) => size * Math.max(0.002, mix.reduce((a, m, b) => a + m * res.blocs[b].pay[i] / 100, 0)) * (0.8 + rng() * 0.4)) });
     }
   });
@@ -605,90 +610,172 @@ function ballotBoxes(res, rng) {
   res.cands.forEach((c, i) => { const col = boxes.reduce((a, b) => a + b.v[i], 0); boxes.forEach(b => { b.v[i] *= (c.pct / 100) * total / col; }); });
   return boxes;
 }
-// Spikerin mahalle mahalle söyledikleri (yarışanlara göre)
-function anchorLine(mi, ids) {
-  const has = id => ids.includes(id);
-  return [
-    "Yayın yasağı kalktı! İlk sandıklar Kavun Ovası köylerinden geliyor; tutanaklar kavun kasasında.",
-    has("bekir") ? "Çarşı sandıkları açılıyor: burası Hacı Bekir'in kalesi, kepenkler kapalı, herkes ekran başında."
-      : "Çarşıda esnaf sandık başında nöbette. Fikret bütün müşahitlere çay dağıtıyor, 'nöbetçi müşahit' diyor.",
-    "Sanayi sandığında itiraz: 'Zarftan bakkal fişi çıktı.' İtiraz reddedildi, çay kabul edildi.",
-    has("vekil") ? "Lojman sandıkları Suat Bey'e yakın. Kendisi 'talimat henüz gelmedi' diyerek yorum yapmıyor."
-      : "Lojmanlarda memurlar sandığa mesai saatinde gitmiş; öğle arası üç saat sürmüş.",
-    "Merkez mahalleler açılıyor. Uzmanımız stüdyoda: 'Kesin konuşmak için erken, yine de konuşacağım.'",
-    has("muhtar") ? "Kavaklı'da Muhtar Rıza oyları kendisi sayıyor, parmak hesabıyla. Üç kere saydı, üçü de başka çıktı."
-      : "Kavaklı sandıkları geldi. Muhtar hepsini tek tek imzaladı, bir tanesine de kaşe yerine tespih bastı.",
-    has("burak") ? "Burak %1 açılmışken canlı yayın açıp 'KAZANDIK' diye bağırdı. İzleyici sayısı: 12, biri kendisi."
-      : "Yurt sandığından oy pusulası yerine ders notu çıktı; kurul geçersiz saydı, öğrenci itiraz etti.",
-    "Sandıkların %99,8'i açıldı. Son sandık Yukarıkavak'tan traktörle yolda; traktör çamura saplandı, muhtar sandığı omzunda getiriyor.",
-  ][mi];
-}
+let tvStop = null; // açık yayının zamanlayıcılarını ve spikeri durdurur
 function electionNight(res, preview = false) {
+  tvStop?.();
   return new Promise(done => {
     const r = rngOf(res.month * 131 + res.term * 7 + 3), boxes = ballotBoxes(res, r), N = boxes.length;
-    // ekranda sabit sıra (sonucu ele vermesin): önce siz, sonra ilan sırası
-    const ids = ["you", ...(res.order || res.cands.map(c => c.id).filter(id => id !== "you").sort())].filter(id => res.cands.some(c => c.id === id));
-    $("#scr-secim .ec-top h2").textContent = (res.early ? "Karakavak Erken Seçim Gecesi" : "Karakavak Seçim Gecesi") + (preview ? " (prova)" : "");
-    const idx = id => res.cands.findIndex(c => c.id === id);
-    const fast = LS.get("ecSeen", false), speed = fast ? 0.6 : 1;
-    const cum = res.cands.map(() => 0), tileCum = MAHALLE.map(() => res.cands.map(() => 0));
-    let opened = 0, leader = null, finished = false, timer = 0;
+    const name = playerName(), speed = LS.get("ecSeen", false) ? 0.6 : 1;
+    const ids = res.cands.map(c => c.id), idx = Object.fromEntries(ids.map((id, i) => [id, i]));
+    // sayım başlamadan sıra: önce siz, sonra ilan sırası (sonucu ele vermesin); oy geldikçe kartlar oya göre dizilir
+    const start = ["you", ...(res.order || ids.filter(id => id !== "you").sort())].filter(id => id in idx);
+    const sum = a => a.reduce((x, y) => x + y, 0), all = sum(boxes.map(b => sum(b.v)));
+    const mahTot = MAHALLE.map((_, m) => sum(boxes.filter(b => b.mi === m).map(b => sum(b.v))));
+    const cum = ids.map(() => 0), disp = ids.map(() => 0), mahCum = MAHALLE.map(() => ids.map(() => 0));
+    const seen = new Set(), T = new Set();
+    let opened = 0, leader = null, finished = false, raf = 0, rollT = 0, mahNow = 0, fxi = Math.floor(r() * 12);
+    let kjAt = -1e9, kjWant = null, kjT = 0;
+    const later = (f, ms) => { const t = setTimeout(() => { T.delete(t); f(); }, ms); T.add(t); return t; };
+    const halt = () => { for (const t of T) clearTimeout(t); T.clear(); cancelAnimationFrame(raf); raf = 0; kjT = 0; kjWant = null; };
     const say = t => { $("#ec-say").textContent = t; };
-    const anchor = t => { $("#ec-anchor").textContent = t; };
-    $("#ec-date").textContent = `${dateLabel(res.month)} · ${res.cands.length} aday`;
-    $("#ec-turnout").textContent = `Katılım %${70 + Math.floor(r() * 16)}`;
-    $("#ec-list").innerHTML = ids.map(id => `<li class="ec-row${id === "you" ? " you" : ""}" data-id="${id}" style="--c:${EC_RENK[id] || "#aaa"}">
-      <img src="${candPic(id)}" alt="" draggable="false">
-      <div class="ec-nm"><b>${esc(candName(id))}<span class="ec-lead">▲ önde</span></b><span>${esc(candLabel(id))}</span></div>
-      <div class="ec-pct"><b>%0</b><span>0 oy</span></div><div class="ec-bar"><i></i></div></li>`).join("");
-    $("#ec-map").innerHTML = MAHALLE.map(([ad]) => `<div class="ec-tile"><span>${esc(ad)}</span><b></b></div>`).join("");
-    $("#ec-after").hidden = true; $("#btn-ec-go").hidden = true; $("#btn-ec-skip").hidden = false;
-    show("secim"); $("#scr-secim").scrollTop = 0;
-    const paint = () => {
-      const tot = cum.reduce((a, v) => a + v, 0) || 1, all = boxes.reduce((a, b) => a + b.v.reduce((x, y) => x + y, 0), 0);
-      const frac = finished ? 100 : Math.min(opened === N - 1 ? 99.8 : 99.7, 100 * boxes.slice(0, opened).reduce((a, b) => a + b.v.reduce((x, y) => x + y, 0), 0) / all);
-      $("#ec-open").textContent = pctTR(frac); $("#ec-prog").style.width = frac + "%";
-      let lead = null, best = -1;
-      for (const id of ids) {
-        const i = idx(id), p = opened ? 100 * cum[i] / tot : 0, row = $(`.ec-row[data-id="${id}"]`);
-        row.querySelector(".ec-pct b").textContent = pctTR(p);
-        row.querySelector(".ec-pct span").textContent = `${Math.round(cum[i]).toLocaleString("tr")} oy`;
-        row.querySelector(".ec-bar i").style.width = p + "%";
-        if (cum[i] > best) { best = cum[i]; lead = id; }
+
+    // stüdyo: spiker SVG'si sahneye takılır; kendi alt bandı kırpılır (yayının kayan yazısı yeter)
+    const stage = $("#tv-stage");
+    stage.innerHTML = studioSVG();
+    const svg = stage.querySelector("svg");
+    svg.setAttribute("viewBox", "0 0 1600 851"); svg.setAttribute("preserveAspectRatio", "xMidYMid slice");
+    const st = studio(stage);
+    tvStop = () => { halt(); st.stop(); tvStop = null; };
+
+    const rows = {};
+    $("#tv-cands").replaceChildren(...start.map(id => {
+      const li = document.createElement("li");
+      li.className = "tv-cand" + (id === "you" ? " you" : ""); li.dataset.id = id; li.style.setProperty("--c", EC_RENK[id] || "#aaa");
+      li.innerHTML = `<div class="tv-pic"><img src="${candPic(id)}" alt="" draggable="false"></div><div class="tv-body"><span class="tv-lbl">${esc(candLabel(id))}</span>`
+        + `<span class="tv-nm"><b class="tv-name">${esc(tvName(id, name))}</b></span><b class="tv-pct">%0,00</b><span class="tv-votes">0</span></div>`;
+      rows[id] = { li, pct: li.querySelector(".tv-pct"), votes: li.querySelector(".tv-votes") };
+      return li;
+    }));
+    // sıra değişince kartlar yerlerine kayar (FLIP)
+    const reorder = order => {
+      const list = $("#tv-cands"), kids = [...list.children];
+      if (order.every((id, i) => kids[i] === rows[id].li)) return;
+      const y0 = reduced ? null : new Map(kids.map(el => [el, el.getBoundingClientRect().top]));
+      list.append(...order.map(id => rows[id].li));
+      if (y0) for (const el of kids) {
+        const d = y0.get(el) - el.getBoundingClientRect().top;
+        if (Math.abs(d) > 1) el.animate([{ transform: `translateY(${d}px)` }, { transform: "none" }], { duration: 480, easing: "cubic-bezier(.3,1.25,.5,1)" });
       }
-      document.querySelectorAll(".ec-row").forEach(el => el.classList.toggle("lead", opened > 0 && el.dataset.id === lead));
-      MAHALLE.forEach((_, m) => {
-        const t = tileCum[m], s = t.reduce((a, v) => a + v, 0), el = $("#ec-map").children[m];
-        if (!s) return;
-        const w = res.cands[t.indexOf(Math.max(...t))].id;
-        el.classList.add("on"); el.style.setProperty("--c", EC_RENK[w] || "#aaa"); el.querySelector("b").textContent = candName(w);
-      });
-      if (opened > 1 && lead !== leader) { anchor(`Liderlik el değiştirdi: ${candName(lead)} öne geçti!`); say(`${candName(lead)} öne geçti.`); }
-      leader = lead;
     };
-    const open = k => {
-      const b = boxes[k]; b.v.forEach((v, i) => { cum[i] += v; tileCum[b.mi][i] += v; });
-      opened = k + 1;
-      if (k === 0 || boxes[k - 1].mi !== b.mi) anchor(anchorLine(b.mi, ids));
-      if (ids.includes("tekir") && k === Math.floor(N / 2)) anchor("Geçersiz oyların yarısına kedi resmi çizilmiş. Miyav Hareketi genel merkezinde mama dağıtılıyor.");
+    const paint = () => {
+      const tot = sum(disp), frac = finished ? 100 : Math.min(99.9, 100 * tot / all);
+      $("#tv-open").textContent = "%" + frac.toFixed(1).replace(".", ","); $("#tv-prog").style.width = frac + "%";
+      const order = tot ? [...start].sort((a, b) => disp[idx[b]] - disp[idx[a]] || start.indexOf(a) - start.indexOf(b)) : start;
+      for (const id of start) {
+        const p = tot ? 100 * disp[idx[id]] / tot : 0, o = rows[id];
+        o.li.style.setProperty("--p", p.toFixed(2));
+        o.pct.textContent = "%" + pct2(p); o.votes.textContent = oyTR(disp[idx[id]]);
+        o.li.classList.toggle("lead", tot > 0 && id === order[0]);
+      }
+      $("#tv-diff").textContent = tot ? oyTR(Math.round(disp[idx[order[0]]]) - Math.round(disp[idx[order[1]]])) : "0";
+      reorder(order);
+    };
+    // sayılar sandık gelince bir anda değil, yayındaki gibi yuvarlanarak artar
+    const roll = now => {
+      const a = rollT ? 1 - Math.exp(-(now - rollT) / 120) : 0.2;
+      let moving = false;
+      cum.forEach((v, i) => { const d = v - disp[i]; if (Math.abs(d) < 0.5) disp[i] = v; else { disp[i] += d * a; moving = true; } });
       paint();
-      const pr = Math.round(100 * opened / N);
-      if ([25, 50, 75].some(x => pr >= x && Math.round(100 * (opened - 1) / N) < x)) say(`Sandıkların yüzde ${pr}'i açıldı, ${candName(leader)} önde.`);
+      rollT = moving ? now : 0; raf = moving ? requestAnimationFrame(roll) : 0;
+    };
+    const kick = () => { if (reduced) { cum.forEach((v, i) => { disp[i] = v; }); paint(); } else if (!raf) raf = requestAnimationFrame(roll); };
+
+    // mahalle kutuları: sayımda açılmakta olan ve önceki iki mahalle, sonuçta hepsi üçer üçer döner
+    const box = m => {
+      const t = mahCum[m], s = sum(t), ad = MAHALLE[m][0];
+      const acik = finished || s >= mahTot[m] - 0.5 ? 100 : 100 * s / mahTot[m];
+      const top = s ? ids.map((id, i) => [id, 100 * t[i] / s]).sort((a, b) => b[1] - a[1]).slice(0, 2) : [];
+      const c = top.length ? EC_RENK[top[0][0]] : "#3d4c6e";
+      return `<div class="tv-box" style="--c:${c}"><span class="tv-box-ad">${esc(ad)}</span><span class="tv-box-open">Açılan %${acik.toFixed(1).replace(".", ",")}</span>`
+        + (top.length ? top.map(([id, p]) => `<p class="tv-box-row${id === "you" ? " you" : ""}" style="--c:${EC_RENK[id] || "#aaa"}"><b>${esc(tvShort(id, name))}</b><span>${pct2(p)}</span></p>`).join("")
+          : `<p class="tv-box-row" style="--c:${c}"><b>Sayım bekleniyor</b><span></span></p>`) + "</div>";
+    };
+    const strip = list => { $("#tv-strip").innerHTML = list.map(box).join(""); };
+    const near = m => (m < 2 ? [0, 1, 2] : [m - 2, m - 1, m]);
+
+    // alt bant: her KJ en az HOLD kalır; bekleyen haberlerden önceliklisi, eşitse en yenisi gelir
+    const HOLD = 2600 * speed;
+    const ctxOf = (extra = {}) => {
+      const tot = sum(cum);
+      return { res, playerName: name, pct: tot ? Object.fromEntries(ids.map((id, i) => [id, 100 * cum[i] / tot])) : {}, leader, opened: finished ? 1 : tot / all,
+        mahalle: MAHALLE[mahNow][0], early: !!res.early, preview, flags: S?.flags || {}, seen, ...extra };
+    };
+    const showKJ = (phase, extra = {}) => {
+      if (phase === "lider" && extra.lead !== leader) phase = "sayim"; // öne geçen yeniden geriye düştüyse haber bayatladı
+      const o = kj(phase, ctxOf(extra), r);
+      $("#tv-kj-title").textContent = o.title; $("#tv-kj-sub").textContent = o.sub;
+      kjAt = performance.now();
+      st.say(Math.min(4200, 900 + (o.title.length + o.sub.length) * 30));
+    };
+    const kjPush = (phase, prio, extra = {}, now = false) => {
+      if (now) { clearTimeout(kjT); kjT = 0; kjWant = null; showKJ(phase, extra); return; }
+      if (kjWant && kjWant.prio > prio) return;
+      kjWant = { phase, prio, extra };
+      if (!kjT) kjT = later(() => { kjT = 0; const w = kjWant; kjWant = null; if (w && !finished) showKJ(w.phase, w.extra); }, Math.max(0, kjAt + HOLD - performance.now()));
+    };
+    const setTicker = () => {
+      const tr = $("#tv-ticker");
+      tr.innerHTML = [...new Set(ticker(ctxOf(), r))].map(t => `<span>${esc(t)}</span>`).join("");
+      tr.style.animation = "none"; void tr.offsetWidth; tr.style.animation = "";
+      tr.style.setProperty("--tv-tick-s", Math.max(30, tr.scrollWidth / 95).toFixed(1) + "s"); // ~95 px/sn, ekran genişliğinden bağımsız hız
+    };
+    const fxShow = () => {
+      const f = fx(fxi++, r);
+      $("#tv-fx").innerHTML = `<b>${esc(f.ad)}</b> ${esc(f.deger)} <i class="${f.yon === "▲" ? "up" : "down"}">${f.yon}</i>`;
+      later(fxShow, 4200);
+    };
+    // şok geçince spiker yarış başa başsa heyecanlı, değilse sakin
+    const calm = () => {
+      if (finished) return;
+      const tot = sum(cum), l = cum[idx[leader]], s2 = Math.max(...cum.filter((_, i) => i !== idx[leader]));
+      st.mood(tot && (l - s2) / tot < 0.02 ? "excited" : "neutral");
+    };
+
+    const open = k => {
+      const b = boxes[k], before = sum(cum);
+      b.v.forEach((v, i) => { cum[i] += v; mahCum[b.mi][i] += v; });
+      opened = k + 1; mahNow = b.mi;
+      const prev = leader; leader = ids[cum.indexOf(Math.max(...cum))];
+      if (finished) return;
+      strip(near(b.mi)); kick();
+      const x = [25, 50, 75].find(p => before / all < p / 100 && sum(cum) / all >= p / 100);
+      if (opened > 2 && prev && leader !== prev) {
+        kjPush("lider", 2, { prev, lead: leader });
+        st.mood("shocked"); st.react("lean"); st.setWall(`${tvShort(leader, name)} öne geçti`); later(calm, 2600);
+        say(`${tvName(leader, name)} öne geçti.`);
+      } else if (x) {
+        kjPush("sayim", 1); st.react("point"); st.setWall(`Sandıkların %${x}${tvNumEk(x)} açıldı`);
+        say(`Sandıkların yüzde ${x}${tvNumEk(x)} açıldı, ${tvName(leader, name)} önde.`);
+      } else if (k === 0 || boxes[k - 1].mi !== b.mi) {
+        kjPush("mahalle", 1, { mahalle: MAHALLE[b.mi][0] }); st.react("papers"); st.setWall(`${MAHALLE[b.mi][0]} sandıkları`);
+      }
+      if (ids.includes("tekir") && k === Math.floor(N / 2)) st.react("cat");
     };
     const finish = () => {
       if (finished) return;
-      finished = true; clearTimeout(timer);
+      halt(); finished = true;
       for (let k = opened; k < N; k++) open(k); // sandık toplamları kesin sonuca eşit, son hâl birebir tutar
-      paint();
-      const w = res.cands[0], row = $(`.ec-row[data-id="${w.id}"]`);
-      row.classList.add("won");
+      cum.forEach((v, i) => { disp[i] = v; }); paint();
+      const w = res.cands[0], tekirWon = w.id === "tekir";
+      rows[w.id].li.classList.add("won");
+      $("#tv-live").textContent = preview ? "Prova sonucu" : "Kesin sonuç";
+      $(".tv-kj-tab").textContent = "Seçim sonucu";
+      st.mood(tekirWon ? "smug" : res.win ? "happy" : "sad");
+      st.setWall(tekirWon ? "Tekir başkan!" : `Kazanan: ${tvShort(w.id, name)}`);
+      showKJ("sonuc"); setTicker(); fxShow();
+      // sonuçtan sonra yayın akar: KJ'ler döner, mahalleler üçer üçer geçer, biraz sonra döküm paneli açılır
+      let pg = 0;
+      const pages = () => { strip([0, 1, 2].map(j => (pg + j) % MAHALLE.length)); pg = (pg + 3) % MAHALLE.length; later(pages, 5000); };
+      pages();
+      for (let j = 1; j <= 3; j++) later(() => showKJ("sonuc"), j * 6500);
+      later(() => { $("#tv-info").hidden = false; }, reduced ? 800 : 3800 * speed);
       const n = res.cands.length;
-      const line = w.id === "tekir" ? "Karakavak'ın ilk tüylü başkanı: Tekir! İlk icraatı masadaki bardağı yere itmek oldu."
+      const line = tekirWon ? "Karakavak'ın ilk tüylü başkanı: Tekir! İlk icraatı masadaki bardağı yere itmek oldu."
         : res.win ? `${candName("you")} ${pctTR(res.you)} ile yeniden seçildi! ${n} adaylı yarışta fark ${String(res.margin).replace(".", ",")} puan.`
         : `${candName(w.id)} ${pctTR(w.pct)} ile Karakavak'ın yeni belediye başkanı. Siz ${pctTR(res.you)} aldınız.`;
-      anchor(line); say(line);
+      say(line);
       if (res.win) snd.win(); else snd.paper();
-      renderElectionAfter(res, ids);
+      renderElectionAfter(res);
       $("#btn-ec-skip").hidden = true; const go = $("#btn-ec-go"); go.hidden = false; go.focus({ preventScroll: true });
       if (preview) return; // prova: günlüğe yazılmaz, hızlı sayım hakkı da harcanmaz
       LS.set("ecSeen", true);
@@ -698,15 +785,27 @@ function electionNight(res, preview = false) {
     const steps = reduced ? [Math.round(N * 0.3), Math.round(N * 0.7), N - 1] : null;
     const next = () => {
       if (finished) return;
-      if (opened >= N - 1) { anchor(anchorLine(MAHALLE.length - 1, ids)); paint(); timer = setTimeout(finish, (reduced ? 600 : 1500) * speed); return; }
-      if (steps) { const to = steps.find(x => x > opened) ?? N - 1; while (opened < to) open(opened); timer = setTimeout(next, 700); return; }
+      if (opened >= N - 1) {
+        kjPush("son", 3, {}, true); st.react("lights"); st.setWall("Son sandık yolda");
+        later(finish, (reduced ? 1200 : 3400) * speed); return;
+      }
+      if (steps) { const to = steps.find(x => x > opened) ?? N - 1; while (opened < to) open(opened); later(next, 1600); return; }
       open(opened);
-      timer = setTimeout(next, (170 + 420 * Math.pow(opened / (N - 1), 1.6)) * speed);
+      later(next, (520 + 760 * Math.pow(opened / (N - 1), 1.6)) * speed);
     };
-    anchor(anchorLine(0, ids)); paint();
-    timer = setTimeout(next, (reduced ? 300 : 1100) * speed);
+
+    $("#scr-secim").setAttribute("aria-label", (res.early ? "Erken seçim gecesi" : "Seçim gecesi") + (preview ? " (prova)" : ""));
+    $("#tv-date").textContent = `${res.early ? "Erken seçim · " : ""}${dateLabel(res.month)} · ${ids.length} aday`;
+    $("#tv-live").textContent = preview ? "Prova" : "Canlı";
+    $(".tv-kj-tab").textContent = "Son dakika";
+    $("#tv-info").hidden = true; $("#btn-ec-go").hidden = true; $("#btn-ec-skip").hidden = false;
+    strip(near(0)); paint();
+    show("secim"); $("#scr-secim").scrollTop = 0;
+    st.year(calOf(res.month).year); st.mood("excited"); st.setWall(res.early ? "Erken seçim gecesi" : preview ? "Prova yayını" : "Sandıklar açılıyor");
+    showKJ("acilis"); setTicker(); fxShow();
+    later(next, (reduced ? 600 : 2400) * speed);
     $("#btn-ec-skip").onclick = finish;
-    $("#btn-ec-go").onclick = () => { $("#btn-ec-go").onclick = null; done(); };
+    $("#btn-ec-go").onclick = () => { $("#btn-ec-go").onclick = null; tvStop?.(); done(); };
   });
 }
 // Hile kodu: oyun masasında klavyeden "akparti" yazılınca seçim gecesi o anki gidişatla prova olarak açılır.
@@ -722,22 +821,16 @@ async function provaSecim() {
   show("game"); busy = false;
 }
 
-// Sonuçtan sonra: seçmen grubu dökümü ve "Neden?" satırları
-function renderElectionAfter(res, ids) {
-  const seg = (b, id) => { const i = res.cands.findIndex(c => c.id === id); return `<i style="--c:${EC_RENK[id]};width:${b.pay[i]}%" title="${esc(candName(id))} ${b.pay[i]}%"></i>`; };
-  const yi = res.cands.findIndex(c => c.id === "you");
-  $("#ec-blocs").innerHTML = res.blocs.map(b => `<div class="ec-bloc"><span>${esc(b.ad)}<small>seçmenin %${Math.round(b.w * 100)}'i</small></span>
-      <div class="ec-stack">${ids.map(id => seg(b, id)).join("")}</div><em>${pctTR(b.pay[yi])}</em></div>`).join("")
-    + `<div class="ec-legend">${ids.map(id => `<span style="--c:${EC_RENK[id]}">${esc(candName(id))}</span>`).join("")}</div>`;
-  const why = [`Teke tek ankette %${String(res.p0).replace(".", ",")} idiniz.`];
-  for (const x of res.steal || []) if (x.v >= 1) why.push(`${PEOPLE[x.id].ad} sizden yaklaşık ${String(x.v).replace(".", ",")} puan aldı.`);
-  if (res.win && res.you < 50) why.push("Oylar bölündü; yüzde elliyi bulmadan birinci çıktınız.");
-  if (res.vaat) why.push(`Tutulmamış vaatler sandıkta ${res.vaat} puan götürdü.`);
-  if (res.rel >= 1) why.push(`Dostlarınızın desteği +${String(res.rel).replace(".", ",")} puan getirdi.`);
-  else if (res.rel <= -1) why.push(`Aranızın bozuk olduğu kanaat önderleri ${String(res.rel).replace(".", ",")} puana mal oldu.`);
-  if (res.fatigue) why.push(`${res.term}. dönem yorgunluğu: −${String(res.fatigue).replace(".", ",")} puan.`);
-  $("#ec-why").innerHTML = why.map(t => `<li>${esc(t)}</li>`).join("");
-  $("#ec-after").hidden = false;
+// Sonuçtan sonra: seçmen grubu dökümü (kazanandan başlayarak) ve "Neden?" satırları
+function renderElectionAfter(res) {
+  const name = playerName(), yi = res.cands.findIndex(c => c.id === "you"), sayi = v => String(v).replace(".", ",");
+  $("#tv-blocs").innerHTML = res.blocs.map(b => {
+    const w = Math.round(b.w * 100);
+    return `<div class="tv-bloc"><span class="tv-bloc-ad">${esc(b.ad)}<small>seçmenin %${w}${tvNumEk(w)}</small></span><div class="tv-stack">`
+      + res.cands.map((c, i) => `<i style="--c:${EC_RENK[c.id] || "#aaa"};width:${b.pay[i]}%" title="${esc(tvName(c.id, name))} %${sayi(b.pay[i])}"><b>${Math.round(b.pay[i])}</b></i>`).join("")
+      + `</div><em>${pctTR(b.pay[yi])}</em></div>`;
+  }).join("") + `<div class="tv-legend">${res.cands.map(c => `<span style="--c:${EC_RENK[c.id] || "#aaa"}">${esc(tvName(c.id, name))}</span>`).join("")}</div>`;
+  $("#tv-why").innerHTML = whyLines(res, name).map(t => `<li>${esc(t)}</li>`).join("");
 }
 
 // ─── Eski Belediye Başkanlarımız (bu tarayıcıdaki dönemler) ───────────────
