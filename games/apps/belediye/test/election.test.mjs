@@ -1,0 +1,113 @@
+// Çok adaylı seçim: aday listesi, oy sayımı, seçmen grubu dökümü, sonuç kartları
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+
+const src = ["cards.js", "engine.js"].map(f => readFileSync(new URL("../src/" + f, import.meta.url), "utf8")).join("\n");
+const load = () => new Function(src + "\nreturn { ADAYLAR, BLOKLAR, PEOPLE, TERM, newGame, draw, choose, tally, drawField, fieldCard, electionCard, special, pollOf };")();
+const rng = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+const E = load();
+const randomState = r => {
+  const s = E.newGame();
+  for (const k of ["h", "k", "e", "a"]) s.m[k] = 10 + Math.floor(r() * 81);
+  for (const w of Object.keys(E.ADAYLAR)) if (w !== "tekir" && r() < 0.4) s.rel[w] = Math.floor(r() * 7) - 3;
+  if (r() < 0.2) s.cnt.tekir = 3;
+  return s;
+};
+
+test("oy sayımı: 2-5 aday, toplam %100, kazanan en çok oyu alan", () => {
+  const counts = new Set();
+  for (let g = 0; g < 3000; g++) {
+    const r = rng(g), s = randomState(r), t = E.tally(s, r);
+    counts.add(t.cands.length);
+    assert.ok(t.cands.length >= 2 && t.cands.length <= 5, `aday sayısı ${t.cands.length}`);
+    const sum = Math.round(t.cands.reduce((a, c) => a + c.pct, 0) * 10) / 10;
+    assert.equal(sum, 100, `toplam ${sum}`);
+    assert.equal(t.winner, t.cands[0].id);
+    assert.ok(t.cands.every(c => c.pct <= t.cands[0].pct));
+    assert.equal(t.win, t.winner === "you");
+    assert.equal(new Set(t.cands.map(c => c.id)).size, t.cands.length, "aynı aday iki kez");
+  }
+  assert.deepEqual([...counts].sort(), [2, 3, 4, 5], "her aday sayısı görülmeli");
+});
+
+test("dost olan aday olmaz; ana rakip her zaman vardır", () => {
+  for (let g = 0; g < 1500; g++) {
+    const r = rng(g + 9000), s = randomState(r), f = E.drawField(s, r);
+    for (const id of [f.main, ...f.extras]) assert.ok((s.rel[id] || 0) < 2, `${id} dost ama aday oldu`);
+    assert.ok(E.ADAYLAR[f.main].ana, "ana rakip ana adaylardan olmalı");
+  }
+});
+
+test("çoğunluk: yüzde ellinin altında da kazanılır, üstünde de kaybedilebilir", () => {
+  let underWin = 0, overLoss = 0;
+  for (let g = 0; g < 4000; g++) {
+    const r = rng(g + 20000), s = randomState(r), t = E.tally(s, r);
+    if (t.win && t.you < 50) underWin++;
+    if (!t.win && t.cands.length === 2 && t.you > 50) overLoss++;
+  }
+  assert.ok(underWin > 50, `%50 altı kazanma: ${underWin}`);
+  assert.equal(overLoss, 0, "iki adaylı yarışta %50 üstü kaybedilmez");
+});
+
+test("Tekir nadiren aday olur, mama verilmişse daha sık", () => {
+  const rate = fed => { let n = 0; for (let g = 0; g < 4000; g++) { const r = rng(g + (fed ? 50000 : 40000)), s = E.newGame(); if (fed) s.cnt.tekir = 3; const f = E.drawField(s, r); if (f.extras.includes("tekir")) n++; } return n / 4000; };
+  const a = rate(false), b = rate(true);
+  assert.ok(a > 0.01 && a < 0.1, `mamasız ${a}`);
+  assert.ok(b > a * 2, `mamalı ${b} mamasız ${a}`);
+});
+
+test("seçmen grubu dökümü: her grup %100 eder, ağırlıklı toplam adayların oyunu tutturur", () => {
+  for (let g = 0; g < 500; g++) {
+    const r = rng(g + 60000), s = randomState(r), t = E.tally(s, r);
+    for (const b of t.blocs) assert.ok(Math.abs(b.pay.reduce((a, v) => a + v, 0) - 100) < 0.6, `${b.ad} toplamı`);
+    t.cands.forEach((c, i) => {
+      const agg = t.blocs.reduce((a, b) => a + b.w * b.pay[i], 0);
+      assert.ok(Math.abs(agg - c.pct) < 1.2, `${c.id}: döküm ${agg.toFixed(1)} ≠ oy ${c.pct}`);
+    });
+  }
+});
+
+test("seçim ve aday kartlarının metni evraka sığar (en kalabalık hâlde de)", () => {
+  let worst = 0;
+  for (let g = 0; g < 2000; g++) {
+    const r = rng(g + 70000), s = randomState(r);
+    s.rel.muhtar = 3; s.rel.bekir = -3; s.rel.nermin = -3; s.cnt.tekir = 4;
+    worst = Math.max(worst, E.fieldCard(s, r).text.length, E.electionCard(s, r).text.length);
+  }
+  assert.ok(worst <= 240, `en uzun metin ${worst}`);
+});
+
+test("sonuç kartları: Tekir kazanırsa özel son, kaybedince kazananın adı, %50 altı zafer", () => {
+  const s = E.newGame();
+  const res = (cands, win) => ({ cands, blocs: [], winner: cands[0].id, win, you: cands.find(c => c.id === "you").pct, margin: cands[0].pct - cands[1].pct });
+  const r1 = res([{ id: "tekir", pct: 41 }, { id: "you", pct: 35 }, { id: "nermin", pct: 24 }], false);
+  assert.equal(E.special({ type: "sonuc", oy: "35", win: false, res: r1 }, s).key, "tekir");
+  const r2 = res([{ id: "bekir", pct: 44 }, { id: "you", pct: 38 }, { id: "nermin", pct: 18 }], false);
+  assert.match(E.special({ type: "sonuc", oy: "38", win: false, res: r2 }, s).text, /Hacı Bekir %44 ile birinci/);
+  const r3 = res([{ id: "you", pct: 43 }, { id: "nermin", pct: 40 }, { id: "burak", pct: 17 }], true);
+  const c3 = E.special({ type: "sonuc", oy: "43", win: true, res: r3 }, s);
+  assert.equal(c3.kind, "sonuc"); assert.match(c3.text, /3 adaylı/); assert.match(c3.text, /birinci birincidir/);
+  // eski kayıt: sonuç ayrıntısı yok
+  assert.equal(E.special({ type: "sonuc", oy: "47", win: false }, s).key, "sandik");
+});
+
+test("akış: her dönem seçimden önce adaylar ilan edilir, seçimde aynı liste yarışır", () => {
+  for (let g = 0; g < 60; g++) {
+    const r = rng(g + 80000), s = E.newGame();
+    let announced = null, checked = 0;
+    for (let i = 0; i < 400 && !s.over; i++) {
+      const c = E.draw(s, r);
+      if (c.kind === "adaylar") { announced = { term: s.term, field: JSON.stringify(s.field) }; assert.ok(s.month % E.TERM >= E.TERM - 10); }
+      if (c.kind === "secim") {
+        assert.ok(announced && announced.term === s.term, "seçimden önce ilan yok");
+        assert.equal(JSON.stringify(s.field), announced.field, "liste değişmiş");
+        checked++;
+      }
+      // hayatta kalsın diye göstergeleri ortada tut
+      E.choose(s, r() < 0.5 ? "L" : "R", r);
+      for (const k of ["h", "k", "e", "a"]) s.m[k] = 50;
+    }
+    assert.ok(checked >= 1);
+  }
+});

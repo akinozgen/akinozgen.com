@@ -992,6 +992,36 @@ const CARDS = [
     R: { t: "Bu da geçer", e: [2, -5, 2, 0], inc: { kur: 1 } } },
 ];
 
+// ─── Seçimde karşınıza çıkabilecek adaylar ──────────────────────────────────
+// Adaylar seçimden 9 ay önce belli olur. Size dost olan (+2 ve üstü) aday olmaz.
+// ana: ilk uygun olan ana rakiptir, geri kalanlar şansa ve duruma göre katılır (en çok 5 aday).
+// p: aday olma ihtimali; sart(s) tutarsa pSart · guc(s): oy yüzdesi · beta: oyunun ne kadarını sizden çaldığı
+// blok: hangi seçmen grubundan oy topladığı (halk, esnaf, parti tabanı, kararsızlar), yalnız dökümde kullanılır
+const ADAYLAR = {
+  nermin: { ana: 1, etiket: "Muhalefetin adayı", slogan: "Şeffaf belediye, şeffaf çay bardağı", blok: [1, .4, .2, 1] },
+  vekil:  { ana: 2, etiket: "Ankara'nın adayı", slogan: "Ankara'yla el ele, Karakavak'la gönül gönüle", blok: [.5, .5, 1.6, .3],
+            p: .05, pSart: .7, sart: s => s.m.a <= 30 || (s.rel.vekil || 0) <= -2, guc: s => 8 + Math.max(0, 40 - s.m.a) / 2, beta: .55 },
+  cengiz: { ana: 3, etiket: "Bağımsız aday", slogan: "Her mahalleye bir Towers", blok: [.3, 1.2, .6, .3],
+            p: .08, pSart: .55, sart: s => (s.rel.cengiz || 0) <= -2 || !!s.flags.towers, guc: s => 7 + ((s.rel.cengiz || 0) <= -2 ? 4 : 0), beta: .35 },
+  kaan:   { ana: 4, etiket: "Değişimin adayı", slogan: "Karakavak 4.0", blok: [.5, .8, .3, .9],
+            p: .06, guc: () => 6, beta: .3 },
+  bekir:  { etiket: "Esnafın adayı", slogan: "Kepenk değil bereket", blok: [.4, 1.8, .3, .2],
+            p: .06, pSart: .65, sart: s => s.m.e <= 30 || (s.rel.bekir || 0) <= -2, guc: s => 8 + Math.max(0, 40 - s.m.e) / 2, beta: .55 },
+  muhtar: { etiket: "Mahallenin adayı", slogan: "Önce Kavaklı, sonra gerisi", blok: [1.2, .3, .3, .5],
+            p: .04, pSart: .6, sart: s => (s.rel.muhtar || 0) <= -2, guc: s => 7 + ((s.rel.muhtar || 0) <= -3 ? 4 : 0), beta: .5 },
+  tuncay: { etiket: "Karakavak Postası'nın adayı", slogan: "Manşet sizsiniz", blok: [.7, .4, .3, 1],
+            p: .03, pSart: .5, sart: s => (s.rel.tuncay || 0) <= -2, guc: () => 6, beta: .35 },
+  burak:  { etiket: "Gençlik hareketi", slogan: "Beğen, paylaş, oy ver", blok: [.6, .1, .1, 1.6],
+            p: .08, pSart: .4, sart: s => (s.rel.burak || 0) <= -2, guc: () => 5, beta: .3 },
+  albay:  { etiket: "Nizam ve intizam listesi", slogan: "Saat tam dokuzda sandık başında olunacak", blok: [.8, .3, .9, .3],
+            p: .06, guc: () => 5, beta: .45 },
+  // Sürpriz aday: mamasını verdiyseniz daha çok aday olur. Herkes sever, oyu herkesten çalar.
+  tekir:  { etiket: "Mırnav Partisi", slogan: "Mama herkese, tırmalama yok", blok: [.6, .2, .1, 1.8],
+            p: .03, pSart: .12, sart: s => (s.cnt.tekir || 0) >= 3, guc: s => 4 + (s.cnt.tekir || 0), beta: .5 },
+};
+// Seçmen grupları ve ağırlıkları (dökümde)
+const BLOKLAR = [["Halk", .55], ["Esnaf", .15], ["Parti tabanı", .15], ["Kararsızlar", .15]];
+
 // ─── Etkileşim tablosu: iki etiketli karar aynı anda yürürlükteyse ─────────
 // e: her ay ek etki · card: ilk kez değdiklerinde gelen kart · msg/ad: günlüğe düşen haber
 const SYN = [
@@ -1068,8 +1098,11 @@ const ENDINGS = {
     text: "Ankara sizi o kadar sevdi ki bir sabah kapınıza araç geldi: 'Bakan yardımcılığınız hayırlı olsun!' Karakavak'ı bir daha ancak bayramlarda gördünüz.",
     manset: "BAŞKAN ANKARA'YA UÇTU", spot: "Karakavak'tan bakan yardımcılığına uzanan hikâye; ilçe başkansız kaldı.", kisa: "Ankara'ya terfi" },
   sandik: { who: "huseyin", konu: "Seçim sonucu",
-    text: "Sandıktan %{oy} çıktı başkanım. Yetmedi. Son çayınızı getirdim; bardak bile buğulandı.",
+    text: "Sandıktan %{oy} çıktı başkanım.{rakip} Yetmedi. Son çayınızı getirdim; bardak bile buğulandı.",
     manset: "SANDIK KONUŞTU", spot: "Karakavak halkı sandıkta değişim dedi; başkan makamı devretti.", kisa: "Sandıkta kaybetti" },
+  tekir: { who: "tekir", konu: "Seçim sonucu",
+    text: "Mırnav Partisi'nin adayı Tekir sandıktan birinci çıktı başkanım. Mazbatasını dişleriyle aldı, ilk icraatı makam koltuğunda öğle uykusu oldu. Size de bir mırr bıraktı; vedalaşması böyle.",
+    manset: "TEKİR BAŞKAN!", spot: "Karakavak'ta bir ilk: belediye başkanlığına dört ayaklı bir aday seçildi. İlk genelge: 'Mama saatleri değişmeyecek.'", kisa: "Kediye kaybetti" },
   emekli: { who: "fikret", konu: "Veda",
     text: "Yirmi yıl oldu başkanım. Dört dönem, bin küsur evrak, binlerce bardak çay. Artık makamı gençlere bırakma vakti. Tekir'in torunları bile belediyede kadrolu.",
     manset: "BİR DEVRİN SONU", spot: "Dört dönemlik başkanlık, meydanda çay ve kavun ikramıyla uğurlandı.", kisa: "Dört dönem, onurlu veda" },

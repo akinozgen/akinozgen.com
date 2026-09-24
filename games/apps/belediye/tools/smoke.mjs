@@ -61,8 +61,10 @@ try {
   await shot("3b-karar-ani-telefon"); await sleep(900);
   // oyun bitene kadar hep sağa
   let n = 0;
-  while (n++ < 140) {
-    const scr = await ev(`["title","game","over","wall"].find(s => !document.querySelector("#scr-" + s).hidden)`);
+  while (n++ < 160) {
+    const scr = await ev(`["title","game","over","wall","secim"].find(s => !document.querySelector("#scr-" + s).hidden)`);
+    // seçime denk gelinirse: sayımı atla, sonuçtan devam et
+    if (scr === "secim") { await key("Enter"); await sleep(700); await key("Enter"); await sleep(900); console.log("seçim gecesi geçildi"); continue; }
     if (scr !== "game") break;
     if (n === 14) {
       await shot("4-oyun-telefon");

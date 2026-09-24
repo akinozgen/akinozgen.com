@@ -14,6 +14,7 @@
     "gesture": "node tools/gesture.mjs",
     "fit": "node tools/fit.mjs",
     "icons": "node tools/icons.mjs",
-    "portraits": "node tools/portraits.mjs"
+    "portraits": "node tools/portraits.mjs",
+    "election": "node tools/election.mjs"
   }
 }

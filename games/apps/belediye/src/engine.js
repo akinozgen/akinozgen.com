@@ -203,22 +203,90 @@ function supporters(s) {
   return Object.keys(INFLUENCE).map(w => ({ w, r: s.rel[w] || 0 })).filter(x => x.r !== 0).sort((a, b) => b.r - a.r);
 }
 
-function electionCard(s) {
+// ─── Seçim: 2-5 aday, en çok oyu alan kazanır ─────────────────────────────
+// Anket (pollOf) sizin "iki adaylı" oyunuzdur; ana rakip kalanı alır. Her ek aday kendi oyunu
+// beta oranında sizden, kalanını ana rakipten çalar. Adaylar seçimden 9 ay önce belli olur.
+const ADAY_MAX = 5;
+const trPct = v => String(v).replace(".", ",");
+const joinTR = a => (a.length <= 1 ? a.join("") : a.slice(0, -1).join(", ") + " ve " + a[a.length - 1]);
+function shuffle(a, rng) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function drawField(s, rng) {
+  const friend = w => (s.rel[w] || 0) >= 2; // dost aday olmaz, sizi destekler
+  const ids = Object.keys(ADAYLAR);
+  const main = ids.filter(w => ADAYLAR[w].ana).sort((a, b) => ADAYLAR[a].ana - ADAYLAR[b].ana).find(w => !friend(w)) || "kaan";
+  const extras = shuffle(ids.filter(w => w !== main && !friend(w) && ADAYLAR[w].guc)
+    .filter(w => { const a = ADAYLAR[w]; return rng() < (a.sart?.(s) ? a.pSart : a.p); }), rng).slice(0, ADAY_MAX - 2);
+  s.field = { term: s.term, main, extras };
+  return s.field;
+}
+const fieldOf = (s, rng) => (s.field?.term === s.term ? s.field : drawField(s, rng));
+// Seçmen grubu dökümü: grupların profiline göre dağıtılır, sonra birkaç tur orantılı düzeltmeyle
+// hem her grup %100 eder hem de grupların ağırlıklı toplamı adayların oyunu tutturur
+function blocsOf(s, cands) {
+  const prof = id => (id === "you" ? [s.m.h / 50, s.m.e / 50, s.m.a / 50, 1] : ADAYLAR[id].blok);
+  const W = BLOKLAR.map(b => b[1]);
+  let m = BLOKLAR.map((_, b) => cands.map(c => Math.max(0.1, c.pct) * Math.max(0.05, prof(c.id)[b])));
+  const norm = row => { const t = row.reduce((a, v) => a + v, 0); return row.map(v => v / t); };
+  for (let it = 0; it < 30; it++) {
+    m = m.map(norm);
+    const agg = cands.map((c, i) => 100 * m.reduce((a, row, b) => a + W[b] * row[i], 0));
+    m = m.map(row => row.map((v, i) => v * Math.max(0.1, cands[i].pct) / Math.max(0.01, agg[i])));
+  }
+  return BLOKLAR.map(([ad, w], b) => ({ ad, w, pay: norm(m[b]).map(v => Math.round(1000 * v) / 10) })); // pay[i] ↔ cands[i]
+}
+function tally(s, rng) {
+  const f = fieldOf(s, rng);
+  const p0 = clamp(pollOf(s) + (rng() * 8 - 4), 5, 95);
+  let you = p0, main = 100 - p0;
+  const ex = f.extras.map(id => {
+    const a = ADAYLAR[id], v = clamp(a.guc(s) + rng() * 4 - 2, 2, 30);
+    you -= a.beta * v; main -= (1 - a.beta) * v;
+    return { id, v };
+  });
+  const raw = [{ id: "you", v: Math.max(2, you) }, { id: f.main, v: Math.max(2, main) }, ...ex].sort((a, b) => b.v - a.v);
+  // en büyük kalan yöntemiyle binde bire yuvarla: toplam tam %100, sıra bozulmaz; kazananı yuvarlanmamış oy belirler
+  const tot = raw.reduce((a, c) => a + c.v, 0), q = raw.map(c => 1000 * c.v / tot), fl = q.map(Math.floor);
+  let rest = 1000 - fl.reduce((a, v) => a + v, 0);
+  q.map((v, i) => [v - fl[i], i]).sort((a, b) => b[0] - a[0]).forEach(([, i]) => { if (rest-- > 0) fl[i]++; });
+  const cands = raw.map((c, i) => ({ id: c.id, pct: fl[i] / 10 }));
+  // p0/steal/vaat/rel/fatigue: seçim gecesi ekranındaki "Neden?" satırları için
+  return { cands, blocs: blocsOf(s, cands), winner: cands[0].id, win: cands[0].id === "you",
+    you: cands.find(c => c.id === "you").pct, margin: Math.round((cands[0].pct - cands[1].pct) * 10) / 10, month: s.month, term: s.term,
+    p0: Math.round(p0 * 10) / 10, steal: ex.map(x => ({ id: x.id, v: Math.round(ADAYLAR[x.id].beta * x.v * 10) / 10 })),
+    vaat: vaatCost(s), rel: Math.round(relBonus(s) * 10) / 10, fatigue: (s.term - 1) * TUNE.fatigue };
+}
+function fieldCard(s, rng) {
+  const f = drawField(s, rng), rivals = [f.main, ...f.extras];
+  const fr = Object.keys(ADAYLAR).filter(w => (s.rel[w] || 0) >= 2 && w !== "tekir").map(w => PEOPLE[w].ad);
+  let text = `Başkanım, seçime dokuz ay var ve adaylar belli oldu: karşınızda ${joinTR(rivals.map(id => PEOPLE[id].ad))} var.`;
+  for (const part of [rivals.includes("tekir") && " Evet, Tekir de; dilekçesine pati bastı, kurul kabul etti.",
+    fr.length && ` ${fr[0]} aday olmadı, sizi destekliyor.`, rivals.length >= 3 && " Oylar bölünür, yüzde elli şart değil."])
+    if (part && text.length + part.length <= 240) text += part; // sığmayan atlanır
+  return { id: "adaylar", kind: "adaylar", who: "tuncay", konu: "Adaylar belli oldu",
+    text,
+    L: { t: "Kampanya başlasın", e: [3, -4, 0, 0] },
+    R: { t: "İşimize bakalım", e: Z } };
+}
+
+function electionCard(s, rng) {
   if (s.term >= MAX_TERMS) return endingCard("emekli", s);
-  const p = Math.round(pollOf(s));
-  const sup = supporters(s), fr = sup.filter(x => x.r >= 2).map(x => PEOPLE[x.w].ad), en = sup.filter(x => x.r <= -2).map(x => PEOPLE[x.w].ad);
-  let extra = "";
-  if (fr.length) extra += ` ${fr.slice(0, 2).join(" ve ")} sizin için çalışıyor.`;
-  if (en.length) extra += ` ${en.slice(0, 2).join(" ve ")} ise aleyhinize oy topluyor.`;
+  const p = Math.round(pollOf(s)), f = fieldOf(s, rng);
+  const rivals = [f.main, ...f.extras];
+  const sup = supporters(s), fr = sup.filter(x => x.r >= 2).map(x => PEOPLE[x.w].ad);
+  const en = sup.filter(x => x.r <= -2 && !rivals.includes(x.w)).map(x => PEOPLE[x.w].ad); // aday olan düşman zaten listede
+  // metin evraka sığsın: önemsizden önemliye doğru eklenir, sığmayan atlanır
+  let text = `Başkanım, sandıklar kuruldu. Karşınızda ${joinTR(rivals.map(id => PEOPLE[id].ad))} var; en çok oyu alan kazanır. Son ankette %${p} civarındasınız.`;
+  for (const part of [fr.length && ` ${fr[0]} sizin için çalışıyor.`, en.length && ` ${en[0]} aleyhinize oy topluyor.`, " Son bir hamle?"])
+    if (part && text.length + part.length <= 240) text += part;
   return { id: "secim", kind: "secim", who: "fikret", konu: "Yerel seçim",
-    text: `Başkanım, sandıklar kuruldu. Son ankette oyunuz %${p} civarında; yüzde elliyi geçen kazanır.${extra} Son bir hamle?`,
+    text,
     L: { t: "Sessiz kalalım", e: Z },
     R: { t: "Meydana çıkalım", e: [6, -10, 3, 0] } };
 }
 
 function endingCard(key, s, extra = {}) {
   const E = ENDINGS[key];
-  return { id: "end_" + key, kind: "ending", key, who: E.who, konu: E.konu, text: E.text.replace("{oy}", extra.oy ?? ""),
+  return { id: "end_" + key, kind: "ending", key, who: E.who, konu: E.konu, text: E.text.replace("{oy}", extra.oy ?? "").replace("{rakip}", extra.rakip ?? ""),
     L: { t: key === "emekli" ? "Hakkınızı helal edin" : "Ah be Fikret...", e: Z },
     R: { t: key === "emekli" ? "Son bir çay" : "Bu da geçer", e: Z } };
 }
@@ -229,11 +297,17 @@ function special(p, s) {
     text: "(Tam o kararı mühürleyecekken Tekir masaya atladı, evrakın üstüne kıvrılıp uyudu. Mühür basılamadı, karar askıda kaldı. Kimse kediyi uyandırmaya kıyamadı.) Mırrr.",
     L: { t: "Aferin Tekir", e: Z }, R: { t: "Mamayı iki kat yapın", e: Z } };
   if (p.type === "sonuc") {
-    if (!p.win) return endingCard("sandik", s, { oy: p.oy });
+    const r = p.res, n = r ? r.cands.length : 2;
+    if (!p.win) {
+      if (r?.winner === "tekir") return endingCard("tekir", s);
+      const w = r?.cands[0];
+      return endingCard("sandik", s, { oy: p.oy, rakip: w ? ` ${PEOPLE[w.id].ad} %${trPct(w.pct)} ile birinci oldu.` : "" });
+    }
+    const alti = r && r.you < 50 ? " Yüzde elli olmadı ama birinci birincidir." : "";
     return { id: "sonuc", kind: "sonuc", who: "huseyin", konu: "Seçim sonucu", oy: p.oy,
       text: p.big
-        ? `Sandıktan %${p.oy} ile, ezici bir zaferle çıktınız başkanım! Meydana heykelinizi dikmek istediler; siz "önce çay ocağı" dediniz. ${s.term + 1}. döneminiz hayırlı olsun.`
-        : `Sandıktan %${p.oy} ile çıktınız başkanım! Bütün ilçeye çay dağıtıyorum. ${s.term + 1}. döneminiz hayırlı olsun.`,
+        ? `${n} adaylı yarıştan %${p.oy} ile, ezici bir farkla birinci çıktınız başkanım! Meydana heykelinizi dikmek istediler; siz "önce çay ocağı" dediniz. ${s.term + 1}. döneminiz hayırlı olsun.`
+        : `${n} adaylı yarıştan %${p.oy} ile birinci çıktınız başkanım!${alti} Bütün ilçeye çay dağıtıyorum. ${s.term + 1}. döneminiz hayırlı olsun.`,
       L: { t: "Çalışmaya devam", e: Z }, R: { t: "Önce bir çay", e: Z } };
   }
 }
@@ -287,7 +361,9 @@ function draw(s, rng = Math.random) {
   let c;
   if (s.pending) { c = special(s.pending, s); s.pending = null; }
   else if (s.intro > 0) c = INTRO[INTRO.length - s.intro];
-  else if (s.month % TERM === TERM - 1 && s.electionTerm !== s.term) c = electionCard(s);
+  else if (s.month % TERM === TERM - 1 && s.electionTerm !== s.term) c = electionCard(s, rng);
+  // seçimden 9 ay önceki pencerede ilk fırsatta adaylar ilan edilir (son dönemde seçim yok)
+  else if (s.month % TERM >= TERM - 10 && s.month % TERM < TERM - 1 && s.fieldTerm !== s.term && s.term < MAX_TERMS) c = fieldCard(s, rng);
   else {
     const ck = crisisKey(s);
     if (ck && rng() < TUNE.crisisP) c = { ...CRISES[ck], id: "kriz_" + ck, kind: "kriz" };
@@ -333,6 +409,7 @@ function choose(s, side, rng = Math.random) {
       passMonth(); break;
     case "cay": s.cay++; s.last.cay = s.month; passMonth(); break;
     case "secim": s.electionTerm = s.term; break;
+    case "adaylar": s.fieldTerm = s.term; passMonth(); break;
     default:
       s.used[c.id] = true; s.last[c.id] = s.month; s.lastWho = c.who; s.signed++;
       s.log.push({ m: s.month, who: c.who, konu: c.konu, t: o.t, e: out.d });
@@ -347,8 +424,9 @@ function choose(s, side, rng = Math.random) {
     else s.pending = { type: "ending", key };
     out.dead = dead;
   } else if (c.kind === "secim") {
-    const oy = Math.round(clamp(pollOf(s) + (rng() * 8 - 4), 5, 95) * 10) / 10;
-    s.pending = { type: "sonuc", oy: String(oy).replace(".", ","), win: oy > 50, big: oy >= 65 };
+    const r = tally(s, rng);
+    s.lastElection = r; // seçim gecesi ekranı ve gazete için
+    s.pending = { type: "sonuc", oy: trPct(r.you), win: r.win, big: r.win && r.margin >= 25, res: r };
   }
   return out;
 }

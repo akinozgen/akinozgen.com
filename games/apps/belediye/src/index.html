@@ -142,6 +142,38 @@
     </div>
   </section>
 
+  <!-- Seçim gecesi: sandıklar açılırken canlı sonuç, ardından seçmen grubu dökümü -->
+  <section id="scr-secim" class="screen" aria-label="Seçim gecesi" hidden>
+    <div class="ec">
+      <header class="ec-top">
+        <span class="ec-live">Canlı</span>
+        <h2>Karakavak Seçim Gecesi</h2>
+        <span class="ec-date" id="ec-date"></span>
+      </header>
+      <div class="ec-open">
+        <span class="ec-k">Açılan sandık</span><b id="ec-open">%0</b>
+        <div class="ec-prog" aria-hidden="true"><i id="ec-prog"></i></div>
+        <span class="ec-k" id="ec-turnout"></span>
+      </div>
+      <div class="ec-main">
+        <ol class="ec-list" id="ec-list"></ol>
+        <div class="ec-side">
+          <div class="ec-map" id="ec-map" aria-hidden="true"></div>
+          <p class="ec-anchor" id="ec-anchor"></p>
+        </div>
+      </div>
+      <div class="ec-after" id="ec-after" hidden>
+        <div class="ec-blocs"><h3>Kim kime oy verdi?</h3><div id="ec-blocs"></div></div>
+        <div class="ec-why"><h3>Neden?</h3><ul id="ec-why"></ul></div>
+      </div>
+      <p class="sr" aria-live="polite" id="ec-say"></p>
+      <div class="ec-act">
+        <button id="btn-ec-skip" class="btn" type="button">Sonucu göster</button>
+        <button id="btn-ec-go" class="btn primary" type="button" hidden>Devam</button>
+      </div>
+    </div>
+  </section>
+
   <!-- Vesikalık seçimi -->
   <section id="scr-pick" class="screen" aria-label="Vesikalık seçimi" hidden>
     <div class="pick-in">
