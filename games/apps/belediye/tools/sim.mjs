@@ -59,7 +59,7 @@ const q = (arr, p) => arr[Math.floor(p * (arr.length - 1))];
 const medians = {}, sideTally = {};
 for (const [name, pol] of Object.entries(policies)) {
   const months = [], ends = {}, seen = {}, tally = (sideTally[name] = {});
-  const field = {}; let under50 = 0, tekirRan = 0, tekirWon = 0, rivalWins = {};
+  const field = {}; let earlyE = 0, earlyW = 0, under50 = 0, tekirRan = 0, tekirWon = 0, rivalWins = {};
   let term1 = 0, elections = 0, wins = 0, crises = 0, pols = 0, relHi = 0, relLo = 0, tekirSave = 0, dropped = 0, syn = 0, vaatAtElection = 0;
   for (let g = 0; g < N; g++) {
     const rng = mulberry(g * 7919 + 13);
@@ -71,7 +71,9 @@ for (const [name, pol] of Object.entries(policies)) {
       if (c.kind === "kriz") crises++;
       if (c.kind === "tekir") tekirSave++;
       if (c.kind === "sonuc") wins++;
-      if (c.kind === "secim") { elections++; vaatAtElection += s.cnt.vaat || 0; }
+      if (c.kind === "secim" && c.early) earlyE++;
+      else if (c.kind === "secim") { elections++; vaatAtElection += s.cnt.vaat || 0; }
+      if (c.kind === "erkensonuc") earlyW++;
       const side = pol(s, rng);
       // kartın yazıldığı taraf (masada yarı yarıya ters çevrilir): baskın seçenek ölçümü için
       if (c.kind === "normal") { const t = (tally[c.id] ||= { L: 0, R: 0 }); t[c.flip ? (side === "L" ? "R" : "L") : side]++; }
@@ -99,7 +101,7 @@ for (const [name, pol] of Object.entries(policies)) {
   console.log("sonlar:", Object.entries(ends).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k}:${(100 * v / N).toFixed(0)}%`).join("  "));
   console.log(`oyun başına etkileşim: ${(syn / N).toFixed(2)}   yer açmak için kalkan karar: ${(dropped / N).toFixed(2)}   seçimde ortalama vaat: ${elections ? (vaatAtElection / elections).toFixed(1) : "-"}   en çok yürürlükte: ${pols}`);
   const fn = Object.values(field).reduce((a, b) => a + b, 0) || 1;
-  console.log(`seçim: aday sayısı ${Object.entries(field).sort().map(([k, v]) => `${k}:%${Math.round(100 * v / fn)}`).join(" ")}   %50 altı zafer: %${wins ? Math.round(100 * under50 / wins) : 0}   Tekir aday: %${(100 * tekirRan / fn).toFixed(1)} (kazandı ${tekirWon})   kaybettiren: ${Object.entries(rivalWins).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([k, v]) => k + ":" + v).join(" ")}`);
+  console.log(`seçim: aday sayısı ${Object.entries(field).sort().map(([k, v]) => `${k}:%${Math.round(100 * v / fn)}`).join(" ")}   %50 altı zafer: %${wins ? Math.round(100 * under50 / wins) : 0}   Tekir aday: %${(100 * tekirRan / fn).toFixed(1)} (kazandı ${tekirWon})   erken seçim: ${(earlyE / N).toFixed(2)}/oyun (kazanma %${earlyE ? Math.round(100 * earlyW / earlyE) : "-"})   kaybettiren: ${Object.entries(rivalWins).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([k, v]) => k + ":" + v).join(" ")}`);
   medians[name] = q(months, .5);
   if (name === "gorerek") {
     const never = E.CARDS.filter(c => !seen[c.id]).map(c => c.id);

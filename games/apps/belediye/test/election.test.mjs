@@ -7,6 +7,7 @@ const src = ["cards.js", "engine.js"].map(f => readFileSync(new URL("../src/" + 
 const load = () => new Function(src + "\nreturn { ADAYLAR, BLOKLAR, PEOPLE, TERM, newGame, draw, choose, tally, drawField, fieldCard, electionCard, special, pollOf };")();
 const rng = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 const E = load();
+const Z = () => [0, 0, 0, 0];
 const randomState = r => {
   const s = E.newGame();
   for (const k of ["h", "k", "e", "a"]) s.m[k] = 10 + Math.floor(r() * 81);
@@ -110,4 +111,45 @@ test("akış: her dönem seçimden önce adaylar ilan edilir, seçimde aynı lis
     }
     assert.ok(checked >= 1);
   }
+});
+
+test("erken seçim: esnaf tavan yapınca oyun bitmez, Hacı Bekir'li erken seçim gelir, döngüye girmez", () => {
+  const X = load(), r = rng(99), s = X.newGame();
+  s.month = 20; s.m.e = 98;
+  s.cur = { id: "t", kind: "normal", who: "bekir", konu: "t", L: { t: "a", e: [0, 0, 5, 0], rel: {} }, R: { t: "b", e: Z(), rel: {} } };
+  X.choose(s, "L", r);
+  assert.equal(s.over, null); assert.equal(s.pending?.type, "erken");
+  const c = X.draw(s, r);
+  assert.equal(c.kind, "secim"); assert.ok(c.early); assert.match(c.text, /erken seçim/);
+  assert.ok([s.earlyField.main, ...s.earlyField.extras].includes("bekir"), "Hacı Bekir aday değil");
+  const term = s.term, eTerm = s.electionTerm;
+  X.choose(s, "L", r);
+  assert.equal(s.pending?.type, "sonuc", "esnaf hâlâ 100'de diye yeniden erken seçime dönmemeli");
+  assert.ok(s.pending.early);
+  assert.equal(s.electionTerm, eTerm, "erken seçim normal seçimi yerinden oynatmamalı");
+  assert.equal(s.term, term);
+});
+
+test("erken seçim sonucu: kazanınca esnaf iner ve dönem sürer; Bekir'e kaybedince okey masası sonu", () => {
+  const X = load(), s = X.newGame(); s.m.e = 100;
+  const res = (cands, win) => ({ cands, blocs: [], winner: cands[0].id, win, you: cands.find(c => c.id === "you").pct, margin: cands[0].pct - cands[1].pct, early: true });
+  const won = X.special({ type: "sonuc", oy: "41", win: true, early: true, res: res([{ id: "you", pct: 41 }, { id: "bekir", pct: 35 }, { id: "nermin", pct: 24 }], true) }, s);
+  assert.equal(won.kind, "erkensonuc");
+  s.cur = { ...won, L: { ...won.L, rel: {} }, R: { ...won.R, rel: {} } };
+  const term = s.term; X.choose(s, "L", rng(3));
+  assert.ok(s.m.e <= 70, `esnaf ${s.m.e}`); assert.equal(s.term, term); assert.equal(s.over, null);
+  const lostB = X.special({ type: "sonuc", oy: "30", win: false, early: true, res: res([{ id: "bekir", pct: 40 }, { id: "you", pct: 30 }, { id: "nermin", pct: 30 }], false) }, s);
+  assert.equal(lostB.key, "e100");
+  const lostN = X.special({ type: "sonuc", oy: "30", win: false, early: true, res: res([{ id: "nermin", pct: 40 }, { id: "you", pct: 30 }, { id: "bekir", pct: 30 }], false) }, s);
+  assert.equal(lostN.key, "sandik");
+});
+
+test("erken seçimde Hacı Bekir güçlüdür", () => {
+  const X = load(); let sum = 0, n = 0;
+  for (let g = 0; g < 300; g++) {
+    const r = rng(g + 90000), s = X.newGame(); s.m.e = 100; s.pending = { type: "erken" };
+    X.draw(s, r); const t = X.tally(s, r, true);
+    sum += t.cands.find(c => c.id === "bekir").pct; n++;
+  }
+  assert.ok(sum / n > 20, `Bekir ortalaması %${(sum / n).toFixed(1)}`);
 });

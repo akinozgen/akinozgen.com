@@ -237,7 +237,7 @@ function toast(html, cls = "") {
 function dangerToast(before) {
   const risky = (k, v) => v <= 15 || (k !== "h" && v >= 85);
   const hot = METERS.filter(k => risky(k, S.m[k]) && !risky(k, before[k]));
-  hot.forEach((k, i) => setTimeout(() => toast(`<b>Dikkat</b>${METER_AD[k]} ${S.m[k] <= 15 ? "dibe yaklaşıyor" : "tavana dayanıyor"}<span class="tr n">${S.m[k]}</span>`, "warn"), 900 + i * 250));
+  hot.forEach((k, i) => setTimeout(() => toast(`<b>Dikkat</b>${METER_AD[k]} ${S.m[k] <= 15 ? "dibe yaklaşıyor" : k === "e" ? "tavana dayanıyor, erken seçim kapıda" : "tavana dayanıyor"}<span class="tr n">${S.m[k]}</span>`, "warn"), 900 + i * 250));
   if (S.m.h >= 85 && before.h < 85) setTimeout(() => toast(`<b>Halk</b>sizi bağrına bastı; sandık kurulsa kazanırsınız<span class="tr p">${S.m.h}</span>`, "ev"), 900);
 }
 function reactions(c, res) {
@@ -477,7 +477,7 @@ function tart(s, o, nearE) {
 function fikretAdvice(s) {
   const c = s.cur, left = TERM - 1 - (s.month % TERM), nearE = left <= 12 && s.term < MAX_TERMS;
   if (c.kind === "secim") {
-    const p = pollOf(s), f = s.field, n = f ? f.extras.length + 2 : 2;
+    const p = pollOf(s), f = c.early ? s.earlyField : s.field, n = f ? f.extras.length + 2 : 2;
     const split = n > 2 ? ` ${n} aday var, oylar bölünecek; birinci çıkmak yeter.` : " Teke tek yarış; yüzde elliyi geçen kazanır.";
     return p >= 55 ? `Anket iyi başkanım, %${Math.round(p)}.${split} Kasayı yormayalım, sessiz kalsak da olur.`
       : `Başkanım, anket %${Math.round(p)}.${split} Kıl payı işler bunlar; meydana çıkalım, her oy lazım.`;
@@ -626,9 +626,9 @@ function anchorLine(mi, ids) {
 function electionNight(res) {
   return new Promise(done => {
     const r = rngOf(res.month * 131 + res.term * 7 + 3), boxes = ballotBoxes(res, r), N = boxes.length;
-    const f = S.field?.term === res.term ? S.field : null;
     // ekranda sabit sıra (sonucu ele vermesin): önce siz, sonra ilan sırası
-    const ids = ["you", ...(f ? [f.main, ...f.extras] : res.cands.map(c => c.id).filter(id => id !== "you").sort())].filter(id => res.cands.some(c => c.id === id));
+    const ids = ["you", ...(res.order || res.cands.map(c => c.id).filter(id => id !== "you").sort())].filter(id => res.cands.some(c => c.id === id));
+    $("#scr-secim .ec-top h2").textContent = res.early ? "Karakavak Erken Seçim Gecesi" : "Karakavak Seçim Gecesi";
     const idx = id => res.cands.findIndex(c => c.id === id);
     const fast = LS.get("ecSeen", false), speed = fast ? 0.6 : 1;
     const cum = res.cands.map(() => 0), tileCum = MAHALLE.map(() => res.cands.map(() => 0));

@@ -24,10 +24,11 @@ test("denetim bozuk içeriği yakalıyor", () => {
     card("t_etiket", { reqTag: "kimse_tasimiyor" }),
     card("t_sayac", { reqCnt: { hayalet: 2 } }),
     card("t_gecikme", {}, { next: { id: "asfalt", in: [5, 2] } }),           // ters aralık
+    { ...card("t_heykel"), text: "Dev kavun heykelimizin önünde kuyruk var başkanım." }, // olay yaşanmadan anılıyor
   );
   E.SYN.push({ id: "t_syn", a: "x", b: "y", card: "yok_kart" });
   E.CARD = Object.fromEntries(E.CARDS.map(c => [c.id, c]));
   const text = lintContent(E).errors.join("\n");
-  for (const want of ["t_yetim: zincir kartına hiçbir yerden ulaşılmıyor", `bayrak "hic_konmayan"`, "yok_boyle_kart", "t_uzun.L", `etiket "kimse_tasimiyor"`, `sayaç "hayalet"`, "t_gecikme.L: next gecikmesi hatalı", "SYN t_syn: kart yok"])
+  for (const want of ["t_yetim: zincir kartına hiçbir yerden ulaşılmıyor", `bayrak "hic_konmayan"`, "yok_boyle_kart", "t_uzun.L", `etiket "kimse_tasimiyor"`, `sayaç "hayalet"`, "t_gecikme.L: next gecikmesi hatalı", "SYN t_syn: kart yok", `t_heykel: metin "dev kavun heykeli"`])
     assert.ok(text.includes(want), `yakalanmadı: ${want}\n--- bulunanlar ---\n${text}`);
 });

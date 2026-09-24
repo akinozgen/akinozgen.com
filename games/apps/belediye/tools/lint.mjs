@@ -5,6 +5,34 @@
 // Motorun kendisinin okuduğu sayaçlar (kartlarda kapı olarak geçmese de kullanılıyor)
 const ENGINE_CNT = new Set(["tekir", "vaat"]);
 
+// Bağlam: bir olayı "olmuş" sayan metin, o olay yaşanmadan gelmemeli. Metin bu olayı anıyorsa ya kart
+// o olayın kendi zincirindedir (ok), ya da kart/metin varyantı olayın bayrağını ister (flag).
+// Yeni bir olay (heykel, bina, proje...) eklerken buraya da yazın.
+export const FACTS = [
+  { ad: "dev kavun heykeli", re: /kavun heykel/i, flag: "devkavun", ok: ["devkavun", "devkavun2"] },
+  { ad: "Karakavak Towers", re: /Towers/, flag: "towers", ok: ["towers", "towersL", "skandal"] },
+  { ad: "eşek Karaca", re: /Karaca\b/, flag: "karaca", ok: ["esek", "karaca"] },
+  { ad: "e-Belediye", re: /e-Belediye/, ok: ["ebelediye", "ebelediye_coktu", "tek_kullanici"] },
+  { ad: "sondaj kulesi", re: /sondaj/i, ok: ["petrol_rezalet", "petrol_kule"] },
+  { ad: "coğrafi işaret", re: /coğrafi işaret/i, ok: ["cografi_isaret", "tescil_sonuc", "ova_kavga"] },
+  { ad: "kent lokantası", re: /kent lokanta/i, ok: ["kent_lokantasi", "kuyruk_birlesti"] },
+  { ad: "tanzim çadırı", re: /tanzim/i, ok: ["tanzim", "tanzim_ispanak", "kuyruk_birlesti"] },
+  { ad: "çevre yolu", re: /çevre yolu/i, ok: ["garanti_yol", "garanti_tur", "garanti_kopru", "garanti_fesih", "scooter_garanti"] },
+  { ad: "kiralık scooter", re: /scooter/i, ok: ["scooter", "scooter_dere", "scooter_garanti"] },
+  { ad: "tribün", re: /tribün/i, ok: ["tribun", "kume"] },
+  { ad: "dizi çekimi", re: /\bdizi\b/i, ok: ["dizi", "dizi2"] },
+  { ad: "Norveç heyeti", re: /Norveç/, ok: ["kardes", "norvec"] },
+  { ad: "lojman", re: /lojman/i, ok: ["ogretmen_lojman", "doktor_lojman"] },
+  { ad: "Karakavak jetonu", re: /jeton/i, ok: ["sakiz"] },
+  { ad: "Roma mozaiği", re: /mozaik/i, ok: ["mozaik", "mozaik2"] },
+  { ad: "Dijital Fikret", re: /Dijital Fikret/, ok: ["dijital", "dijital2"] },
+  { ad: "AVM", re: /\bAVM/, ok: ["avm", "avmL", "towers"] },
+  { ad: "sanal tarla", re: /sanal (kavun )?tarla/i, ok: ["sanal_ciftlik", "ciftlik_cikis", "ciftlik_kacti"] },
+  { ad: "güneş paneli", re: /panel/i, ok: ["ges_tarla", "ges_festival", "ova_kavga", "gunes", "elektrik"] },
+  { ad: "metro sözü", re: /metro/i, flag: "metro_soz", ok: ["deepfake"] },
+  { ad: "petrol müjdesi", re: /petrol/i, ok: ["petrol", "petrol_tahlil", "petrol_rezalet", "petrol_kule"] },
+];
+
 const arr = x => [].concat(x ?? []);
 const keysOf = x => (!x ? [] : typeof x === "string" ? [x] : Object.keys(x));
 const nextOf = n => (!n ? null : Array.isArray(n) ? { id: n[0], in: n[1] } : n);
@@ -101,6 +129,17 @@ export function lintContent(E) {
       if (t === c.id) { if (!c.once) warn(`${c.id}: zincir kendine dönüyor`); break; }
       if (seen.has(t) || d > 8 || !E.CARD[t]) continue;
       seen.add(t); links(E.CARD[t]).forEach(u => st.push([u, d + 1]));
+    }
+  }
+
+  // Bağlam: olayı anan metin olaysız gelemez (FACTS)
+  const needs = (c, a) => [...arr(c.req), ...arr(a?.req), ...arr(a?.if?.req)];
+  for (const c of E.CARDS) {
+    const texts = [[c.text, null], ...(c.alt || []).map(a => [a.text, a])];
+    for (const [t, a] of texts) for (const f of FACTS) {
+      if (!f.re.test(t) || f.ok.includes(c.id)) continue;
+      if (f.flag && needs(c, a).includes(f.flag)) continue;
+      err(`${c.id}${a ? " (varyant)" : ""}: metin "${f.ad}" olayını anıyor ama o olay olmadan da gelebilir${f.flag ? ` (bayrak: ${f.flag})` : ""}`);
     }
   }
 
