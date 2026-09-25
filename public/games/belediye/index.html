@@ -23,11 +23,13 @@
 <link rel="icon" href="icons/icon-192.png" type="image/png" sizes="192x192">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
-  <script type="module" crossorigin src="./assets/index-B4EcTLL9.js"></script>
+<!-- ana stil gelene kadar koyu, boş sayfa: stilsiz ilk kare (tam ekran ikonlar, kayan meydan resmi) görünmesin; style.css açar -->
+<style>html { background: #0e1f18; } #app { visibility: hidden; }</style>
+  <script type="module" crossorigin src="./assets/index-CHpydUYq.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/rolldown-runtime-CbXtAM7H.js">
   <link rel="modulepreload" crossorigin href="./assets/kutuphane-Clj-Woyo.js">
-  <link rel="modulepreload" crossorigin href="./assets/icerik-DwzwXd1y.js">
-  <link rel="stylesheet" crossorigin href="./assets/index-CM72GXl-.css">
+  <link rel="modulepreload" crossorigin href="./assets/icerik-Dj16c5ZU.js">
+  <link rel="stylesheet" crossorigin href="./assets/index-B_KH01D1.css">
 </head>
 <body>
 <div id="app" lang="tr">
@@ -211,6 +213,10 @@
       <div class="plaque"><h2>Eski Belediye Başkanlarımız</h2><p>Bu tarayıcıda görev yapanlar</p></div>
       <div class="frames" id="frames"></div>
       <p class="wall-msg" id="wall-msg" hidden></p>
+      <section class="sonlar" aria-labelledby="sonlar-h">
+        <h3 id="sonlar-h">Sonlar defteri <span id="sonlar-n"></span></h3>
+        <ul id="sonlar-list"></ul>
+      </section>
       <button id="btn-back" class="btn" type="button">Makama dön</button>
     </div>
   </section>
@@ -316,6 +322,6 @@
     </div>
   </section>
 </div>
-
+
 </body>
 </html>
