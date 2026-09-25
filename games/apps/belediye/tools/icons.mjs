@@ -13,7 +13,10 @@ const GLASS = `M48 80 A52 9 0 0 1 152 80 C150 112 135 128 135 152 C135 172 149 1
 const INNER = `M52 80 L148 80 C146 112 131 128 131 152 C131 172 145 186 145 203 C145 214 139 221 127 222 L73 222 C61 221 55 214 55 203 C55 186 69 172 69 152 C69 128 54 112 52 80 Z`;
 // k: bardağın ölçeği; maskelenebilir ikonda güvenli alan için küçük
 const art = (k, rounded) => {
-  const w = 184 * k, h = 187 * k, tx = (512 - w) / 2 - 8 * k, ty = (512 - h) / 2 - 71 * k;
+  const w = 184 * k,
+    h = 187 * k,
+    tx = (512 - w) / 2 - 8 * k,
+    ty = (512 - h) / 2 - 71 * k;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
 <defs>
   <radialGradient id="bg" cx="50%" cy="40%" r="75%"><stop offset="0" stop-color="#2a5242"/><stop offset=".6" stop-color="#1b3a2e"/><stop offset="1" stop-color="#0e1f18"/></radialGradient>
@@ -40,11 +43,31 @@ ${rounded ? `<rect x="22" y="22" width="468" height="468" rx="86" fill="none" st
 };
 
 writeFileSync(new URL("icon.svg", DIR), art(1.7, true));
-const jobs = [["icon-192.png", 192, art(1.7, false)], ["icon-512.png", 512, art(1.7, false)], ["maskable-512.png", 512, art(1.3, false)], ["apple-touch-icon.png", 180, art(1.6, false)]];
+const jobs = [
+  ["icon-192.png", 192, art(1.7, false)],
+  ["icon-512.png", 512, art(1.7, false)],
+  ["maskable-512.png", 512, art(1.3, false)],
+  ["apple-touch-icon.png", 180, art(1.6, false)],
+];
 for (const [name, size, svg] of jobs) {
   const html = new URL(`_${size}_${name}.html`, DIR);
-  writeFileSync(html, `<!doctype html><html><body style="margin:0;background:#0e1f18">${svg.replace("<svg ", `<svg width="${size}" height="${size}" style="display:block" `)}</body></html>`);
-  execFileSync(CHROME, ["--headless=new", "--mute-audio", "--disable-gpu", "--hide-scrollbars", `--window-size=${size},${size}`, `--screenshot=${fileURLToPath(new URL(name, DIR))}`, html.href], { stdio: "ignore" });
+  writeFileSync(
+    html,
+    `<!doctype html><html><body style="margin:0;background:#0e1f18">${svg.replace("<svg ", `<svg width="${size}" height="${size}" style="display:block" `)}</body></html>`,
+  );
+  execFileSync(
+    CHROME,
+    [
+      "--headless=new",
+      "--mute-audio",
+      "--disable-gpu",
+      "--hide-scrollbars",
+      `--window-size=${size},${size}`,
+      `--screenshot=${fileURLToPath(new URL(name, DIR))}`,
+      html.href,
+    ],
+    { stdio: "ignore" },
+  );
   rmSync(html);
   console.log("ikon:", name);
 }

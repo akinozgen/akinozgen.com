@@ -19,8 +19,10 @@ const read = p => readFileSync(new URL(p, root), "utf8");
 function sectionOf(src, id) {
   const start = src.indexOf(`<section id="${id}"`);
   if (start < 0) throw new Error(`#${id} bulunamadı`);
-  const re = /<\/?section\b/g; re.lastIndex = start;
-  let depth = 0, m;
+  const re = /<\/?section\b/g;
+  re.lastIndex = start;
+  let depth = 0,
+    m;
   while ((m = re.exec(src))) {
     depth += m[0] === "<section" ? 1 : -1;
     if (!depth) return src.slice(start, src.indexOf(">", m.index) + 1);
@@ -156,13 +158,44 @@ console.log("sayfa:", fileURLToPath(PAGE));
 if (process.argv.includes("--no-shot")) process.exit(0);
 
 // ── Fotoğraf ve denetim
-const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe", PORT = 9357;
-const chrome = spawn(CHROME, ["--headless=new", "--mute-audio", "--disable-gpu", "--hide-scrollbars", `--remote-debugging-port=${PORT}`, `--user-data-dir=${fileURLToPath(OUT)}profile`, "--no-first-run", "about:blank"], { stdio: "ignore" });
+const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe",
+  PORT = 9357;
+const chrome = spawn(
+  CHROME,
+  [
+    "--headless=new",
+    "--mute-audio",
+    "--disable-gpu",
+    "--hide-scrollbars",
+    `--remote-debugging-port=${PORT}`,
+    `--user-data-dir=${fileURLToPath(OUT)}profile`,
+    "--no-first-run",
+    "about:blank",
+  ],
+  { stdio: "ignore" },
+);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-let ws, id = 0; const pend = new Map(), errors = [], notes = [];
-const send = (m, p = {}) => new Promise((res, rej) => { const i = ++id; pend.set(i, { res, rej }); ws.send(JSON.stringify({ id: i, method: m, params: p })); });
-const ev = async e => { const r = await send("Runtime.evaluate", { expression: e, returnByValue: true, awaitPromise: true }); if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || r.exceptionDetails.text); return r.result?.value; };
-const shot = async name => { const { data } = await send("Page.captureScreenshot", { format: "png" }); writeFileSync(new URL(name + ".png", OUT), Buffer.from(data, "base64")); console.log("  görüntü:", name + ".png"); };
+let ws,
+  id = 0;
+const pend = new Map(),
+  errors = [],
+  notes = [];
+const send = (m, p = {}) =>
+  new Promise((res, rej) => {
+    const i = ++id;
+    pend.set(i, { res, rej });
+    ws.send(JSON.stringify({ id: i, method: m, params: p }));
+  });
+const ev = async e => {
+  const r = await send("Runtime.evaluate", { expression: e, returnByValue: true, awaitPromise: true });
+  if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || r.exceptionDetails.text);
+  return r.result?.value;
+};
+const shot = async name => {
+  const { data } = await send("Page.captureScreenshot", { format: "png" });
+  writeFileSync(new URL(name + ".png", OUT), Buffer.from(data, "base64"));
+  console.log("  görüntü:", name + ".png");
+};
 
 // Sayfa içinde çalışan denetim: yatay taşma, masaüstünde dikey taşma, blok çakışmaları, kart içi taşma, 11px altı yazı
 const AUDIT = String.raw`(() => {
@@ -224,46 +257,84 @@ const VIEWS = [
   { w: 360, h: 640, mobile: true, states: ["count", "result"] },
 ];
 try {
-  let url; for (let t = 0; t < 50 && !url; t++) { try { url = (await (await fetch(`http://127.0.0.1:${PORT}/json/list`)).json()).find(x => x.type === "page")?.webSocketDebuggerUrl; } catch { } if (!url) await sleep(200); }
+  let url;
+  for (let t = 0; t < 50 && !url; t++) {
+    try {
+      url = (await (await fetch(`http://127.0.0.1:${PORT}/json/list`)).json()).find(
+        x => x.type === "page",
+      )?.webSocketDebuggerUrl;
+    } catch {}
+    if (!url) await sleep(200);
+  }
   if (!url) throw new Error("Chrome açılmadı");
-  ws = new WebSocket(url); await new Promise(r => ws.addEventListener("open", r));
+  ws = new WebSocket(url);
+  await new Promise(r => ws.addEventListener("open", r));
   ws.addEventListener("message", m => {
     const d = JSON.parse(m.data);
-    if (d.id && pend.has(d.id)) { const p = pend.get(d.id); pend.delete(d.id); d.error ? p.rej(new Error(d.error.message)) : p.res(d.result); }
-    if (d.method === "Runtime.exceptionThrown") errors.push("İSTİSNA: " + (d.params.exceptionDetails.exception?.description || d.params.exceptionDetails.text));
-    if (d.method === "Log.entryAdded" && d.params.entry.level === "error") errors.push("LOG: " + d.params.entry.text + " " + (d.params.entry.url || ""));
+    if (d.id && pend.has(d.id)) {
+      const p = pend.get(d.id);
+      pend.delete(d.id);
+      d.error ? p.rej(new Error(d.error.message)) : p.res(d.result);
+    }
+    if (d.method === "Runtime.exceptionThrown")
+      errors.push("İSTİSNA: " + (d.params.exceptionDetails.exception?.description || d.params.exceptionDetails.text));
+    if (d.method === "Log.entryAdded" && d.params.entry.level === "error")
+      errors.push("LOG: " + d.params.entry.text + " " + (d.params.entry.url || ""));
   });
-  await send("Runtime.enable"); await send("Log.enable"); await send("Page.enable");
+  await send("Runtime.enable");
+  await send("Log.enable");
+  await send("Page.enable");
   for (const v of VIEWS) {
-    await send("Emulation.setDeviceMetricsOverride", { width: v.w, height: v.h, deviceScaleFactor: 1, mobile: v.mobile });
+    await send("Emulation.setDeviceMetricsOverride", {
+      width: v.w,
+      height: v.h,
+      deviceScaleFactor: 1,
+      mobile: v.mobile,
+    });
     for (const st of v.states) {
       const name = `${v.w}x${v.h}-${st}`;
       await send("Page.navigate", { url: PAGE.href + "#" + st });
       await sleep(300);
       await send("Page.reload", { ignoreCache: true }); // yalnız hash değişince sayfa yeniden kurulmaz
-      for (let t = 0; t < 40 && !(await ev(`document.documentElement.dataset.ready === "1"`).catch(() => false)); t++) await sleep(100);
-      await ev(`document.fonts.ready.then(() => Promise.all([...document.images].map(i => i.complete ? 0 : new Promise(r => { i.onload = i.onerror = r; })))).then(() => 1)`);
+      for (let t = 0; t < 40 && !(await ev(`document.documentElement.dataset.ready === "1"`).catch(() => false)); t++)
+        await sleep(100);
+      await ev(
+        `document.fonts.ready.then(() => Promise.all([...document.images].map(i => i.complete ? 0 : new Promise(r => { i.onload = i.onerror = r; })))).then(() => 1)`,
+      );
       await sleep(900); // mühür ve panel animasyonları bitsin
       const a = await ev(AUDIT);
-      console.log(`${name}  kök ${a.root}px · en küçük yazı ${a.min}px · ${a.desk ? "masaüstü" : "dar"} · yükseklik ${a.scrollH}/${a.clientH}`);
+      console.log(
+        `${name}  kök ${a.root}px · en küçük yazı ${a.min}px · ${a.desk ? "masaüstü" : "dar"} · yükseklik ${a.scrollH}/${a.clientH}`,
+      );
       for (const x of a.out) errors.push(`${name}: ${x}`);
       for (const x of a.info) notes.push(`${name}: ${x}`);
       await shot(name);
-      if (v.mobile && a.scrollH > a.clientH) { await ev(`document.querySelector("#scr-secim").scrollTop = 1e6`); await sleep(250); await shot(name + "-end"); }
+      if (v.mobile && a.scrollH > a.clientH) {
+        await ev(`document.querySelector("#scr-secim").scrollTop = 1e6`);
+        await sleep(250);
+        await shot(name + "-end");
+      }
     }
   }
   // Hareket azaltma: kayan yazı durmalı
   await send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: "reduce" }] });
   await send("Emulation.setDeviceMetricsOverride", { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false });
-  await send("Page.navigate", { url: PAGE.href + "#count" }); await sleep(300); await send("Page.reload", { ignoreCache: true }); await sleep(900);
+  await send("Page.navigate", { url: PAGE.href + "#count" });
+  await sleep(300);
+  await send("Page.reload", { ignoreCache: true });
+  await sleep(900);
   const rm = await ev(AUDIT);
   if (rm.tick !== "none") errors.push("hareket azaltmada kayan yazı hâlâ kayıyor");
   await shot("1280x800-reduced");
   console.log("hareket azaltma: kayan yazı animasyonu", rm.tick);
-} catch (e) { errors.push("HATA: " + e.message); }
-finally {
+} catch (e) {
+  errors.push("HATA: " + e.message);
+} finally {
   if (notes.length) console.log("notlar:\n  " + notes.join("\n  "));
   console.log(errors.length ? "sorunlar:\n  " + errors.join("\n  ") : "sorun yok");
-  try { ws?.close(); } catch { }
-  chrome.kill(); setTimeout(() => process.exit(errors.length ? 1 : 0), 300);
+  try {
+    ws?.close();
+  } catch {}
+  chrome.kill();
+  setTimeout(() => process.exit(errors.length ? 1 : 0), 300);
 }

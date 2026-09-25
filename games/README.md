@@ -28,6 +28,7 @@ pnpm install
 pnpm --filter @travelle/geo build:data      # rebuild the border graph
 pnpm --filter @travelle/geo build:puzzles   # rebuild the puzzle calendar
 pnpm test                                   # graph + scoring tests
+pnpm typecheck && pnpm lint                 # tsc and ESLint in every app that has them
 pnpm dev                                    # run travelle
 pnpm build                                  # build every game into ../public/games/<slug>/
 ```

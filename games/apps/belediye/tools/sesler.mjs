@@ -7,14 +7,22 @@ import { fileURLToPath } from "node:url";
 
 const OUT = process.argv[2] || fileURLToPath(new URL("../.cache/sesler/", import.meta.url));
 const TMP = fileURLToPath(new URL("../.cache/sesler-tmp/", import.meta.url)); // tarayıcı profili ve sayfa: çıktı klasörü temiz kalsın
-mkdirSync(OUT, { recursive: true }); mkdirSync(TMP, { recursive: true });
+mkdirSync(OUT, { recursive: true });
+mkdirSync(TMP, { recursive: true });
 const UI = stripTypeScriptTypes(readFileSync(new URL("../src/ui.ts", import.meta.url), "utf8"));
-const a = UI.indexOf("const snd = (() => {"), b = UI.indexOf("\n})();", a);
+const a = UI.indexOf("const snd = (() => {"),
+  b = UI.indexOf("\n})();", a);
 if (a < 0 || b < 0) throw new Error("ui.ts'te snd bulunamadı");
 const SND = UI.slice(a, b + 6);
 // [dosya, snd işlevi, süre (sn)]
-const SESLER = [["01-muhur", "stamp", .45], ["02-evrak", "paper", .55], ["03-cay-kasik", "clink", 1], ["04-zafer", "win", 2.8],
-  ["05-hicaz-oyun-sonu", "hicaz", 4], ["06-menu-tik", "tick", .2]];
+const SESLER = [
+  ["01-muhur", "stamp", 0.45],
+  ["02-evrak", "paper", 0.55],
+  ["03-cay-kasik", "clink", 1],
+  ["04-zafer", "win", 2.8],
+  ["05-hicaz-oyun-sonu", "hicaz", 4],
+  ["06-menu-tik", "tick", 0.2],
+];
 
 const html = `<!doctype html><meta charset="utf-8"><script>
 const LS = { get: (k, d) => ({ sound: true, volume: 50 })[k] ?? d, set() { } };
@@ -39,23 +47,73 @@ window.kaydet = async (fn, len) => {
 </script>`;
 writeFileSync(TMP + "/sesler.html", html);
 
-const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe", PORT = 9367;
-const chrome = spawn(CHROME, ["--headless=new", `--remote-debugging-port=${PORT}`, `--user-data-dir=${TMP}/profile`, "--no-first-run", "--autoplay-policy=no-user-gesture-required", "about:blank"], { stdio: "ignore" });
+const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe",
+  PORT = 9367;
+const chrome = spawn(
+  CHROME,
+  [
+    "--headless=new",
+    `--remote-debugging-port=${PORT}`,
+    `--user-data-dir=${TMP}/profile`,
+    "--no-first-run",
+    "--autoplay-policy=no-user-gesture-required",
+    "about:blank",
+  ],
+  { stdio: "ignore" },
+);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-let ws, id = 0; const pend = new Map(), errors = [];
-const send = (m, p = {}) => new Promise((res, rej) => { const i = ++id; pend.set(i, { res, rej }); ws.send(JSON.stringify({ id: i, method: m, params: p })); });
-const ev = async e => { const r = await send("Runtime.evaluate", { expression: e, returnByValue: true, awaitPromise: true }); if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || r.exceptionDetails.text); return r.result?.value; };
+let ws,
+  id = 0;
+const pend = new Map(),
+  errors = [];
+const send = (m, p = {}) =>
+  new Promise((res, rej) => {
+    const i = ++id;
+    pend.set(i, { res, rej });
+    ws.send(JSON.stringify({ id: i, method: m, params: p }));
+  });
+const ev = async e => {
+  const r = await send("Runtime.evaluate", { expression: e, returnByValue: true, awaitPromise: true });
+  if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || r.exceptionDetails.text);
+  return r.result?.value;
+};
 try {
-  let url; for (let t = 0; t < 50 && !url; t++) { try { url = (await (await fetch(`http://127.0.0.1:${PORT}/json/list`)).json()).find(x => x.type === "page")?.webSocketDebuggerUrl; } catch { } if (!url) await sleep(200); }
-  ws = new WebSocket(url); await new Promise(r => ws.addEventListener("open", r));
-  ws.addEventListener("message", m => { const d = JSON.parse(m.data); if (d.id && pend.has(d.id)) { const p = pend.get(d.id); pend.delete(d.id); d.error ? p.rej(new Error(d.error.message)) : p.res(d.result); } });
-  await send("Runtime.enable"); await send("Page.enable");
-  await send("Page.navigate", { url: new URL("file:///" + TMP.replace(/\\/g, "/") + "/sesler.html").href }); await sleep(800);
+  let url;
+  for (let t = 0; t < 50 && !url; t++) {
+    try {
+      url = (await (await fetch(`http://127.0.0.1:${PORT}/json/list`)).json()).find(
+        x => x.type === "page",
+      )?.webSocketDebuggerUrl;
+    } catch {}
+    if (!url) await sleep(200);
+  }
+  ws = new WebSocket(url);
+  await new Promise(r => ws.addEventListener("open", r));
+  ws.addEventListener("message", m => {
+    const d = JSON.parse(m.data);
+    if (d.id && pend.has(d.id)) {
+      const p = pend.get(d.id);
+      pend.delete(d.id);
+      d.error ? p.rej(new Error(d.error.message)) : p.res(d.result);
+    }
+  });
+  await send("Runtime.enable");
+  await send("Page.enable");
+  await send("Page.navigate", { url: new URL("file:///" + TMP.replace(/\\/g, "/") + "/sesler.html").href });
+  await sleep(800);
   for (const [name, fn, len] of SESLER) {
     const r = await ev(`kaydet(${JSON.stringify(fn)}, ${len})`);
     const buf = Buffer.from(r.b64, "base64");
     writeFileSync(`${OUT}/${name}.wav`, buf);
     console.log(`${name}.wav · ${len} sn · ${(buf.length / 1024).toFixed(0)} KB · ham tepe ${r.peak.toFixed(2)}`);
   }
-} catch (e) { errors.push(e.message); }
-finally { console.log(errors.length ? errors.join("\n") : "hata yok"); try { ws?.close(); } catch { } chrome.kill(); setTimeout(() => process.exit(errors.length ? 1 : 0), 300); }
+} catch (e) {
+  errors.push(e.message);
+} finally {
+  console.log(errors.length ? errors.join("\n") : "hata yok");
+  try {
+    ws?.close();
+  } catch {}
+  chrome.kill();
+  setTimeout(() => process.exit(errors.length ? 1 : 0), 300);
+}

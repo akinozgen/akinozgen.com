@@ -22,11 +22,20 @@ test("studioSVG: 1600×900, harici kaynak yok, bütün sınıflar st- önekli, 3
   assert.doesNotMatch(svg, /url\(\s*['"]?http/i);
   const names = [...svg.matchAll(/class="([^"]*)"/g)].flatMap(m => m[1].split(/\s+/).filter(Boolean));
   assert.ok(names.length > 20);
-  assert.deepEqual(names.filter(n => !n.startsWith("st-")), []);
+  assert.deepEqual(
+    names.filter(n => !n.startsWith("st-")),
+    [],
+  );
   // <style> içindeki seçiciler ve animasyon adları da sayfaya sızmasın
   const css = svg.match(/<style>([\s\S]*?)<\/style>/)[1];
-  assert.deepEqual([...css.matchAll(/(?<![\d\w])\.(-?[a-zA-Z][\w-]*)/g)].map(m => m[1]).filter(n => !n.startsWith("st-")), []);
-  assert.deepEqual([...css.matchAll(/@keyframes\s+([\w-]+)/g)].map(m => m[1]).filter(n => !n.startsWith("st-")), []);
+  assert.deepEqual(
+    [...css.matchAll(/(?<![\d\w])\.(-?[a-zA-Z][\w-]*)/g)].map(m => m[1]).filter(n => !n.startsWith("st-")),
+    [],
+  );
+  assert.deepEqual(
+    [...css.matchAll(/@keyframes\s+([\w-]+)/g)].map(m => m[1]).filter(n => !n.startsWith("st-")),
+    [],
+  );
   assert.match(svg, /KARAKAVAK <tspan[^>]*>SEÇİM <tspan id="st-year">2034<\/tspan>/);
   assert.ok(Buffer.byteLength(svg) < LIMIT, `SVG ${Buffer.byteLength(svg)} bayt`);
   const kod = await kucuk();
@@ -36,7 +45,11 @@ test("studioSVG: 1600×900, harici kaynak yok, bütün sınıflar st- önekli, 3
 test("iki kopya aynı sayfada: gradyan kimlikleri çakışmaz", async () => {
   const { studioSVG } = await load();
   const ids = s => [...s.matchAll(/id="([^"]+)"/g)].map(m => m[1]).filter(i => i !== "st-year");
-  const a = ids(studioSVG()), b = ids(studioSVG());
+  const a = ids(studioSVG()),
+    b = ids(studioSVG());
   assert.ok(a.length > 5);
-  assert.deepEqual(a.filter(i => b.includes(i)), []);
+  assert.deepEqual(
+    a.filter(i => b.includes(i)),
+    [],
+  );
 });

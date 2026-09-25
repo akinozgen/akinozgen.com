@@ -2,58 +2,103 @@
 // studioSVG(): 1600×900 SVG metni. Harici dosya yok; sınıflar, kimlikler ve animasyonlar "st-" önekli.
 // studio(kök): spiker denetimi → { talk, say, mood, react, setWall, year, stop }
 export let ST_N = 0;
-export const ST_REST: Record<string, string> = { neutral: "n", excited: "x", shocked: "s", happy: "h", sad: "d", smug: "m" };
+export const ST_REST: Record<string, string> = {
+  neutral: "n",
+  excited: "x",
+  shocked: "s",
+  happy: "h",
+  sad: "d",
+  smug: "m",
+};
 
 export function studioSVG(): string {
-  const p = "st" + ++ST_N + "-", u = (n: string) => `url(#${p}${n})`; // gradyan kimlikleri her kopyada ayrı
-  const S = (o: number, c: string, a?: number) => `<stop offset="${o}" stop-color="${c}"${a != null ? ` stop-opacity="${a}"` : ""}/>`;
+  const p = "st" + ++ST_N + "-",
+    u = (n: string) => `url(#${p}${n})`; // gradyan kimlikleri her kopyada ayrı
+  const S = (o: number, c: string, a?: number) =>
+    `<stop offset="${o}" stop-color="${c}"${a != null ? ` stop-opacity="${a}"` : ""}/>`;
   const L = (n: string, ...s: string[]) => `<linearGradient id="${p}${n}" x2="0" y2="1">${s.join("")}</linearGradient>`;
   const RG = (n: string, ...s: string[]) => `<radialGradient id="${p}${n}">${s.join("")}</radialGradient>`;
-  const SK = "#f7cba6", SKD = "#e8a883", HAIR = "#2e1d17", INK = "#2b1a17", LIP = "#6e2629", TONG = "#ea7a80";
-  const rep = <T,>(xs: T[], f: (x: T, i: number) => string) => xs.map(f).join("");
-  const ln = (d: string, c: string, w: number, k = "") => `<path class="st-r${k}" d="${d}" stroke="${c}" stroke-width="${w}"/>`; // yuvarlak uçlu çizgi
+  const SK = "#f7cba6",
+    SKD = "#e8a883",
+    HAIR = "#2e1d17",
+    INK = "#2b1a17",
+    LIP = "#6e2629",
+    TONG = "#ea7a80";
+  const rep = <T>(xs: T[], f: (x: T, i: number) => string) => xs.map(f).join("");
+  const ln = (d: string, c: string, w: number, k = "") =>
+    `<path class="st-r${k}" d="${d}" stroke="${c}" stroke-width="${w}"/>`; // yuvarlak uçlu çizgi
 
   // Karakavak silueti: ev gövdeleri renk renk tek yol, damlar ve pencereler tek yol
-  const HOUSES: [number, number, number, number, number][] = [[700, 84, 80, 0, 1], [784, 82, 104, 1, 0], [934, 84, 70, 2, 1], [1018, 86, 96, 0, 0], [1104, 88, 76, 1, 1],
-    [1192, 78, 112, 2, 0], [1270, 60, 64, 0, 1], [1486, 50, 72, 2, 1]];
-  const B = 492, body = ["", "", ""];
-  let roofs = "", caps = "", wins = "";
+  const HOUSES: [number, number, number, number, number][] = [
+    [700, 84, 80, 0, 1],
+    [784, 82, 104, 1, 0],
+    [934, 84, 70, 2, 1],
+    [1018, 86, 96, 0, 0],
+    [1104, 88, 76, 1, 1],
+    [1192, 78, 112, 2, 0],
+    [1270, 60, 64, 0, 1],
+    [1486, 50, 72, 2, 1],
+  ];
+  const B = 492,
+    body = ["", "", ""];
+  let roofs = "",
+    caps = "",
+    wins = "";
   HOUSES.forEach(([x, w, h, c, pitched], i) => {
     const t = B - h;
     body[c] += `M${x} ${t}h${w}V${B}H${x}z`;
     if (pitched) roofs += `M${x - 6} ${t}L${x + w / 2} ${t - 26}L${x + w + 6} ${t}z`;
     else caps += `M${x - 3} ${t - 7}h${w + 6}v8h${-w - 6}z`;
-    for (let r = 0; r < (h > 80 ? 2 : 1); r++) for (const fx of [.28, .72]) if ((i + r + Number(fx > .5)) % 3) wins += `M${Math.round(x + w * fx - 6)} ${t + 16 + r * 30}h12v16h-12z`;
+    for (let r = 0; r < (h > 80 ? 2 : 1); r++)
+      for (const fx of [0.28, 0.72])
+        if ((i + r + Number(fx > 0.5)) % 3) wins += `M${Math.round(x + w * fx - 6)} ${t + 16 + r * 30}h12v16h-12z`;
   });
   // kavun biçimli sokak lambası
-  const lamp = (x: number) => `<circle cx="${x}" cy="404" r="38" fill="${u("gy")}"/><path d="M${x} 492V414" stroke="#1d2757" stroke-width="6"/><ellipse cx="${x}" cy="404" rx="14" ry="11" fill="#eee37c"/>`
-    + ln(`M${x - 13} 404Q${x} 394 ${x + 13} 404M${x - 13} 404Q${x} 414 ${x + 13} 404M${x} 394V414`, "#8fae45", 2.2);
-  const star = (x: number, y: number, r: number) => `M${x} ${y - r}Q${x + r * .2} ${y - r * .2} ${x + r} ${y}Q${x + r * .2} ${y + r * .2} ${x} ${y + r}Q${x - r * .2} ${y + r * .2} ${x - r} ${y}Q${x - r * .2} ${y - r * .2} ${x} ${y - r}z`;
-  const drop = (x: number, y: number, s: number) => `M${x} ${y}q${-9 * s} ${14 * s} 0 ${19 * s}q${9 * s} ${-5 * s} 0 ${-19 * s}z`;
+  const lamp = (x: number) =>
+    `<circle cx="${x}" cy="404" r="38" fill="${u("gy")}"/><path d="M${x} 492V414" stroke="#1d2757" stroke-width="6"/><ellipse cx="${x}" cy="404" rx="14" ry="11" fill="#eee37c"/>` +
+    ln(`M${x - 13} 404Q${x} 394 ${x + 13} 404M${x - 13} 404Q${x} 414 ${x + 13} 404M${x} 394V414`, "#8fae45", 2.2);
+  const star = (x: number, y: number, r: number) =>
+    `M${x} ${y - r}Q${x + r * 0.2} ${y - r * 0.2} ${x + r} ${y}Q${x + r * 0.2} ${y + r * 0.2} ${x} ${y + r}Q${x - r * 0.2} ${y + r * 0.2} ${x - r} ${y}Q${x - r * 0.2} ${y - r * 0.2} ${x} ${y - r}z`;
+  const drop = (x: number, y: number, s: number) =>
+    `M${x} ${y}q${-9 * s} ${14 * s} 0 ${19 * s}q${9 * s} ${-5 * s} 0 ${-19 * s}z`;
   // göz: beyaz (şaşkın), bebek + parıltı, mutlu yay, kırpılmış kapak
-  const eye = (x: number, s: string) => `<g class="st-eye"><ellipse class="st-scl" cx="${x}" cy="338" rx="21" ry="24" fill="#fff"/>
+  const eye = (
+    x: number,
+    s: string,
+  ) => `<g class="st-eye"><ellipse class="st-scl" cx="${x}" cy="338" rx="21" ry="24" fill="#fff"/>
 <g class="st-pup"><ellipse cx="${x}" cy="338" rx="14.5" ry="18.5" fill="${INK}"/><circle cx="${x - 5}" cy="330" r="5.5" fill="#fff"/><circle cx="${x + 5}" cy="347" r="2.6" fill="#fff"/><path class="st-spk" d="${star(x + 5, 327, 6)}" fill="#fff"/></g>
 ${ln(`M${x - 15} 345Q${x} 322 ${x + 15} 345`, INK, 7, " st-hap")}<g clip-path="${u("e" + s)}"><rect class="st-lid${s}" x="${x - 22}" y="294" width="44" height="26" fill="${SK}"/></g></g>`;
   // kol: omuzdan +x yönüne uzanır, CSS dönüşüyle masaya ya da duvara
-  const arm = (f: number) => `${ln("M0 0H112", "#5c1826", 62)}${ln("M132 0H140", "#f6f4ee", 40)}${ln("M0 0H112", "#8a2c3c", 54)}${f ? `<rect class="st-fing" x="172" y="-7.5" width="40" height="15" rx="7.5" fill="${SK}"/>` : ""}<circle cx="164" r="22" fill="${SK}"/>`;
+  const arm = (f: number) =>
+    `${ln("M0 0H112", "#5c1826", 62)}${ln("M132 0H140", "#f6f4ee", 40)}${ln("M0 0H112", "#8a2c3c", 54)}${f ? `<rect class="st-fing" x="172" y="-7.5" width="40" height="15" rx="7.5" fill="${SK}"/>` : ""}<circle cx="164" r="22" fill="${SK}"/>`;
   const mouth = (k: string, s: string) => `<g class="st-mo st-q${k}">${s}</g>`;
-  const D = (w: number, t: number, c: number, b: number) => `<path d="M${470 - w} ${t}Q470 ${c} ${470 + w} ${t}Q${467 + w} ${b - 2} 470 ${b}Q${473 - w} ${b - 2} ${470 - w} ${t}z" fill="${LIP}"/>`;
-  const TE = (w: number, t: number, c: number) => `<path d="M${474 - w} ${t + 1}Q470 ${c + 1} ${466 + w} ${t + 1}V${t + 9}Q470 ${c + 9} ${474 - w} ${t + 9}z" fill="#fff"/>`;
-  const TG = (y: number, w: number) => `<path d="M${470 - w} ${y}Q470 ${y - 11} ${470 + w} ${y}Q${463 + w} ${y + 9} 470 ${y + 9}Q${477 - w} ${y + 9} ${470 - w} ${y}z" fill="${TONG}"/>`;
+  const D = (w: number, t: number, c: number, b: number) =>
+    `<path d="M${470 - w} ${t}Q470 ${c} ${470 + w} ${t}Q${467 + w} ${b - 2} 470 ${b}Q${473 - w} ${b - 2} ${470 - w} ${t}z" fill="${LIP}"/>`;
+  const TE = (w: number, t: number, c: number) =>
+    `<path d="M${474 - w} ${t + 1}Q470 ${c + 1} ${466 + w} ${t + 1}V${t + 9}Q470 ${c + 9} ${474 - w} ${t + 9}z" fill="#fff"/>`;
+  const TG = (y: number, w: number) =>
+    `<path d="M${470 - w} ${y}Q470 ${y - 11} ${470 + w} ${y}Q${463 + w} ${y + 9} 470 ${y + 9}Q${477 - w} ${y + 9} ${470 - w} ${y}z" fill="${TONG}"/>`;
   const LAMPS = [270, 540, 810, 1080, 1350];
   const PX = [46, 150, 254, 1558];
-  const TICK = ["Kavun fiyatları sabit, pazarcılar sandık başında", "Sandık görevlilerine çay servisi başladı", "Yukarıkavak sandığı traktörle yolda",
-    "Muhtarlık: Sonuçları biz de merakla bekliyoruz", "Hava durumu: Gece açık, kavun bol"].join("  ✦  ").toLocaleUpperCase("tr-TR");
+  const TICK = [
+    "Kavun fiyatları sabit, pazarcılar sandık başında",
+    "Sandık görevlilerine çay servisi başladı",
+    "Yukarıkavak sandığı traktörle yolda",
+    "Muhtarlık: Sonuçları biz de merakla bekliyoruz",
+    "Hava durumu: Gece açık, kavun bol",
+  ]
+    .join("  ✦  ")
+    .toLocaleUpperCase("tr-TR");
 
   return `<svg class="st-root st-m-neutral st-v-n" viewBox="0 0 1600 900" width="100%" height="100%" style="width:100%;height:100%;display:block" preserveAspectRatio="xMidYMid meet" role="img" aria-label="KTV seçim stüdyosu: spiker canlı yayında" xmlns="http://www.w3.org/2000/svg">
 <style>${studioCSS()}</style>
 <defs>
-<radialGradient id="${p}bg" cx=".36" cy=".42" r=".78">${S(0, "#23498f")}${S(.55, "#0e2150")}${S(1, "#050c1e")}</radialGradient>
-${L("pan", S(0, "#9ccbff"), S(.45, "#4686ff"), S(1, "#1c3f9e"))}${L("sky", S(0, "#132364"), S(.5, "#2d3d93"), S(.8, "#7e4f9b"), S(1, "#f39a6a"))}
-${L("cone", S(0, "#cfe3ff", .32), S(1, "#cfe3ff", 0))}${L("dt", S(0, "#a86e46"), S(1, "#74432a"))}${L("df", S(0, "#51301e"), S(1, "#1d110a"))}
-${L("br", S(0, "#f3dc97"), S(.5, "#c9a54c"), S(1, "#8a6a26"))}${L("jk", S(0, "#a23a4b"), S(1, "#7a2436"))}
-${L("band", S(0, "#fff", 0), S(.5, "#fff", .1), S(1, "#fff", 0))}${RG("gy", S(0, "#fff3a0", .75), S(1, "#fff3a0", 0))}${RG("gw", S(0, "#fff6d8", .6), S(1, "#fff6d8", 0))}
-<radialGradient id="${p}vig" r=".75">${S(.6, "#000", 0)}${S(1, "#00030d", .55)}</radialGradient>
+<radialGradient id="${p}bg" cx=".36" cy=".42" r=".78">${S(0, "#23498f")}${S(0.55, "#0e2150")}${S(1, "#050c1e")}</radialGradient>
+${L("pan", S(0, "#9ccbff"), S(0.45, "#4686ff"), S(1, "#1c3f9e"))}${L("sky", S(0, "#132364"), S(0.5, "#2d3d93"), S(0.8, "#7e4f9b"), S(1, "#f39a6a"))}
+${L("cone", S(0, "#cfe3ff", 0.32), S(1, "#cfe3ff", 0))}${L("dt", S(0, "#a86e46"), S(1, "#74432a"))}${L("df", S(0, "#51301e"), S(1, "#1d110a"))}
+${L("br", S(0, "#f3dc97"), S(0.5, "#c9a54c"), S(1, "#8a6a26"))}${L("jk", S(0, "#a23a4b"), S(1, "#7a2436"))}
+${L("band", S(0, "#fff", 0), S(0.5, "#fff", 0.1), S(1, "#fff", 0))}${RG("gy", S(0, "#fff3a0", 0.75), S(1, "#fff3a0", 0))}${RG("gw", S(0, "#fff6d8", 0.6), S(1, "#fff6d8", 0))}
+<radialGradient id="${p}vig" r=".75">${S(0.6, "#000", 0)}${S(1, "#00030d", 0.55)}</radialGradient>
 <pattern id="${p}gr" width="80" height="80" patternUnits="userSpaceOnUse"><path d="M80 0H0V80" fill="none" stroke="#7aa8ff" stroke-opacity=".08" stroke-width="2"/></pattern>
 <pattern id="${p}sl" width="8" height="6" patternUnits="userSpaceOnUse"><rect width="8" height="2"/></pattern>
 <clipPath id="${p}scr"><rect x="702" y="82" width="826" height="456" rx="10"/></clipPath>
@@ -62,9 +107,18 @@ ${L("band", S(0, "#fff", 0), S(.5, "#fff", .1), S(1, "#fff", 0))}${RG("gy", S(0,
 <rect width="1600" height="900" fill="${u("bg")}"/><rect width="1600" height="640" fill="${u("gr")}"/>
 <path class="st-lit" d="${rep(LAMPS, x => `M${x - 16} 40L${x + 16} 40L${x + 160} 640L${x - 160} 640z`)}" fill="${u("cone")}"/>
 <rect width="1600" height="30" fill="#0a132b"/><path d="M0 30${rep([...Array(40)], (_, i) => `L${i * 40 + 20} 4L${i * 40 + 40} 30`)}" fill="none" stroke="#223a70" stroke-width="3"/>
-<path d="${rep(LAMPS, x => `M${x - 20} 20h40v22h-40z`)}" fill="#1b2a52"/>${ln(rep(LAMPS, x => `M${x} 42h0`), "#eaf3ff", 18, " st-lit")}
+<path d="${rep(LAMPS, x => `M${x - 20} 20h40v22h-40z`)}" fill="#1b2a52"/>${ln(
+    rep(LAMPS, x => `M${x} 42h0`),
+    "#eaf3ff",
+    18,
+    " st-lit",
+  )}
 <g class="st-lit">${rep(PX, x => `<rect x="${x}" y="110" width="70" height="530" rx="14" fill="${u("pan")}" stroke="#3a78ff" stroke-opacity=".14" stroke-width="28"/>`)}
-<path d="${rep(PX, x => rep([200, 290, 380, 470, 560], y => `M${x} ${y}h70`))}" stroke="#0b1f5c" stroke-opacity=".35" stroke-width="3"/><g opacity=".35">${ln(rep(PX, x => `M${x + 14} 128V620`), "#fff", 9)}</g></g>
+<path d="${rep(PX, x => rep([200, 290, 380, 470, 560], y => `M${x} ${y}h70`))}" stroke="#0b1f5c" stroke-opacity=".35" stroke-width="3"/><g opacity=".35">${ln(
+    rep(PX, x => `M${x + 14} 128V620`),
+    "#fff",
+    9,
+  )}</g></g>
 
 <rect x="690" y="70" width="850" height="480" rx="18" fill="#070e1f" stroke="#2c5cb8" stroke-width="4"/>
 <g clip-path="${u("scr")}"><g class="st-wall">
@@ -160,21 +214,46 @@ ${ln("M-18 -63q5 10 0 18M2 -65q5 10 0 18M22 -63q5 10 0 18", "#6b5642", 5)}${ln("
 
 // Bütün dönüşümler ve animasyonlar yalnız transform ve opacity kullanır
 export function studioCSS(): string {
-  const Y = (v: number) => `translateY(${v}px) `, R = (v: number) => `rotate(${v}deg) `, t = (s: string, v: string) => `${s}{transform:${v}}`, K = (n: string, b: string) => `@keyframes st-${n}{${b}}`;
-  const E = "cubic-bezier(.3,1.5,.5,1)", I = " infinite", N = "none";
-  const T: Record<string, (string | number)[]> = { // ruh hâli → gövde, baş, kaş L, kaş R, bebek, kapak L, kapak R, perçem, yanak, görünenler
-    excited: [Y(-8) + "scale(1.02)", R(-3), Y(-12), Y(-12), "scale(1.12)", "", "", "", .8, "spk,fxx"],
-    shocked: [Y(-14), Y(-6), Y(-16) + "scale(1.05)", Y(-16) + "scale(1.05)", "scale(.48)", "", "", "scale(1.03,1.1)", .1, "scl,fxs"],
-    happy: [R(-1), R(-5), Y(-6), Y(-6), "", "", "", "", .85, "hap"],
-    sad: [Y(10), R(5) + Y(6), Y(-4) + R(-16), Y(-4) + R(16), "", Y(11) + R(-14), Y(11) + R(14), "", .2, "fxd"],
-    smug: [R(1.5), R(4) + Y(-3), Y(4) + R(5), Y(-12) + R(-7), "", Y(15), Y(15), "", .5, "fxm"],
+  const Y = (v: number) => `translateY(${v}px) `,
+    R = (v: number) => `rotate(${v}deg) `,
+    t = (s: string, v: string) => `${s}{transform:${v}}`,
+    K = (n: string, b: string) => `@keyframes st-${n}{${b}}`;
+  const E = "cubic-bezier(.3,1.5,.5,1)",
+    I = " infinite",
+    N = "none";
+  const T: Record<string, (string | number)[]> = {
+    // ruh hâli → gövde, baş, kaş L, kaş R, bebek, kapak L, kapak R, perçem, yanak, görünenler
+    excited: [Y(-8) + "scale(1.02)", R(-3), Y(-12), Y(-12), "scale(1.12)", "", "", "", 0.8, "spk,fxx"],
+    shocked: [
+      Y(-14),
+      Y(-6),
+      Y(-16) + "scale(1.05)",
+      Y(-16) + "scale(1.05)",
+      "scale(.48)",
+      "",
+      "",
+      "scale(1.03,1.1)",
+      0.1,
+      "scl,fxs",
+    ],
+    happy: [R(-1), R(-5), Y(-6), Y(-6), "", "", "", "", 0.85, "hap"],
+    sad: [Y(10), R(5) + Y(6), Y(-4) + R(-16), Y(-4) + R(16), "", Y(11) + R(-14), Y(11) + R(14), "", 0.2, "fxd"],
+    smug: [R(1.5), R(4) + Y(-3), Y(4) + R(5), Y(-12) + R(-7), "", Y(15), Y(15), "", 0.5, "fxm"],
   };
   const sel = ["post", "hd", "brL", "brR", "pup", "lidL", "lidR", "quiff"];
   let m = ".st-m-happy .st-pup{opacity:0}";
   for (const [k, v] of Object.entries(T)) {
     const r = `.st-m-${k} .st-`;
-    sel.forEach((s, i) => { if (v[i]) m += t(r + s, String(v[i])); });
-    m += `${r}chk{opacity:${v[8]}}` + String(v[9]).split(",").map(x => r + x).join() + "{opacity:1}";
+    sel.forEach((s, i) => {
+      if (v[i]) m += t(r + s, String(v[i]));
+    });
+    m +=
+      `${r}chk{opacity:${v[8]}}` +
+      String(v[9])
+        .split(",")
+        .map(x => r + x)
+        .join() +
+      "{opacity:1}";
   }
   m += [..."nxshdmaeo"].map(k => `.st-v-${k} .st-q${k}`).join() + "{opacity:1}";
   return `.st-f1{font-family:"Alfa Slab One",Rockwell,Georgia,serif}.st-f2{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:700;letter-spacing:1.5px}.st-c{text-anchor:middle}
@@ -193,7 +272,10 @@ ${t(".st-glance .st-eyes,.st-papers .st-eyes", Y(10))}${t(".st-glance .st-hd2,.s
 ${t(".st-armL", R(56.7))}.st-armR{transform:${R(123.3)};transition:transform .5s cubic-bezier(.35,1.3,.5,1)}
 .st-fing{transform:scaleX(0);transform-origin:0 50%;transition:transform .2s .25s}
 ${t(".st-point .st-armR", R(-38))}${t(".st-point .st-fing", N)}${t(".st-point .st-eyes", "translate(10px,-4px)")}${t(".st-point .st-hd2", R(2.5) + "translateX(4px)")}
-${["cards:tap", "tapL:tapL", "tapR:tapR", "c1:shuf"].map(x => x.split(":")).map(([a, b]) => `.st-papers .st-${a}{animation:st-${b} .95s}`).join("")}
+${["cards:tap", "tapL:tapL", "tapR:tapR", "c1:shuf"]
+  .map(x => x.split(":"))
+  .map(([a, b]) => `.st-papers .st-${a}{animation:st-${b} .95s}`)
+  .join("")}
 ${t(".st-lean .st-post", Y(30) + "scale(1.1)")}${t(".st-lean .st-brL", Y(3) + R(10))}${t(".st-lean .st-brR", Y(3) + R(-10))}${t(".st-lean .st-lidL,.st-lean .st-lidR", Y(6))}
 .st-lean .st-sd{opacity:1;animation:st-op .5s steps(1) 4}
 .st-lights .st-dim{animation:st-flick 1.4s linear}.st-lights .st-lit{animation:st-flick2 1.4s linear}${t(".st-lights .st-eyes", Y(-10))}${t(".st-lights .st-brows", Y(-8))}
@@ -207,7 +289,7 @@ ${t(".st-cat1 .st-eyes,.st-cat2 .st-eyes", "translate(11px,6px)")}${t(".st-cat3 
 .st-stm{animation:st-steam 3.2s ease-out${I};opacity:0}.st-stm2{animation-delay:-1.6s}.st-clk{transform-origin:900px 320px;animation:st-spin 60s linear${I}}
 .st-tick{animation:st-tick 40s -10s linear${I}}.st-capin .st-cap{animation:st-capin .45s ease-out}
 ${K("breathe", t("50%", "scale(1.01,1.014)"))}
-${K("bob", t("0%,100%", N) + t("17%", R(1.4) + Y(-2)) + t("33%", R(-.6)) + t("52%", R(.8) + Y(-3)) + t("70%", R(-1.2) + Y(-1)) + t("86%", R(.4)))}
+${K("bob", t("0%,100%", N) + t("17%", R(1.4) + Y(-2)) + t("33%", R(-0.6)) + t("52%", R(0.8) + Y(-3)) + t("70%", R(-1.2) + Y(-1)) + t("86%", R(0.4)))}
 ${K("tap", t("20%,60%", Y(-15)) + t("40%,80%", N))}${K("tapL", t("20%,60%", R(-9)) + t("40%,80%", N))}${K("tapR", t("20%,60%", R(9)) + t("40%,80%", N))}
 ${K("shuf", t("25%", "translate(6px,-26px) " + R(-7)) + t("55%", "translate(-3px,-10px) " + R(3)))}
 ${K("flick", "0%,100%{opacity:0}8%{opacity:.62}12%{opacity:.08}20%{opacity:.72}27%{opacity:.15}42%{opacity:.5}50%{opacity:0}62%{opacity:.35}68%{opacity:0}")}
@@ -234,86 +316,209 @@ export interface Studio {
   stop(): void;
 }
 export function studio(rootEl: Element | null): Studio {
-  const svg = (rootEl?.matches?.("svg.st-root") ? rootEl : rootEl?.querySelector("svg.st-root")) as SVGSVGElement | null;
+  const svg = (
+    rootEl?.matches?.("svg.st-root") ? rootEl : rootEl?.querySelector("svg.st-root")
+  ) as SVGSVGElement | null;
   if (!svg) throw new Error("studio: stüdyo SVG'si bulunamadı");
   const mq = typeof matchMedia === "function" ? matchMedia("(prefers-reduced-motion: reduce)") : null;
-  const rm = () => !!mq?.matches, T = new Set<number>(), rnd = (a: number, b: number) => a + Math.random() * (b - a);
+  const rm = () => !!mq?.matches,
+    T = new Set<number>(),
+    rnd = (a: number, b: number) => a + Math.random() * (b - a);
   const on = (c: string, v = true) => svg.classList.toggle(c, v);
-  const later = (f: () => void, ms: number) => { const t = window.setTimeout(() => { T.delete(t); f(); }, ms); T.add(t); return t; };
-  const cancel = (t: number | undefined) => { window.clearTimeout(t); if (t != null) T.delete(t); };
-  const restart = (c: string) => { on(c, false); void svg.getBoundingClientRect(); on(c); };
-  const REACT: Record<string, number> = { point: 1800, papers: 1000, lean: 2200, lights: 1500 }, rt: Record<string, number> = {};
+  const later = (f: () => void, ms: number) => {
+    const t = window.setTimeout(() => {
+      T.delete(t);
+      f();
+    }, ms);
+    T.add(t);
+    return t;
+  };
+  const cancel = (t: number | undefined) => {
+    window.clearTimeout(t);
+    if (t != null) T.delete(t);
+  };
+  const restart = (c: string) => {
+    on(c, false);
+    void svg.getBoundingClientRect();
+    on(c);
+  };
+  const REACT: Record<string, number> = { point: 1800, papers: 1000, lean: 2200, lights: 1500 },
+    rt: Record<string, number> = {};
   const BUSY = ["st-point", "st-papers", "st-lean", "st-lights", "st-cat1", "st-cat2", "st-cat3"];
-  let mood = [...svg.classList].find(c => c.startsWith("st-m-"))?.slice(5) || "neutral", shape = "", talking = false, talkT = 0, sayT = 0, sayDone: (() => void) | null = null, catOn = false;
+  let mood = [...svg.classList].find(c => c.startsWith("st-m-"))?.slice(5) || "neutral",
+    shape = "",
+    talking = false,
+    talkT = 0,
+    sayT = 0,
+    sayDone: (() => void) | null = null,
+    catOn = false;
   const paint = () => {
     for (const c of [...svg.classList]) if (c.startsWith("st-v-")) svg.classList.remove(c);
     on("st-v-" + (shape || ST_REST[mood]));
   };
   const sync = () => on("st-rm", rm());
-  sync(); mq?.addEventListener?.("change", sync);
+  sync();
+  mq?.addEventListener?.("change", sync);
 
   // Konuşma: 3 ağız şekli + kapalı ağız (ruh hâlininki), düzensiz hece süreleri, arada kelime boşlukları
   const syll = () => {
     if (!talking) return;
     let d;
-    if (shape && Math.random() < .2) { shape = ""; d = rnd(80, 220) + (Math.random() < .15 ? 320 : 0); }
-    else { let s; do s = "aaeeeoo"[Math.random() * 7 | 0]; while (s === shape); shape = s; d = rnd(70, 170); }
-    if (Math.random() < .05) { on("st-emph"); later(() => on("st-emph", false), 320); }
-    paint(); talkT = later(syll, d);
+    if (shape && Math.random() < 0.2) {
+      shape = "";
+      d = rnd(80, 220) + (Math.random() < 0.15 ? 320 : 0);
+    } else {
+      let s;
+      do s = "aaeeeoo"[(Math.random() * 7) | 0];
+      while (s === shape);
+      shape = s;
+      d = rnd(70, 170);
+    }
+    if (Math.random() < 0.05) {
+      on("st-emph");
+      later(() => on("st-emph", false), 320);
+    }
+    paint();
+    talkT = later(syll, d);
   };
   const talk = (v: boolean) => {
     v = !!v;
     if (v === talking) return;
-    talking = v; on("st-talk", v); cancel(talkT);
-    shape = v && rm() ? "e" : ""; paint();
+    talking = v;
+    on("st-talk", v);
+    cancel(talkT);
+    shape = v && rm() ? "e" : "";
+    paint();
     if (v && !rm()) syll();
   };
   const say = (ms = 1500) => {
-    cancel(sayT); sayDone?.(); talk(true);
-    return new Promise<void>(res => { sayDone = res; sayT = later(() => { sayDone = null; talk(false); res(); }, ms); });
+    cancel(sayT);
+    sayDone?.();
+    talk(true);
+    return new Promise<void>(res => {
+      sayDone = res;
+      sayT = later(() => {
+        sayDone = null;
+        talk(false);
+        res();
+      }, ms);
+    });
   };
 
   // Boşta: 2-6 sn arayla göz kırpma, ara sıra kartlara göz atma. Nefes, yayın parıltısı ve kayan yazı CSS'te.
-  const blink = () => { on("st-blink"); later(() => on("st-blink", false), 120); };
-  const blinkLoop = () => later(() => { if (!rm()) { blink(); if (Math.random() < .2) later(blink, 280); } blinkLoop(); }, rnd(2000, 6000));
-  const glanceLoop = () => later(() => {
-    if (!rm() && !BUSY.some(c => svg.classList.contains(c))) { on("st-glance"); later(() => on("st-glance", false), rnd(700, 1300)); }
-    glanceLoop();
-  }, rnd(7000, 14000));
-  blinkLoop(); glanceLoop();
+  const blink = () => {
+    on("st-blink");
+    later(() => on("st-blink", false), 120);
+  };
+  const blinkLoop = () =>
+    later(
+      () => {
+        if (!rm()) {
+          blink();
+          if (Math.random() < 0.2) later(blink, 280);
+        }
+        blinkLoop();
+      },
+      rnd(2000, 6000),
+    );
+  const glanceLoop = () =>
+    later(
+      () => {
+        if (!rm() && !BUSY.some(c => svg.classList.contains(c))) {
+          on("st-glance");
+          later(() => on("st-glance", false), rnd(700, 1300));
+        }
+        glanceLoop();
+      },
+      rnd(7000, 14000),
+    );
+  blinkLoop();
+  glanceLoop();
 
-  const cat = () => { // Tekir masaya çıkar, kalemi düşürür, geri döner
+  const cat = () => {
+    // Tekir masaya çıkar, kalemi düşürür, geri döner
     if (catOn) return;
     catOn = true;
-    const end = () => { on("st-cat3", false); on("st-cat2", false); on("st-penoff", false); catOn = false; };
-    if (rm()) { on("st-cat2"); on("st-penoff"); later(end, 3000); return; }
+    const end = () => {
+      on("st-cat3", false);
+      on("st-cat2", false);
+      on("st-penoff", false);
+      catOn = false;
+    };
+    if (rm()) {
+      on("st-cat2");
+      on("st-penoff");
+      later(end, 3000);
+      return;
+    }
     on("st-cat1");
-    later(() => { on("st-cat1", false); on("st-cat2"); on("st-penoff"); }, 2300);
-    later(() => { on("st-cat2", false); on("st-cat3"); }, 4000);
-    later(() => { end(); on("st-penin"); later(() => on("st-penin", false), 800); }, 6500);
+    later(() => {
+      on("st-cat1", false);
+      on("st-cat2");
+      on("st-penoff");
+    }, 2300);
+    later(() => {
+      on("st-cat2", false);
+      on("st-cat3");
+    }, 4000);
+    later(() => {
+      end();
+      on("st-penin");
+      later(() => on("st-penin", false), 800);
+    }, 6500);
   };
   const react = (kind: string) => {
     if (kind === "cat") return cat();
-    const ms = REACT[kind], c = "st-" + kind;
+    const ms = REACT[kind],
+      c = "st-" + kind;
     if (!ms) return;
-    cancel(rt[kind]); restart(c);
+    cancel(rt[kind]);
+    restart(c);
     rt[kind] = later(() => on(c, false), ms);
   };
   const setWall = (text: unknown) => {
-    const t = svg.querySelector<SVGTextElement>(".st-cap"), W = 700;
+    const t = svg.querySelector<SVGTextElement>(".st-cap"),
+      W = 700;
     if (!t) return;
     t.textContent = String(text ?? "").toLocaleUpperCase("tr-TR");
-    t.removeAttribute("textLength"); t.removeAttribute("lengthAdjust");
-    try { if (t.getComputedTextLength() > W) { t.setAttribute("textLength", String(W)); t.setAttribute("lengthAdjust", "spacingAndGlyphs"); } } catch { /* görünmüyorsa ölçülemez */ }
-    if (!rm()) { restart("st-capin"); later(() => on("st-capin", false), 500); }
+    t.removeAttribute("textLength");
+    t.removeAttribute("lengthAdjust");
+    try {
+      if (t.getComputedTextLength() > W) {
+        t.setAttribute("textLength", String(W));
+        t.setAttribute("lengthAdjust", "spacingAndGlyphs");
+      }
+    } catch {
+      /* görünmüyorsa ölçülemez */
+    }
+    if (!rm()) {
+      restart("st-capin");
+      later(() => on("st-capin", false), 500);
+    }
   };
-  const year = (y: number | string) => { const t = svg.querySelector("#st-year"); if (t) t.textContent = String(y); };
-  const setMood = (n: string) => { if (!ST_REST[n]) n = "neutral"; on("st-m-" + mood, false); mood = n; on("st-m-" + n); paint(); };
+  const year = (y: number | string) => {
+    const t = svg.querySelector("#st-year");
+    if (t) t.textContent = String(y);
+  };
+  const setMood = (n: string) => {
+    if (!ST_REST[n]) n = "neutral";
+    on("st-m-" + mood, false);
+    mood = n;
+    on("st-m-" + n);
+    paint();
+  };
   const stop = () => {
     for (const t of T) clearTimeout(t);
-    T.clear(); sayDone?.(); sayDone = null; talking = false; shape = ""; catOn = false;
-    for (const c of ["st-talk", "st-blink", "st-glance", "st-emph", "st-capin", "st-penoff", "st-penin", ...BUSY]) on(c, false);
-    paint(); mq?.removeEventListener?.("change", sync);
+    T.clear();
+    sayDone?.();
+    sayDone = null;
+    talking = false;
+    shape = "";
+    catOn = false;
+    for (const c of ["st-talk", "st-blink", "st-glance", "st-emph", "st-capin", "st-penoff", "st-penin", ...BUSY])
+      on(c, false);
+    paint();
+    mq?.removeEventListener?.("change", sync);
   };
   return { talk, say, mood: setMood, react, setWall, year, stop };
 }

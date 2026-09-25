@@ -17,7 +17,11 @@ export const FACTS = [
   { ad: "coğrafi işaret", re: /coğrafi işaret/i, ok: ["cografi_isaret", "tescil_sonuc", "ova_kavga"] },
   { ad: "kent lokantası", re: /kent lokanta/i, ok: ["kent_lokantasi", "kuyruk_birlesti"] },
   { ad: "tanzim çadırı", re: /tanzim/i, ok: ["tanzim", "tanzim_ispanak", "kuyruk_birlesti"] },
-  { ad: "çevre yolu", re: /çevre yolu/i, ok: ["garanti_yol", "garanti_tur", "garanti_kopru", "garanti_fesih", "scooter_garanti"] },
+  {
+    ad: "çevre yolu",
+    re: /çevre yolu/i,
+    ok: ["garanti_yol", "garanti_tur", "garanti_kopru", "garanti_fesih", "scooter_garanti"],
+  },
   { ad: "kiralık scooter", re: /scooter/i, ok: ["scooter", "scooter_dere", "scooter_garanti"] },
   { ad: "tribün", re: /tribün/i, ok: ["tribun", "kume"] },
   { ad: "dizi çekimi", re: /\bdizi\b/i, ok: ["dizi", "dizi2"] },
@@ -38,50 +42,81 @@ const keysOf = x => (!x ? [] : typeof x === "string" ? [x] : Object.keys(x));
 const nextOf = n => (!n ? null : Array.isArray(n) ? { id: n[0], in: n[1] } : n);
 
 export function lintContent(E) {
-  const errors = [], warnings = [];
-  const err = m => errors.push(m), warn = m => warnings.push(m);
-  const all = [...E.CARDS, ...E.INTRO.map(c => ({ ...c, intro: true })), ...Object.entries(E.CRISES).map(([k, c]) => ({ ...c, id: "kriz_" + k, crisis: true })), ...(E.DAVET || [])];
-  const ids = new Set(), polIds = new Set();
-  const flagW = new Set(), flagR = new Map(), cntW = new Set(), cntR = new Map(), tagW = new Set(), tagR = new Map();
+  const errors = [],
+    warnings = [];
+  const err = m => errors.push(m),
+    warn = m => warnings.push(m);
+  const all = [
+    ...E.CARDS,
+    ...E.INTRO.map(c => ({ ...c, intro: true })),
+    ...Object.entries(E.CRISES).map(([k, c]) => ({ ...c, id: "kriz_" + k, crisis: true })),
+    ...(E.DAVET || []),
+  ];
+  const ids = new Set(),
+    polIds = new Set();
+  const flagW = new Set(),
+    flagR = new Map(),
+    cntW = new Set(),
+    cntR = new Map(),
+    tagW = new Set(),
+    tagR = new Map();
   const readF = (f, by) => flagR.set(f, [...(flagR.get(f) || []), by]);
   const readC = (k, by) => cntR.set(k, [...(cntR.get(k) || []), by]);
   const readT = (t, by) => tagR.set(t, [...(tagR.get(t) || []), by]);
   const readCond = (q, by) => {
     if (!q) return;
-    arr(q.req).forEach(f => readF(f, by)); arr(q.not).forEach(f => readF(f, by));
+    arr(q.req).forEach(f => readF(f, by));
+    arr(q.not).forEach(f => readF(f, by));
     Object.keys(q.cnt || {}).forEach(k => readC(k, by));
-    arr(q.tag).forEach(t => readT(t, by)); arr(q.notag).forEach(t => readT(t, by));
+    arr(q.tag).forEach(t => readT(t, by));
+    arr(q.notag).forEach(t => readT(t, by));
     for (const w of Object.keys(q.rel || {})) if (!E.PEOPLE[w]) err(`${by}: koşulda bilinmeyen kişi ${w}`);
   };
   const polRefs = [];
 
-  for (const c of E.CARDS) { if (ids.has(c.id)) err(`çift kimlik: ${c.id}`); ids.add(c.id); }
+  for (const c of E.CARDS) {
+    if (ids.has(c.id)) err(`çift kimlik: ${c.id}`);
+    ids.add(c.id);
+  }
   for (const c of all) {
     const by = c.id || c.konu;
     if (!E.PEOPLE[c.who]) err(`${by}: bilinmeyen kişi ${c.who}`);
     if (!c.text || c.text.length > 240) err(`${by}: metin boş ya da evraka sığmaz (${c.text?.length})`);
     for (const a of c.alt || []) {
       if (!a.text || a.text.length > 240) err(`${by}: hatırlama metni boş ya da uzun (${a.text?.length})`);
-      arr(a.req).forEach(f => readF(f, by)); readCond(a.if, by);
+      arr(a.req).forEach(f => readF(f, by));
+      readCond(a.if, by);
     }
-    arr(c.req).forEach(f => readF(f, by)); arr(c.not).forEach(f => readF(f, by));
+    arr(c.req).forEach(f => readF(f, by));
+    arr(c.not).forEach(f => readF(f, by));
     Object.keys(c.reqCnt || {}).forEach(k => readC(k, by));
-    arr(c.reqTag).forEach(t => readT(t, by)); arr(c.notTag).forEach(t => readT(t, by));
-    arr(c.reqPol).concat(arr(c.notPol)).forEach(p => polRefs.push([p, by]));
-    for (const [w] of Object.entries({ ...c.relMin, ...c.relMax })) if (!E.PEOPLE[w]) err(`${by}: ilişki kapısında bilinmeyen kişi ${w}`);
+    arr(c.reqTag).forEach(t => readT(t, by));
+    arr(c.notTag).forEach(t => readT(t, by));
+    arr(c.reqPol)
+      .concat(arr(c.notPol))
+      .forEach(p => polRefs.push([p, by]));
+    for (const [w] of Object.entries({ ...c.relMin, ...c.relMax }))
+      if (!E.PEOPLE[w]) err(`${by}: ilişki kapısında bilinmeyen kişi ${w}`);
     for (const side of ["L", "R"]) {
-      const o = c[side], sb = `${by}.${side}`;
-      if (!o || !o.t || !Array.isArray(o.e) || o.e.length !== 4) { err(`${sb}: hatalı seçenek`); continue; }
+      const o = c[side],
+        sb = `${by}.${side}`;
+      if (!o || !o.t || !Array.isArray(o.e) || o.e.length !== 4) {
+        err(`${sb}: hatalı seçenek`);
+        continue;
+      }
       if (o.t.length > 26) err(`${sb}: "${o.t}" düğmeye sığmaz (${o.t.length})`);
       if (o.e.some(v => !Number.isFinite(v))) err(`${sb}: etki sayı değil`);
       if (o.son && E.ENDINGS && !E.ENDINGS[o.son]) err(`${sb}: böyle bir son yok → ${o.son}`);
-      arr(o.set).forEach(f => flagW.add(f)); arr(o.clr).forEach(f => flagW.add(f));
-      keysOf(o.inc).forEach(k => cntW.add(k)); keysOf(o.dec).forEach(k => cntW.add(k));
+      arr(o.set).forEach(f => flagW.add(f));
+      arr(o.clr).forEach(f => flagW.add(f));
+      keysOf(o.inc).forEach(k => cntW.add(k));
+      keysOf(o.dec).forEach(k => cntW.add(k));
       for (const w of Object.keys(o.rel || {})) if (!E.PEOPLE[w]) err(`${sb}: ilişkide bilinmeyen kişi ${w}`);
       const n = nextOf(o.next);
       if (n) {
         const d = n.in ?? 0;
-        if (!(Number.isInteger(d) && d >= 0) && !(Array.isArray(d) && d.length === 2 && d[0] >= 0 && d[1] >= d[0])) err(`${sb}: next gecikmesi hatalı`);
+        if (!(Number.isInteger(d) && d >= 0) && !(Array.isArray(d) && d.length === 2 && d[0] >= 0 && d[1] >= d[0]))
+          err(`${sb}: next gecikmesi hatalı`);
         readCond(n.if, sb);
         if (n.else && !n.if) warn(`${sb}: next.else var ama if yok`);
       }
@@ -97,14 +132,17 @@ export function lintContent(E) {
   }
 
   // Kart bağlantıları
-  const links = c => ["L", "R"].flatMap(s => {
-    const o = c[s] || {}, n = nextOf(o.next);
-    return [n?.id, n?.else, o.pol?.doneCard].filter(Boolean);
-  });
+  const links = c =>
+    ["L", "R"].flatMap(s => {
+      const o = c[s] || {},
+        n = nextOf(o.next);
+      return [n?.id, n?.else, o.pol?.doneCard].filter(Boolean);
+    });
   for (const c of all) for (const t of links(c)) if (!ids.has(t)) err(`${c.id || c.konu}: bağlandığı kart yok → ${t}`);
   for (const x of E.SYN) {
     if (!x.id || !x.a || !x.b) err(`SYN: id/a/b eksik ${JSON.stringify(x)}`);
-    readT(x.a, "SYN " + x.id); readT(x.b, "SYN " + x.id);
+    readT(x.a, "SYN " + x.id);
+    readT(x.b, "SYN " + x.id);
     if (x.card && !ids.has(x.card)) err(`SYN ${x.id}: kart yok → ${x.card}`);
     if (x.e && x.e.length !== 4) err(`SYN ${x.id}: etki dört gösterge değil`);
     if (x.msg && !x.ad) err(`SYN ${x.id}: haberin başlığı (ad) yok`);
@@ -113,7 +151,8 @@ export function lintContent(E) {
   for (const [p, by] of polRefs) if (!polIds.has(p)) err(`${by}: böyle bir karar yok → ${p}`);
 
   // Ulaşılabilirlik: zincir kartları yalnız bağlantıyla gelir; hiçbir yerden bağlanmayan zincir ölü içeriktir
-  const reach = new Set(), stack = [...all.filter(c => !c.chain)];
+  const reach = new Set(),
+    stack = [...all.filter(c => !c.chain)];
   for (const x of E.SYN) if (x.card && tagW.has(x.a) && tagW.has(x.b)) stack.push(E.CARD[x.card]);
   while (stack.length) {
     const c = stack.pop();
@@ -124,12 +163,17 @@ export function lintContent(E) {
   for (const c of E.CARDS) if (c.chain && !reach.has(c.id)) err(`${c.id}: zincir kartına hiçbir yerden ulaşılmıyor`);
   // Zincir döngüsü: once olmayan zincirler kendini besleyebilir
   for (const c of E.CARDS) {
-    const seen = new Set(), st = links(c).map(t => [t, 1]);
+    const seen = new Set(),
+      st = links(c).map(t => [t, 1]);
     while (st.length) {
       const [t, d] = st.pop();
-      if (t === c.id) { if (!c.once) warn(`${c.id}: zincir kendine dönüyor`); break; }
+      if (t === c.id) {
+        if (!c.once) warn(`${c.id}: zincir kendine dönüyor`);
+        break;
+      }
       if (seen.has(t) || d > 8 || !E.CARD[t]) continue;
-      seen.add(t); links(E.CARD[t]).forEach(u => st.push([u, d + 1]));
+      seen.add(t);
+      links(E.CARD[t]).forEach(u => st.push([u, d + 1]));
     }
   }
 
@@ -137,19 +181,25 @@ export function lintContent(E) {
   const needs = (c, a) => [...arr(c.req), ...arr(a?.req), ...arr(a?.if?.req)];
   for (const c of E.CARDS) {
     const texts = [[c.text, null], ...(c.alt || []).map(a => [a.text, a])];
-    for (const [t, a] of texts) for (const f of FACTS) {
-      if (!f.re.test(t) || f.ok.includes(c.id)) continue;
-      if (f.flag && needs(c, a).includes(f.flag)) continue;
-      err(`${c.id}${a ? " (varyant)" : ""}: metin "${f.ad}" olayını anıyor ama o olay olmadan da gelebilir${f.flag ? ` (bayrak: ${f.flag})` : ""}`);
-    }
+    for (const [t, a] of texts)
+      for (const f of FACTS) {
+        if (!f.re.test(t) || f.ok.includes(c.id)) continue;
+        if (f.flag && needs(c, a).includes(f.flag)) continue;
+        err(
+          `${c.id}${a ? " (varyant)" : ""}: metin "${f.ad}" olayını anıyor ama o olay olmadan da gelebilir${f.flag ? ` (bayrak: ${f.flag})` : ""}`,
+        );
+      }
   }
 
   // Durum anahtarları: okunup hiç yazılmayan hata, yazılıp hiç okunmayan uyarı
-  for (const [f, by] of flagR) if (!flagW.has(f)) err(`bayrak "${f}" okunuyor ama hiçbir seçenek koymuyor (${by.join(", ")})`);
+  for (const [f, by] of flagR)
+    if (!flagW.has(f)) err(`bayrak "${f}" okunuyor ama hiçbir seçenek koymuyor (${by.join(", ")})`);
   for (const f of flagW) if (!flagR.has(f)) warn(`bayrak "${f}" konuyor ama hiçbir yer okumuyor`);
-  for (const [k, by] of cntR) if (!cntW.has(k)) err(`sayaç "${k}" okunuyor ama hiçbir seçenek artırmıyor (${by.join(", ")})`);
+  for (const [k, by] of cntR)
+    if (!cntW.has(k)) err(`sayaç "${k}" okunuyor ama hiçbir seçenek artırmıyor (${by.join(", ")})`);
   for (const k of cntW) if (!cntR.has(k) && !ENGINE_CNT.has(k)) warn(`sayaç "${k}" artıyor ama hiçbir yer okumuyor`);
-  for (const [t, by] of tagR) if (!tagW.has(t)) err(`etiket "${t}" aranıyor ama hiçbir karar taşımıyor (${by.join(", ")})`);
+  for (const [t, by] of tagR)
+    if (!tagW.has(t)) err(`etiket "${t}" aranıyor ama hiçbir karar taşımıyor (${by.join(", ")})`);
   for (const t of tagW) if (!tagR.has(t)) warn(`etiket "${t}" taşınıyor ama hiçbir yer aramıyor`);
   return { errors, warnings };
 }

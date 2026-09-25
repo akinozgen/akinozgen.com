@@ -25,7 +25,8 @@ export interface Cond {
 }
 
 /** Zincir: [kart, ay] ya da { id, in: ay | [en az, en çok], if, else } */
-export type Next = [string, number | [number, number]] | { id: string; in?: number | [number, number]; if?: Cond; else?: string };
+export type Next =
+  [string, number | [number, number]] | { id: string; in?: number | [number, number]; if?: Cond; else?: string };
 
 /** Yürürlüğe giren karar: her ay e kadar işler, ay dolunca done ve doneCard gelir */
 export interface PolDef {
@@ -55,7 +56,8 @@ export interface SideDef {
   son?: string;
 }
 
-export type CardKind = "normal" | "intro" | "kriz" | "ending" | "tekir" | "sonuc" | "cay" | "secim" | "erkensonuc" | "adaylar" | "davet";
+export type CardKind =
+  "normal" | "intro" | "kriz" | "ending" | "tekir" | "sonuc" | "cay" | "secim" | "erkensonuc" | "adaylar" | "davet";
 
 /** Kart (içerik ya da motorun ürettiği özel evrak) */
 export interface CardDef {
@@ -92,8 +94,18 @@ export interface CardDef {
   early?: boolean;
 }
 
-export interface Person { ad: string; unvan: string; pos?: string[]; neg?: string[] }
-export interface Baskan { ad: string; lakap: string; bio: string; cins: "k" | "e" }
+export interface Person {
+  ad: string;
+  unvan: string;
+  pos?: string[];
+  neg?: string[];
+}
+export interface Baskan {
+  ad: string;
+  lakap: string;
+  bio: string;
+  cins: "k" | "e";
+}
 
 /** Seçimde karşınıza çıkabilecek aday */
 export interface Aday {
@@ -111,9 +123,26 @@ export interface Aday {
   beta?: number;
 }
 
-export interface SynRule { id: string; a: string; b: string; e?: Effect; card?: string; ad?: string; msg?: string }
+export interface SynRule {
+  id: string;
+  a: string;
+  b: string;
+  e?: Effect;
+  card?: string;
+  ad?: string;
+  msg?: string;
+}
 
-export interface Ending { who: string; konu: string; text: string; manset: string; spot: string; kisa: string; win?: boolean; legacy?: boolean }
+export interface Ending {
+  who: string;
+  konu: string;
+  text: string;
+  manset: string;
+  spot: string;
+  kisa: string;
+  win?: boolean;
+  legacy?: boolean;
+}
 
 // ── Oyun durumu
 export interface Ongoing {
@@ -128,9 +157,24 @@ export interface Ongoing {
   proj: boolean;
   tags: string[];
 }
-export interface QueueItem { id: string; at: number; if?: Cond; else?: string }
-export interface LogEntry { m: number; who: string; konu: string; t: string; e: Effect }
-export interface Field { term: number; main: string; extras: string[] }
+export interface QueueItem {
+  id: string;
+  at: number;
+  if?: Cond;
+  else?: string;
+}
+export interface LogEntry {
+  m: number;
+  who: string;
+  konu: string;
+  t: string;
+  e: Effect;
+}
+export interface Field {
+  term: number;
+  main: string;
+  extras: string[];
+}
 
 export interface Tally {
   cands: { id: string; pct: number }[];
@@ -158,7 +202,9 @@ export type Pending =
   | { type: "sonuc"; oy: string; win: boolean; big?: boolean; res?: Tally; early?: boolean };
 
 /** Masaya gelmiş, o ana göre somutlaşmış seçenek */
-export interface Side extends Omit<SideDef, "rel"> { rel: Record<string, number> }
+export interface Side extends Omit<SideDef, "rel"> {
+  rel: Record<string, number>;
+}
 /** Masadaki evrak (materialize) */
 export interface Cur {
   id: string;
@@ -180,7 +226,15 @@ export interface Cur {
 }
 
 /** Olay günlüğü kaydı (ui.ts) */
-export interface JournalEntry { m: number; who: string; konu: string; side: "L" | "R"; t: string; e: Effect; notes: { html: string; cls?: string }[] }
+export interface JournalEntry {
+  m: number;
+  who: string;
+  konu: string;
+  side: "L" | "R";
+  t: string;
+  e: Effect;
+  notes: { html: string; cls?: string }[];
+}
 
 export interface State {
   v: number;
@@ -218,5 +272,17 @@ export interface State {
 }
 
 /** Motorun bir kararın ardından döndürdüğü */
-export interface TickEvent { ad: string; msg: string; e?: Effect | null; syn?: boolean }
-export interface ChooseOut { d: Effect; td: Effect; events: TickEvent[]; rel: Record<string, number>; over?: boolean; dead?: Meter }
+export interface TickEvent {
+  ad: string;
+  msg: string;
+  e?: Effect | null;
+  syn?: boolean;
+}
+export interface ChooseOut {
+  d: Effect;
+  td: Effect;
+  events: TickEvent[];
+  rel: Record<string, number>;
+  over?: boolean;
+  dead?: Meter;
+}

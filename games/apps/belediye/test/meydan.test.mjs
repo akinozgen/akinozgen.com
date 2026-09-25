@@ -32,9 +32,15 @@ test("meydanSVG: 1920×1080 slice, kök etiket dengeli, undefined/NaN yok, haric
   assert.doesNotMatch(svg, /href="(?!#)/);
   assert.doesNotMatch(svg, /url\(\s*['"]?(?!#)/);
   // açılan ve kapanan etiketler dengede (kendiliğinden kapananlar hariç)
-  const body = svg.replace(/<style>[\s\S]*?<\/style>/, "").replace(/<text\b[^>]*>[^<]*(<tspan[^>]*>[^<]*<\/tspan>[^<]*)*<\/text>/g, "");
-  const open = {}, close = {};
-  for (const m of body.matchAll(/<(\/?)([a-zA-Z]+)\b[^>]*?(\/?)>/g)) { if (m[3]) continue; (m[1] ? close : open)[m[2]] = ((m[1] ? close : open)[m[2]] || 0) + 1; }
+  const body = svg
+    .replace(/<style>[\s\S]*?<\/style>/, "")
+    .replace(/<text\b[^>]*>[^<]*(<tspan[^>]*>[^<]*<\/tspan>[^<]*)*<\/text>/g, "");
+  const open = {},
+    close = {};
+  for (const m of body.matchAll(/<(\/?)([a-zA-Z]+)\b[^>]*?(\/?)>/g)) {
+    if (m[3]) continue;
+    (m[1] ? close : open)[m[2]] = ((m[1] ? close : open)[m[2]] || 0) + 1;
+  }
   assert.deepEqual(open, close);
   assert.match(svg, />KARAKAVAK BELEDİYESİ</);
   assert.ok(Buffer.byteLength(svg) < LIMIT, `SVG ${Buffer.byteLength(svg)} bayt`);
@@ -47,13 +53,26 @@ test("sınıflar, seçiciler ve animasyon adları md- önekli; animasyonlar yaln
   const svg = meydanSVG();
   const names = [...svg.matchAll(/class="([^"]*)"/g)].flatMap(m => m[1].split(/\s+/).filter(Boolean));
   assert.ok(names.length > 50);
-  assert.deepEqual(names.filter(n => !n.startsWith("md-")), []);
+  assert.deepEqual(
+    names.filter(n => !n.startsWith("md-")),
+    [],
+  );
   const css = svg.match(/<style>([\s\S]*?)<\/style>/)[1];
-  assert.deepEqual([...css.matchAll(/(?<![\d\w])\.(-?[a-zA-Z][\w-]*)/g)].map(m => m[1]).filter(n => !n.startsWith("md-")), []);
-  assert.deepEqual([...css.matchAll(/@keyframes\s+([\w-]+)/g)].map(m => m[1]).filter(n => !n.startsWith("md-")), []);
+  assert.deepEqual(
+    [...css.matchAll(/(?<![\d\w])\.(-?[a-zA-Z][\w-]*)/g)].map(m => m[1]).filter(n => !n.startsWith("md-")),
+    [],
+  );
+  assert.deepEqual(
+    [...css.matchAll(/@keyframes\s+([\w-]+)/g)].map(m => m[1]).filter(n => !n.startsWith("md-")),
+    [],
+  );
   for (const [, b] of css.matchAll(/@keyframes\s+[\w-]+\{((?:[^{}]*\{[^{}]*\})*)\}/g))
     for (const [, decl] of b.matchAll(/\{([^{}]*)\}/g))
-      for (const prop of decl.split(";").map(d => d.split(":")[0].trim()).filter(Boolean)) assert.ok(["transform", "opacity"].includes(prop), `keyframes: ${prop}`);
+      for (const prop of decl
+        .split(";")
+        .map(d => d.split(":")[0].trim())
+        .filter(Boolean))
+        assert.ok(["transform", "opacity"].includes(prop), `keyframes: ${prop}`);
   assert.match(css, /@media \(prefers-reduced-motion:reduce\)\{[^}]*animation:none!important/);
   assert.match(css, /\.md-rm \*\{animation:none!important;transition:none!important\}/);
   for (const t of ["md-t-aksam", "md-t-gece", "md-t-gun"]) assert.ok(css.includes("." + t + "{"), t);
@@ -62,19 +81,54 @@ test("sınıflar, seçiciler ve animasyon adları md- önekli; animasyonlar yaln
 test("kimlikler bir kopyada tekil, iki kopyada farklı", () => {
   const { meydanSVG } = load();
   const ids = s => [...s.matchAll(/id="([^"]+)"/g)].map(m => m[1]);
-  const a = ids(meydanSVG()), b = ids(meydanSVG());
+  const a = ids(meydanSVG()),
+    b = ids(meydanSVG());
   assert.ok(a.length > 10);
   assert.equal(new Set(a).size, a.length);
-  assert.deepEqual(a.filter(i => b.includes(i)), []);
+  assert.deepEqual(
+    a.filter(i => b.includes(i)),
+    [],
+  );
   // her url(#…) ve href="#…" aynı kopyadaki bir kimliğe gider
-  const s = meydanSVG(), own = new Set(ids(s));
+  const s = meydanSVG(),
+    own = new Set(ids(s));
   for (const [, r] of [...s.matchAll(/url\(#([^)]+)\)/g), ...s.matchAll(/href="#([^"]+)"/g)]) assert.ok(own.has(r), r);
 });
 
 test("gerçek marka, parti ya da kişi adı yok", () => {
   const { meydanSVG } = load();
   const text = (meydanSVG() + src).toLocaleUpperCase("tr-TR");
-  const BAN = ["AKP", "CHP", "MHP", "HDP", "DEM PARTİ", "İYİ PARTİ", "SAADET", "ATATÜRK", "ERDOĞAN", "İNÖNÜ", "İMAMOĞLU", "YAVAŞ", "BAHÇELİ",
-    "COCA", "PEPSI", "ÇAYKUR", "LİPTON", "DOĞUŞ", "TÜRK TELEKOM", "TURKCELL", "VODAFONE", "ŞOK", "BİM", "MİGROS", "FORD", "MURAT 131", "TÜMOSAN", "ERKUNT", "JOHN DEERE", "MASSEY"];
+  const BAN = [
+    "AKP",
+    "CHP",
+    "MHP",
+    "HDP",
+    "DEM PARTİ",
+    "İYİ PARTİ",
+    "SAADET",
+    "ATATÜRK",
+    "ERDOĞAN",
+    "İNÖNÜ",
+    "İMAMOĞLU",
+    "YAVAŞ",
+    "BAHÇELİ",
+    "COCA",
+    "PEPSI",
+    "ÇAYKUR",
+    "LİPTON",
+    "DOĞUŞ",
+    "TÜRK TELEKOM",
+    "TURKCELL",
+    "VODAFONE",
+    "ŞOK",
+    "BİM",
+    "MİGROS",
+    "FORD",
+    "MURAT 131",
+    "TÜMOSAN",
+    "ERKUNT",
+    "JOHN DEERE",
+    "MASSEY",
+  ];
   for (const w of BAN) assert.ok(!new RegExp(`(^|[^A-ZÇĞİÖŞÜ])${w}([^A-ZÇĞİÖŞÜ]|$)`).test(text), w);
 });

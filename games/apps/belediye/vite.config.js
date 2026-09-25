@@ -7,7 +7,11 @@ import { join, relative, resolve } from "node:path";
 import { defineConfig } from "vite";
 
 const here = resolve(import.meta.dirname);
-const walk = d => readdirSync(d).flatMap(f => { const p = join(d, f); return statSync(p).isDirectory() ? walk(p) : [p]; });
+const walk = d =>
+  readdirSync(d).flatMap(f => {
+    const p = join(d, f);
+    return statSync(p).isDirectory() ? walk(p) : [p];
+  });
 
 // menüdeki sürüm: derleme günü ve kaynağın kısa özeti ("2026.09.25 · 3f9c2a1")
 const srcHash = createHash("sha1");
@@ -21,13 +25,19 @@ function serviceWorker() {
   return {
     name: "belediye-sw",
     apply: "build",
-    configResolved(c) { outDir = resolve(c.root, c.build.outDir); },
+    configResolved(c) {
+      outDir = resolve(c.root, c.build.outDir);
+    },
     closeBundle() {
-      const files = walk(outDir).filter(f => !/[\\/]sw\.js$|\.map$/.test(f)).sort();
+      const files = walk(outDir)
+        .filter(f => !/[\\/]sw\.js$|\.map$/.test(f))
+        .sort();
       const h = createHash("sha1");
       for (const f of files) h.update(readFileSync(f));
       const assets = ["./", ...files.map(f => relative(outDir, f).replaceAll("\\", "/"))];
-      writeFileSync(join(outDir, "sw.js"), `// Çaylar Belediyeden: çevrimdışı önbellek (derlemede üretilir)
+      writeFileSync(
+        join(outDir, "sw.js"),
+        `// Çaylar Belediyeden: çevrimdışı önbellek (derlemede üretilir)
 const CACHE = "caylar-${h.digest("hex").slice(0, 10)}";
 const ASSETS = ${JSON.stringify(assets)};
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting())); });
@@ -47,7 +57,8 @@ self.addEventListener("fetch", e => {
     return res;
   })));
 });
-`);
+`,
+      );
       console.log(`sw.js · ${assets.length} dosya önbellekte`);
     },
   };
@@ -62,7 +73,10 @@ export default defineConfig({
     // açılışta üç parça: kütüphane (interact.js, nadiren değişir), içerik (kart metinleri) ve oyun kodu. Biri değişince
     // öbürleri tarayıcı önbelleğinde kalır. Seçim gecesi (secim.ts) ve ad havuzu (adlar.ts) ayrıca, gerektiği anda iner.
     rollupOptions: {
-      output: { manualChunks: id => (id.includes("node_modules") ? "kutuphane" : /[\\/]src[\\/]cards\.[jt]s$/.test(id) ? "icerik" : undefined) },
+      output: {
+        manualChunks: id =>
+          id.includes("node_modules") ? "kutuphane" : /[\\/]src[\\/]cards\.[jt]s$/.test(id) ? "icerik" : undefined,
+      },
     },
   },
   server: { host: true, port: 8765 },

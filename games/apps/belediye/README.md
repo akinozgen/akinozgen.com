@@ -28,6 +28,7 @@ Ana projeden tek komut isterseniz `npm run build:games` aynı işi yapar. Derlen
 | `pnpm dev` | Vite geliştirme sunucusu, http://localhost:8765 (derlemeden, anında yenilenir; service worker kapalı) |
 | `pnpm preview` | `dist/`'i http://localhost:8765 adresinde sunar |
 | `pnpm test` | İçerik grafı, motor, mekanik, seçim, yayın, ad ve sahne testleri (vitest). Her test `test/yukle.mjs` ile taze modül yükler. İçerik denetimi `tools/lint.mjs`'te |
+| `pnpm typecheck` · `pnpm lint` · `pnpm format` | TypeScript denetimi (`tsc --noEmit`, `strict`), ESLint (JS ve typescript-eslint önerilenleri), Prettier (120 sütun; `pnpm format:check` yalnız denetler). Ad havuzları `prettier-ignore` ile satır satır paketli durur. typescript-eslint TS 7'yi henüz desteklemiyor: `typescript` paketi TS 6 API'sine (`@typescript/typescript6`) yönlenir, `tsc` 7 `@typescript/native`'den gelir |
 | `pnpm sim` | Motoru yedi oyuncu tipiyle (Ankara'yı hep yukarı iten ve davetleri reddeden "ankaracı" dahil) 2000'er kez oynatır; denge, ölüm sebepleri, etkileşim, vaat, beceri oranı ve baskın seçenek raporu verir. `node tools/sim.mjs 3000 fatigue=6` gibi ayarlar denenebilir |
 | `pnpm smoke` · `pnpm gesture` · `pnpm fit` | Headless Chrome testleri: uçtan uca oyun, dokunma ve fiske, telefonlarda sığma. Önce `pnpm build`: testler `dist/`'i kendi açtıkları yerel sunucudan (`tools/lib/sayfa.mjs`) oynar. Sessizdir; Chrome yolu farklıysa `CHROME` ortam değişkeniyle verilir. Çıktılar `.cache/` klasörüne yazılır |
 | `pnpm icons` | Uygulama ikonlarını yeniden çizer |
