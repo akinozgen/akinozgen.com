@@ -2,7 +2,7 @@
 // başsız Chrome ile ekran görüntüleri alır. Çıktı: .cache/anchor/demo.html + *.png
 // node tools/anchor-demo.mjs [çıktı klasörü]
 import { spawn } from "node:child_process";
-import { readFileSync, writeFileSync, mkdirSync, rmSync, readdirSync } from "node:fs";
+import { writeFileSync, mkdirSync, rmSync, readdirSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { betik, FONTS } from "./lib/sayfa.mjs";
 const OUT = process.argv[2] || fileURLToPath(new URL("../.cache/anchor/", import.meta.url));

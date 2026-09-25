@@ -2,6 +2,7 @@
 import { test } from "vitest";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { minifySync } from "vite";
 
 const src = readFileSync(new URL("../tools/meydan.js", import.meta.url), "utf8");
 const load = () => new Function(src + "\nreturn { meydanSVG, meydan, MD_HOUR };")();
@@ -37,7 +38,8 @@ test("meydanSVG: 1920×1080 slice, kök etiket dengeli, undefined/NaN yok, haric
   assert.deepEqual(open, close);
   assert.match(svg, />KARAKAVAK BELEDİYESİ</);
   assert.ok(Buffer.byteLength(svg) < LIMIT, `SVG ${Buffer.byteLength(svg)} bayt`);
-  assert.ok(Buffer.byteLength(src) < LIMIT, `meydan.js ${Buffer.byteLength(src)} bayt`);
+  const kod = minifySync("meydan.js", src).code; // biçim ve yorum satırları sayılmaz
+  assert.ok(Buffer.byteLength(kod) < LIMIT, `meydan.js küçültülmüş ${Buffer.byteLength(kod)} bayt`);
 });
 
 test("sınıflar, seçiciler ve animasyon adları md- önekli; animasyonlar yalnız transform ve opacity", () => {

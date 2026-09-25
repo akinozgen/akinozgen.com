@@ -1,7 +1,7 @@
 // Sahne testi: motorla belirli bir oyun durumu kurar, sayfaya kayıt olarak yükler, önizleme ekran görüntüsü alır.
 // node tools/scene.mjs [çıktı klasörü] [adres]
 import { spawn } from "node:child_process";
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { writeFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { motor, sunucu } from "./lib/sayfa.mjs";
 const srv = process.argv[3] ? null : await sunucu(); // önce `pnpm build`: dist/ sunulur

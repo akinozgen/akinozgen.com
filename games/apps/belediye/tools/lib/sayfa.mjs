@@ -46,7 +46,7 @@ export async function motor() {
 
 export const betik = (...adlar) => adlar.map(a => {
   const u = kaynak(a), s = readFileSync(u, "utf8");
-  return (u.pathname.endsWith(".ts") ? stripTypeScriptTypes(s) : s).replace(/^import [^\n]*\n/gm, "").replace(/^export /gm, "");
+  return (u.pathname.endsWith(".ts") ? stripTypeScriptTypes(s) : s).replace(/^import\b[^;]*;\n/gm, "").replace(/^export /gm, "");
 }).join("\n");
 
 export const FONTS = readFileSync(new URL("src/fonts.css", APP), "utf8").replace(/url\(\.\/fonts\//g, `url(${new URL("src/fonts/", APP).href}`);

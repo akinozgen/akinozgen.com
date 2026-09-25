@@ -1,7 +1,7 @@
 // Ana menü testi: klavyeyle gezinme, bilgi kartı, ayarlar ve künye panelleri, aday kaydı, oyuna giriş.
 // Ekran görüntüleri .cache/menu/ klasörüne yazılır. node tools/menu.mjs [çıktı klasörü] [adres]
 import { spawn } from "node:child_process";
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { writeFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { motor, sunucu } from "./lib/sayfa.mjs";
 

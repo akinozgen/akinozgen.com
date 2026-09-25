@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { motor, sunucu } from "./lib/sayfa.mjs";
 const srv = process.argv[3] ? null : await sunucu(); // önce `pnpm build`: dist/ sunulur
 import { spawn } from "node:child_process";
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { writeFileSync, mkdirSync } from "node:fs";
 const OUT = process.argv[2] || fileURLToPath(new URL("../.cache/fit/", import.meta.url)), PAGE = process.argv[3] || srv.url;
 mkdirSync(OUT, { recursive: true });
 const E = await motor();
@@ -19,7 +19,6 @@ let ws, id = 0; const pend = new Map(), errs = [];
 const send = (m, p = {}) => new Promise(r => { const i = ++id; pend.set(i, r); ws.send(JSON.stringify({ id: i, method: m, params: p })); });
 const ev = async e => (await send("Runtime.evaluate", { expression: e, returnByValue: true, awaitPromise: true })).result?.value;
 const shot = async n => { const { data } = await send("Page.captureScreenshot", { format: "png" }); writeFileSync(`${OUT}/${n}.png`, Buffer.from(data, "base64")); };
-const touch = async (pts) => { for (const [type, x, y] of pts) { await send("Input.dispatchTouchEvent", { type, touchPoints: type === "touchEnd" ? [] : [{ x, y }] }); await sleep(16); } };
 try {
   let url; for (let t = 0; t < 50 && !url; t++) { try { url = (await (await fetch("http://127.0.0.1:9338/json/list")).json()).find(x => x.type === "page")?.webSocketDebuggerUrl; } catch { } if (!url) await sleep(200); }
   ws = new WebSocket(url); await new Promise(r => ws.addEventListener("open", r));

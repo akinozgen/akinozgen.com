@@ -3,6 +3,7 @@
 // meydan(kök, { hour }): sahne denetimi → { enter, pause, resume, stop, setHour }
 // Güvenli alan: yatayda sol %36 menünün altında kalır (sakin taraf). Dikey telefonda yalnız x≈710-1210 ve üst %45 görünür:
 // cephe, makam penceresi ve Tekir bu kutudadır. Ultra genişte üst ve alt ~%12 kırpılır, orada önemli bir şey yok.
+/* exported meydanSVG, meydan */
 let MD_N = 0;
 const MD_HOUR = h => (h >= 21 || h < 6 ? "gece" : h < 17 ? "gun" : "aksam"); // 21-5 gece, 6-16 gündüz, 17-20 akşamüstü
 

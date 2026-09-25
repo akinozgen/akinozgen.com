@@ -1,7 +1,7 @@
 // Seçim gecesi testi: seçim ayında 5 adaylı bir yarış kurar, sayımı izler, sonucu motorla karşılaştırır.
 // Sayım ortası ve sonuç ekranı .cache/election/ klasörüne yazılır. node tools/election.mjs [çıktı klasörü] [adres]
 import { spawn } from "node:child_process";
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { writeFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { motor, sunucu } from "./lib/sayfa.mjs";
 

@@ -9,6 +9,7 @@
     "build:apps": "pnpm -r build",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r --if-present lint",
     "geo:build": "pnpm --filter @travelle/geo build:data"
   },
   "devDependencies": {

@@ -1,0 +1,7 @@
+# derleme çıktısı, önbellek, hazır dosyalar
+dist/
+.cache/
+public/
+# işaretleme ve yazılar elle dizili: satır kırılımı metnin parçası
+index.html
+*.md

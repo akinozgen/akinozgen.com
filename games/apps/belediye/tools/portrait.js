@@ -1,7 +1,8 @@
 // ─── Vesikalık üreteci: tariften düz renkli SVG portre ─────────────────────
-// Oyun bu dosyayı yüklemez; vesikalıklar web-src/portraits/ altındaki resimlerdir.
+// Oyun bu dosyayı yüklemez; vesikalıklar public/portraits/ altındaki resimlerdir.
 // tools/portraits.mjs eksik resimleri buradaki tariflerden çizer. Şimdiki resimler bu çizimlerden SDXL img2img ile
 // parlak 3D stile çevrildi; --force onların üstüne düz çizim yazar.
+/* exported portrait, mayorFace, RECIPES */
 function shade(hex, amt) {
   const n = parseInt(hex.slice(1), 16);
   const f = amt < 0 ? 0 : 255, p = Math.abs(amt);
