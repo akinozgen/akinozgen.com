@@ -13,7 +13,9 @@ import {
   dateLabel,
   draw,
   durLabel,
+  defterOf,
   edgeRisk,
+  mirasOf,
   newGame,
   pollOf,
   vaatCost,
@@ -581,7 +583,10 @@ function dangerToast(before: Meters) {
       900,
     );
 }
-function reactions(c: Cur, res: ChooseOut) {
+function reactions(c: Cur, res: ChooseOut, side: "L" | "R") {
+  // hafıza notu: bu karar unutulmayacak (gecikmeli sonucun ilk işareti)
+  const nt = c[side].not;
+  if (nt) toast(`<b>Not</b>${esc(nt)}`, "ev");
   for (const [w, dv] of Object.entries(res.rel || {})) {
     const P = PEOPLE[w];
     if (!P) continue;
@@ -659,13 +664,17 @@ function optNote(o: Side) {
       per = etkiKisa(p.e);
     if (per) bits.push(`her ay ${per}${p.ay ? `, ${p.ay} ay` : ", süresiz"}`);
     if (p.done || p.doneCard) bits.push(per ? "sonu var" : `${p.ay} ay sürecek iş`);
+    if (p.yan?.length) bits.push("yan etkisi olabilir");
   }
+  if (o.son && S?.cur?.kind !== "davet") bits.push("oyun biter");
   if (o.cut) bits.push("uygulamayı kaldırır");
   if (o.next) bits.push("devamı gelecek");
   // vaat defteri: tutulmayan vaat sandıkta ödenir, tutulan geri alınır
   const cnt = (x: Side["inc"]): Record<string, number> => (typeof x === "string" ? { [x]: 1 } : x || {});
   if (cnt(o.inc).vaat) bits.push("vaat verilir");
   if (cnt(o.dec).vaat) bits.push("vaat yerine gelir");
+  // sandık defteri
+  if (o.anket) bits.push(o.anket.puan < 0 ? "skandal olur" : "sandıkta anılır");
   return bits.join(" · ");
 }
 function renderCard(c: Cur) {
@@ -793,7 +802,7 @@ async function commit(side: "L" | "R", dragged = false) {
   showHints(null);
   setMeters(res.d, res.td);
   journalAdd(card, side, res, month);
-  reactions(card, res);
+  reactions(card, res, side);
   renderOngoing();
   updateHud();
   if (!res.dead) dangerToast(before);
@@ -839,9 +848,13 @@ function updateHud() {
   tweenNum($("#poll .num"), poll);
   $("#poll").classList.toggle("warn", near && poll <= 50);
   const vaat = S.cnt?.vaat || 0,
-    vc = vaatCost(S);
+    vc = vaatCost(S),
+    df = defterOf(S);
   $("#poll").setAttribute("aria-label", `Anket: yüzde ${poll}`);
-  $("#poll").title = `Anket %${poll}` + (vaat ? ` · tutulmamış ${vaat} vaat sandıkta −${vc} puan` : "");
+  $("#poll").title =
+    `Anket %${poll}` +
+    (vaat ? ` · tutulmamış ${vaat} vaat sandıkta −${vc} puan` : "") +
+    (df ? ` · sandık defteri ${df > 0 ? "+" : "−"}${Math.abs(Math.round(df * 10) / 10)} puan` : "");
   $("#poll").classList.toggle("vaat", vaat > 0);
   $("#danis-n").textContent = String(S.danis);
   $("#btn-danis").classList.toggle("spent", S.danis <= 0);
@@ -1012,6 +1025,10 @@ function article(s: State, name: string): Article {
   else if (dost.length)
     haber += `\nBaşkanın zor günlerde yanından ayrılmayanlar arasında ${listTR(dost.slice(0, 3))} vardı.`;
   else if (kus.length) haber += `\n${listTR(kus.slice(0, 2))} ise başkanın kapısını son aylarda hiç çalmadı.`;
+  const kara = (s.defter || []).filter(k => k.puan < 0).sort((a, b) => a.puan - b.puan)[0];
+  if (kara) haber += ` Dönemin en çok konuşulan dosyası “${kara.ad}” oldu.`;
+  const miras = mirasOf(s);
+  if (miras.length) haber += "\n" + miras.join(" ");
   haber += ` Makam şefi Fikret gazetemize kısa bir açıklama yaptı: “${pickOne(QUOTES)}”`;
   const el = s.lastElection;
   const spot =

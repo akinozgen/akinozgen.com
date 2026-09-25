@@ -87,6 +87,12 @@ const policies = {
   },
 };
 const seenAll = {};
+// yan etki evrakları (yürürlükteki kararların doğurduğu)
+const YAN = new Set(
+  E.CARDS.flatMap(c => [c.L, c.R])
+    .flatMap(o => o.pol?.yan || [])
+    .map(y => y.card),
+);
 
 const N = Number(process.argv[2] || 3000);
 const q = (arr, p) => arr[Math.floor(p * (arr.length - 1))];
@@ -115,7 +121,9 @@ for (const [name, pol] of Object.entries(policies)) {
     tekirSave = 0,
     dropped = 0,
     syn = 0,
-    vaatAtElection = 0;
+    vaatAtElection = 0,
+    defterAt = 0,
+    yanSeen = 0;
   for (let g = 0; g < N; g++) {
     const rng = mulberry(g * 7919 + 13);
     const s = E.newGame();
@@ -125,6 +133,7 @@ for (const [name, pol] of Object.entries(policies)) {
       seen[c.id] = (seen[c.id] || 0) + 1;
       seenAll[c.id] = 1;
       if (c.kind === "davet") davet[c.id] = (davet[c.id] || 0) + 1;
+      if (YAN.has(c.id)) yanSeen++;
       if (c.kind === "kriz") crises++;
       if (c.kind === "tekir") tekirSave++;
       if (c.kind === "sonuc") wins++;
@@ -132,6 +141,7 @@ for (const [name, pol] of Object.entries(policies)) {
       else if (c.kind === "secim") {
         elections++;
         vaatAtElection += s.cnt.vaat || 0;
+        defterAt += E.defterOf(s);
       }
       if (c.kind === "erkensonuc") earlyW++;
       const side = pol(s, rng);
@@ -171,6 +181,12 @@ for (const [name, pol] of Object.entries(policies)) {
   );
   console.log(
     `oyun başına kriz kartı: ${(crises / N).toFixed(2)}   Tekir kurtarışı: ${(tekirSave / N).toFixed(2)}   dost(≥2): ${(relHi / N).toFixed(1)}   dargın(≤-2): ${(relLo / N).toFixed(1)}`,
+  );
+  const yay = Object.entries(ends)
+    .filter(([k]) => E.ENDINGS[k]?.tur)
+    .reduce((a, [, v]) => a + v, 0);
+  console.log(
+    `yay sonu: %${((100 * yay) / N).toFixed(1)}   yan etki evrakı (oyun başına): ${(yanSeen / N).toFixed(2)}   seçimde ortalama defter: ${elections ? (defterAt / elections).toFixed(2) : "-"}`,
   );
   console.log(
     "sonlar:",

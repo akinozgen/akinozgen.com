@@ -1,9 +1,9 @@
 // İçerik denetimi: kart grafı, bayraklar, sayaçlar, etiketler, uzunluklar.
-// lintContent(E) → { errors: [], warnings: [] }. E: cards.ts + engine.ts'ten dönen nesne (CARDS, CARD, CRISES, INTRO, PEOPLE, SYN; varsa DAVET, ENDINGS).
+// lintContent(E) → { errors: [], warnings: [] }. E: cards.ts + engine.ts'ten dönen nesne (CARDS, CARD, CRISES, INTRO, PEOPLE, SYN; varsa DAVET, ENDINGS, MIRAS).
 // test/content.test.mjs hata bırakmaz; tools/sim.mjs uyarıları da yazar.
 
 // Motorun kendisinin okuduğu sayaçlar (kartlarda kapı olarak geçmese de kullanılıyor)
-const ENGINE_CNT = new Set(["tekir", "vaat"]);
+const ENGINE_CNT = new Set(["tekir", "vaat", "skandal"]);
 
 // Bağlam: bir olayı "olmuş" sayan metin, o olay yaşanmadan gelmemeli. Metin bu olayı anıyorsa ya kart
 // o olayın kendi zincirindedir (ok), ya da kart/metin varyantı olayın bayrağını ister (flag).
@@ -72,7 +72,8 @@ export function lintContent(E) {
     arr(q.notag).forEach(t => readT(t, by));
     for (const w of Object.keys(q.rel || {})) if (!E.PEOPLE[w]) err(`${by}: koşulda bilinmeyen kişi ${w}`);
   };
-  const polRefs = [];
+  const polRefs = [],
+    yanRefs = [];
 
   for (const c of E.CARDS) {
     if (ids.has(c.id)) err(`çift kimlik: ${c.id}`);
@@ -107,6 +108,16 @@ export function lintContent(E) {
       if (o.t.length > 26) err(`${sb}: "${o.t}" düğmeye sığmaz (${o.t.length})`);
       if (o.e.some(v => !Number.isFinite(v))) err(`${sb}: etki sayı değil`);
       if (o.son && E.ENDINGS && !E.ENDINGS[o.son]) err(`${sb}: böyle bir son yok → ${o.son}`);
+      // ceza sonu tek seçimle gelmez: yayın sonundaki (zincirle gelen) evrakta olmalı
+      if (o.son && E.ENDINGS?.[o.son]?.tur === "ceza" && !c.chain && !c.crisis)
+        err(`${sb}: ceza sonu (${o.son}) yalnız bir yayın sonundaki zincir evrakında olabilir`);
+      if (o.anket) {
+        const k = o.anket;
+        if (!k.ad || k.ad.length > 40) err(`${sb}: defter kaleminin adı boş ya da uzun`);
+        if (!Number.isFinite(k.puan) || !k.puan || Math.abs(k.puan) > 4)
+          err(`${sb}: defter kalemi -4..4 arası, sıfırdan farklı olmalı`);
+      }
+      if (o.not && o.not.length > 80) err(`${sb}: hafıza notu uzun (${o.not.length})`);
       arr(o.set).forEach(f => flagW.add(f));
       arr(o.clr).forEach(f => flagW.add(f));
       keysOf(o.inc).forEach(k => cntW.add(k));
@@ -126,6 +137,12 @@ export function lintContent(E) {
         polIds.add(p.id);
         if (p.e && p.e.length !== 4) err(`${sb}: kararın aylık etkisi dört gösterge değil`);
         arr(p.tags).forEach(t => tagW.add(t));
+        for (const y of p.yan || []) {
+          if (!(y.p > 0 && y.p <= 0.3)) err(`${sb}: yan etki olasılığı 0-0,3 arası olmalı (${y.p})`);
+          if (p.ay && (y.min ?? 3) >= p.ay) err(`${sb}: yan etki karar bittikten sonraya kalıyor`);
+          readCond(y.if, sb);
+          yanRefs.push([y.card, p.id, sb]);
+        }
       }
       arr(o.cut).forEach(p => polRefs.push([p, sb]));
     }
@@ -136,7 +153,7 @@ export function lintContent(E) {
     ["L", "R"].flatMap(s => {
       const o = c[s] || {},
         n = nextOf(o.next);
-      return [n?.id, n?.else, o.pol?.doneCard].filter(Boolean);
+      return [n?.id, n?.else, o.pol?.doneCard, ...(o.pol?.yan || []).map(y => y.card)].filter(Boolean);
     });
   for (const c of all) for (const t of links(c)) if (!ids.has(t)) err(`${c.id || c.konu}: bağlandığı kart yok → ${t}`);
   for (const x of E.SYN) {
@@ -149,6 +166,15 @@ export function lintContent(E) {
   }
   if (new Set(E.SYN.map(x => x.id)).size !== E.SYN.length) err("SYN: çift kimlik");
   for (const [p, by] of polRefs) if (!polIds.has(p)) err(`${by}: böyle bir karar yok → ${p}`);
+  // yan etki evrakı kararı kaldırma yolu sunmalı (biri "kaldır", öbürü "üstüne git")
+  for (const [id, p, by] of yanRefs) {
+    const y = E.CARD[id];
+    if (y && !["L", "R"].some(s => arr(y[s]?.cut).includes(p)))
+      warn(`${by}: yan etki evrakı ${id} kararı (${p}) kaldırma seçeneği sunmuyor`);
+  }
+  // aynı evrakın iki tarafı birden oyunu bitirmesin
+  for (const c of all)
+    if (c.L?.son && c.R?.son && !c.id?.startsWith("davet")) err(`${c.id}: iki taraf da oyunu bitiriyor`);
 
   // Ulaşılabilirlik: zincir kartları yalnız bağlantıyla gelir; hiçbir yerden bağlanmayan zincir ölü içeriktir
   const reach = new Set(),
@@ -176,6 +202,27 @@ export function lintContent(E) {
       links(E.CARD[t]).forEach(u => st.push([u, d + 1]));
     }
   }
+
+  // Sonlar ve miras: uzunluklar, kişiler; miras koşulları da bayrak/sayaç okur
+  for (const [k, x] of Object.entries(E.ENDINGS || {})) {
+    if (!E.PEOPLE[x.who]) err(`son ${k}: bilinmeyen kişi ${x.who}`);
+    if (!x.text || x.text.length > 240) err(`son ${k}: metin boş ya da evraka sığmaz (${x.text?.length})`);
+    if (!x.manset || x.manset.length > 32) err(`son ${k}: manşet boş ya da uzun (${x.manset?.length})`);
+    if (!x.spot || x.spot.length > 170) err(`son ${k}: spot boş ya da uzun (${x.spot?.length})`);
+    if (!x.kisa || x.kisa.length > 30) err(`son ${k}: kısa ad boş ya da uzun (${x.kisa?.length})`);
+    for (const t of x.btn || []) if (t.length > 26) err(`son ${k}: "${t}" düğmeye sığmaz`);
+  }
+  const sonlar = new Set(Object.keys(E.ENDINGS || {}));
+  (E.MIRAS || []).forEach((m, i) => {
+    const by = `MIRAS[${i}]`;
+    if (!m.text || m.text.length > 200) err(`${by}: metin boş ya da uzun (${m.text?.length})`);
+    if (!m.if || !Object.keys(m.if).length) err(`${by}: koşulsuz miras her oyunda çıkar`);
+    readCond(m.if, by);
+    for (const k of arr(m.son)) if (!sonlar.has(k)) err(`${by}: böyle bir son yok → ${k}`);
+    for (const f of FACTS)
+      if (f.re.test(m.text) && !(f.flag && arr(m.if?.req).includes(f.flag)))
+        err(`${by}: metin "${f.ad}" olayını anıyor ama koşulu o olayın bayrağını istemiyor`);
+  });
 
   // Bağlam: olayı anan metin olaysız gelemez (FACTS)
   const needs = (c, a) => [...arr(c.req), ...arr(a?.req), ...arr(a?.if?.req)];

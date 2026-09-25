@@ -28,6 +28,22 @@ export interface Cond {
 export type Next =
   [string, number | [number, number]] | { id: string; in?: number | [number, number]; if?: Cond; else?: string };
 
+/** Yan etki: karar yürürlükteyken her ay p olasılıkla bir evrak doğurur (karar başına bir kez) */
+export interface YanDef {
+  card: string;
+  /** her ay olasılık; 0,10-0,20 önerilir (0,15 ile 12 ayda gelme olasılığı %86) */
+  p: number;
+  /** en erken kaçıncı ayında (varsayılan 3) */
+  min?: number;
+  if?: Cond;
+}
+
+/** Sandık defterine giren kalem: eksi skandal, artı akılda kalan iş (özür de artı yazılır) */
+export interface Kalem {
+  ad: string;
+  puan: number;
+}
+
 /** Yürürlüğe giren karar: her ay e kadar işler, ay dolunca done ve doneCard gelir */
 export interface PolDef {
   id: string;
@@ -38,6 +54,7 @@ export interface PolDef {
   msg?: string;
   doneCard?: string;
   tags?: string[];
+  yan?: YanDef[];
 }
 
 /** Kart seçeneği (içerikte yazıldığı hâliyle) */
@@ -52,8 +69,12 @@ export interface SideDef {
   next?: Next;
   pol?: PolDef;
   cut?: OneOrMany;
-  /** Ankara daveti: kabul edilince gelen son (ENDINGS anahtarı) */
+  /** seçilince oyunu bitiren son (ENDINGS anahtarı): yay finalleri ve Ankara davetinin kabulü */
   son?: string;
+  /** sandık defterine kalem: anketi etkiler, seçim gecesinde adıyla anılır */
+  anket?: Kalem;
+  /** kaydırınca çıkan hafıza notu ("Hacı Bekir bunu unutmayacak.") */
+  not?: string;
 }
 
 export type CardKind =
@@ -142,6 +163,18 @@ export interface Ending {
   kisa: string;
   win?: boolean;
   legacy?: boolean;
+  /** son evrağının düğmeleri [sol, sağ]; yoksa kazanç ya da kayba göre varsayılan */
+  btn?: [string, string];
+  /** yay sonlarının türü: gönüllü (istifa, terfi), ceza (görevden alma: yalnız bir yayın sonunda), komik */
+  tur?: "gonullu" | "ceza" | "komik";
+}
+
+/** Oyun sonu gazetesinde başkanın neyle anılacağı: koşulu tutan ilk ikisi yazılır */
+export interface MirasDef {
+  if: Cond;
+  text: string;
+  /** yalnız bu sonlarda (ENDINGS anahtarı) */
+  son?: OneOrMany;
 }
 
 // ── Oyun durumu
@@ -156,6 +189,9 @@ export interface Ongoing {
   doneCard: string | null;
   proj: boolean;
   tags: string[];
+  /** henüz doğmamış yan etkiler ve kararın kaç aydır yürürlükte olduğu */
+  yan?: YanDef[];
+  age?: number;
 }
 export interface QueueItem {
   id: string;
@@ -192,6 +228,9 @@ export interface Tally {
   vaat: number;
   rel: number;
   fatigue: number;
+  /** sandık defterinin ankete net etkisi ve en ağır kalemleri */
+  defter?: number;
+  kalem?: Kalem[];
 }
 
 export type Pending =
@@ -267,6 +306,10 @@ export interface State {
   earlyField?: Field | null;
   syn?: Record<string, number>;
   dropped?: string[];
+  /** sandık defteri: m kalemin yazıldığı ay */
+  defter?: (Kalem & { m: number })[];
+  /** son yan etkinin doğduğu ay (ilçede 3 ayda en çok bir yan etki) */
+  lastYan?: number;
   lastElection?: Tally;
   journal?: JournalEntry[];
 }

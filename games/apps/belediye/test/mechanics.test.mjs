@@ -1,4 +1,5 @@
-// Motorun zamana yayılan mekanikleri: sayaçlar, koşullu/aralıklı zincir, etiket etkileşimi, yer açma, hatırlama, vaat
+// Motorun zamana yayılan mekanikleri: sayaçlar, koşullu/aralıklı zincir, etiket etkileşimi, yer açma, hatırlama, vaat,
+// yay sonu, yan etki, sandık hafızası (skandal/eser), miras
 import { test } from "vitest";
 import assert from "node:assert/strict";
 import { yukle } from "./yukle.mjs";
@@ -187,4 +188,127 @@ test("eski kayıtlar bozulmadan açılır: yeni alanlar yokken motor çalışır
     E.choose(s, r() < 0.5 ? "L" : "R", r);
   }
   assert.ok(s.month > 0);
+});
+
+test("yay sonu: seçeneğin son'u oyunu o sonla bitirir, göstergeler yerindeyken bile", async () => {
+  const E = await load(),
+    s = E.newGame();
+  E.ENDINGS.t_son = {
+    who: "fikret",
+    konu: "Deneme sonu",
+    text: "Bitti.",
+    manset: "BİTTİ",
+    spot: "Bitti.",
+    kisa: "Bitti",
+    btn: ["Tamam", "Peki"],
+  };
+  play(E, s, card("t_final", {}, { son: "t_son" }), "L");
+  assert.deepEqual(s.pending, { type: "ending", key: "t_son" });
+  const c = E.draw(s, rng(2));
+  assert.equal(c.kind, "ending");
+  assert.equal(c.L.t, "Tamam", "sonun kendi düğmesi");
+  E.choose(s, "L", rng(2));
+  assert.equal(s.over.key, "t_son");
+});
+
+test("yan etki: ilk 3 ayda doğmaz, bir kez doğar, koşul tutmazsa doğmaz, ilçede 3 ayda en çok bir tane", async () => {
+  const E = await load(),
+    s = E.newGame();
+  E.addPol(s, {
+    id: "gece",
+    ad: "Gece pazarı",
+    e: Z,
+    yan: [
+      { card: "t_kavga", p: 0.2 },
+      { card: "t_sel", p: 0.2, min: 1, if: { req: "yagmur" } },
+    ],
+  });
+  const bir = () => 0; // her zar tutar
+  E.tick(s, bir);
+  E.tick(s, bir);
+  assert.equal(s.queue.length, 0, "ilk iki ay: kavga 3. aydan önce yok, sel koşulu tutmuyor");
+  E.tick(s, bir);
+  assert.deepEqual(
+    s.queue.map(q => q.id),
+    ["t_kavga"],
+  );
+  s.flags.yagmur = true;
+  s.month++;
+  E.tick(s, bir);
+  assert.equal(s.queue.length, 1, "3 ay dolmadan ikinci yan etki yok");
+  s.month += 3;
+  E.tick(s, bir);
+  assert.equal(s.queue[0].id, "t_sel");
+  s.month += 3;
+  E.tick(s, bir);
+  assert.equal(s.queue.filter(q => q.id === "t_kavga").length, 1, "yan etki bir kez");
+  const t = E.newGame();
+  E.addPol(t, { id: "gece", ad: "Gece pazarı", e: Z, yan: [{ card: "t_kavga", p: 0.1 }] });
+  for (let i = 0; i < 6; i++) E.tick(t, () => 0.9);
+  assert.equal(t.queue.length, 0, "zar tutmazsa doğmaz");
+  const u = E.newGame();
+  E.addPol(u, { id: "sade", ad: "Sade karar", e: Z });
+  let atildi = 0;
+  for (let i = 0; i < 5; i++) E.tick(u, () => (atildi++, 0));
+  assert.equal(atildi, 0, "yan etkisi olmayan karar zar harcamaz");
+});
+
+test("sandık defteri: kalemler adıyla ankete girer (net etki sınırlı), özür düşürür, yeni dönemde yarıya iner; seçim gecesine gider", async () => {
+  const E = await load(),
+    s = E.newGame();
+  const p0 = E.pollOf(s),
+    fark = () => Math.round((E.pollOf(s) - p0) * 10) / 10;
+  play(E, s, card("t_ihale", {}, { anket: { ad: "Kreş ihalesi", puan: -3 } }), "L");
+  assert.equal(s.cnt.skandal, 1, "eksi kalem skandal sayar (kapılar için)");
+  assert.equal(fark(), -3);
+  play(E, s, card("t_ozur", {}, { anket: { ad: "Kamuoyundan özür", puan: 1 } }), "L");
+  assert.equal(fark(), -2);
+  for (let i = 0; i < 5; i++) play(E, s, card("t_s" + i, {}, { anket: { ad: "Skandal " + i, puan: -4 } }), "L");
+  assert.equal(fark(), E.TUNE.defterMin, "alt sınır");
+  const r = E.tally(s, rng(4));
+  assert.equal(r.defter, E.TUNE.defterMin);
+  assert.deepEqual(
+    r.kalem.map(k => k.puan),
+    [-4, -4],
+    "en ağır iki kalem",
+  );
+  s.defter = [
+    { ad: "Park", puan: 3, m: 0 },
+    { ad: "Küçük dedikodu", puan: -0.5, m: 0 },
+  ];
+  s.cur = { id: "sonuc", kind: "sonuc", L: { t: "a", e: Z }, R: { t: "b", e: Z } };
+  E.choose(s, "L", rng(1));
+  assert.deepEqual(
+    s.defter.map(k => [k.ad, k.puan]),
+    [["Park", 1.5]],
+    "yarıya iner, küçük kalan silinir",
+  );
+});
+
+test("miras: koşulu tutan ilk iki cümle, sırasıyla; son'a bağlı satır yalnız o sonda", async () => {
+  const E = await load(),
+    s = E.newGame();
+  E.MIRAS.push(
+    { if: { req: "a" }, text: "A." },
+    { if: { cnt: { k: 2 } }, text: "K.", son: "k0" },
+    { if: { req: "b" }, text: "B." },
+  );
+  assert.deepEqual(E.mirasOf(s), []);
+  s.flags.b = true;
+  s.cnt.k = 2;
+  assert.deepEqual(E.mirasOf(s), ["B."], "K. yalnız k0 sonunda");
+  s.over = { key: "k0", months: 10, term: 1 };
+  assert.deepEqual(E.mirasOf(s), ["K.", "B."]);
+  s.flags.a = true;
+  assert.deepEqual(E.mirasOf(s), ["A.", "K."]);
+});
+
+test("hafıza notu ve defter kalemi masadaki seçeneğe taşınır", async () => {
+  const E = await load(),
+    s = E.newGame();
+  const c = card("t_not", {}, { not: "Hacı Bekir bunu unutmayacak.", anket: { ad: "Çarşı", puan: 2 } });
+  const cur = E.materialize(c, s, rng(1)),
+    side = cur.L.t === "Sol" ? cur.L : cur.R;
+  assert.equal(side.not, "Hacı Bekir bunu unutmayacak.");
+  assert.deepEqual(side.anket, { ad: "Çarşı", puan: 2 });
 });

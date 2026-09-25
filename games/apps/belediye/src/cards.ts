@@ -1,6 +1,6 @@
 // ─── Karakavak'ın insanları ───────────────────────────────────────────────
 // vesikalık: web-src/portraits/<anahtar>.webp · pos/neg: gönlü olunca / kırılınca tepki
-import type { Aday, Baskan, CardDef, Ending, Person, SynRule } from "./types.ts";
+import type { Aday, Baskan, CardDef, Ending, MirasDef, Person, SynRule } from "./types.ts";
 export const PEOPLE: Record<string, Person> = {
   fikret: { ad: "Fikret", unvan: "Makam Şefi" },
   muhtar: {
@@ -3259,6 +3259,10 @@ export const ENDINGS: Record<string, Ending> = {
     kisa: "Dört dönem, onurlu veda",
   },
 };
+
+// ─── Miras: oyun sonu gazetesi başkanın neyle anılacağını yazar ────────────
+// if: ortak koşul dili (bayrak, sayaç, ilişki...). Sıra önemli: koşulu tutan ilk ikisi gazeteye girer, özel olan öne.
+export const MIRAS: MirasDef[] = [];
 
 export const INTRO: CardDef[] = [
   {

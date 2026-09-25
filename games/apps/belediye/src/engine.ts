@@ -1,5 +1,5 @@
 // ─── Oyun motoru (DOM'suz; sim.mjs de bunu çalıştırır) ────────────────────
-import { ADAYLAR, BLOKLAR, CARDS, CAY_LINES, CRISES, DAVET, ENDINGS, INTRO, PEOPLE, SYN } from "./cards.ts";
+import { ADAYLAR, BLOKLAR, CARDS, CAY_LINES, CRISES, DAVET, ENDINGS, INTRO, MIRAS, PEOPLE, SYN } from "./cards.ts";
 import type {
   CardDef,
   CardKind,
@@ -65,6 +65,8 @@ export const INFLUENCE: Record<string, number> = {
 // Ayar düğmeleri (sim.mjs ile ölçüldü)
 // salience: koşulu tutan her şart kartın ağırlığını bu oranda artırır (özgül kart genel kartı yener)
 // vaat: tutulmamış her vaat anketten bu kadar puan götürür (en çok vaatMax)
+// defterMin/Max: sandık defterinin (skandallar eksi, akılda kalan işler artı) ankete net etkisinin sınırları
+// yanAra: ilçede iki yan etki arasında en az bu kadar ay
 // 2026-09: 61 yeni kartla birlikte hafif sıkılaştırıldı (rescue 1.4→1.3, fatigue 7→6.5, base 19→17.5, scale 1.15→1.2)
 export const TUNE = {
   damp: 0.9,
@@ -79,6 +81,9 @@ export const TUNE = {
   salience: 0.5,
   vaat: 2,
   vaatMax: 8,
+  defterMin: -8,
+  defterMax: 6,
+  yanAra: 3,
 };
 export const MAX_ONGOING = 7;
 
@@ -103,9 +108,30 @@ export const relBonus = (s: State) =>
   );
 // Tutulmamış vaatler (s.cnt.vaat) sandıkta ödenir
 export const vaatCost = (s: State) => Math.min(TUNE.vaatMax, (s.cnt?.vaat || 0) * TUNE.vaat);
+// Sandık defteri (s.defter): skandallar ve akılda kalan işler adlarıyla birikir, yeni dönemde yarıya iner
+export const defterOf = (s: State) =>
+  clamp(
+    (s.defter || []).reduce((a, k) => a + k.puan, 0),
+    TUNE.defterMin,
+    TUNE.defterMax,
+  );
+// en ağır kalemler (seçim gecesi "Neden?" satırı, gazete)
+export const kalemler = (s: State, n = 2) =>
+  (s.defter || [])
+    .slice()
+    .sort((a, b) => Math.abs(b.puan) - Math.abs(a.puan))
+    .slice(0, n)
+    .map(({ ad, puan }) => ({ ad, puan }));
 // Yıpranma: her yeni dönemde sandık biraz daha zorlaşır
 export const pollOf = (s: State) =>
-  TUNE.base + s.m.h * 0.45 + s.m.e * 0.08 + s.m.a * 0.04 + relBonus(s) - (s.term - 1) * TUNE.fatigue - vaatCost(s);
+  TUNE.base +
+  s.m.h * 0.45 +
+  s.m.e * 0.08 +
+  s.m.a * 0.04 +
+  relBonus(s) -
+  (s.term - 1) * TUNE.fatigue -
+  vaatCost(s) +
+  defterOf(s);
 
 // ── Ortak koşul dili: kart kapıları, next.if ve alt.if hepsi bunu kullanır
 // { req: bayrak(lar), not: bayrak(lar), cnt: {sayaç: en az | [en az, en çok]}, pol: karar id(leri), nopol,
@@ -220,6 +246,8 @@ export function addPol(s: State, p: PolDef) {
     doneCard: p.doneCard || null,
     proj: !!(p.done || p.doneCard),
     tags: arr(p.tags),
+    yan: p.yan?.map(y => ({ ...y })),
+    age: 0,
   });
 }
 
@@ -243,8 +271,9 @@ export function schedule(s: State, n: Next | undefined, rng: Rng) {
   s.queue.push(q);
 }
 
-// Ay başı: yürürlükteki kararlar işler, süresi dolanlar biter, birbirine değen kararlar etkileşir
-export function tick(s: State): { sum: Effect; events: TickEvent[] } {
+// Ay başı: yürürlükteki kararlar işler, süresi dolanlar biter, birbirine değen kararlar etkileşir,
+// yan etkisi olan kararlar zar atar (yan etkisi olmayan içerik rng harcamaz)
+export function tick(s: State, rng: Rng = Math.random): { sum: Effect; events: TickEvent[] } {
   const sum = [0, 0, 0, 0],
     events: TickEvent[] = [];
   for (const ad of s.dropped || []) events.push({ ad, msg: "Yeni karara yer açmak için yürürlükten kalktı." });
@@ -254,7 +283,18 @@ export function tick(s: State): { sum: Effect; events: TickEvent[] } {
       sum[i] += v;
     });
     if (o.left != null) o.left--;
+    o.age = (o.age || 0) + 1;
   }
+  // Yan etkiler: kararın ilk aylarında gelmez, ilçede 3 ayda en çok bir tane doğar, her biri bir kez
+  if (s.lastYan == null || s.month - s.lastYan >= TUNE.yanAra)
+    for (const o of s.ongoing) {
+      const y = o.yan?.find(y => o.age! >= (y.min ?? 3) && condOK(s, y.if) && rng() < y.p);
+      if (!y) continue;
+      o.yan = o.yan!.filter(x => x !== y);
+      s.queue.unshift({ id: y.card, at: s.month });
+      s.lastYan = s.month;
+      break;
+    }
   // Etkileşim tablosu (cards.ts'teki SYN): iki etiket aynı anda yürürlükteyse her ay ek etki; ilk kez değince kart/haber
   const tg = tagsOn(s);
   for (const x of SYN) {
@@ -451,6 +491,8 @@ export function tally(s: State, rng: Rng, early = false): Tally {
     vaat: vaatCost(s),
     rel: Math.round(relBonus(s) * 10) / 10,
     fatigue: (s.term - 1) * TUNE.fatigue,
+    defter: defterOf(s),
+    kalem: kalemler(s),
   };
 }
 export function fieldCard(s: State, rng: Rng): CardDef {
@@ -534,10 +576,19 @@ export function endingCard(key: string, _s: State, extra: { oy?: string; rakip?:
     who: E.who,
     konu: E.konu,
     text: E.text.replace("{oy}", extra.oy ?? "").replace("{rakip}", extra.rakip ?? ""),
-    L: { t: key === "emekli" ? "Hakkınızı helal edin" : E.win ? "Hayırlı olsun" : "Ah be Fikret...", e: Z },
-    R: { t: key === "emekli" ? "Son bir çay" : E.win ? "Karakavak'a selam" : "Bu da geçer", e: Z },
+    L: {
+      t: E.btn?.[0] ?? (key === "emekli" ? "Hakkınızı helal edin" : E.win ? "Hayırlı olsun" : "Ah be Fikret..."),
+      e: Z,
+    },
+    R: { t: E.btn?.[1] ?? (key === "emekli" ? "Son bir çay" : E.win ? "Karakavak'a selam" : "Bu da geçer"), e: Z },
   };
 }
+
+// Oyun sonu gazetesi: başkanın neyle anılacağı (MIRAS), koşulu tutan ilk n cümle
+export const mirasOf = (s: State, n = 2) =>
+  MIRAS.filter(m => condOK(s, m.if) && (!m.son || arr(m.son).includes(s.over?.key ?? "")))
+    .slice(0, n)
+    .map(m => m.text);
 
 export function special(p: Pending, s: State, rng: Rng = Math.random): CardDef {
   if (p.type === "ending") return endingCard(p.key, s, p);
@@ -622,6 +673,8 @@ export function materialize(c: CardDef, s: State, rng: Rng): Cur {
       pol: x.pol,
       cut: x.cut,
       son: x.son,
+      anket: x.anket,
+      not: x.not,
     };
   };
   let L = side("L"),
@@ -697,6 +750,11 @@ export function choose(s: State, side: "L" | "R", rng: Rng = Math.random): Choos
   });
   bump(s, o.inc, 1);
   bump(s, o.dec, -1);
+  // sandık defteri: kalem adıyla yazılır; skandal/eser sayaçları kapılar için (gazeteci kartı, müfettiş yayı)
+  if (o.anket) {
+    (s.defter ||= []).push({ ...o.anket, m: s.month });
+    if (o.anket.puan < 0) bump(s, "skandal", 1);
+  }
   schedule(s, o.next, rng);
   if (o.cut) s.ongoing = s.ongoing.filter(x => !arr(o.cut).includes(x.id));
   if (o.pol) addPol(s, o.pol);
@@ -717,7 +775,7 @@ export function choose(s: State, side: "L" | "R", rng: Rng = Math.random): Choos
   };
   const passMonth = () => {
     s.month++;
-    const t = tick(s);
+    const t = tick(s, rng);
     out.td = applyDelta(s, t.sum);
     out.events = t.events;
   };
@@ -742,7 +800,9 @@ export function choose(s: State, side: "L" | "R", rng: Rng = Math.random): Choos
         s.danis = 3;
         s.danisTerm = s.term;
       }
-      if (s.cnt.vaat) s.cnt.vaat = Math.floor(s.cnt.vaat / 2); // yeni dönemde eski vaatlerin yarısı unutulur
+      // yeni dönemde eski vaatlerin ve defterin yarısı unutulur
+      for (const k of ["vaat", "skandal"]) if (s.cnt[k]) s.cnt[k] = Math.floor(s.cnt[k] / 2);
+      if (s.defter) s.defter = s.defter.map(k => ({ ...k, puan: k.puan / 2 })).filter(k => Math.abs(k.puan) >= 0.5);
       passMonth();
       break;
     case "cay":
@@ -773,6 +833,11 @@ export function choose(s: State, side: "L" | "R", rng: Rng = Math.random): Choos
       signed();
   }
 
+  // yay finali: seçenek oyunu kendi sonuyla bitirir (göstergeler ne olursa olsun)
+  if (o.son && c.kind !== "davet") {
+    s.pending = { type: "ending", key: o.son };
+    return out;
+  }
   // seçim evrakında esnaf ya da Ankara tavanı sandığı bekletmez: önce seçim, davet ya da erken seçim sonra
   const dead = METERS.find(
     k => s.m[k] <= 0 || (k !== "h" && s.m[k] >= 100 && !((k === "e" || k === "a") && c.kind === "secim")),

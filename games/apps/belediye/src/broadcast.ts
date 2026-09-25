@@ -1052,6 +1052,12 @@ export function whyLines(res: Tally | null | undefined, playerName?: string) {
   else if (res.win && res.margin >= 25)
     out.push(`Fark ${d(res.margin)} puan; rakipler sandığı değil, takvimi suçluyor.`);
   if (res.vaat) out.push(`Tutulmamış vaatler sandıkta ${d(res.vaat)} puan götürdü; seçmen not defteri tutuyormuş.`);
+  for (const k of res.kalem || [])
+    out.push(
+      k.puan < 0
+        ? `“${k.ad}” sandıkta ${d(-k.puan)} puan götürdü; kahvede hâlâ konuşuluyor.`
+        : `“${k.ad}” +${d(k.puan)} puan getirdi; seçmen kurdeleyi değil işi hatırladı.`,
+    );
   if (res.rel >= 1) out.push(`Kanaat önderleri arkanızdaydı: +${d(res.rel)} puan. Kahvede adınız hayırla anıldı.`);
   else if (res.rel <= -1) out.push(`Küs olduğunuz kanaat önderleri kahvede konuştu: −${d(-res.rel)} puan.`);
   if (res.fatigue)
