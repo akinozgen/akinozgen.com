@@ -37,24 +37,25 @@ const PEOPLE = {
 
 // ─── Başkanlık vesikalıkları: aday kaydında seçilir, her birinin kendi adı var ─
 // Oyuncu kendi adını yazmazsa bu ad kullanılır. Eski başkanlar duvarı da bu resimleri asar.
+// cins: k (kadın) ya da e (erkek), resme bakılarak; ad zarı buna uygun ad verir (adlar.js).
 // lakap + bio: seçim ekranındaki broşür. Gerçek kişi ya da parti yok; hepsi yerel siyasetin bilinen halleri.
 const BASKANLAR = {
-  "baskan-01": { ad: "Aslı Kavaklıoğlu", lakap: "Kurdele Aslı", bio: "Aynı çeşmenin üç ayrı açılışında da kurdeleyi o kesti. Makası çantasından çıkmaz: düğünde, sünnette, bir keresinde de dalgınlıkla bir cenazede." },
-  "baskan-02": { ad: "Mehmet Emin Yurtsever", lakap: "Müjdeci Emin", bio: "On iki yılda Karakavak'a yedi fabrika müjdeledi. Arsa hep aynı, temel üç kez atıldı. Fabrika gelmedi ama müjdeler istihdam yarattı: iki basın danışmanı." },
-  "baskan-03": { ad: "Gülten Arıkan", lakap: "Kasayı Boş Bulan", bio: "Apartman yöneticiliği, okul aile birliği, kooperatif... Nereye seçildiyse ilk iş 'kasayı boş bulduk' basın toplantısı yaptı. Kasalar sonra hep bankada çıktı." },
-  "baskan-04": { ad: "Onur Kalaycı", lakap: "Ağır Çekim Onur", bio: "Kampanyası 212 videodan oluşuyor; hepsinde dizi müziği eşliğinde ağır çekim yürüyor. Kar yağınca eline kürek alır, kamera kapanınca küreği aldığı yere bırakır." },
-  "baskan-05": { ad: "Cemal Kuzucu", lakap: "Asfalt Cemal", bio: "Seçimden önceki gece bütün mahalleyi asfaltladı, park etmiş arabaların etrafından dolanarak. Kavaklı'daki araba biçimli üç çukura muhtar 'Cemal'in eserleri' der." },
-  "baskan-06": { ad: "Nesrin Ulusoy", lakap: "Rengârenk Nesrin", bio: "Otuz yılda dört parti değiştirdi, her seferinde çöp kutularını yeni partinin rengine boyattı. Karakavak'ın çöp kutularında dokuz kat boya var. 'Hizmetin rengi olmaz.'" },
-  "baskan-07": { ad: "Saadet Kocabaş", lakap: "Ebedi Aday", bio: "1987'den beri her seçime girdi, on dokuzunu kaybetti. Bu sefer umutlu: rahmetli eşi hâlâ seçmen kütüğünde ve mezarlıktaki komşularını da ikna etmiş." },
-  "baskan-08": { ad: "Hülya Kavuncu", lakap: "Dev Kavun Hülya", bio: "Festival derneğindeyken ilçe girişine 7 metrelik kavun heykeli diktirdi. Komşu ilçe 8 metrelik karpuz dikince ikinci kavunu çevre yoluna koydurdu. 'Kent estetiğine katkı.'" },
-  "baskan-09": { ad: "Rüstem Aksakal", lakap: "Saat Kulesi Rüstem", bio: "Meydana dört yüzlü saat kulesi yaptırdı, her yüzü başka saati gösterir. Gerekçesi: 'Çoğu memlekette var, bizde de olsun.' Randevular o günden beri kuzey yüzüne göre verilir." },
-  "baskan-10": { ad: "Nilgün Sarıbaş", lakap: "Kardeş Şehir Nilgün", bio: "Karakavak'a on bir kardeş şehir buldu, her birine meclisle birlikte 'niyet anlaşması' imzalamaya gitti. Norveç'ten geriye bir ren geyiği heykeli ve bir fatura kaldı." },
-  "baskan-11": { ad: "Hikmet Çınaroğlu", lakap: "Borç Yadigârı", bio: "Otuz yıl belediye muhasebesinde çalıştı; SGK borcunu üç başkandan devraldı, dördüncüye bırakmayı planlıyor. Makam aracı haczedilince otobüse bindi, halk tevazu sandı." },
-  "baskan-12": { ad: "Leman Tuncel", lakap: "Taziye Leman", bio: "Beş yılda ilçedeki 412 taziyenin 412'sine gitti, helvayı herkesten önce karıştırdı. Seçim bitince cenazeleri bıraktı; mahallede 'Leman Hanım'ı görmek için ölmek lazım' denir." },
-  "baskan-13": { ad: "Pınar Ekinci", lakap: "Rekortmen Pınar", bio: "'Dünyanın en büyük kavun reçeli' rekor denemesini o yönetti. Kazan tartılırken ayağı kırıldı, rekor onaylanmadı. Reçel hâlâ belediye deposunda, Guinness'ten cevap bekliyor." },
-  "baskan-14": { ad: "Derya Başaran", lakap: "Liman Derya", bio: "Denize 400 kilometre uzak Karakavak'a liman sözü verdi. İki etaplı bir planı var: önce deniz, sonra liman. Birinci etabın temeli iki kez atıldı." },
-  "baskan-15": { ad: "Tolga Bıyıklı", lakap: "Soy Ağacı Tolga", bio: "Dernek başkanlığında teşkilat şemasını soy ağacıyla karıştırdı: damadı özel kalem, eniştesi basın müşaviri, halasının kedisi moral danışmanı. Tekir buna hâlâ içerliyor." },
-  "baskan-16": { ad: "Zehra Tarlacı", lakap: "Anons Zehra", bio: "Yirmi yıl mahalle hoparlöründen 'Duyduk duymadık demeyin, dört ayaklı bir köpek kaybolmuştur' diye anons yaptı. Sesini herkes tanır; yüzünü ilk kez seçim afişinde gördüler." },
+  "baskan-01": { cins: "k", ad: "Aslı Kavaklıoğlu", lakap: "Kurdele Aslı", bio: "Aynı çeşmenin üç ayrı açılışında da kurdeleyi o kesti. Makası çantasından çıkmaz: düğünde, sünnette, bir keresinde de dalgınlıkla bir cenazede." },
+  "baskan-02": { cins: "e", ad: "Mehmet Emin Yurtsever", lakap: "Müjdeci Emin", bio: "On iki yılda Karakavak'a yedi fabrika müjdeledi. Arsa hep aynı, temel üç kez atıldı. Fabrika gelmedi ama müjdeler istihdam yarattı: iki basın danışmanı." },
+  "baskan-03": { cins: "k", ad: "Gülten Arıkan", lakap: "Kasayı Boş Bulan", bio: "Apartman yöneticiliği, okul aile birliği, kooperatif... Nereye seçildiyse ilk iş 'kasayı boş bulduk' basın toplantısı yaptı. Kasalar sonra hep bankada çıktı." },
+  "baskan-04": { cins: "e", ad: "Onur Kalaycı", lakap: "Ağır Çekim Onur", bio: "Kampanyası 212 videodan oluşuyor; hepsinde dizi müziği eşliğinde ağır çekim yürüyor. Kar yağınca eline kürek alır, kamera kapanınca küreği aldığı yere bırakır." },
+  "baskan-05": { cins: "e", ad: "Cemal Kuzucu", lakap: "Asfalt Cemal", bio: "Seçimden önceki gece bütün mahalleyi asfaltladı, park etmiş arabaların etrafından dolanarak. Kavaklı'daki araba biçimli üç çukura muhtar 'Cemal'in eserleri' der." },
+  "baskan-06": { cins: "k", ad: "Nesrin Ulusoy", lakap: "Rengârenk Nesrin", bio: "Otuz yılda dört parti değiştirdi, her seferinde çöp kutularını yeni partinin rengine boyattı. Karakavak'ın çöp kutularında dokuz kat boya var. 'Hizmetin rengi olmaz.'" },
+  "baskan-07": { cins: "k", ad: "Saadet Kocabaş", lakap: "Ebedi Aday", bio: "1987'den beri her seçime girdi, on dokuzunu kaybetti. Bu sefer umutlu: rahmetli eşi hâlâ seçmen kütüğünde ve mezarlıktaki komşularını da ikna etmiş." },
+  "baskan-08": { cins: "k", ad: "Hülya Kavuncu", lakap: "Dev Kavun Hülya", bio: "Festival derneğindeyken ilçe girişine 7 metrelik kavun heykeli diktirdi. Komşu ilçe 8 metrelik karpuz dikince ikinci kavunu çevre yoluna koydurdu. 'Kent estetiğine katkı.'" },
+  "baskan-09": { cins: "e", ad: "Rüstem Aksakal", lakap: "Saat Kulesi Rüstem", bio: "Meydana dört yüzlü saat kulesi yaptırdı, her yüzü başka saati gösterir. Gerekçesi: 'Çoğu memlekette var, bizde de olsun.' Randevular o günden beri kuzey yüzüne göre verilir." },
+  "baskan-10": { cins: "k", ad: "Nilgün Sarıbaş", lakap: "Kardeş Şehir Nilgün", bio: "Karakavak'a on bir kardeş şehir buldu, her birine meclisle birlikte 'niyet anlaşması' imzalamaya gitti. Norveç'ten geriye bir ren geyiği heykeli ve bir fatura kaldı." },
+  "baskan-11": { cins: "e", ad: "Hikmet Çınaroğlu", lakap: "Borç Yadigârı", bio: "Otuz yıl belediye muhasebesinde çalıştı; SGK borcunu üç başkandan devraldı, dördüncüye bırakmayı planlıyor. Makam aracı haczedilince otobüse bindi, halk tevazu sandı." },
+  "baskan-12": { cins: "k", ad: "Leman Tuncel", lakap: "Taziye Leman", bio: "Beş yılda ilçedeki 412 taziyenin 412'sine gitti, helvayı herkesten önce karıştırdı. Seçim bitince cenazeleri bıraktı; mahallede 'Leman Hanım'ı görmek için ölmek lazım' denir." },
+  "baskan-13": { cins: "k", ad: "Pınar Ekinci", lakap: "Rekortmen Pınar", bio: "'Dünyanın en büyük kavun reçeli' rekor denemesini o yönetti. Kazan tartılırken ayağı kırıldı, rekor onaylanmadı. Reçel hâlâ belediye deposunda, Guinness'ten cevap bekliyor." },
+  "baskan-14": { cins: "k", ad: "Derya Başaran", lakap: "Liman Derya", bio: "Denize 400 kilometre uzak Karakavak'a liman sözü verdi. İki etaplı bir planı var: önce deniz, sonra liman. Birinci etabın temeli iki kez atıldı." },
+  "baskan-15": { cins: "e", ad: "Tolga Bıyıklı", lakap: "Soy Ağacı Tolga", bio: "Dernek başkanlığında teşkilat şemasını soy ağacıyla karıştırdı: damadı özel kalem, eniştesi basın müşaviri, halasının kedisi moral danışmanı. Tekir buna hâlâ içerliyor." },
+  "baskan-16": { cins: "k", ad: "Zehra Tarlacı", lakap: "Anons Zehra", bio: "Yirmi yıl mahalle hoparlöründen 'Duyduk duymadık demeyin, dört ayaklı bir köpek kaybolmuştur' diye anons yaptı. Sesini herkes tanır; yüzünü ilk kez seçim afişinde gördüler." },
 };
 
 // ─── Evraklar ─────────────────────────────────────────────────────────────

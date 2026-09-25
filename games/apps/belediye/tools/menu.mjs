@@ -8,7 +8,8 @@ const OUT = process.argv[2] || fileURLToPath(new URL("../.cache/menu/", import.m
 const PAGE = process.argv[3] || new URL("../dist/oyna.html", import.meta.url).href;
 mkdirSync(OUT, { recursive: true });
 const src = ["cards.js", "engine.js"].map(f => readFileSync(new URL("../src/" + f, import.meta.url), "utf8")).join("\n");
-const E = new Function(src + "\nreturn { newGame, draw };")();
+const E = new Function(src + "\nreturn { newGame, draw, BASKANLAR };")();
+const { ADLAR } = new Function(readFileSync(new URL("../src/adlar.js", import.meta.url), "utf8") + "\nreturn { ADLAR };")();
 const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe", PORT = 9347;
 const chrome = spawn(CHROME, ["--headless=new", "--mute-audio", "--disable-gpu", "--hide-scrollbars", `--remote-debugging-port=${PORT}`, `--user-data-dir=${OUT}/profile`, "--no-first-run", "about:blank"], { stdio: "ignore" });
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -105,6 +106,58 @@ try {
   await ev(`document.querySelector("#btn-start").click()`); await sleep(600);
   await shot("aday-390");
   check(await ev(`(() => { const b = document.querySelector("#btn-go").getBoundingClientRect(); return b.bottom <= innerHeight + 1 && b.top >= 0; })()`), "telefonda Mazbatayı al görünmüyor");
-  console.log("menü: gezinme, paneller, ayarlar, aday kaydı ve oyuna giriş denendi");
+  // ad zarı: vesikalığın cinsine uygun ad, art arda tekrar yok, klavyeyle de atılır.
+  // Zarın adı karşı cinsten vesikalığa geçince yenilenir; oyuncunun yazdığı ad kalır. Zar kutunun sağında, yazının üstüne binmez.
+  const nm = () => ev(`document.querySelector("#in-name").value`);
+  const lsName = () => ev(`JSON.parse(localStorage.getItem("cb.name") || '""')`);
+  const cinsNow = async () => E.BASKANLAR[await ev(`JSON.parse(localStorage.getItem("cb.avatar"))`)].cins;
+  const zar = () => ev(`document.querySelector("#btn-ad-zar").click()`);
+  const pick = id => ev(`document.querySelector('#picks [data-id="${id}"]').click()`);
+  const typeName = v => ev(`(() => { const i = document.querySelector("#in-name"); i.value = ${JSON.stringify(v)}; i.dispatchEvent(new Event("input", { bubbles: true })); })()`);
+  const first = n => n.split(" ")[0], other = { k: "e", e: "k" }, portrait = { k: "baskan-01", e: "baskan-05" };
+  const zarGeo = () => ev(`JSON.stringify((() => {
+    const inp = document.querySelector("#in-name"), i = inp.getBoundingClientRect(), b = document.querySelector("#btn-ad-zar").getBoundingClientRect();
+    return { inside: b.left >= i.left + i.width / 2 && b.right <= i.right + 1 && b.top >= i.top - 4 && b.bottom <= i.bottom + 4, clear: parseFloat(getComputedStyle(inp).paddingRight) >= b.width,
+      fits: inp.scrollWidth <= inp.clientWidth + 1, font: parseFloat(getComputedStyle(inp).fontSize), w: Math.round(b.width) };
+  })())`);
+  check(await cinsNow() === "e", "zar testi erkek vesikalıkla başlamalı (baskan-05)");
+  const rolls = [];
+  for (let i = 0; i < 12; i++) { await zar(); rolls.push(await nm()); }
+  check(rolls.every(n => /^\S+ \S+$/u.test(n) && ADLAR.e.includes(first(n))), `zar erkek vesikalığa uygun ad vermedi: ${rolls.join(", ")}`);
+  check(rolls.every((n, i) => !i || n !== rolls[i - 1]), `zar art arda aynı adı verdi: ${rolls.join(", ")}`);
+  check(await lsName() === rolls.at(-1), "zarın adı yazılan ad gibi saklanmadı");
+  check(/Mazbataya/.test(await ev(`document.querySelector("#pick-note").textContent`)), "zardan sonra not güncellenmedi");
+  await ev(`document.querySelector("#btn-ad-zar").focus()`);
+  const beforeKey = await nm();
+  for (const type of ["keyDown", "keyUp"]) await send("Input.dispatchKeyEvent", { type, key: "Enter", code: "Enter", windowsVirtualKeyCode: 13, ...(type === "keyDown" ? { text: "\r" } : {}) });
+  await sleep(100);
+  check(await nm() !== beforeKey && await screenNow() === "pick", "zar klavyeyle (Enter) atılmadı");
+  await shot("aday-390-zar-odak");
+  await ev(`document.activeElement.blur()`);
+  for (const [w, h, mob] of [[390, 844, true], [1280, 800, false]]) {
+    await send("Emulation.setDeviceMetricsOverride", { width: w, height: h, deviceScaleFactor: 1, mobile: mob }); await sleep(300);
+    // cins değişimi: ortak (iki cinse konan) ad çıkarsa değişmesi gerekmez, o yüzden önce ortak olmayan ad
+    const c = await cinsNow();
+    for (let i = 0; i < 30 && ADLAR[other[c]].includes(first(await nm())); i++) await zar();
+    const before = await nm();
+    await shot(`aday-${w}-zar`);
+    const g = JSON.parse(await zarGeo());
+    check(g.inside && g.clear, `${w}: zar ad kutusunun sağında değil ya da yazıya biniyor ${JSON.stringify(g)}`);
+    await pick(portrait[other[c]]); await sleep(150);
+    const after = await nm();
+    check(after !== before && ADLAR[other[c]].includes(first(after)) && await lsName() === after,
+      `${w}: karşı cins vesikalığa geçince zarın adı yenilenmedi (${before} → ${after})`);
+    // oyuncunun yazdığı ad vesikalık değişince de kalır
+    await typeName("Ahmet Deneme");
+    await pick(portrait[c]); await pick(portrait[other[c]]); await sleep(150);
+    check(await nm() === "Ahmet Deneme" && await lsName() === "Ahmet Deneme", `${w}: yazılan ad vesikalık değişince değişti`);
+    // en uzun ad (24 harf) kutuya sığar, zar yine yerinde
+    await typeName("Şerafettin Karakavaklıoğ"); await sleep(100);
+    const L = JSON.parse(await zarGeo());
+    check(L.fits && L.inside && L.clear && L.font >= 11, `${w}: 24 harflik ad kutuya sığmadı ${JSON.stringify(L)}`);
+    await shot(`aday-${w}-uzun`);
+    await zar();
+  }
+  console.log("menü: gezinme, paneller, ayarlar, aday kaydı, ad zarı ve oyuna giriş denendi");
 } catch (e) { errors.push("TEST: " + e.message); }
 finally { console.log(errors.length ? errors.join("\n") : "hata yok"); try { ws?.close(); } catch { } chrome.kill(); setTimeout(() => process.exit(errors.length ? 1 : 0), 300); }

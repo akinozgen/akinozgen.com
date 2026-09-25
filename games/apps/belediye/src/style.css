@@ -1033,9 +1033,10 @@ div.ay-row { cursor: default; }
   position: relative; margin: 0; display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: 1rem; align-items: start; padding: 1rem 1.125rem 1.125rem;
   background: var(--paper); color: var(--ink); border-radius: .1875rem; box-shadow: 0 .5rem 1.5rem rgba(0, 0, 0, .45);
 }
-.ak-card::after { /* kurulun kaşesi */
-  content: "ADAY"; position: absolute; top: .75rem; right: .875rem; padding: .25rem .5rem .1875rem; border: 2px solid var(--stamp-r); border-radius: .1875rem;
-  color: var(--stamp-r); font: 700 .75rem/1 var(--f-ui); letter-spacing: .2em; transform: rotate(8deg); opacity: .85;
+.ak-photo { position: relative; }
+.ak-photo::after { /* kurulun kaşesi, vesikalığın köşesine basılmış (ad satırı zara kalsın) */
+  content: "ADAY"; position: absolute; right: -.4375rem; top: -.375rem; padding: .25rem .5rem .1875rem; border: 2px solid var(--stamp-r); border-radius: .1875rem;
+  background: rgba(243, 242, 236, .3); color: var(--stamp-r); font: 700 .75rem/1 var(--f-ui); letter-spacing: .2em; transform: rotate(8deg); opacity: .88;
 }
 .ak-photo img {
   display: block; width: 100%; aspect-ratio: 1; object-fit: cover; padding: .25rem .25rem .5rem; background: #fff;
@@ -1043,11 +1044,26 @@ div.ay-row { cursor: default; }
 }
 .ak-card figcaption { display: flex; flex-direction: column; gap: .375rem; min-width: 0; padding-top: .25rem; }
 .ak-name { display: flex; flex-direction: column; gap: .25rem; }
-.ak-name span { font: 700 .75rem/1 var(--f-ui); letter-spacing: .16em; text-transform: uppercase; color: var(--ink-soft); }
+.ak-name label { font: 700 .75rem/1 var(--f-ui); letter-spacing: .16em; text-transform: uppercase; color: var(--ink-soft); }
+/* ad kutusu ve sağ ucundaki zar. Uzun adda yazı küçülür: --n harf sayısı (ui.js nameFit), Courier'de harf .6em */
+.ak-field { position: relative; container-type: inline-size; --fs: 1.375rem; }
 .ak-name input {
-  width: 100%; min-width: 0; padding: .25rem 0 .3125rem; border: 0; border-bottom: 2px dotted rgba(35, 33, 42, .45); border-radius: 0;
-  background: transparent; color: var(--ink); font: 700 1.375rem/1.1 var(--f-type);
+  width: 100%; min-width: 0; padding: .25rem 2.5rem .3125rem 0; border: 0; border-bottom: 2px dotted rgba(35, 33, 42, .45); border-radius: 0;
+  background: transparent; color: var(--ink); font: 700 clamp(.875rem, calc((100cqi - 2.5rem) / var(--n, 15) / .62), var(--fs))/1.1 var(--f-type);
 }
+.ak-adzar {
+  position: absolute; right: 0; top: 0; bottom: 2px; margin: auto 0; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; padding: 0;
+  border: 0; border-radius: .25rem; background: none; color: var(--ink-soft); cursor: pointer; transition: color .15s, background-color .15s;
+}
+.ak-adzar svg { width: 1.5rem; height: 1.5rem; overflow: visible; }
+.ak-adzar rect { fill: rgba(201, 165, 76, .2); stroke: currentColor; stroke-width: 1.6; }
+.ak-adzar circle { fill: currentColor; }
+.ak-adzar:hover { color: var(--brass-lo); background: rgba(201, 165, 76, .14); }
+.ak-adzar:active { color: var(--ink); }
+.ak-adzar:focus-visible { outline: 2px solid var(--pen); outline-offset: 0; }
+.ak-adzar.roll svg { animation: zar-at .45s cubic-bezier(.25, .8, .35, 1); }
+@keyframes zar-at { 0% { transform: rotate(0) scale(1); } 45% { transform: rotate(210deg) scale(.8); } 100% { transform: rotate(360deg) scale(1); } }
+@media (prefers-reduced-motion: reduce) { .ak-adzar.roll svg { animation: none; } }
 .ak-name input::placeholder { color: rgba(35, 33, 42, .5); }
 .ak-name input:focus { outline: none; border-bottom-color: var(--pen); border-bottom-style: solid; }
 .ak-lakap { font: 700 .8125rem/1.2 var(--f-ui); letter-spacing: .12em; text-transform: uppercase; color: var(--stamp-p); }
@@ -1082,7 +1098,7 @@ div.ay-row { cursor: default; }
   .ak { flex: none; margin-block: auto; }
   .ak-main { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); align-items: start; gap: 1.5rem; }
   .ak-card { grid-template-columns: 12rem minmax(0, 1fr); padding: 1.375rem 1.5rem 1.5rem; gap: 1.375rem; }
-  .ak-name input { font-size: 1.625rem; }
+  .ak-field { --fs: 1.625rem; }
   .ak-bio { font-size: .9688rem; }
   .ak-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .625rem; }
   .ak-act { position: static; margin: 0; background: none; border: 0; -webkit-backdrop-filter: none; backdrop-filter: none; padding: .25rem 0 1.5rem; }

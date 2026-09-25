@@ -41,6 +41,7 @@ Sitenin tamamını yerelde denemek için ana projede `npm run build` çalıştı
 | Yol | İçerik |
 |---|---|
 | `src/cards.js` | 32 karakter, 16 başkan adayı: ad, lakap, kısa biyografi (`BASKANLAR`), ~210 evrak (birbirine bağlı yaylar dahil), etkileşim tablosu (`SYN`), seçim adayları (`ADAYLAR`) ve seçmen grupları, kriz kartları, 11 son. Kart şeması dosyanın başında |
+| `src/adlar.js` | Aday kaydındaki ad zarı: 299 kadın, 313 erkek adı (16'sı ortak), 488 soyadı (beşte biri çarşı esnafı), gerçek kişi yasak listeleri (`YASAK_SOYAD`, `YASAK_TAM`, `YASAK_AD`) ve `rastgeleAd(cins, rng, son)`. Cins `BASKANLAR`'dan gelir; `test/adlar.test.mjs` sınar |
 | `src/engine.js` | DOM'suz oyun motoru: ortak koşul dili (`condOK`), sayaçlar, koşullu ve aralıklı zincirler, etiket etkileşimleri, vaat defteri. Denge ayarları `TUNE` nesnesinde |
 | `src/ui.js` | Sürükleme, mühür, göstergeler, WebAudio sesleri, Fikret'in tavsiyeleri, gazete, koridor duvarı, seçim gecesi akışı |
 | `src/broadcast.js` | KARAKAVAK TV'nin yazıları: duruma göre KJ (alt bant), kayan yazı (ilçe, ülke, dünya), kur kutusu, "Neden?" satırları. DOM'suz, `test/broadcast.test.mjs` sınar |

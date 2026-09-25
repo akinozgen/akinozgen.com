@@ -917,14 +917,28 @@ function openPick() {
 function pickAvatar(id, sound = true) {
   LS.set("avatar", id);
   for (const b of $("#picks").children) { const on = b.dataset.id === id; b.setAttribute("aria-checked", String(on)); b.tabIndex = on ? 0 : -1; }
-  const B = BASKANLAR[id], own = customName(), note = $("#pick-note"), sv = savedGame();
-  paintAvatar();
+  const B = BASKANLAR[id], z = LS.get("nameZar", "");
+  // zarın verdiği ad yeni vesikalığa uymuyorsa (kadına erkek adı ya da tersi) zar yeniden atılır; oyuncunun yazdığı ada dokunulmaz
+  if (z && z === customName() && !ADLAR[B.cins].includes(z.split(" ")[0])) adZar();
+  const own = customName(), note = $("#pick-note"), sv = savedGame();
+  paintAvatar(); nameFit();
   $("#ak-lakap").textContent = `“${B.lakap}”`; $("#ak-bio").textContent = B.bio;
   note.classList.toggle("warn", !!sv);
   note.textContent = sv ? "Kayıtlı bir döneminiz var; mazbatayı alırsanız o dönem kapanır."
     : own ? `Mazbataya “${own}” yazılacak; vesikalık ${B.ad}'ın.` : "Ad kutusu boş kalırsa vesikalığın adıyla aday olursunuz.";
   if (sound) snd.tick();
 }
+// Ad zarı: vesikalığın cinsine uygun ad soyad (adlar.js). Yazılan ad gibi saklanır; "nameZar" adın zardan geldiğini hatırlar.
+let zarSon = []; // son atılan adlar: art arda aynısı, yakın atışlarda aynı ad ya da soyad gelmesin
+function adZar() {
+  // kutudaki ad da son atış sayılır: sayfa yenilense de zar aynı adı geri vermez
+  const ad = rastgeleAd(BASKANLAR[playerAvatar()].cins, Math.random, [...zarSon, $("#in-name").value.trim()].filter(Boolean)), b = $("#btn-ad-zar");
+  zarSon = [...zarSon, ad].slice(-8);
+  $("#in-name").value = ad; LS.set("name", ad); LS.set("nameZar", ad); nameFit();
+  b.classList.remove("roll"); void b.offsetWidth; b.classList.add("roll");
+}
+// uzun ad kutuya sığsın: yazı boyu harf sayısıyla küçülür (CSS --n)
+function nameFit() { const i = $("#in-name"); i.style.setProperty("--n", Math.max(15, (i.value || i.placeholder).length)); }
 // ızgarada ok tuşları seçimi taşır (radyo düğmesi gibi); satır boyu ekrandaki sütun sayısından
 function pickMove(e) {
   const list = [...$("#picks").children], i = list.indexOf(document.activeElement);
@@ -1087,6 +1101,8 @@ function wire() {
   for (const ev of ["pointerdown", "keydown"]) addEventListener(ev, () => snd.unlock(), { once: true, capture: true });
   $("#btn-go").addEventListener("click", startNew);
   $("#btn-zar").addEventListener("click", () => { const cur = playerAvatar(), rest = MAYORS.filter(id => id !== cur); const id = pickOne(rest); pickAvatar(id); $(`#picks [data-id="${id}"]`).focus({ preventScroll: true }); });
+  $("#btn-ad-zar").addEventListener("click", () => { adZar(); pickAvatar(playerAvatar(), false); snd.tick(); });
+  $("#btn-ad-zar").addEventListener("animationend", e => e.currentTarget.classList.remove("roll"));
   $("#in-name").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); startNew(); } });
   $("#ay-ses").addEventListener("change", e => { if (e.target.checked !== snd.on) snd.toggle(); paintMute(); });
   $("#ay-vol").addEventListener("input", e => { snd.volume(+e.target.value); $("#ay-vol-o").textContent = snd.vol; });
@@ -1112,7 +1128,7 @@ function wire() {
   $("#btn-log-x").addEventListener("click", () => openLog(false));
   $("#log-scrim").addEventListener("click", () => openLog(false));
   wideLog.addEventListener("change", () => { openLog(false); logUnread = 0; if (S) renderLog(false); });
-  $("#in-name").addEventListener("input", e => { LS.set("name", e.target.value.slice(0, 24)); pickAvatar(playerAvatar(), false); });
+  $("#in-name").addEventListener("input", e => { LS.set("name", e.target.value.slice(0, 24)); LS.del("nameZar"); pickAvatar(playerAvatar(), false); });
   $("#btn-pick-back").addEventListener("click", showTitle);
   const mute = $("#btn-mute"), mute2 = $("#btn-mute2");
   function paintMute() {

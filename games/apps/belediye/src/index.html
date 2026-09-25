@@ -264,7 +264,15 @@
         <figure class="ak-card">
           <div class="ak-photo"><img id="avatar-img" alt="" draggable="false"></div>
           <figcaption>
-            <label class="ak-name" for="in-name"><span>Başkanın adı</span><input id="in-name" type="text" maxlength="24" autocomplete="off" spellcheck="false"></label>
+            <div class="ak-name">
+              <label for="in-name">Başkanın adı</label>
+              <div class="ak-field">
+                <input id="in-name" type="text" maxlength="24" autocomplete="off" spellcheck="false">
+                <button id="btn-ad-zar" class="ak-adzar" type="button" aria-label="Rastgele ad" title="Zar at: vesikalığa uygun rastgele bir ad">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g transform="rotate(-10 12 12)"><rect x="3.75" y="3.75" width="16.5" height="16.5" rx="3.5"/><circle cx="8.4" cy="8.4" r="1.55"/><circle cx="15.6" cy="8.4" r="1.55"/><circle cx="12" cy="12" r="1.55"/><circle cx="8.4" cy="15.6" r="1.55"/><circle cx="15.6" cy="15.6" r="1.55"/></g></svg>
+                </button>
+              </div>
+            </div>
             <b class="ak-lakap" id="ak-lakap"></b>
             <p class="ak-bio" id="ak-bio"></p>
           </figcaption>
