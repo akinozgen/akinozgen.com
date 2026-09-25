@@ -42,6 +42,7 @@ test("zincirler, işler ve ilişkiler var olan kartlara ve kişilere bağlı", (
         if (n.else) link(c, n.else);
       }
       if (o.pol?.doneCard) link(c, o.pol.doneCard);
+      for (const y of o.pol?.yan || []) link(c, y.card);
       for (const w of Object.keys(o.rel || {})) assert.ok(E.PEOPLE[w], `${c.id}: ilişkide bilinmeyen ${w}`);
     }
   for (const x of E.SYN) if (x.card) linked.add(x.card);

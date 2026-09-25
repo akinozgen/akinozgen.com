@@ -502,6 +502,12 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "semaver",
+    alt: [
+      {
+        req: "meclis_semaver",
+        text: "Kavgadan sonra gelen semaver de dün gece patladı başkanım; kürsüye yakın durunca sinirleniyor galiba. Meclis toplantısı çaysız geçerse mesuliyet kabul etmem, kavga da çaysız olmaz.",
+      },
+    ],
     who: "huseyin",
     konu: "Demirbaş talebi",
     text: "Semaver yirmi yıllık, dün gece patladı. Meclis toplantısı çaysız geçerse mesuliyet kabul etmem.",
@@ -535,6 +541,25 @@ export const CARDS: CardDef[] = [
   // ── Kaymakam Selim Bey
   {
     id: "tatbikat",
+    alt: [
+      {
+        if: {
+          req: ["bina_bitti", "bina_saray"],
+          not: "bina_satildi",
+        },
+        text: "Deprem tatbikatı yapacağız başkanım. On iki katlı hizmet sarayını boşaltmak kırk dakika sürüyor; 11. kattakiler merdivende çay molası veriyor. Meclis dâhil herkes inecek, asansör yasak.",
+      },
+      {
+        if: {
+          pol: "bina_konteyner",
+        },
+        text: "Deprem tatbikatı yapacağız başkanım. Bu sefer kolay: belediye konteynerde, tahliye için kapıyı açıp bir adım atmanız yeterli. Meclis zaten sığmıyor, yarısı dışarıda oturuyor.",
+      },
+      {
+        req: "bina_riskli",
+        text: "Deprem tatbikatı yapacağız başkanım. Hasırlı kolonlu binada bu tatbikat değil, provası bile riskli. Belediye binası boşaltılacak, meclis dâhil; bu sefer geri dönmeyin derim.",
+      },
+    ],
     who: "kaymakam",
     konu: "Deprem tatbikatı",
     text: "Afet ekibiyle deprem tatbikatı yapacağız başkanım. Belediye binası da boşaltılacak, meclis dâhil.",
@@ -709,6 +734,15 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "canliyayin",
+    alt: [
+      {
+        if: {
+          req: "meclis_uzlasma",
+          not: "meclis_sezlong",
+        },
+        text: "Çoğunluk artık bizde başkanım, ilk önergemiz canlı yayın. Meclis toplantılarını yayınlayalım; vatandaş kimin ne dediğini, Hilmi Bey'in hangi sırada uyuduğunu görsün.",
+      },
+    ],
     who: "nermin",
     konu: "Şeffaflık önergesi",
     once: true,
@@ -722,7 +756,26 @@ export const CARDS: CardDef[] = [
     konu: "Ortak proje",
     text: "Bu sefer sizinle aynı fikirdeyim başkanım. Çalışan anneler için ücretsiz kreş açalım; imzamı atarım.",
     L: { t: "Muhalefetle iş olmaz", e: [-6, 0, 0, 5] },
-    R: { t: "El sıkışalım", e: [10, -3, 0, -6], pol: { id: "kres", ad: "Ücretsiz kreş", e: [0, -1, 0, 0], ay: 12 } },
+    R: {
+      t: "El sıkışalım",
+      e: [10, -3, 0, -6],
+      pol: {
+        id: "kres",
+        yan: [
+          {
+            card: "kres_okey",
+            p: 0.15,
+            min: 4,
+            if: {
+              not: "kres_okey",
+            },
+          },
+        ],
+        ad: "Ücretsiz kreş",
+        e: [0, -1, 0, 0],
+        ay: 12,
+      },
+    },
   },
   {
     id: "skandal",
@@ -745,6 +798,12 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "nermin_dost",
+    alt: [
+      {
+        req: "meclis_uzlasma",
+        text: "Başkanım, uzlaştık ya; bu yıl bütçeye muhalefet olarak 'evet' diyeceğiz. Hilmi Bey de oylamada uyanık kalacağına söz verdi. Siyasette nadir görülür, kıymetini bilin.",
+      },
+    ],
     who: "nermin",
     konu: "Bütçe oylaması",
     relMin: { nermin: 2 },
@@ -756,6 +815,12 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "nermin_kus",
+    alt: [
+      {
+        req: "meclis_yk",
+        text: "Hakkınızda denetim kuruluna dilekçe verdim başkanım: 'Yönetim Kurulu Dosyası'. Üç üyeye dağıttığınız koltukların huzur hakları ekte. İmza atan meclis üyesi: dokuz; Hilmi Bey uykusunda imzaladı.",
+      },
+    ],
     who: "nermin",
     konu: "Şikâyet dilekçesi",
     relMax: { nermin: -2 },
@@ -770,6 +835,12 @@ export const CARDS: CardDef[] = [
   // ── Hayri Hoca
   {
     id: "hoparlor",
+    alt: [
+      {
+        req: "sela_ses",
+        text: "Başkanım, yanlış selâdan sonra aldığımız ses sistemi de cızırdamaya başladı. Kahveci Rahmi her anonsta kapıya çıkıp 'yine mi ben' diye soruyor. Bir sistem daha mı alsak?",
+      },
+    ],
     who: "hayri",
     konu: "Ses sistemi",
     text: "Minarenin hoparlörü cızırdıyor; ezan radyo paraziti gibi çıkıyor. Belediye bir ses sistemi alsa?",
@@ -787,6 +858,14 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "yagmur",
+    alt: [
+      {
+        if: {
+          pol: "su_kesinti",
+        },
+        text: "Baraj yüzde on sekizde başkanım, musluklar dönüşümlü akıyor. Köylüler yağmur duasına çıkacak; belediye otobüs verirse tepeye kadar gideriz. Kemal Bey de geliyor, 'takvimi yukarıya havale ettim' diyor.",
+      },
+    ],
     who: "hayri",
     konu: "Kuraklık",
     months: [5, 6, 7],
@@ -928,6 +1007,14 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "sel",
+    alt: [
+      {
+        if: {
+          pol: "bulut_tohum",
+        },
+        text: "Başkanım, tohumlama tuttu, hem de fazlasıyla: bir yıllık yağmur bir gecede yağdı, çarşıyı su bastı. Dursun Ağa 'bu kadarını istemedik' diyor. Kanalizasyon 1970'den kalma, borular pamuk ipliğine bağlı.",
+      },
+    ],
     who: "kemal",
     konu: "Altyapı",
     cd: 30,
@@ -1044,6 +1131,14 @@ export const CARDS: CardDef[] = [
   // ── Komiser Mahir
   {
     id: "trafik",
+    alt: [
+      {
+        if: {
+          pol: "kamera",
+        },
+        text: "İlçenin tek trafik ışığı bozuldu, kavşak kamerası boşa bakıyor. İşin ilginci, bir haftadır herkes birbirine yol veriyor; kaza sıfır, ceza da sıfır. Sevim Hanım ikincisine üzülüyor.",
+      },
+    ],
     who: "mahir",
     konu: "Trafik ışığı",
     fav: "L",
@@ -1074,6 +1169,26 @@ export const CARDS: CardDef[] = [
   // ── Mali Hizmetler Sevim Hanım
   {
     id: "butce",
+    alt: [
+      {
+        if: {
+          req: ["meclis_uzlasma", "meclis_bitti"],
+          not: "meclis_sezlong",
+        },
+        text: "Yeni yılın bütçesi muhalefetin oylarıyla geçti başkanım; Nermin Hanım ilk kez 'evet' dedi, Hilmi Bey de uyanıktı. Ankara'dan pay da yattı. Artan parayı ne yapalım?",
+      },
+      {
+        req: "meclis_yk",
+        text: "Yeni yılın bütçesi meclisten geçti başkanım; kurula aldığımız üç üye el kaldırdı, Hilmi Bey uykusunda bile. Ankara'dan pay da yattı. Artan parayı ne yapalım?",
+      },
+      {
+        if: {
+          req: "bina_sekiz",
+          pol: "bina_konteyner",
+        },
+        text: "Yeni yılın bütçesi konteyner mecliste sekiz dakikada geçti başkanım; kimse terlemek istemedi. Ankara'dan pay da yattı. Artan parayı ne yapalım?",
+      },
+    ],
     who: "sevim",
     konu: "Yıllık bütçe",
     months: [0],
@@ -1090,8 +1205,24 @@ export const CARDS: CardDef[] = [
     konu: "Prim borcu",
     once: true,
     norel: true,
-    text: "Sigorta prim borcu kapıda başkanım. Ya yapılandıracağız ya da makam aracını satacağız.",
-    L: { t: "Yapılandırın", e: [0, 0, 0, 5], pol: { id: "sgk", ad: "Prim taksiti", e: [0, -1, 0, 0], ay: 10 } },
+    text: "Sigorta prim borcu kapıda başkanım. Ya yapılandıracağız ya da makam aracını satacağız. Yapılandırırsak taksiti aksatmayalım; aksarsa araca yolda haciz gelir, bilesiniz.",
+    L: {
+      t: "Yapılandırın",
+      e: [0, 0, 0, 5],
+      pol: {
+        id: "sgk",
+        yan: [
+          {
+            card: "arac_haciz",
+            p: 0.08,
+            min: 3,
+          },
+        ],
+        ad: "Prim taksiti",
+        e: [0, -1, 0, 0],
+        ay: 10,
+      },
+    },
     R: { t: "Makam aracı gitsin", e: [8, 12, 0, -5], set: "bisiklet", next: ["bisiklet", 2] },
   },
   {
@@ -1171,6 +1302,21 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "eskibina",
+    alt: [
+      {
+        if: {
+          req: "bina_saray",
+          pol: "bina_saray",
+        },
+        text: "Başkanım, hizmet sarayının taksiti kasayı emiyor. Belediyenin eski binası da boş duruyor; bir otel zinciri iyi para veriyor. Satarsak birkaç taksit kapanır. Satalım mı?",
+      },
+      {
+        if: {
+          pol: "bina_konteyner",
+        },
+        text: "Başkanım, biz konteynere geçince hasırlı binamız da boş kaldı; artık iki eski binamız var. Bir otel zinciri ikisine birden talip, kolonları sormadılar bile. Satalım mı?",
+      },
+    ],
     who: "sevim",
     konu: "Taşınmaz satışı",
     once: true,
@@ -1299,6 +1445,19 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "horlama",
+    alt: [
+      {
+        req: "meclis_yk",
+        text: "Canlı yayında meclis üyesi Hilmi Bey'in horlaması 400 bin izlendi başkanım. Aynı gece yönetim kurulunda da horlamış; iki kayıt birleşince stereo olmuş. Remiksi bile çıktı.",
+      },
+      {
+        if: {
+          req: "meclis_uzlasma",
+          not: "meclis_sezlong",
+        },
+        text: "Canlı yayında Hilmi Bey'in horlaması 400 bin izlendi başkanım. Artık muhalefet sırasından horluyor; remiksin adı 'Saf Değiştiren Horlama'. Nermin Hanım 'bizim üye' diye sahiplendi.",
+      },
+    ],
     who: "tuncay",
     konu: "Meclis yayını",
     chain: true,
@@ -1308,6 +1467,12 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "bisiklet",
+    alt: [
+      {
+        req: "arac_traktor",
+        text: "'Karakavak Belediye Başkanı işe bisikletle gidiyor!' haberimiz ulusal basına düştü başkanım. Dursun Ağa'nın traktörü de 'ikinci makam aracı' ilan edildi. Ankara'dan aradılar, bisikletin rengini soruyorlar.",
+      },
+    ],
     who: "tuncay",
     konu: "Gündem",
     chain: true,
@@ -1322,8 +1487,8 @@ export const CARDS: CardDef[] = [
     chain: true,
     norel: true,
     text: "Dizi yayında başkanım! Ama ilçeyi mafya yuvası, başkanı da 'kavun baronu' diye göstermişler.",
-    L: { t: "Dava açalım", e: [5, -5, 0, 0] },
-    R: { t: "Reklamın kötüsü olmaz", e: [-6, 0, 12, 0] },
+    L: { t: "Dava açalım", e: [5, -5, 0, 0], set: ["dizi_yayinda", "dizi_dava"] },
+    R: { t: "Reklamın kötüsü olmaz", e: [-6, 0, 12, 0], set: "dizi_yayinda" },
   },
   {
     id: "devkavun2",
@@ -1540,7 +1705,18 @@ export const CARDS: CardDef[] = [
       t: "Emekliye bedava",
       e: [12, -3, 0, 0],
       set: "emekliDone",
-      pol: { id: "emekli", ad: "Emekliye bedava ulaşım", e: [0, -1, 0, 0] },
+      pol: {
+        id: "emekli",
+        yan: [
+          {
+            card: "emekli_tur",
+            p: 0.1,
+            min: 6,
+          },
+        ],
+        ad: "Emekliye bedava ulaşım",
+        e: [0, -1, 0, 0],
+      },
     },
   },
   {
@@ -1656,7 +1832,19 @@ export const CARDS: CardDef[] = [
     R: {
       t: "Pervaneler dönsün",
       e: [-6, 4, 0, 5],
-      pol: { id: "ruzgar", ad: "Rüzgâr türbini kirası", e: [0, 1, 0, 0], ay: 20 },
+      pol: {
+        id: "ruzgar",
+        yan: [
+          {
+            card: "ruzgar_disko",
+            p: 0.15,
+            min: 3,
+          },
+        ],
+        ad: "Rüzgâr türbini kirası",
+        e: [0, 1, 0, 0],
+        ay: 20,
+      },
     },
   },
   {
@@ -1665,7 +1853,26 @@ export const CARDS: CardDef[] = [
     konu: "Reklam panosu",
     text: "Meydana dev bir LED reklam panosu dikelim başkanım. Kira belediyeye; gece de ışığıyla meydanı aydınlatır.",
     L: { t: "Meydan reklamsız kalsın", e: [5, 0, -4, 0] },
-    R: { t: "Pano dikilsin", e: [-5, 4, 4, 0], pol: { id: "pano", ad: "LED pano kirası", e: [0, 1, 0, 0], ay: 18 } },
+    R: {
+      t: "Pano dikilsin",
+      e: [-5, 4, 4, 0],
+      pol: {
+        id: "pano",
+        yan: [
+          {
+            card: "pano_horoz",
+            p: 0.15,
+            min: 3,
+            if: {
+              not: "pano_horoz",
+            },
+          },
+        ],
+        ad: "LED pano kirası",
+        e: [0, 1, 0, 0],
+        ay: 18,
+      },
+    },
   },
 
   // ── Kayınvalide Naciye Hanım
@@ -1689,6 +1896,12 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "horoz",
+    alt: [
+      {
+        req: "horoz_plaket",
+        text: "Evladım, plaket verdiğin horoz şımardı; artık gece üçte değil, gece birde ötüyor. Plaketi de kümesin kapısına asmışlar. Zabıta mı gönderirsin, yoksa ben mi hallederim?",
+      },
+    ],
     who: "naciye",
     konu: "Şikâyet",
     text: "Komşunun horozu sabah dörtte ötüyor evladım. Zabıta mı gönderirsin, yoksa ben mi hallederim?",
@@ -1707,6 +1920,16 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "balata",
+    alt: [
+      {
+        req: "arac_kiralik",
+        text: "Kiralık makam aracının balataları bitmiş başkanım. Sözleşmeye göre bakım belediyede, araç Cengiz Bey'in: fren bizden, tapu ondan. Orijinal parça üç hafta; çıkma parça yarın, komşu ilçenin eski makam aracından.",
+      },
+      {
+        req: "arac_yok",
+        text: "Eski makam aracınızın balataları bitmiş başkanım. Araç şimdi icrada mı Cengiz Bey'de mi belli değil ama fatura bize geldi. Orijinal parça üç hafta; çıkma parça yarın, komşu ilçeden.",
+      },
+    ],
     who: "ferhat",
     konu: "Makam aracı",
     not: ["bisiklet"],
@@ -1823,8 +2046,8 @@ export const CARDS: CardDef[] = [
     konu: "Heyet ziyareti",
     chain: true,
     text: "Karakavak'a bayıldık! En çok da kokoreçe. Norveç'e kokoreç ithal etmek istiyoruz. Tarifi paylaşır mısınız?",
-    L: { t: "Tarif ata yadigârı", e: [5, 0, 5, 0] },
-    R: { t: "İhracat başlasın", e: [0, 10, 8, 5] },
+    L: { t: "Tarif ata yadigârı", e: [5, 0, 5, 0], set: "kardes_sehir" },
+    R: { t: "İhracat başlasın", e: [0, 10, 8, 5], set: "kardes_sehir" },
   },
 
   // ── Tekir
@@ -1843,6 +2066,12 @@ export const CARDS: CardDef[] = [
   // ── Fikret
   {
     id: "festival",
+    alt: [
+      {
+        req: "kral_tac",
+        text: "Başkanım, Kavun Festivali geldi çattı. Kalabalık şimdiden 'Kral nerede?' diye soruyor, Hatice Abla tacınızı parlatıyor. Konsere kimi çağıralım? Taç takan sanatçıya indirim varmış.",
+      },
+    ],
     who: "fikret",
     konu: "Kavun Festivali",
     months: [6, 7],
@@ -2192,6 +2421,14 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "dijital_gocebe",
+    alt: [
+      {
+        if: {
+          pol: "okul_koy",
+        },
+        text: "Başkanım, köye dönüş desteğini duyan İstanbullu yazılımcılar ilçeye de doldu. Köy evlerini üç kat fiyata tutup kahvede 'filtre' istiyorlar. Kahveci Rahmi çaya su katıp filtre diye satıyor. Kiralar uçtu.",
+      },
+    ],
     who: "muhtar",
     konu: "Yeni komşular",
     once: true,
@@ -2213,6 +2450,12 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "gocebe_donus",
+    alt: [
+      {
+        req: "okul_internet",
+        text: "Başkanım, yazılımcılar ilk karı görünce İstanbul'a döndü; bir tek Yukarıçeşme'deki aile kaldı, okulda internet var diye. Ortak ofiste bir 'ergonomik sandalye' kaldı, üstünde Tekir uyuyor. Kiralar düşmedi ama.",
+      },
+    ],
     who: "rahmi",
     konu: "Kış geldi",
     chain: true,
@@ -2431,6 +2674,10 @@ export const CARDS: CardDef[] = [
     text: "Başkanım, tescil geldi, 'Karakavak kavunu' artık coğrafi işaretli! Komşu ilçe itiraz edemeyince 'Karakavak tipi kavun' diye paketlemeye başladı. Kasaların üstüne bizim ilçe tabelasının fotoğrafını basmışlar.",
     alt: [
       {
+        req: "kral_tac",
+        text: "Başkanım, tescil geldi, 'Karakavak kavunu' artık coğrafi işaretli! Komşu ilçe itiraz edemeyince 'Karakavak tipi kavun' diye paketlemeye başladı. Kasaların üstünde taçlı fotoğrafınız var: 'Kralın kavunu.'",
+      },
+      {
         req: "devkavun",
         text: "Başkanım, tescil geldi, 'Karakavak kavunu' artık coğrafi işaretli! Komşu ilçe itiraz edemeyince 'Karakavak tipi kavun' diye paketlemeye başladı. Kasaların üstünde bizim dev kavun heykelinin fotoğrafı var.",
       },
@@ -2438,12 +2685,36 @@ export const CARDS: CardDef[] = [
     L: {
       t: "Mahkemeye verelim",
       e: [0, -6, 4, 3],
-      pol: { id: "tescil", ad: "Coğrafi işaret", e: [0, 0, 2, 0], tags: ["tarim", "marka"] },
+      pol: {
+        id: "tescil",
+        yan: [
+          {
+            card: "tescil_sahte",
+            p: 0.12,
+            min: 6,
+          },
+        ],
+        ad: "Coğrafi işaret",
+        e: [0, 0, 2, 0],
+        tags: ["tarim", "marka"],
+      },
     },
     R: {
       t: "Taklit de reklamdır",
       e: [3, 0, -3, 0],
-      pol: { id: "tescil", ad: "Coğrafi işaret", e: [0, 0, 1, 0], tags: ["tarim", "marka"] },
+      pol: {
+        id: "tescil",
+        yan: [
+          {
+            card: "tescil_sahte",
+            p: 0.12,
+            min: 6,
+          },
+        ],
+        ad: "Coğrafi işaret",
+        e: [0, 0, 1, 0],
+        tags: ["tarim", "marka"],
+      },
     },
   },
   {
@@ -2474,6 +2745,18 @@ export const CARDS: CardDef[] = [
   // ── Birbirine değen kararlar: etiketleri SYN tablosunda buluşur
   {
     id: "tasarruf",
+    alt: [
+      {
+        req: "bisiklet",
+        text: "Başkanım, Ankara'dan tasarruf genelgesi geldi: üç yıl yeni araç, yeni bina, kokteyl yok. Bisikletiniz genelgede 'örnek uygulama' diye geçiyor, fotoğrafınızla. Uymayanların listesi de Ankara'ya gidecekmiş.",
+      },
+      {
+        if: {
+          pol: "arac_kira",
+        },
+        text: "Başkanım, Ankara'dan tasarruf genelgesi geldi: üç yıl yeni araç, yeni bina, kokteyl yok. Cengiz Bey'den kiraladığımız makam aracı da soruldu. Genelgeye uymayanların listesi Ankara'ya gidecekmiş, isim isim.",
+      },
+    ],
     who: "kaymakam",
     konu: "Tasarruf genelgesi",
     once: true,
@@ -2483,7 +2766,25 @@ export const CARDS: CardDef[] = [
     L: {
       t: "Genelgeye uyalım",
       e: [2, 4, -3, 6],
-      pol: { id: "kemer", ad: "Tasarruf genelgesi", e: [0, 1, -1, 0], ay: 24, tags: ["kemer"] },
+      pol: {
+        id: "kemer",
+        yan: [
+          {
+            card: "kemer_cay",
+            p: 0.12,
+            min: 4,
+          },
+          {
+            card: "kemer_asansor",
+            p: 0.12,
+            min: 6,
+          },
+        ],
+        ad: "Tasarruf genelgesi",
+        e: [0, 1, -1, 0],
+        ay: 24,
+        tags: ["kemer"],
+      },
       next: { id: "kokteyl_simit", in: [4, 6], if: { pol: "kemer" } },
     },
     R: { t: "Toplantı uluslararası", e: [-4, -6, 0, -8] },
@@ -2567,7 +2868,20 @@ export const CARDS: CardDef[] = [
     R: {
       t: "e-Belediye açılsın",
       e: [0, -5, 3, 3],
-      pol: { id: "ebelediye", ad: "e-Belediye", e: [0, 1, 0, 0], ay: 36, tags: ["dijital", "ebelediye"] },
+      pol: {
+        id: "ebelediye",
+        yan: [
+          {
+            card: "eb_ihbar",
+            p: 0.12,
+            min: 4,
+          },
+        ],
+        ad: "e-Belediye",
+        e: [0, 1, 0, 0],
+        ay: 36,
+        tags: ["dijital", "ebelediye"],
+      },
       next: ["ebelediye_coktu", 1],
     },
   },
@@ -2817,6 +3131,3618 @@ export const CARDS: CardDef[] = [
     L: { t: "Yazma Tuncay", e: [-3, 0, 0, 3] },
     R: { t: "Yaz, gurur duyarız", e: [6, 0, 3, -6] },
   },
+  // ══ Son Damla (kuraklık, batık köy) · Tek Öğrenci · kuraklık evrakları ══
+  {
+    id: "su_kesinti",
+    who: "kemal",
+    konu: "Su kesintisi",
+    once: true,
+    w: 0.9,
+    minM: 12,
+    months: [4, 5, 6, 7],
+    text: "Baraj yüzde on sekize indi başkanım, dönüşümlü kesinti şart. Takvimi hazırladım; kayınvalidenizin sokağı nasılsa hiç denk gelmedi. İsterseniz kura çekeriz. Kesinti uzarsa çatılar bidonla dolar, baştan söyleyeyim.",
+    L: {
+      t: "Kura çekilsin, herkese",
+      e: [5, -2, -3, 0],
+      rel: {
+        naciye: -2,
+      },
+      set: "su_kura",
+      anket: {
+        ad: "Kurayla adil kesinti",
+        puan: 2,
+      },
+      pol: {
+        id: "su_kesinti",
+        ad: "Dönüşümlü su kesintisi",
+        e: [-1, 1, 0, 0],
+        ay: 9,
+        msg: "Kesinti bitti; musluklar yeniden gündüz akıyor.",
+        yan: [
+          {
+            card: "su_bidon",
+            p: 0.2,
+          },
+          {
+            card: "su_gece",
+            p: 0.18,
+          },
+          {
+            card: "su_cay",
+            p: 0.15,
+          },
+        ],
+      },
+      next: ["su_minare", [2, 3]],
+      not: "Naciye Hanım bu bayram dolma yapmayacak.",
+    },
+    R: {
+      t: "Takvim aynen kalsın",
+      e: [-4, 1, 3, 0],
+      rel: {
+        naciye: 1,
+      },
+      set: "su_torpil",
+      anket: {
+        ad: "Kesintisiz kayınvalide sokağı",
+        puan: -3,
+      },
+      pol: {
+        id: "su_kesinti",
+        ad: "Dönüşümlü su kesintisi",
+        e: [-1, 1, 0, 0],
+        ay: 9,
+        msg: "Kesinti bitti; musluklar yeniden gündüz akıyor.",
+        yan: [
+          {
+            card: "su_bidon",
+            p: 0.2,
+          },
+          {
+            card: "su_gece",
+            p: 0.18,
+          },
+          {
+            card: "su_cay",
+            p: 0.15,
+          },
+        ],
+      },
+      next: ["su_minare", [2, 3]],
+    },
+  },
+  {
+    id: "su_minare",
+    who: "hayri",
+    konu: "Minare çıktı",
+    chain: true,
+    text: "Başkanım, baraj çekildi, Eski Karakavak'ın minaresi sudan çıktı. Rahmetli dedem orada ezan okurdu. Gurbetçiler 'dedemin evi' diye bilet almış, Kaan Bey tekne turu satmak istiyor. Ben sessiz bir ziyaret yeri isterim.",
+    L: {
+      t: "Batık köy turu başlasın",
+      e: [-4, 4, 5, -1],
+      rel: {
+        kaan: 1,
+      },
+      set: "su_tur",
+      pol: {
+        id: "su_tur",
+        ad: "Batık köy turu",
+        e: [0, 1, 0, 0],
+        ay: 8,
+      },
+      next: ["su_makam", [1, 2]],
+    },
+    R: {
+      t: "Sessiz ziyaret alanı",
+      e: [4, -4, -3, 3],
+      next: ["su_tapu", [1, 2]],
+    },
+  },
+  {
+    id: "su_makam",
+    who: "albay",
+    konu: "Makam taşınsın",
+    chain: true,
+    fav: "L",
+    text: "Asıl Karakavak orası başkanım! Makam eski köye taşınsın; çadır, masa, bayrak direği minarenin yanına. Kemal Bey 'yağmurlar başlayınca su geri gelir' diyor. Gelsin! Biz askerde sudan korkmazdık.",
+    L: {
+      t: "Makam eski köye taşınsın",
+      e: [6, -4, 2, -4],
+      set: "su_makam",
+      next: ["su_tapu", [1, 2]],
+      not: "Kemal Bey baraj kotunu artık makam çadırının direğinden ölçüyor.",
+    },
+    R: {
+      t: "Makam yerinde kalsın",
+      e: [-3, 1, 0, 3],
+      next: ["su_tapu", [1, 2]],
+    },
+  },
+  {
+    id: "su_tapu",
+    who: "muhtar",
+    konu: "Tapu davası",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, Almanya'dan bir aile dedelerinin tapusuyla geldi: 'Ev sudan çıktı, istimlak parası hiç ödenmedi, evimizi isteriz.' Evin damında şimdi balık kuruyor. Avukatları da yolda.",
+    alt: [
+      {
+        req: "su_makam",
+        text: "Başkanım, Almanya'dan bir aile dedelerinin tapusuyla geldi: 'Ev sudan çıktı, istimlak parası hiç ödenmedi.' Asıl mesele şu: makam çadırınız tam o evin avlusunda. Kira da istiyorlar.",
+      },
+    ],
+    L: {
+      t: "Tapu komisyonu kurulsun",
+      e: [4, -5, 0, -2],
+      next: ["su_kapsul", [1, 2]],
+    },
+    R: {
+      t: "Tarih oldu, kapansın",
+      e: [-5, 1, 0, 4],
+      next: ["su_kapsul", [1, 2]],
+    },
+  },
+  {
+    id: "su_kapsul",
+    who: "hans",
+    konu: "Zaman kapsülü",
+    chain: true,
+    text: "Sayın Başkan, metal dedektörle Eski Karakavak'ı gezdim; minarenin dibinden 1987'de gömülmüş bir zaman kapsülü çıktı! İçinde dönemin başkanının notu: '2025'te Karakavak'a metro gelecek.' Wunderbar! Biraz gecikmiş ama?",
+    alt: [
+      {
+        req: "su_makam",
+        text: "Sayın Başkan, makam çadırınızın kazığını çakarken toprak 'tınn' dedi: 1987'de gömülmüş bir zaman kapsülü! İçinde dönemin başkanının notu: '2025'te Karakavak'a metro gelecek.' Wunderbar! Biraz gecikmiş ama?",
+      },
+    ],
+    L: {
+      t: "Sessizce geri gömün",
+      e: [-3, 0, 0, 5],
+      next: ["su_obruk", [1, 2]],
+      not: "Tuncay'ın manşeti hazır: 'Metro sözü yine gömüldü.'",
+    },
+    R: {
+      t: "Sözü biz devralırız",
+      e: [6, -2, 2, -3],
+      inc: {
+        vaat: 1,
+      },
+      set: "metro_soz",
+      next: ["su_obruk", [1, 2]],
+      not: "Nermin Hanım metro sözünü deftere yazdı bile.",
+    },
+  },
+  {
+    id: "su_obruk",
+    who: "dursun",
+    konu: "Ovada obruk",
+    chain: true,
+    text: "Başkanım, kavun ovasında bir gecede otuz metrelik obruk açıldı; traktörüm kenarından sarkıyor. Kaçak kuyular yeraltı suyunu bitirmiş, benimki de dahil. Kaan Bey sabah 'obruk manzaralı cam teras' projesiyle geldi bile.",
+    alt: [
+      {
+        req: "su_makam",
+        text: "Başkanım, ovada otuz metrelik obruk açıldı; kaçak kuyular yeraltı suyunu bitirmiş, benimki de dahil. Kaan Bey cam teras istiyor. Bir de makamınız çukurda başkanım; yağmur gelince ilk orası dolar, benden söylemesi.",
+      },
+    ],
+    L: {
+      t: "Kaçak kuyulara mühür",
+      e: [4, -2, -5, 5],
+      set: "su_muhur",
+      next: ["su_batma", [2, 3]],
+    },
+    R: {
+      t: "Cam seyir terası",
+      e: [-4, 5, 4, -3],
+      rel: {
+        kaan: 1,
+      },
+      set: "su_teras",
+      next: ["su_batma", [2, 3]],
+    },
+  },
+  {
+    id: "su_batma",
+    who: "kemal",
+    konu: "Köy yine batıyor",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, yağmurlar başladı, baraj bir ayda yüzde kırka çıktı. Eski Karakavak yine batıyor; su minarenin şerefesine geldi. Hemen kıyıya mı çekilelim, yoksa son güne kadar orada veda mı edelim?",
+    alt: [
+      {
+        req: "su_makam",
+        text: "Başkanım, yağmurlar başladı; su makam çadırının kazıklarına geldi. Nuri Bey bayrağı indirmiyor, Hüseyin semaveri masaya çıkardı. Hemen kıyıya mı çekilelim, yoksa son güne kadar makamda mı kalalım?",
+      },
+      {
+        req: "su_teras",
+        text: "Başkanım, yağmurlar başladı, Eski Karakavak yine batıyor. Obruğun cam terasına da su doldu; Kaan Bey 'yüzme terası' diye bilet kesiyor. Hemen kıyıya mı çekilelim, son güne kadar veda mı edelim?",
+      },
+      {
+        req: "su_muhur",
+        text: "Başkanım, yağmurlar başladı; mühürlediğiniz kuyular sayesinde ova da su tuttu, Dursun Ağa ilk kez size dua etti. Eski Karakavak yine batıyor. Hemen kıyıya mı çekilelim, son güne kadar veda mı edelim?",
+      },
+    ],
+    L: {
+      t: "Hemen kıyıya çekilelim",
+      e: [-2, -2, -3, 5],
+      cut: ["su_kesinti", "su_tur"],
+      set: "su_bitti",
+    },
+    R: {
+      t: "Son güne kadar kalalım",
+      e: [4, -3, 4, -4],
+      cut: ["su_kesinti", "su_tur"],
+      set: "su_bitti",
+      next: {
+        id: "su_son",
+        in: 0,
+        if: {
+          req: ["su_makam", "su_tur"],
+        },
+      },
+    },
+  },
+  {
+    id: "su_son",
+    who: "fikret",
+    konu: "Son evrak",
+    chain: true,
+    text: "Başkanım, su çadırın içine girdi, masanın ayağına dayandı. Son evrak önünüzde, mürekkep yüzüyor. Kayığı kapıya bağladım. Nuri Bey 'kaptan gemisini terk etmez' diyor, Hüseyin semaveri başına aldı. Emriniz?",
+    L: {
+      t: "Son evrağı imzalarım",
+      e: [4, 0, 0, -4],
+      son: "batik_makam",
+    },
+    R: {
+      t: "Kayığa binelim",
+      e: [-5, 0, 2, 4],
+      rel: {
+        albay: -2,
+      },
+      set: "su_kayik",
+      not: "Nuri Bey kayıkta sırtını döndü: 'Kaptan böyle mi olur?'",
+    },
+  },
+  {
+    id: "su_bidon",
+    who: "bekir",
+    konu: "Bidon fiyatı",
+    chain: true,
+    text: "Başkanım, kesintiyle bidon kırk liradan dört yüze çıktı; çarşıda dokuz dükkân depocu oldu. Alan da çatıya diziyor, Kavaklı'da iki çatı çöktü; biri kasap Ramazan'ın. 'Tavan fiyat' diyen var, 'piyasa bu' diyen var.",
+    alt: [
+      {
+        req: "su_torpil",
+        text: "Başkanım, bidon kırk liradan dört yüze çıktı, çatılar bidondan çöküyor. Millet de 'kayınvalidenin sokağında musluk hiç susmuyor, bidonu orada dolduralım' diye kuyruk oldu. Kesinti mi bitsin, piyasa mı?",
+      },
+    ],
+    L: {
+      t: "Kesinti bitsin artık",
+      e: [5, -4, -2, -3],
+      cut: "su_kesinti",
+    },
+    R: {
+      t: "Piyasa serbest",
+      e: [-5, 1, 5, 0],
+    },
+  },
+  {
+    id: "su_gece",
+    who: "fatma",
+    konu: "Gece üçte su",
+    chain: true,
+    text: "Başkanım, su gece üçte geliyor, bütün ilçe uyanık! Balkonda çay, gece yarısı çamaşır, kıraathane sabaha kadar açık. Sabah namazında cemaat üç kat, Hayri Hoca çok memnun. Ben de otuz yıllık küs komşumla barıştım.",
+    L: {
+      t: "Musluk gündüz aksın",
+      e: [4, -4, -3, -2],
+      cut: "su_kesinti",
+    },
+    R: {
+      t: "Gece mesaisi resmî olsun",
+      e: [2, -3, 4, 0],
+    },
+  },
+  {
+    id: "su_cay",
+    who: "huseyin",
+    konu: "Şişe suyuyla çay",
+    chain: true,
+    text: "Başkanım, musluktan su akmayınca çayı şişe suyuyla demliyorum; bardak on iki lira oldu. Meclis üyeleri yarısını içip 'kalanını eve götüreyim' diyor. Semaver ilk kez kireçsiz ama, orası ayrı.",
+    L: {
+      t: "Musluk açılsın artık",
+      e: [4, -3, 0, -3],
+      cut: "su_kesinti",
+    },
+    R: {
+      t: "Ocağa su tankı",
+      e: [2, -5, 2, 0],
+    },
+  },
+  {
+    id: "okul_tek",
+    who: "elif",
+    konu: "Tek öğrenci",
+    once: true,
+    w: 0.9,
+    minM: 12,
+    months: [8, 9, 10],
+    text: "Başkanım, Yukarıçeşme köy okulunda tek öğrenci kaldı: Ayşe. Haftada üç gün ona ders vermeye ben çıkıyorum. Ayşe bitirince okul kapanır, okul kapanınca köy de. Ya taşımalı eğitim ya köye yeni aile.",
+    L: {
+      t: "Kapatın, servisle gelsin",
+      e: [-5, 4, 0, 2],
+      set: "okul_kapandi",
+      next: ["okul_otel", [1, 2]],
+      not: "Ayşe tutanak tuttu: 'Okulumu kapattılar.' İmzası kocaman.",
+    },
+    R: {
+      t: "Köye aile getirelim",
+      e: [4, -3, 1, -1],
+      set: "okul_acik",
+      pol: {
+        id: "okul_koy",
+        ad: "Köye dönüş desteği",
+        e: [0, -1, 0, 0],
+        ay: 10,
+        msg: "Köye dönüş desteği bitti; gelen gelmiş, kalan kalmış.",
+      },
+      next: ["okul_aile", [1, 2]],
+    },
+  },
+  {
+    id: "okul_otel",
+    who: "kaan",
+    konu: "Boş okul",
+    chain: true,
+    text: "Başkanım, Yukarıçeşme okulu boşaldı; bana kiralayın, 'Okul Otel' yapalım. Sıralarda köy kahvaltısı, karatahtada menü, zil çalınca çay. Köylü 'köy konağı olsun' diyor ama konak para getirmez.",
+    L: {
+      t: "Köy konağı olsun",
+      e: [5, -5, 0, 0],
+      next: ["okul_kar", [0, 1]],
+    },
+    R: {
+      t: "Okul Otel açılsın",
+      e: [-5, 6, 3, 0],
+      set: "okul_otelde",
+      next: ["okul_kar", [0, 1]],
+      not: "Ayşe eski sınıfında kahvaltı fiyatını sordu: iki bin lira.",
+    },
+  },
+  {
+    id: "okul_aile",
+    who: "ayse",
+    konu: "Yeni sınıf arkadaşı",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, köye aile geldi! İstanbullu yazılımcılar. Oğulları Kerem artık sınıf arkadaşım ama tabletsiz duramıyor; Elif Öğretmen ona soba yakmayı öğretiyor. Babası 'internet yoksa kışı çıkaramayız' diyor.",
+    alt: [
+      {
+        if: {
+          pol: "ofis",
+        },
+        text: "Başkanım, ortak ofisteki yazılımcılardan biri ailesiyle köyümüze taşındı! Oğulları Kerem artık sınıf arkadaşım ama tabletsiz duramıyor. Babası 'internet yoksa kışı çıkaramayız' diyor. Okula internet gelir mi?",
+      },
+    ],
+    L: {
+      t: "Okula internet gelsin",
+      e: [4, -5, 0, 1],
+      set: "okul_internet",
+      next: ["okul_kar", [0, 1]],
+    },
+    R: {
+      t: "Soba da bir eğitimdir",
+      e: [-3, 2, 0, 0],
+      next: ["okul_kar", [0, 1]],
+      not: "Kerem'in babası 'ilk karda bavul hazır' dedi.",
+    },
+  },
+  {
+    id: "okul_kar",
+    who: "elif",
+    konu: "Kar ve servis",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, kar bastırdı, Yukarıçeşme yolu kapandı. Okulda iki öğrenci, bir öğretmen, bir soba mahsuruz; Kerem internetten kar tatili ilan etti. Greyder tek; ya köy yoluna ya çarşıya yetişir.",
+    alt: [
+      {
+        req: "okul_kapandi",
+        text: "Başkanım, kar bastırdı; Ayşe'nin servisi köy yolunda kara saplandı. Şoför çocuklara türkü söyletiyor, Ayşe tutanak tutuyor. Greyder tek; ya köy yoluna ya çarşıya yetişir.",
+      },
+      {
+        if: {
+          req: "okul_acik",
+          not: "okul_internet",
+        },
+        text: "Başkanım, kar bastırdı; yazılımcı aile ilk karı görünce İstanbul'a döndü, internetsiz kış olmazmış. Okulda yine Ayşe tek, soba ikimize yetiyor. Yol kapandı; greyder ya köye ya çarşıya yetişir.",
+      },
+    ],
+    L: {
+      t: "Greyder önce köy yoluna",
+      e: [5, -3, -5, 0],
+      set: "okul_yol",
+      next: {
+        id: "okul_destek",
+        in: [2, 4],
+        if: {
+          req: "okul_acik",
+        },
+        else: "okul_kus",
+      },
+    },
+    R: {
+      t: "Önce çarşı açılsın",
+      e: [-4, 0, 5, 0],
+      next: ["okul_kus", [2, 4]],
+    },
+  },
+  {
+    id: "okul_destek",
+    who: "ayse",
+    konu: "Sınıf kararı",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, sınıfımız dört kişi oldu, sınıf başkanlığını da ben kazandım! Seçimde sizi destekliyoruz; oy veremiyoruz ama annelerimiz verebiliyor. Vaadim belediye ziyaretiydi. Gelebilir miyiz? Makamda bir tur yeter.",
+    alt: [
+      {
+        if: {
+          not: "okul_internet",
+        },
+        text: "Başkanım, Kerem'ler ilk karda gitti ama okulum açık, yolum açık. Seçimde sizi destekliyorum; oy veremem ama annem, babam, dedem verebiliyor. Bir de gelecek yıl yeni aile gelsin, sınıf başkanlığında rakibim yok.",
+      },
+    ],
+    L: {
+      t: "Makamda ağırlayalım",
+      e: [4, -2, 0, 0],
+      set: "okul_iyi",
+      anket: {
+        ad: "Yukarıçeşme okulu yaşadı",
+        puan: 2,
+      },
+    },
+    R: {
+      t: "Seçime çocuk karışmaz",
+      e: [-3, 0, 0, 4],
+      set: "okul_iyi",
+      not: "Ayşe not düştü: 'Sınıf başkanı da seçimle gelir.'",
+    },
+  },
+  {
+    id: "okul_kus",
+    who: "ayse",
+    konu: "Sınıfça küsüz",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, okulumu kapattınız, kar günü servisimi de kurtarmadınız. Sınıfça küsüz; sınıf da benim zaten. Seçimde rakip adayın pankartlarını ben boyayacağım. Annem, babam, dedem de oy verecek.",
+    alt: [
+      {
+        req: "okul_otelde",
+        text: "Başkanım, okulumu otel yaptınız; benim sıramda şimdi bir turist menemen yiyor. Sınıfça küsüz, sınıf da benim zaten. Seçimde rakip adayın pankartlarını ben boyayacağım. Annem, babam, dedem de oy verecek.",
+      },
+      {
+        req: ["okul_kapandi", "okul_yol"],
+        text: "Başkanım, servisimi kardan kurtardınız, teşekkür ederim. Ama okulumu kapattınız; sınıfça küsüz, sınıf da benim zaten. Seçimde rakip adayın pankartlarını ben boyayacağım. Annem de dedem de oy verecek.",
+      },
+      {
+        req: "okul_acik",
+        text: "Başkanım, kar günü greyderi çarşıya gönderdiniz; üç gün okula gidemedik, Elif Öğretmen de gelemedi. Sınıfça küsüz. Seçimde rakip adayın pankartlarını ben boyayacağım; annem, babam, dedem de oy verecek.",
+      },
+    ],
+    L: {
+      t: "Ayşe'den özür dileyelim",
+      e: [4, -3, 0, -2],
+      set: "okul_kotu",
+      anket: {
+        ad: "Çocuk başkandan özür",
+        puan: 1,
+      },
+    },
+    R: {
+      t: "Çocuk küsü, geçer",
+      e: [-2, 2, 0, 3],
+      set: "okul_kotu",
+      anket: {
+        ad: "Küs çocuk başkan",
+        puan: -2,
+      },
+    },
+  },
+  {
+    id: "hortum_yasagi",
+    who: "recep",
+    konu: "Hortum yasağı",
+    once: true,
+    minM: 6,
+    months: [5, 6, 7],
+    fav: "L",
+    text: "Başkanım, kuraklıkta bahçeye, arabaya, havuza hortum yasağı koyalım mı? İlk ihbar kayınvalidenizden geldi bile: Hans Bey'in havuzu ağzına kadar dolu. Hans 'havuz değil, pansiyonun Alman usulü sarnıcı' diyor.",
+    alt: [
+      {
+        if: {
+          pol: "su_kesinti",
+        },
+        text: "Başkanım, musluklar dönüşümlü akarken Hans Bey'in havuzu ağzına kadar dolu; ihbar kayınvalidenizden. Hans 'havuz değil, pansiyonun Alman usulü sarnıcı' diyor, içinde ördek var. Hortum yasağı koyalım mı?",
+      },
+    ],
+    L: {
+      t: "Yasak herkese, Hans dahil",
+      e: [4, 2, -4, 2],
+      rel: {
+        hans: -2,
+      },
+      pol: {
+        id: "hortum_yasagi",
+        ad: "Hortum yasağı",
+        e: [0, 1, -1, 0],
+        ay: 4,
+        msg: "Hortum yasağı kalktı; Hans Bey'in ördekleri havuza döndü.",
+      },
+    },
+    R: {
+      t: "Turizme istisna",
+      e: [-6, 0, 4, 0],
+      rel: {
+        hans: 1,
+        naciye: -1,
+      },
+    },
+  },
+  {
+    id: "dumanli_nobet",
+    who: "dursun",
+    konu: "Dumanlı nöbet",
+    months: [2, 3],
+    cd: 24,
+    fav: "L",
+    text: "Başkanım, bu gece zirai don var. Köylü sabaha kadar bahçede saman yakıp ağaç ısıtacak; biz buna dumanlı nöbet deriz. Kimi lastik de yakıyor. Sabah çarşı is kokar, Hacı Bekir künefeyi 'tütsülü' diye satar.",
+    L: {
+      t: "İtfaiye su sislesin",
+      e: [4, -5, 2, 0],
+    },
+    R: {
+      t: "Lastik yakmak yasak",
+      e: [-4, 0, 3, 4],
+    },
+  },
+  {
+    id: "bulut_tohum",
+    who: "dursun",
+    konu: "Bulut hırsızlığı",
+    once: true,
+    minM: 12,
+    months: [5, 6, 7, 8],
+    text: "Başkanım, komşu ilçe uçakla bulut tohumluyor; bizim bulut gidip onlara yağıyor! Geçen hafta tepemizden geçen kara bulut sınırda boşaldı. Biz de uçak kiralayalım, bulutu önce biz tohumlayalım.",
+    alt: [
+      {
+        if: {
+          pol: "su_kesinti",
+        },
+        text: "Başkanım, biz kesintiyle bidon taşırken komşu ilçe uçakla bulut tohumluyor; bizim bulut gidip onlara yağıyor! Biz de uçak kiralayalım, bulutu önce biz tohumlayalım. Olmazsa bir protesto yazısı.",
+      },
+    ],
+    L: {
+      t: "Resmî protesto yazısı",
+      e: [3, 0, 0, -4],
+      not: "Komşu ilçe cevap yazdı: 'Bulut kimsenin malı değil.'",
+    },
+    R: {
+      t: "Tohumlama uçağı kiralayın",
+      e: [4, -4, 2, -1],
+      pol: {
+        id: "bulut_tohum",
+        ad: "Bulut tohumlama uçağı",
+        e: [0, -1, 0, 0],
+        ay: 3,
+        msg: "Tohumlama uçağı hangara döndü; pilot 'bulutlar artık bizi tanıyor' diyor.",
+      },
+      next: {
+        id: "sel",
+        in: [0, 2],
+        if: {
+          pol: "bulut_tohum",
+        },
+      },
+    },
+  },
+  // ══ Konteyner Makamı · Çoğunluk Kimde? · tek evraklar ══
+  {
+    id: "bina_rapor",
+    who: "kemal",
+    konu: "Riskli bina",
+    once: true,
+    w: 0.8,
+    minM: 12,
+    fav: "L",
+    text: "Başkanım, kamu binası taraması geldi: belediye binası riskli. Kolonlarda demir yerine bir tür hasır çıktı; 1978'in müteahhidi 'esnek olsun' demiş. Konteynere geçebiliriz; yalnız yazın fırın olur, Tekir de altına kaçar.",
+    L: {
+      t: "Konteynere taşınalım",
+      e: [4, -5, 0, 4],
+      pol: {
+        id: "bina_konteyner",
+        ad: "Konteyner makam",
+        e: [0, -1, 0, 0],
+        ay: 15,
+        msg: "Konteyner makamın on beş ayı doldu; kapıdaki 'GEÇİCİ' yazısı yerinde duruyor.",
+        yan: [
+          {
+            card: "bina_klima",
+            p: 0.15,
+            min: 3,
+          },
+          {
+            card: "bina_tekir",
+            p: 0.12,
+            min: 4,
+          },
+        ],
+      },
+      next: {
+        id: "bina_saray",
+        in: [2, 3],
+      },
+    },
+    R: {
+      t: "Binada kalalım",
+      e: [-3, 3, 0, -5],
+      set: "bina_riskli",
+      rel: {
+        kaymakam: -1,
+      },
+      not: "Kaymakam Selim Bey tutanağa geçti.",
+      next: {
+        id: "bina_saray",
+        in: [2, 3],
+      },
+    },
+  },
+  {
+    id: "bina_saray",
+    who: "cengiz",
+    konu: "Hizmet sarayı",
+    chain: true,
+    text: "Başkanım, size bir hizmet sarayı çizdim: 12 kat, cam cephe, çatıda helikopter pisti. İlçe 18 bin kişi diyorlar; bina büyük olunca nüfus da gelir. Ödemesi aylık taksit, kasa hissetmez bile.",
+    alt: [
+      {
+        if: {
+          pol: "bina_konteyner",
+        },
+        text: "Başkanım, konteynerde belediye mi olur? Size bir hizmet sarayı çizdim: 12 kat, cam cephe, çatıda helikopter pisti. İlçe 18 bin kişi; bina büyük olunca nüfus da gelir. Ödemesi aylık taksit, kasa hissetmez.",
+      },
+      {
+        req: "bina_riskli",
+        text: "Başkanım, çatlak binada belediye mi olur? Kolondaki yarıkta Tekir yavruladı, kaymakam tutanak tuttu. Size bir hizmet sarayı çizdim: 12 kat, helikopter pisti. Ödemesi aylık taksit, kasa hissetmez.",
+      },
+    ],
+    L: {
+      t: "İki kat yeter",
+      e: [4, -3, -2, -3],
+      set: "bina_mutevazi",
+      clr: "bina_riskli",
+      pol: {
+        id: "bina_iki",
+        ad: "İki katlı bina inşaatı",
+        e: [0, -1, 0, 0],
+        ay: 7,
+        done: [6, 0, 2, 0],
+        msg: "İki katlı yeni belediye binası açıldı; asansörü yok, gerek de yok.",
+        tags: ["insaat"],
+      },
+      next: {
+        id: "bina_temel",
+        in: [2, 3],
+      },
+    },
+    R: {
+      t: "On iki kat olsun",
+      e: [2, -4, 6, 3],
+      set: "bina_saray",
+      clr: "bina_riskli",
+      pol: {
+        id: "bina_saray",
+        ad: "Hizmet sarayı taksiti",
+        e: [0, -1, 1, 0],
+        ay: 24,
+        done: [3, 4, 0, 2],
+        msg: "Hizmet sarayının son taksiti ödendi; Sevim Hanım ilk kez asansöre bindi.",
+        tags: ["insaat"],
+      },
+      not: "Sevim Hanım taksit tablosunu masasının camının altına koydu.",
+      next: {
+        id: "bina_temel",
+        in: [2, 3],
+      },
+    },
+  },
+  {
+    id: "bina_temel",
+    who: "fikret",
+    konu: "Temel atma",
+    chain: true,
+    text: "Başkanım, yarın sarayın temel atma töreni. Cengiz Bey temele zaman kapsülü koyacak; içine taksit tablosunu koyalım dedim, 'o sığmaz' dedi. Suat Bey de gelmek istiyor, helikopterle. Pist henüz yok, tarlaya iner.",
+    alt: [
+      {
+        req: "bina_mutevazi",
+        text: "Başkanım, iki katlı binanın temel atma töreni yarın. Suat Bey 'iki kata ben gelmem' dedi, kaymakam gelecek. Kemal Bey temel taşını kendi eliyle yazdı; 'belediye'de bir harf eksik ama taş taştır.",
+      },
+    ],
+    L: {
+      t: "Sade tören, kürek bende",
+      e: [4, 1, -2, -4],
+      set: "bina_temel",
+      next: {
+        id: "bina_uyari",
+        in: [3, 4],
+        if: {
+          req: "bina_saray",
+        },
+      },
+    },
+    R: {
+      t: "Davul zurna, Suat Bey",
+      e: [-2, -4, 4, 6],
+      set: "bina_temel",
+      rel: {
+        vekil: 1,
+      },
+      next: {
+        id: "bina_uyari",
+        in: [3, 4],
+        if: {
+          req: "bina_saray",
+        },
+      },
+    },
+  },
+  {
+    id: "bina_uyari",
+    who: "sevim",
+    konu: "Taksit uyarısı",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, sarayın taksiti kasayı her ay emiyor. Cengiz Bey şimdi bir de ek blok istiyor, 'bina yalnız kalmasın' diyor. Tutanağa yazıyorum: bir kat daha çıkarsak icra memuru asansörle gelir.",
+    L: {
+      t: "Altı katta durduralım",
+      e: [2, 4, -4, -3],
+      set: "bina_iyi",
+      rel: {
+        cengiz: -1,
+      },
+      pol: {
+        id: "bina_saray",
+        ad: "Küçük saray taksiti",
+        e: [0, -1, 0, 0],
+        ay: 8,
+        done: [3, 3, 0, 0],
+        msg: "Saray altı katta bitti; kalan katların iskelesi 'ikinci etap' tabelasıyla bekliyor.",
+        tags: ["insaat"],
+      },
+    },
+    R: {
+      t: "Ek blok da yapılsın",
+      e: [3, -3, 5, 3],
+      set: "bina_genis",
+      rel: {
+        cengiz: 1,
+      },
+      pol: {
+        id: "bina_saray",
+        ad: "Saray ve ek blok taksiti",
+        e: [0, -2, 1, 0],
+        ay: 18,
+        done: [4, 4, 2, 2],
+        msg: "Sarayın ve ek bloğun son taksiti ödendi; icra memuru eli boş döndü.",
+        tags: ["insaat"],
+      },
+      not: "Sevim Hanım uyarısını tutanağa geçirdi.",
+      next: {
+        id: "bina_kat",
+        in: [2, 3],
+      },
+    },
+  },
+  {
+    id: "bina_kat",
+    who: "fikret",
+    konu: "On birinci kat",
+    chain: true,
+    text: "Başkanım, saray bitti; herkes kendine bir kat seçti, 11. kat boşta. Tekir oraya çıkıp güneşleniyor, Burak stüdyo istiyor. Sevim Hanım 'orayı icra memuruna ayırın, nasılsa gelecek' diyor. Kimin olsun?",
+    L: {
+      t: "Tekir'in katı olsun",
+      e: [4, -1, 0, -3],
+      set: "bina_bitti",
+      inc: "tekir",
+      next: {
+        id: "bina_icra",
+        in: [3, 4],
+        if: {
+          req: "bina_genis",
+          pol: "bina_saray",
+        },
+      },
+    },
+    R: {
+      t: "Burak'a stüdyo",
+      e: [-3, 0, 3, 1],
+      set: "bina_bitti",
+      rel: {
+        burak: 1,
+        nermin: -1,
+      },
+      next: {
+        id: "bina_icra",
+        in: [3, 4],
+        if: {
+          req: "bina_genis",
+          pol: "bina_saray",
+        },
+      },
+    },
+  },
+  {
+    id: "bina_icra",
+    who: "sevim",
+    konu: "Haciz kapıda",
+    chain: true,
+    norel: true,
+    text: "Başkanım, icra memuru sarayın kapısında. Taksit üç aydır ödenmiyor, ek blok da cabası. Sarayı otel zincirine satarsak borç kapanır, biz kiracı kalırız. Satmazsak haciz; ben uyarmıştım, tutanağı da getirdim.",
+    L: {
+      t: "Saray satılmaz!",
+      e: [0, 0, 0, 0],
+      son: "saray_icra",
+    },
+    R: {
+      t: "Otele satın, kiracı olalım",
+      e: [-6, 10, -3, -4],
+      cut: "bina_saray",
+      set: "bina_satildi",
+      rel: {
+        cengiz: -1,
+      },
+      not: "Karakavak, sarayın satıldığını otelin tabelasından öğrendi.",
+    },
+  },
+  {
+    id: "bina_ikinci",
+    who: "fikret",
+    konu: "İkinci temel",
+    pre: true,
+    once: true,
+    w: 2,
+    req: "bina_temel",
+    not: "bina_satildi",
+    text: "Başkanım, seçime az kaldı. Yeni binanın temelini bir kere attık ama seçmen unuttu. Aynı yere ikinci temel atalım mı? Eski taşın yanına yenisini koyarız. Tuncay unutmadı ama o da gelir, börek var.",
+    L: {
+      t: "İkinci temel, davullu",
+      e: [-3, -4, 3, 3],
+      anket: {
+        ad: "Aynı yere ikinci temel",
+        puan: 2,
+      },
+    },
+    R: {
+      t: "Temel bir kere atılır",
+      e: [3, 1, -2, -3],
+    },
+  },
+  {
+    id: "bina_klima",
+    who: "nermin",
+    konu: "Konteyner meclis",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, konteyner meclis öğlen 45 derece. Toplantılar sekiz dakika sürüyor; kimse söz istemiyor, ben de dahil. İtiraf edeyim, gündem ilk kez bitti. Ama bu demokrasi değil, sauna.",
+    L: {
+      t: "Riskli ama serin binaya",
+      e: [-1, 3, 0, -3],
+      cut: "bina_konteyner",
+    },
+    R: {
+      t: "Sekiz dakika yeter",
+      e: [3, 1, 0, -2],
+      set: "bina_sekiz",
+    },
+  },
+  {
+    id: "bina_tekir",
+    who: "tekir",
+    konu: "Konteyner altı",
+    chain: true,
+    norel: true,
+    text: "(Tekir konteyner makamın altına yerleşmiş, yanında dört yavru. Konteyner Tekir tarafına hafifçe yattı; masadaki kalemler hep o yöne yuvarlanıyor. Çıkarmak için vinç lazım.) Mırr.",
+    L: {
+      t: "Konteyner Tekir'in olsun",
+      e: [3, -4, 0, 1],
+      cut: "bina_konteyner",
+      inc: "tekir",
+      not: "Makam, kaymakamlığın bodrumuna taşındı.",
+    },
+    R: {
+      t: "Vinçle kaldırın",
+      e: [-3, 0, 2, 4],
+      rel: {
+        selin: -1,
+      },
+    },
+  },
+  {
+    id: "meclis_saf",
+    who: "nermin",
+    konu: "Saf değişti",
+    once: true,
+    w: 0.8,
+    minM: 12,
+    text: "Başkanım, dün gece üç meclis üyesi bizim tarafa geçti; biri meclisin meşhur uykucusu Hilmi Bey. Geçtiğini sabah uyanınca öğrendi. Çoğunluk artık muhalefette. Uzlaşırız ya da siz onları geri alırsınız; nasıl, biliyoruz.",
+    L: {
+      t: "Yönetim kurulu verelim",
+      e: [-2, -4, 3, 5],
+      set: "meclis_yk",
+      anket: {
+        ad: "Kurulda üç koltuk",
+        puan: -2,
+      },
+      not: "Nermin Hanım kurul listesini dosyasına koydu.",
+      next: {
+        id: "meclis_kavga",
+        in: [2, 3],
+      },
+    },
+    R: {
+      t: "Uzlaşalım",
+      e: [3, 0, -3, -6],
+      set: "meclis_uzlasma",
+      anket: {
+        ad: "Muhalefetle uzlaşma",
+        puan: 2,
+      },
+      next: {
+        id: "meclis_butce",
+        in: [1, 2],
+      },
+    },
+  },
+  {
+    id: "meclis_butce",
+    who: "sevim",
+    konu: "Bütçe reddi",
+    chain: true,
+    norel: true,
+    text: "Başkanım, meclis bütçeyi reddetti. Nermin Hanım 'kreş girerse evet' diyor. Hilmi Bey oylamada uyuyordu; eli yukarıda kalmış, ret sayıldı. Geçen yılın bütçesiyle de idare ederiz ama kasa daralır.",
+    L: {
+      t: "Kreş bütçeye girsin",
+      e: [5, -4, 0, -2],
+      rel: {
+        nermin: 1,
+      },
+      pol: {
+        id: "kres",
+        ad: "Ücretsiz kreş",
+        e: [0, -1, 0, 0],
+        ay: 12,
+      },
+      next: {
+        id: "meclis_kavga",
+        in: [1, 2],
+      },
+    },
+    R: {
+      t: "Geçen yılın bütçesiyle",
+      e: [-4, 2, -3, 2],
+      rel: {
+        nermin: -1,
+      },
+      next: {
+        id: "meclis_kavga",
+        in: [1, 2],
+      },
+    },
+  },
+  {
+    id: "meclis_kavga",
+    who: "huseyin",
+    konu: "Kürsüde arbede",
+    chain: true,
+    text: "Başkanım, meclis kürsüde birbirine girdi. Kimseye bir şey olmadı; tek zayiat benim semaverim. Kaynar su kimseye değmedi, çay da kalmadı. Hilmi Bey kavga boyunca uyudu, bir tek o dinlenmiş çıktı.",
+    L: {
+      t: "Kavgacılar ödesin",
+      e: [3, 2, 0, -4],
+      set: "meclis_semaver",
+      rel: {
+        nermin: -1,
+      },
+      next: {
+        id: "meclis_katilim",
+        in: [2, 3],
+      },
+    },
+    R: {
+      t: "Belediye ödesin, kapansın",
+      e: [1, -4, 2, 3],
+      set: "meclis_semaver",
+      next: {
+        id: "meclis_katilim",
+        in: [2, 3],
+      },
+    },
+  },
+  {
+    id: "meclis_katilim",
+    who: "nermin",
+    konu: "Katılımcı bütçe",
+    chain: true,
+    text: "Başkanım, katılımcı bütçe oylaması bitti. 500 bin liralık projeyi halk seçti: Tekir'e altın kaplama mama kabı. Kanalizasyon ikinci oldu. Ayşe'nin sınıfı sandığa yüklendi. Bu gidişle seneye başkanı da oylarlar.",
+    L: {
+      t: "Sonucu tanımıyoruz",
+      e: [-5, 3, 0, 2],
+      next: {
+        id: "meclis_rapor",
+        in: [2, 3],
+      },
+    },
+    R: {
+      t: "Sonuca uyalım",
+      e: [5, -4, 0, -3],
+      set: "meclis_mama",
+      inc: "tekir",
+      not: "Tekir, altın mama kabında kendi yüzüne uzun uzun baktı.",
+      next: {
+        id: "meclis_rapor",
+        in: [2, 3],
+      },
+    },
+  },
+  {
+    id: "meclis_rapor",
+    who: "tuncay",
+    konu: "Faaliyet raporu",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, meclis yıllık faaliyet raporunu reddetti. Gerekçe: 'Başkan her sabah 08.00'de makamdaydı' cümlesi. Nermin Hanım kıraathanenin kamera kaydını istemiş. Yarın manşet atacağım; bir demeç verir misiniz?",
+    alt: [
+      {
+        req: "meclis_mama",
+        text: "Başkanım, meclis faaliyet raporunu reddetti; gerekçe 'başkan her sabah 08.00'de makamdaydı' cümlesi. Bir de anket yaptım: 'Başkan kim olsun?' Tekir yüzde 41'le önde, mama kabının fotoğrafı da manşette. Bir demeç?",
+      },
+      {
+        req: "meclis_yk",
+        text: "Başkanım, meclis faaliyet raporunu reddetti. Kurula aldığınız üç üye oylamaya gelmedi; aynı saatte yönetim kurulundaymışlar, huzur hakkı orada. Hilmi Bey ikisinde de uyumuş. Yarın manşet; bir demeç?",
+      },
+    ],
+    L: {
+      t: "Raporu dürüstçe yazın",
+      e: [5, -2, 0, -3],
+      not: "Yeni raporda tavla saatleri de yazıyor.",
+      next: {
+        id: "meclis_hilmi",
+        in: [2, 3],
+      },
+    },
+    R: {
+      t: "Fikret yeniden yazsın",
+      e: [-4, 0, 2, 4],
+      next: {
+        id: "meclis_hilmi",
+        in: [2, 3],
+      },
+    },
+  },
+  {
+    id: "meclis_hilmi",
+    who: "fikret",
+    konu: "Hilmi Bey'in şartı",
+    chain: true,
+    text: "Başkanım, Hilmi Bey geri dönmek istiyor. Tek şartı meclis salonuna şezlong; 'muhalefetin sandalyeleri sert' diyormuş. O dönerse çoğunluk yine bizde. Nermin Hanım duyarsa şezlongu kürsüye çıkarır.",
+    alt: [
+      {
+        req: "meclis_yk",
+        text: "Başkanım, Hilmi Bey yönetim kurulu koltuğu yetmedi diyor; bir de meclis salonuna şezlong istiyor. Vermezsek Nermin Hanım'a geri geçecekmiş. 'Kurulda koltuk rahat, mecliste belim ağrıyor' diyor.",
+      },
+    ],
+    L: {
+      t: "Şezlong gelsin",
+      e: [-2, -3, 2, 5],
+      set: ["meclis_sezlong", "meclis_bitti"],
+      rel: {
+        nermin: -1,
+      },
+      not: "Hilmi Bey şezlongdaki ilk oturumu uyuyarak açtı.",
+    },
+    R: {
+      t: "Şezlong yok, tabure var",
+      e: [3, 1, -2, -3],
+      set: "meclis_bitti",
+      rel: {
+        nermin: 1,
+      },
+    },
+  },
+  {
+    id: "meclis_tekir",
+    who: "nermin",
+    konu: "Başkanı oylayalım",
+    once: true,
+    w: 1,
+    req: ["meclis_mama", "meclis_bitti"],
+    reqCnt: {
+      tekir: 3,
+    },
+    text: "Başkanım, bu yılki katılımcı bütçe oylamasına halk bir seçenek ekledi: 'Başkanı da oylayalım.' Adaylar siz ve Tekir. Tekir'in afişi her direkte, mama kabı altın. Ben tarafsızım; anketler hiç tarafsız değil.",
+    L: {
+      t: "Başkanlık oylanmaz",
+      e: [-4, 0, 0, 4],
+    },
+    R: {
+      t: "Sandık kurulsun",
+      e: [0, 0, 0, 0],
+      son: "tekir",
+    },
+  },
+  {
+    id: "mum_meclis",
+    who: "sevim",
+    konu: "Mum ışığında",
+    minM: 8,
+    cd: 48,
+    norel: true,
+    text: "Başkanım, ödenmeyen fatura yüzünden elektrik şirketi belediyenin elektriğini kesti. Meclis bu akşam mum ışığında toplanacak. Nermin Hanım 'romantik ama usulsüz' dedi. Hüseyin çayı mangalda demliyor.",
+    alt: [
+      {
+        if: {
+          pol: "gunes2",
+        },
+        text: "Başkanım, ödenmeyen fatura yüzünden elektrik şirketi belediyenin elektriğini kesti. Ama biz onlara elektrik satıyorduk! Kim kime borçlu, belli değil. Meclis bu akşam mum ışığında; Nermin Hanım 'romantik ama usulsüz' dedi.",
+      },
+    ],
+    L: {
+      t: "Borcu ödeyin, ışık yansın",
+      e: [3, -6, 0, 3],
+    },
+    R: {
+      t: "Meclis kıraathanede",
+      e: [2, -1, 4, -6],
+      rel: {
+        rahmi: 1,
+      },
+    },
+  },
+  {
+    id: "dorduncu_temel",
+    who: "fikret",
+    konu: "Dördüncü temel",
+    once: true,
+    minM: 18,
+    fav: "L",
+    text: "Başkanım, kültür merkezinin dördüncü temel atma töreni hazır. Eski taşlarda 2011, 2016, 2021 yazıyor; yan yana koyunca merdiven oldu. Suat Bey 'bu sefer kürek bende' diyor. Kurdele de hazır, neyi keseceğiz bilmiyorum.",
+    L: {
+      t: "Dördüncü tören olsun",
+      e: [-3, -3, 2, 6],
+      rel: {
+        vekil: 1,
+      },
+    },
+    R: {
+      t: "Törensiz başlayın",
+      e: [5, -4, 0, -4],
+      rel: {
+        vekil: -1,
+      },
+      pol: {
+        id: "kultur",
+        ad: "Kültür merkezi inşaatı",
+        e: [0, -1, 0, 0],
+        ay: 8,
+        done: [6, 0, 3, 0],
+        msg: "Kültür merkezi dört temelden sonra nihayet bitti; merdiven olan taşlar girişte duruyor.",
+        tags: ["insaat"],
+      },
+    },
+  },
+  {
+    id: "rampa_pencere",
+    who: "fatma",
+    konu: "Engelli rampası",
+    once: true,
+    fav: "L",
+    text: "Başkanım, belediyenin önüne engelli rampası yaptınız, Allah razı olsun. Yalnız rampa birinci kat penceresinde bitiyor. Komşum tekerlekli sandalyeyle çıktı, pencerede kaldı. Kemal Bey 'rampa şartnameye uygun' diyor.",
+    alt: [
+      {
+        if: {
+          pol: "bina_konteyner",
+        },
+        text: "Başkanım, konteyner makama engelli rampası yaptınız, Allah razı olsun. Yalnız rampa konteynerin çatısında bitiyor. Komşum tekerlekli sandalyeyle çıktı, çatıda kaldı. Kemal Bey 'rampa şartnameye uygun' diyor.",
+      },
+    ],
+    L: {
+      t: "Yıkıp baştan yapın",
+      e: [4, -6, 0, 1],
+    },
+    R: {
+      t: "Pencereye GİRİŞ yazın",
+      e: [-5, 3, 2, -1],
+      not: "Pencerenin fotoğrafı bütün ülkeyi dolaştı.",
+    },
+  },
+  {
+    id: "logo_cizgi",
+    who: "burak",
+    konu: "Yeni logo",
+    once: true,
+    fav: "L",
+    text: "Dayı, ajans yeni logoyu yolladı: yatay bir çizgi, üstünde bir nokta. Açıklaması 'kavunun ufukta doğuşu'. Fiyatı 400 bin. Cumhuriyet İlkokulu'ndan Ayşe aynısını teneffüste çizmiş. Ama dayı, sektör böyle çalışmaz.",
+    L: {
+      t: "Ajansın logosu",
+      e: [-4, -5, 2, 5],
+      not: "Tuncay'ın manşeti hazır: 'Çizgi 400 bin, nokta bedava.'",
+    },
+    R: {
+      t: "Ayşe'nin çizimi",
+      e: [6, 0, 0, -5],
+      rel: {
+        elif: 1,
+      },
+    },
+  },
+  // ══ Kavun AŞ · Makam Aracı Destanı · kavşak kamerası ve tek evraklar ══
+  {
+    id: "as_kurulus",
+    who: "kaan",
+    konu: "Belediye şirketi",
+    once: true,
+    w: 0.8,
+    minM: 10,
+    text: "Başkanım, belediye şirketi kuralım: Kavun AŞ! İhale derdi yok, kâr kasaya. Kurul hazır, on dört kişi; çalışan iki kişi, sandalyeler kurula gitti, onlar ayakta. Şirket iyi büyürse belediyeyi bile geçer, benden söylemesi.",
+    L: {
+      t: "Belediye şirket değildir",
+      e: [2, 0, 3, -1],
+    },
+    R: {
+      t: "Kavun AŞ kurulsun",
+      e: [-2, -3, -2, 5],
+      set: "as_kuruldu",
+      pol: {
+        id: "as_huzur",
+        ad: "Kurul huzur hakkı",
+        e: [0, -1, 0, 0],
+        ay: 8,
+        msg: "Kavun AŞ kurulunun ilk huzur hakları ödendi; kurul huzurlu.",
+      },
+      next: {
+        id: "as_akraba",
+        in: [1, 2],
+      },
+    },
+  },
+  {
+    id: "as_akraba",
+    who: "naciye",
+    konu: "Akraba yasağı",
+    chain: true,
+    fav: "L",
+    text: "Evladım, şirketlere akraba yasağı gelmiş. Dilekçe verdim: kayınvalide kaçıncı derece? Kâğıtta dördüncüyüm, gönülden birinciyim. Kurulda bir sandalye isterim. Burak 'yeğen üçüncü derece' deyip şirkete çoktan girdi.",
+    alt: [
+      {
+        req: "yegen",
+        text: "Evladım, akraba yasağı gelince Burak belediyeden kaçıp Kavun AŞ'ye geçti, 'yeğen üçüncü derece' diyor. Ben de dilekçe verdim: kayınvalide kaçıncı derece? Kâğıtta dördüncü, gönülden birinciyim. Kurulda yer isterim.",
+      },
+    ],
+    L: {
+      t: "Kurula buyurun anne",
+      e: [-4, 1, 0, -1],
+      cut: "yegen",
+      set: "as_naciye",
+      anket: {
+        ad: "Kurulda kayınvalide",
+        puan: -1,
+      },
+      not: "Naciye Hanım kurula dolmayla geldi; Nermin Hanım dosya açtı.",
+      next: {
+        id: "as_su",
+        in: 2,
+      },
+    },
+    R: {
+      t: "Gönülden birincisiniz",
+      e: [3, 0, 0, 1],
+      cut: "yegen",
+      next: {
+        id: "as_su",
+        in: 2,
+      },
+    },
+  },
+  {
+    id: "as_su",
+    who: "burak",
+    konu: "İlk ürün",
+    chain: true,
+    text: "Dayı, Kavun AŞ'nin ilk ürünü hazır: kavun aromalı şişe su! Musluktan doldurup bir damla esans katıyoruz, etikette senin fotoğrafın var. Maliyet sıfır, kâr sonsuz. Bu gidişle şirket belediyeden büyük olur dayı!",
+    L: {
+      t: "Musluk suyu musluktan",
+      e: [3, 0, 2, 0],
+      next: {
+        id: "as_kafe",
+        in: 2,
+      },
+    },
+    R: {
+      t: "Şişeleyin gitsin",
+      e: [-3, 3, -2, 0],
+      inc: "as_buyume",
+      next: {
+        id: "as_kafe",
+        in: 2,
+      },
+    },
+  },
+  {
+    id: "as_kafe",
+    who: "bekir",
+    konu: "Şirketin kafesi",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, Kavun AŞ çarşıya kafe açtı; çay on lira, Rahmi'nin yarı fiyatı! Hüseyin'in ocağında sinek avlanıyor, kıraathanede okey masası kurulmuyor. Belediyenin şirketi esnafa rakip mi oldu? Şube de açacaklarmış.",
+    L: {
+      t: "Kafe kapansın",
+      e: [-3, -2, 7, 0],
+      rel: {
+        huseyin: 1,
+        rahmi: 1,
+      },
+      next: {
+        id: "as_arac",
+        in: [2, 3],
+      },
+    },
+    R: {
+      t: "Şube açalım",
+      e: [4, 2, -7, 0],
+      inc: "as_buyume",
+      rel: {
+        huseyin: -1,
+        rahmi: -1,
+      },
+      not: "Hüseyin ocağı söndürmedi ama size küstü.",
+      next: {
+        id: "as_arac",
+        in: [2, 3],
+      },
+    },
+  },
+  {
+    id: "as_arac",
+    who: "nermin",
+    konu: "Operasyonel araç",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, Kavun AŞ 'operasyonel araç' diye deri döşemeli siyah bir makam aracı almış; her sabah sizi evden alıyor. Şirketin iki çalışanı var, biri artık şoför. Soru önergem hazır: bu kimin aracı?",
+    alt: [
+      {
+        req: "bisiklet",
+        text: "Başkanım, siz bisiklete bindiniz diye Kavun AŞ 'operasyonel araç' adıyla deri döşemeli bir araç almış; her sabah bisikletinizi bagajında makama taşıyor. Şirketin iki çalışanı var, biri şoför oldu.",
+      },
+      {
+        if: {
+          pol: "kemer",
+        },
+        text: "Başkanım, tasarruf genelgesi yürürlükte ama Kavun AŞ 'operasyonel araç' diye deri döşemeli bir makam aracı almış; her sabah sizi evden alıyor. Genelge belediyeyi bağlıyor da şirketi bağlamıyor mu?",
+      },
+    ],
+    L: {
+      t: "Araç iade edilsin",
+      e: [3, 1, -2, 2],
+      next: {
+        id: "as_zarar",
+        in: [3, 4],
+      },
+    },
+    R: {
+      t: "Kavun da taşır, kalsın",
+      e: [-4, 0, 4, -3],
+      set: "as_makam",
+      anket: {
+        ad: "Kavun AŞ'nin makam aracı",
+        puan: -2,
+      },
+      next: {
+        id: "as_zarar",
+        in: [3, 4],
+      },
+    },
+  },
+  {
+    id: "as_zarar",
+    who: "sevim",
+    konu: "Şirket bilançosu",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, Kavun AŞ'nin bilançosu geldi: cirosu belediye bütçesine yaklaştı, gideri geçti. On dört kişilik kurul, şoför, danışmanlık... Şirket sermaye artırımı istiyor. Artırmazsak kapanır, artırırsak büyür.",
+    alt: [
+      {
+        req: "as_naciye",
+        text: "Başkanım, Kavun AŞ'nin bilançosu geldi: cirosu bütçemize yaklaştı, gideri geçti. On dört kişilik kurul, şoför, Naciye Hanım'ın dolmalı toplantıları... Şirket sermaye artırımı istiyor; artırmazsak kapanır.",
+      },
+    ],
+    L: {
+      t: "Şirket kapansın",
+      e: [2, -1, 3, -2],
+      set: "as_kapandi",
+      cut: "as_huzur",
+      rel: {
+        burak: -1,
+        kaan: -1,
+      },
+      not: "Burak işsiz kaldı; 'aile içi şeffaflık' diye video çekiyor.",
+    },
+    R: {
+      t: "Sermayeyi artıralım",
+      e: [-2, -8, 0, 3],
+      inc: "as_buyume",
+      set: "as_sermaye",
+      next: {
+        id: "as_devir",
+        in: [4, 6],
+        if: {
+          req: "as_kuruldu",
+          cnt: {
+            as_buyume: 2,
+          },
+        },
+      },
+    },
+  },
+  {
+    id: "as_devir",
+    who: "kaan",
+    konu: "Devir teklifi",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, Kavun AŞ'nin cirosu belediye bütçesini geçti! Kurul teklif getirdi: belediyeyi şirkete iştirak olarak bağlayalım. Siz de şube müdürü olursunuz; maaş iyi, seçim yok, yalnız satış hedefi var.",
+    L: {
+      t: "Belediyeyi şirkete bağla",
+      e: [0, 0, 0, 0],
+      son: "as_sube",
+    },
+    R: {
+      t: "Belediye belediyedir",
+      e: [4, 0, -3, 0],
+      set: "as_bagimsiz",
+      pol: {
+        id: "as_temettu",
+        ad: "Kavun AŞ temettüsü",
+        e: [0, 1, -1, 0],
+        ay: 8,
+      },
+    },
+  },
+  {
+    id: "arac_haciz",
+    who: "fikret",
+    konu: "Yolda haciz",
+    chain: true,
+    text: "Başkanım, prim taksiti aksadı, yapılandırma bozuldu; Ankara dönüşü otoyolda makam aracına haciz geldi! Araç çekiciyle gitti, biz jandarma karakolunda kaldık, ben semaver kurdum. Dursun Ağa 'traktörle gelir alırım' diyor.",
+    L: {
+      t: "Borcu kasadan kapatın",
+      e: [-2, -9, 0, 5],
+      cut: "sgk",
+    },
+    R: {
+      t: "Traktörle dönerim",
+      e: [6, 0, 0, -4],
+      set: ["arac_traktor", "arac_yok"],
+      rel: {
+        dursun: 1,
+      },
+      not: "Traktörün kasasındaki fotoğrafınız bütün gruplarda.",
+      next: ["arac_artirma", 1],
+    },
+  },
+  {
+    id: "arac_artirma",
+    who: "cengiz",
+    konu: "Açık artırma",
+    chain: true,
+    text: "Başkanım, hacizli makam aracınız açık artırmada; tek teklif benden, bedeli de pek mütevazı. Borcunuz kapanır, üstü kasaya kalır. Ben hayır için alıyorum; lazım olursa aynı aracı size kiralarım, şoförü bile aynı.",
+    L: {
+      t: "Borcu ödeyip aracı alın",
+      e: [-2, -8, 0, 3],
+      cut: "sgk",
+      clr: "arac_yok",
+    },
+    R: {
+      t: "Satılsın, borç kapansın",
+      e: [2, 4, 0, -3],
+      cut: "sgk",
+      next: ["arac_kira", 1],
+    },
+  },
+  {
+    id: "arac_kira",
+    who: "cengiz",
+    konu: "Kiralık makam",
+    chain: true,
+    text: "Başkanım, artırmada aldığım aracı size aylık kirayla vereyim. Plaka aynı, koltuk aynı, torpidodaki tespihiniz bile yerinde. Yoksa makama traktörle mi geleceksiniz? Bisiklete binin, Ankara sizi afişe basar.",
+    L: {
+      t: "Bisiklet bana yeter",
+      e: [3, 1, 0, -1],
+      set: "bisiklet",
+      pol: {
+        id: "pedal",
+        ad: "Bisikletli makam",
+        e: [0, 1, 0, 0],
+        ay: 10,
+        doneCard: "arac_elci",
+        msg: "Bisikletli makamın onuncu ayı doldu; Ankara'dan telefon var.",
+      },
+      next: ["bisiklet", 1],
+    },
+    R: {
+      t: "Kiralayalım",
+      e: [-2, -2, 0, 2],
+      set: "arac_kiralik",
+      clr: "arac_yok",
+      pol: {
+        id: "arac_kira",
+        ad: "Makam aracı kirası",
+        e: [0, -1, 0, 0],
+        ay: 24,
+        tags: ["kiralik"],
+      },
+      next: {
+        id: "arac_fatura",
+        in: 11,
+        if: {
+          pol: "arac_kira",
+        },
+      },
+    },
+  },
+  {
+    id: "arac_fatura",
+    who: "nermin",
+    konu: "Kira hesabı",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, hesapladım: Cengiz Bey'e on iki ayda ödediğimiz kira, aracı ona sattığımız bedeli geçti. Aracımızı geri aldık, parasını da verdik, araç hâlâ onun. Bisiklete binseniz Ankara bile alkışlar.",
+    L: {
+      t: "Kira bitsin, pedala",
+      e: [3, -2, 0, 0],
+      cut: "arac_kira",
+      clr: "arac_kiralik",
+      set: ["bisiklet", "arac_yok"],
+      rel: {
+        cengiz: -1,
+      },
+      pol: {
+        id: "pedal",
+        ad: "Bisikletli makam",
+        e: [0, 1, 0, 0],
+        ay: 10,
+        doneCard: "arac_elci",
+        msg: "Bisikletli makamın onuncu ayı doldu; Ankara'dan telefon var.",
+      },
+      next: ["bisiklet", 1],
+    },
+    R: {
+      t: "Kira sürsün, araç lazım",
+      e: [-3, 0, 1, 2],
+      set: "arac_kotu",
+      rel: {
+        cengiz: 1,
+      },
+      anket: {
+        ad: "Kendi aracına kira",
+        puan: -2,
+      },
+      not: "Nermin Hanım kira makbuzlarını dosyasına ekledi.",
+    },
+  },
+  {
+    id: "arac_genelge",
+    who: "kaymakam",
+    konu: "Kiralık araç",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, tasarruf genelgesi yürürlükte, Ankara soruyor: kiralık makam aracı 'yeni araç' sayılır mı? Cengiz Bey 'yeni değil, sizin eski aracınız' diyor. Ankara tasarrufa bir yüz arıyor; o yüz siz olabilirsiniz.",
+    L: {
+      t: "İade edelim, pedala",
+      e: [2, 1, -2, 4],
+      cut: "arac_kira",
+      clr: ["arac_kiralik", "arac_kotu"],
+      set: ["bisiklet", "arac_yok"],
+      rel: {
+        cengiz: -1,
+      },
+      pol: {
+        id: "pedal",
+        ad: "Bisikletli makam",
+        e: [0, 1, 0, 0],
+        ay: 10,
+        doneCard: "arac_elci",
+        msg: "Bisikletli makamın onuncu ayı doldu; Ankara'dan telefon var.",
+      },
+      next: ["bisiklet", 1],
+    },
+    R: {
+      t: "Kiralık değil, emanet",
+      e: [-2, 0, 1, -4],
+    },
+  },
+  {
+    id: "arac_elci",
+    who: "vekil",
+    konu: "Tasarrufun yüzü",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, Ankara sizi tasarruf kampanyasının yüzü yapmak istiyor: 'Pedal Çevir, Kamuyu Çevir.' Her ilçeye bisikletli afişiniz asılacak. Yalnız Ankara'ya taşınacaksınız; unvanınız Kamu Tasarrufu Koordinatörü.",
+    alt: [
+      {
+        req: ["as_makam", "as_kuruldu"],
+        text: "Başkanım, Ankara sizi tasarruf kampanyasının yüzü yapmak istiyor: 'Pedal Çevir, Kamuyu Çevir.' Yalnız Kavun AŞ'nin siyah aracı kadraja girmesin; bisikleti bagajdan indirip öyle çekeceğiz. Unvanınız Koordinatör, yeriniz Ankara.",
+      },
+    ],
+    L: {
+      t: "Koordinatörlüğü kabul et",
+      e: [0, 0, 0, 0],
+      son: "pedal",
+    },
+    R: {
+      t: "Pedal Karakavak'ta döner",
+      e: [7, 0, 2, -6],
+      set: "arac_iyi",
+      anket: {
+        ad: "Bisikletli başkan",
+        puan: 2,
+      },
+    },
+  },
+  {
+    id: "kavsak_kamera",
+    who: "mahir",
+    konu: "Kavşak kamerası",
+    once: true,
+    minM: 8,
+    text: "Başkanım, ilçenin tek trafik ışığına ceza kamerası takalım. Kural oturur, ceza kasaya girer. Yalnız kamera göz yummaz; ilk cezayı kime yazacağı belli olmaz, ona göre.",
+    alt: [
+      {
+        req: "karaca",
+        text: "Başkanım, ilçenin tek trafik ışığına ceza kamerası takalım. Kural oturur, ceza kasaya girer. Yalnız kamera göz yummaz; eşek Karaca'nın yokuş aşağı hızına bile ceza yazar, ona göre.",
+      },
+    ],
+    L: {
+      t: "Işık bize yeter",
+      e: [3, 0, 1, -3],
+    },
+    R: {
+      t: "Kamera takılsın",
+      e: [-3, 0, -2, 4],
+      pol: {
+        id: "kamera",
+        ad: "Kavşak kamerası",
+        e: [-1, 1, 0, 0],
+        ay: 12,
+        msg: "Kavşak kamerasının bir yılı doldu; ceza fişleri arşive kaldırıldı.",
+        yan: [
+          {
+            card: "kamera_makam",
+            p: 0.15,
+            min: 3,
+          },
+          {
+            card: "kamera_kacak",
+            p: 0.12,
+            min: 4,
+          },
+          {
+            card: "kamera_tekir",
+            p: 0.12,
+            min: 5,
+          },
+        ],
+      },
+    },
+  },
+  {
+    id: "kamera_makam",
+    who: "fikret",
+    konu: "İlk ceza",
+    chain: true,
+    text: "Başkanım, kavşak kamerası ilk cezayı makam aracına yazdı: kırmızıda geçmişiz. Fotoğrafta arka koltukta ben simit yiyorum, susamlar bile seçiliyor. Kamerayı mı söktürelim, cezayı mı ödeyelim?",
+    alt: [
+      {
+        req: "bisiklet",
+        text: "Başkanım, kavşak kamerası ilk cezayı bisikletinize yazdı: kırmızıda geçmişsiniz. Fotoğrafta arkanızda ben simit yiyorum; bisiklet tek kişilik, nasıl sığdık bilmiyorum. Kamerayı mı söktürelim, cezayı mı ödeyelim?",
+      },
+      {
+        req: "arac_kiralik",
+        text: "Başkanım, kavşak kamerası ilk cezayı kiralık makam aracına yazdı; Cengiz Bey mi öder biz mi, sözleşmede yok. Fotoğrafta arka koltukta ben simit yiyorum, susamlar bile seçiliyor. Söktürelim mi, ödeyelim mi?",
+      },
+      {
+        req: "arac_yok",
+        text: "Başkanım, kavşak kamerası ilk cezayı Dursun Ağa'nın traktörüne yazdı: sizi makama getirirken kırmızıda geçmiş. Fotoğrafta römorkta ben simit yiyorum. Kamerayı mı söktürelim, cezayı mı ödeyelim?",
+      },
+    ],
+    L: {
+      t: "Kamerayı söktürün",
+      e: [-3, 0, 1, -3],
+      cut: "kamera",
+    },
+    R: {
+      t: "Cezayı ödeyin",
+      e: [5, -2, 0, 2],
+    },
+  },
+  {
+    id: "kamera_kacak",
+    who: "recep",
+    konu: "Hızlandırılmış kat",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, kavşak kamerası gece Kavaklı'da bir eve kat çıkıldığını kaydetmiş. Hızlandırılmış video gruplarda 'Bir gecede bir kat' diye dönüyor; duvarcı usta reklam oldu diye telefonuna bakamıyor.",
+    L: {
+      t: "Kaçak kat yıkılsın",
+      e: [-4, 2, 0, 5],
+    },
+    R: {
+      t: "Kamera sökülsün",
+      e: [4, -1, 0, -2],
+      cut: "kamera",
+    },
+  },
+  {
+    id: "kamera_tekir",
+    who: "selin",
+    konu: "Kayıp bulundu",
+    chain: true,
+    text: "Başkanım, üç gündür kayıp olan Tekir'i kavşak kamerası buldu! Gece ikide yaya geçidinde yeşili beklemiş, sonra geçmiş. Bir yılın kayıtlarına baktık: ilçede kırmızıda duran tek canlı o.",
+    L: {
+      t: "Görüntü afiş olsun",
+      e: [5, -1, 0, 3],
+      inc: "tekir",
+    },
+    R: {
+      t: "Kamera yerine Tekir",
+      e: [3, -1, 1, -2],
+      cut: "kamera",
+    },
+  },
+  {
+    id: "durust_durak",
+    who: "deniz",
+    konu: "Akıllı durak",
+    once: true,
+    minM: 6,
+    fav: "L",
+    text: "Başkanım, kampüs yolundaki akıllı durak üç saattir 'Otobüs: 3 dk' gösteriyor. Durakta ders çalışan arkadaşım tezini bitirdi, otobüs hâlâ üç dakika uzakta. Yazılımı değil, otobüsü güncelleyin!",
+    L: {
+      t: "Ekrana 'Belki gelir' yazın",
+      e: [5, 0, 0, -3],
+    },
+    R: {
+      t: "Ekran reklama kiralansın",
+      e: [-4, 4, 2, 0],
+    },
+  },
+  {
+    id: "mal_beyani",
+    who: "fikret",
+    konu: "Mal beyanı",
+    once: true,
+    minM: 12,
+    text: "Başkanım, mal beyanınızın taslağı hazır: 1 tavla (sedef kakmalı), 1 hediye telefon (kayıtsız), 1 bağ evi (kayınvalide üstüne), 14 kavanoz tarhana (kooperatiften). Olduğu gibi mi verelim, biraz sadeleştirelim mi?",
+    L: {
+      t: "Olduğu gibi yazın",
+      e: [4, 0, 0, -2],
+      rel: {
+        tuncay: 1,
+      },
+      anket: {
+        ad: "Sedef kakmalı mal beyanı",
+        puan: 1,
+      },
+      not: "Tuncay'ın manşeti hazır: 'Başkanın tavlası sedef!'",
+    },
+    R: {
+      t: "Biraz sadeleştirelim",
+      e: [-1, 0, 0, 2],
+      next: {
+        id: "beyan_eksik",
+        in: [3, 5],
+      },
+    },
+  },
+  {
+    id: "beyan_eksik",
+    who: "nermin",
+    konu: "Eksik beyan",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, mal beyanınızda bir telefon eksik. Nereden mi biliyorum? Meclis toplantısında cebinizde çaldı; zil sesi de kavun şarkısı. Kayıtsız, beyansız, bir de şarkılı. Siz mi düzeltirsiniz, ben mi basına vereyim?",
+    alt: [
+      {
+        if: {
+          rel: {
+            nermin: 2,
+          },
+        },
+        text: "Başkanım, basına gitmeden dostça söylüyorum: mal beyanınızda bir telefon eksik. Meclis toplantısında cebinizde çaldı, zil sesi de kavun şarkısı. Kayıtsız, beyansız. Siz mi düzeltirsiniz, ben mi yazayım?",
+      },
+    ],
+    L: {
+      t: "Beyanı düzeltip harcı öde",
+      e: [2, -6, 0, 2],
+      anket: {
+        ad: "Düzeltilen mal beyanı",
+        puan: -1,
+      },
+    },
+    R: {
+      t: "O telefon Fikret'in",
+      e: [-3, 0, 0, -2],
+      anket: {
+        ad: "Kayıtsız hediye telefon",
+        puan: -3,
+      },
+    },
+  },
+  {
+    id: "personel_tavan",
+    who: "sevim",
+    konu: "Personel tavanı",
+    once: true,
+    minM: 12,
+    fav: "L",
+    text: "Başkanım, personel gideri tavanı geldi. Ya Çaycı Hüseyin gidecek ya Fen İşleri'nden üç kepçeci. Üçüncü yol: kepçecileri bir şirkete kaydırmak, tavan şirkete işlemiyor. Kemal Bey 'kepçecim şirketli olmaz' diye ayakta.",
+    alt: [
+      {
+        req: "as_kuruldu",
+        text: "Başkanım, personel gideri tavanı geldi. Ya Çaycı Hüseyin gidecek ya Fen İşleri'nden üç kepçeci. Kaan Bey 'kepçecileri Kavun AŞ'ye yazalım, tavan şirkete işlemez' diyor. Kemal Bey 'kepçecim şirketli olmaz' diye ayakta.",
+      },
+    ],
+    L: {
+      t: "Çay ocağı dışarıya",
+      e: [-3, 4, 2, 1],
+      rel: {
+        huseyin: -2,
+      },
+    },
+    R: {
+      t: "Kepçeciler şirkete",
+      e: [2, 2, 0, -4],
+      rel: {
+        kemal: -1,
+      },
+      pol: {
+        id: "yavas",
+        ad: "Fen İşleri ağırdan alıyor",
+        e: [-1, 0, 0, 0],
+        ay: 5,
+      },
+    },
+  },
+  // ══ Kavun Krallığı · Setten Makama · yapay zekâ ve fenomen evrakları ══
+  {
+    id: "kral_gunbatimi",
+    who: "dursun",
+    konu: "Gün batımı",
+    once: true,
+    minM: 12,
+    months: [4, 5, 6, 7, 8],
+    text: "Başkanım, bir gezi hesabı ovadaki gün batımını paylaşmış: 'Karakavak'ın altın saati.' Hafta sonu tarlaya 400 araç girdi; gelinlik çekimi, drone, ezik kavun. Bilet koyarsak kasa dolar ama İstanbullu yatırımcının gözü tarlaya düşer.",
+    L: {
+      t: "Tarlaya giriş bileti",
+      e: [-4, 2, 4, 0],
+      pol: {
+        id: "kral_bilet",
+        ad: "Tarla bileti",
+        e: [0, 1, 0, 0],
+        ay: 10,
+        msg: "Tarla bileti sezonu kapandı; ovada yine yalnız kavun var.",
+        yan: [
+          {
+            card: "kral_park",
+            p: 0.2,
+          },
+        ],
+      },
+      next: {
+        id: "kral_rekor",
+        in: [1, 2],
+      },
+    },
+    R: {
+      t: "Tarlaya bekçi koyun",
+      e: [3, -3, -4, 0],
+      set: "kral_bekci",
+      next: {
+        id: "kral_rekor",
+        in: [1, 2],
+      },
+    },
+  },
+  {
+    id: "kral_rekor",
+    who: "fikret",
+    konu: "Rekor denemesi",
+    chain: true,
+    text: "Başkanım, madem ün geldi, 'dünyanın en uzun kavun dilimi' rekorunu deneyelim: 200 metre! O boyda kavun yok tabii; dilimleri uç uca ekleyip tek dilim sayacağız. Hakem İstanbul'dan geliyor, ölçü şeridini ben aldım bile.",
+    alt: [
+      {
+        req: "kral_bekci",
+        text: "Başkanım, tarlaya bekçi koyduk ama ün kapıdan girdi. Bari 'dünyanın en uzun kavun dilimi' rekorunu deneyelim: 200 metre! O boyda kavun yok; dilimleri uç uca ekleyip tek dilim sayacağız. Ölçü şeridini aldım bile.",
+      },
+    ],
+    L: {
+      t: "Rekoru deneyelim",
+      e: [3, -6, 5, 0],
+      set: "kral_rekor",
+      next: {
+        id: "kral_dilim",
+        in: 1,
+      },
+    },
+    R: {
+      t: "Vazgeç Fikret",
+      e: [-2, 2, -3, 0],
+      not: "Fikret ölçü şeridini sessizce çekmeceye koydu.",
+      next: {
+        id: "kral_video",
+        in: [3, 5],
+      },
+    },
+  },
+  {
+    id: "kral_dilim",
+    who: "tuncay",
+    konu: "Rekor sonucu",
+    chain: true,
+    norel: true,
+    text: "Başkanım, dilim 182. metrede bitti; kalan 18 metreyi karpuzla tamamladık. Hakem 'bu kavun dilimi değil, meyve salatası' dedi, rekor yok. Ama görüntüler 3 milyon izlendi. Manşete ne yazalım?",
+    L: {
+      t: "'Rekor bizde' yazın",
+      e: [5, 0, 2, -3],
+      anket: {
+        ad: "Karpuzlu kavun rekoru",
+        puan: -1,
+      },
+      next: {
+        id: "kral_video",
+        in: [2, 4],
+      },
+    },
+    R: {
+      t: "Meyve salatası rekoru",
+      e: [0, -2, 1, 3],
+      next: {
+        id: "kral_video",
+        in: [2, 4],
+      },
+    },
+  },
+  {
+    id: "kral_park",
+    who: "kaan",
+    konu: "Kavunlandia",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, biletli tarla tuttu; sırada Kavunlandia var! Kavun dilimi salıncak, dev kavun dönme dolap, kabuktan çarpışan araba. Çocuklar şimdiden kapıda 'kavun treni' sırasına girdi. Arsa sizden, gerisi benden.",
+    alt: [
+      {
+        req: "devkavun",
+        text: "Başkanım, biletli tarla tuttu; sırada Kavunlandia var! Kavun dilimi salıncak, kabuktan çarpışan araba; meydandaki dev kavun heykelini de dönme dolabın göbeğine koyarız. Arsa sizden, gerisi benden.",
+      },
+    ],
+    L: {
+      t: "Kavunlandia açılsın",
+      e: [2, -6, 6, -2],
+      set: "kral_park",
+      pol: {
+        id: "kral_park",
+        ad: "Kavunlandia",
+        e: [0, 0, 1, 0],
+        ay: 10,
+        msg: "Kavunlandia'nın ilk sezonu kapandı; dönme dolap kışa branda giydi.",
+      },
+      next: {
+        id: "kral_tac",
+        in: [3, 5],
+        if: {
+          req: ["kral_tac", "kral_israr", "kral_park"],
+        },
+      },
+    },
+    R: {
+      t: "Tarla köylüye kalsın",
+      e: [2, -1, -4, 0],
+      cut: "kral_bilet",
+      rel: {
+        dursun: 1,
+      },
+    },
+  },
+  {
+    id: "kral_video",
+    who: "burak",
+    konu: "Kavun Kralı",
+    chain: true,
+    fav: "L",
+    text: "Dayı, festival videosu 5 milyon izlendi! Sen sahneye çıkınca kalabalık 'Kavun Kralı! Kavun Kralı!' diye tempo tutuyor. Hatice Abla kavun kabuğundan taç örmüş, getirdi. Tak şunu, internet yıkılır.",
+    alt: [
+      {
+        req: "kral_rekor",
+        text: "Dayı, rekor gecesinin videosu 5 milyon izlendi! Karpuzlu dilimin başında kalabalık 'Kavun Kralı! Kavun Kralı!' diye tempo tutuyor. Hatice Abla kavun kabuğundan taç örmüş, getirdi. Tak şunu, internet yıkılır.",
+      },
+    ],
+    L: {
+      t: "Tacı tak",
+      e: [4, 0, 2, -5],
+      set: "kral_tac",
+      not: "Taç başınızda. Ankara'da da internet var.",
+      next: {
+        id: "kral_protokol",
+        in: [1, 2],
+        if: {
+          req: "kardes_sehir",
+        },
+        else: "kral_genelge",
+      },
+    },
+    R: {
+      t: "Ben hizmetkârım",
+      e: [1, 0, -2, 3],
+    },
+  },
+  {
+    id: "kral_protokol",
+    who: "ingrid",
+    konu: "Kardeş krallık",
+    chain: true,
+    text: "Sayın Başkan, taçlı videonuzu bizim kasabada da izlediler! Meclisimiz 'kardeş şehir' yetmez, 'kardeş krallık' olalım diyor. Protokolü getirdim: altına imza, üstüne mühür, en tepeye de bir taç çizdik.",
+    L: {
+      t: "Krallıklar kardeştir",
+      e: [2, 0, 4, -6],
+      set: "kral_kardes",
+      next: {
+        id: "kral_genelge",
+        in: [1, 2],
+      },
+    },
+    R: {
+      t: "Nazikçe geri çevir",
+      e: [-2, 0, -2, 5],
+      next: {
+        id: "kral_genelge",
+        in: [1, 2],
+      },
+    },
+  },
+  {
+    id: "kral_genelge",
+    who: "kaymakam",
+    konu: "Kral meselesi",
+    chain: true,
+    text: "Başkanım, taçlı videonuz Ankara'da izlenmiş. 'Kral' kelimesinden hiç hoşlanılmadı; valilikten yazı geldi: 'İlçemizde kaymakam, başkan ve muhtar vardır.' Tacı müzeye kaldırırsanız dosyayı kapatırım.",
+    alt: [
+      {
+        req: "kral_kardes",
+        text: "Başkanım, taçlı videonuz Ankara'da izlenmiş; üstüne bir de 'kardeş krallık' protokolü imzalamışsınız. Valilikten yazı geldi: 'İlçemizde kaymakam, başkan ve muhtar vardır.' Tacı müzeye kaldırırsanız dosyayı kapatırım.",
+      },
+    ],
+    L: {
+      t: "Sadece kavun kralıyım",
+      e: [3, 0, 2, -8],
+      set: "kral_israr",
+      not: "Selim Bey bunu tutanağa 'kral' diye geçirdi.",
+      next: {
+        id: "kral_tac",
+        in: [3, 5],
+        if: {
+          req: ["kral_tac", "kral_israr", "kral_park"],
+        },
+      },
+    },
+    R: {
+      t: "Taç müzeye",
+      e: [-3, 0, -1, 6],
+      clr: "kral_tac",
+      set: "kral_muze",
+    },
+  },
+  {
+    id: "kral_tac",
+    who: "fikret",
+    konu: "Taç giyme",
+    chain: true,
+    text: "Başkanım, taç giyme töreni hazır. Meydana sahne kuruldu, Hatice Abla tacı cilaladı, bando 'Yaşasın Kral'ı çalışıyor, tabelacı 'Kavun Krallığı Karakavak' yazdı. Kavunlandia'nın dolabı süslendi. Bir 'evet' deyin, başvezir hazır.",
+    alt: [
+      {
+        req: "kral_kardes",
+        text: "Başkanım, taç giyme töreni hazır. Kardeş krallıktan tebrik telgrafı geldi, bando 'Yaşasın Kral'ı çalışıyor, tabelacı 'Kavun Krallığı Karakavak' yazdı. Kavunlandia'nın dolabı süslendi. Bir 'evet' deyin, başvezir hazır.",
+      },
+      {
+        if: {
+          pol: "tescil",
+        },
+        text: "Başkanım, taç giyme töreni hazır. Tescilli kavunun tescilli kralı olacaksınız; bando 'Yaşasın Kral'ı çalışıyor, tabelacı 'Kavun Krallığı Karakavak' yazdı. Kavunlandia'nın dolabı süslendi. Bir 'evet' deyin, başvezir hazır.",
+      },
+    ],
+    L: {
+      t: "Tacı giy",
+      e: [0, 0, 0, 0],
+      son: "kavun_krali",
+    },
+    R: {
+      t: "Tacı festivale bağışla",
+      e: [3, -2, 0, 3],
+      clr: "kral_tac",
+      set: "kral_muze",
+      anket: {
+        ad: "Festivale bağışlanan taç",
+        puan: 2,
+      },
+      not: "Taç festival müzesinde. Fikret başvezir cübbesini katladı.",
+    },
+  },
+  {
+    id: "set_evi",
+    who: "naciye",
+    konu: "Dizi evi",
+    once: true,
+    w: 0.9,
+    fav: "L",
+    req: "dizi_yayinda",
+    text: "Evladım, dizide kavun baronunun konağı diye benim evi göstermişler. Kapıda kuyruk var; bilet masası kurdum, dolmayı tanesiyle satıyorum. Zabıta 'ruhsat' dedi. Ben senin menajerin olsam sen çoktan zengin olmuştun.",
+    L: {
+      t: "Belediye tur rotası",
+      e: [-3, 3, 4, 0],
+      pol: {
+        id: "set_tur",
+        ad: "Dizi evi turu",
+        e: [0, 1, 0, 0],
+        ay: 8,
+        msg: "Dizi evi turu bitti; Naciye Hanım bilet masasını kaldırdı, dolma fiyatı düştü.",
+      },
+      next: {
+        id: "set_teklif",
+        in: [2, 3],
+      },
+    },
+    R: {
+      t: "Ev ücretsiz gezilsin",
+      e: [3, -2, -2, 0],
+      not: "Naciye Hanım bilet koçanını tek kelime etmeden geri verdi.",
+      next: {
+        id: "set_teklif",
+        in: [2, 3],
+      },
+    },
+  },
+  {
+    id: "set_teklif",
+    who: "kaan",
+    konu: "Kendini oyna",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, yapımcı ikinci sezonda gerçek başkanı istiyor: kendinizi oynayacaksınız. Tek sahne, üç replik: kavun baronunun rüşvetini reddeden dürüst başkan. Ödeme yok ama kamera sizi sağ profilden alacak.",
+    alt: [
+      {
+        req: "dizi_dava",
+        text: "Başkanım, dava açtığınız yapımcı barış istiyor: ikinci sezonda kendinizi oynayın, dava düşsün. Tek sahne: kavun baronunun rüşvetini reddeden dürüst başkan. Ödeme yok ama kamera sizi sağ profilden alacak.",
+      },
+    ],
+    L: {
+      t: "Rolü alıyorum",
+      e: [4, 0, 3, -4],
+      set: "set_rol",
+      next: {
+        id: "set_kostum",
+        in: [1, 2],
+      },
+    },
+    R: {
+      t: "Makam sahne değil",
+      e: [-2, 0, -3, 4],
+      next: {
+        id: "set_intikam",
+        in: [4, 6],
+      },
+    },
+  },
+  {
+    id: "set_kostum",
+    who: "nermin",
+    konu: "Kostümlü meclis",
+    chain: true,
+    text: "Başkanım, meclise sette giydiğiniz kaşe paltoyla, makyajınızla geldiniz. Bütçe görüşmesinde masaya vurup repliği patlattınız: 'Bu kasabanın kavunu satılık değil!' Galeri ayakta. Tutanağa 'tiyatro' mu yazayım, 'alkış' mı?",
+    L: {
+      t: "Rolüme sadığım",
+      e: [4, 0, 1, -3],
+      set: "set_kostum",
+      anket: {
+        ad: "Meclise baron paltosuyla",
+        puan: -1,
+      },
+      next: {
+        id: "set_viral",
+        in: [1, 2],
+      },
+    },
+    R: {
+      t: "Meclisten özür dilerim",
+      e: [-3, 0, 0, 3],
+      next: {
+        id: "set_viral",
+        in: [1, 2],
+      },
+    },
+  },
+  {
+    id: "set_viral",
+    who: "burak",
+    konu: "8 milyon",
+    chain: true,
+    fav: "L",
+    text: "Dayı, sahnen 8 milyon izlendi! 'Yılın doğal oyuncusu' ödülüne adaysın. Tören İstanbul'da, bütçe oylamasıyla aynı gün. İki menajer aradı; biri 'başkanlığı bırakırsa iki sezon garanti' dedi. Ben cevap vermedim, tabii.",
+    alt: [
+      {
+        req: "set_kostum",
+        text: "Dayı, meclisteki 'kavun satılık değil' çıkışın 8 milyon izlendi! 'Yılın doğal oyuncusu' ödülüne adaysın. Tören İstanbul'da, bütçe oylamasıyla aynı gün. Bir menajer 'başkanlığı bırakırsa iki sezon garanti' dedi.",
+      },
+    ],
+    L: {
+      t: "Törene gidiyorum",
+      e: [3, -2, 0, -5],
+      set: "set_odul",
+      rel: {
+        sevim: -1,
+      },
+      not: "Bütçe oylaması sizsiz yapılacak. Sevim Hanım not aldı.",
+      next: {
+        id: "set_mesai",
+        in: [1, 2],
+      },
+    },
+    R: {
+      t: "Bütçe oylamasına kalırım",
+      e: [-2, 2, 0, 3],
+      rel: {
+        sevim: 1,
+      },
+      next: {
+        id: "set_mesai",
+        in: [1, 2],
+      },
+    },
+  },
+  {
+    id: "set_mesai",
+    who: "kaymakam",
+    konu: "Mesai uyarısı",
+    chain: true,
+    text: "Başkanım, mesai saatinde sette olduğunuz Ankara'ya bildirilmiş; ekrandaki saat 14.20, çekim de belediyenin önünde. Başkanlık yarım gün olmaz. Ya set ya makam; tutanağa şimdilik 'uyarı' yazıyorum.",
+    alt: [
+      {
+        req: "set_odul",
+        text: "Başkanım, bütçe oylaması günü İstanbul'da ödül töreninde olduğunuz Ankara'ya bildirilmiş; kırmızı halı fotoğrafınız masamda. Başkanlık yarım gün olmaz. Ya set ya makam; tutanağa şimdilik 'uyarı' yazıyorum.",
+      },
+    ],
+    L: {
+      t: "İzin günümdü",
+      e: [2, 0, 0, -6],
+      next: {
+        id: "set_sezon",
+        in: [2, 4],
+        if: {
+          req: ["set_rol", "set_odul"],
+        },
+        else: "set_intikam",
+      },
+    },
+    R: {
+      t: "Setten çekiliyorum",
+      e: [-3, 0, -2, 5],
+      clr: "set_rol",
+      next: {
+        id: "set_intikam",
+        in: [3, 5],
+      },
+    },
+  },
+  {
+    id: "set_sezon",
+    who: "kaan",
+    konu: "Başrol teklifi",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, ödül töreninden sonra kanal üçüncü sezonu size yazdı: 'Kavun Baronunun Gençliği', başrol sizsiniz. Dokuz ay İstanbul'da çekim; makamla olmaz. Naciye Hanım menajerliğe, Fikret vekâlete hazır.",
+    L: {
+      t: "İstifa, sete!",
+      e: [0, 0, 0, 0],
+      son: "setten",
+    },
+    R: {
+      t: "Makamım burası",
+      e: [4, 0, 2, -2],
+      anket: {
+        ad: "Başrolü reddeden başkan",
+        puan: 1,
+      },
+      next: {
+        id: "set_intikam",
+        in: [2, 4],
+      },
+    },
+  },
+  {
+    id: "set_intikam",
+    who: "tuncay",
+    konu: "Dizide ölüm",
+    chain: true,
+    norel: true,
+    text: "Başkanım, dizinin yeni bölümünde başkan karakteri kavun kamyonunun altında kaldı. Senarist 'gerçeği dururken kopyaya gerek yok' demiş. İzleyiciler belediyeye taziye çelengi yolluyor; Hüseyin çelenklerin arasında çay dağıtıyor.",
+    L: {
+      t: "Çelenkler parka dikilsin",
+      e: [3, -3, 2, 0],
+      set: "set_bitti",
+    },
+    R: {
+      t: "Basına: 'Yaşıyorum!'",
+      e: [1, 0, -3, 3],
+      set: "set_bitti",
+    },
+  },
+  {
+    id: "pankart_ceviri",
+    who: "ingrid",
+    konu: "Tercüme hatası",
+    once: true,
+    months: [6, 7],
+    req: "kardes_sehir",
+    text: "Sayın Başkan, festival pankartınızda 'Black Poplar Melon Party' yazıyor; Karakavak'ı kelime kelime çevirmişler. Ücretli tuvaletin tabelası da 'Toilet: Salaried'. Tuvalet maaş mı alıyor? Fotoğrafları bizim kasabada sergiledim, çok gezildi.",
+    L: {
+      t: "Tercüman tutalım",
+      e: [0, -4, 0, 4],
+    },
+    R: {
+      t: "Kalsın, turist çekiyor",
+      e: [2, 0, 3, -4],
+    },
+  },
+  {
+    id: "ai_afis",
+    who: "tuncay",
+    konu: "Bayram afişi",
+    once: true,
+    minM: 6,
+    norel: true,
+    text: "Başkanım, Burak'ın yapay zekâya çizdirdiği bayram afişi her yere asıldı. Elinizde altı parmak var, tek minareli camimize ikinci minare eklenmiş. Hayri Hoca 'onun parası kimden' diye soruyor. Fotoğraf bir milyon izlendi.",
+    L: {
+      t: "Afişleri toplatın",
+      e: [3, -3, 0, 1],
+      rel: {
+        burak: -1,
+      },
+    },
+    R: {
+      t: "Altı parmak bereket",
+      e: [-4, 0, 4, -1],
+      rel: {
+        hayri: -1,
+      },
+    },
+  },
+  {
+    id: "ai_rapor",
+    who: "nermin",
+    konu: "Raporun sonu",
+    once: true,
+    minM: 6,
+    fav: "L",
+    text: "Başkanım, meclise sunduğunuz kavun raporunu baştan sona okudum, gayet iyi. Yalnız son cümlesi: 'Umarım bu rapor işinize yarar! Başka bir konuda yardımcı olabilir miyim?' Kürsüden okudum, galeri güldü. Yazanı soruyorum.",
+    L: {
+      t: "Yazanı bulun",
+      e: [4, -1, 0, 0],
+      not: "Raporu Fikret yazmış; gece üçte, telefondan.",
+    },
+    R: {
+      t: "Rapor iyiyse onay",
+      e: [-3, 2, 0, 1],
+    },
+  },
+  {
+    id: "fenomen_kebap",
+    who: "bekir",
+    konu: "Kebaba puan",
+    once: true,
+    minM: 6,
+    text: "Başkanım, bir yemek fenomeni dükkâna geldi, kebabı üç lokmada bitirdi, 'iki buçuk kavun' verdi. Video 3 milyon izlendi, masalar bomboş. Arabası hâlâ kaldırımda; zabıta çekici çağırsın, ben de camdan izleyeyim.",
+    L: {
+      t: "Rövanş çekimi yapalım",
+      e: [3, -4, 3, 0],
+      not: "Fenomen rövanşa geliyor; Hacı Bekir şişleri biliyor.",
+    },
+    R: {
+      t: "Çekici gelsin",
+      e: [-4, 1, 2, 0],
+      not: "Tuncay'ın manşeti hazır: 'Kebap intikamı.'",
+    },
+  },
+  {
+    id: "tekir_fenomen",
+    who: "burak",
+    konu: "Tekir'in hesabı",
+    once: true,
+    minM: 12,
+    fav: "L",
+    reqCnt: {
+      tekir: 1,
+    },
+    text: "Dayı, Tekir'e hesap açtım: 300 bin takipçi, seninkinin dört katı! Bir mama markası sponsor olmak istiyor. Yorumlar hep aynı: 'Tekir aday olsun.' Ben bir şey demiyorum, yorumlar diyor.",
+    L: {
+      t: "Sponsor gelsin",
+      e: [-2, 5, 2, 0],
+      inc: "tekir",
+      not: "Tekir'in adaylık yorumları çoğalıyor.",
+    },
+    R: {
+      t: "Hesabı kapat",
+      e: [-3, 0, 0, 2],
+    },
+  },
+  // ══ Sandık Hesabı · Taş Ocağı · gece pazarı, askıda fatura, kabristan ══
+  {
+    id: "sandik_hemsehri",
+    who: "sevim",
+    konu: "Hemşehri kaydı",
+    once: true,
+    minM: 14,
+    w: 0.7,
+    not: "sandik_38_goruldu",
+    fav: "L",
+    text: "Başkanım, nüfus yüz kişi daha düşerse Ankara'dan gelen pay bir basamak iniyor. İstanbul'daki hemşehri derneği '12 bin üyemizin adresini size alalım' diyor. Kâğıt üstünde hemşehri; kütük denetimi gelirse imzam yok.",
+    L: {
+      t: "Gerçekten taşınana indirim",
+      e: [4, -4, 0, 0],
+    },
+    R: {
+      t: "Dernek listesi gelsin",
+      e: [-3, 5, 2, 0],
+      set: "sandik_hayalet",
+      pol: {
+        id: "sandik_pay",
+        ad: "Hemşehri nüfus payı",
+        e: [0, 1, 0, 0],
+        ay: 10,
+        msg: "Hemşehri nüfus payı son kez yattı; Sevim Hanım makbuzu imzasız dosyaladı.",
+      },
+      next: {
+        id: "sandik_38",
+        in: [3, 5],
+        if: {
+          not: "sandik_38_goruldu",
+        },
+      },
+      not: "Sevim Hanım listenin altına imza atmadı.",
+    },
+  },
+  {
+    id: "sandik_38",
+    who: "muhtar",
+    konu: "Seçmen kaydı",
+    pre: true,
+    once: true,
+    w: 3,
+    not: "sandik_hayalet",
+    fav: "L",
+    text: "Başkanım, seçim yaklaşınca Kavaklı'da tek odalı bir eve 38 seçmen kaydoldu. Biri 1911 doğumlu, biri Tekir. Kimin seçmeni belli değil; komşular 'başkanınkiler' diyor. Ben dokunmayalım derim, mahalle karışır.",
+    alt: [
+      {
+        req: "sandik_hayalet",
+        text: "Başkanım, dernek listesi kütüğe işlendi: Kavaklı'da tek odalı bir eve 38 seçmen yazılmış. Biri 1911 doğumlu, biri Tekir. Oda dediğim, Hüsnü Dede'nin kümesi. Nermin Hanım fotoğraf çekti, 'kütük davası' diyor.",
+      },
+    ],
+    L: {
+      t: "Kayıtlar kalsın",
+      e: [-3, 0, 0, 3],
+      set: ["sandik_38_kalsin", "sandik_38_goruldu"],
+      anket: {
+        ad: "Tek odada 38 seçmen",
+        puan: -2,
+      },
+      next: {
+        id: "sandik_kutuk",
+        in: [4, 7],
+        if: {
+          req: ["sandik_hayalet", "sandik_38_kalsin"],
+          cnt: {
+            skandal: 2,
+          },
+        },
+        else: "sandik_kutuk_ok",
+      },
+      not: "Nermin Hanım 38 kişilik evin fotoğrafını dosyaladı.",
+    },
+    R: {
+      t: "Seçim kuruluna itiraz",
+      e: [5, -3, 0, -2],
+      set: "sandik_38_goruldu",
+      clr: "sandik_hayalet",
+      cut: "sandik_pay",
+      anket: {
+        ad: "Kütüğe itiraz eden başkan",
+        puan: 1,
+      },
+    },
+  },
+  {
+    id: "sandik_kutuk",
+    who: "kaymakam",
+    konu: "Kütük davası",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, seçmen kütüğü davası açıldı. Dernek listesindeki 12 bin kişiden 11 bini Karakavak'ı haritada bulamadı; kümesteki 38 kişinin ifadesi alındı, Tekir hariç. Savcı 'ya tam iş birliği ya görevden uzaklaştırma' diyor.",
+    L: {
+      t: "Tam iş birliği",
+      e: [-4, -6, 0, 5],
+      clr: ["sandik_hayalet", "sandik_38_kalsin"],
+      cut: "sandik_pay",
+      set: "sandik_itiraf",
+      anket: {
+        ad: "Kütükte tam iş birliği",
+        puan: 1,
+      },
+      dec: "skandal",
+      not: "Kümes kütükten silindi; Hüsnü Dede tavuklarıyla baş başa kaldı.",
+    },
+    R: {
+      t: "Kümes de konuttur!",
+      e: [-3, 0, -2, -6],
+      son: "kutuk",
+    },
+  },
+  {
+    id: "sandik_kutuk_ok",
+    who: "kaymakam",
+    konu: "Kütük incelemesi",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, seçmen kütüğü incelemesi bitti: Kavaklı'daki tek odalı evin 38 kaydı silindi, dava açılmadı. Savcı 'başka dosyanız temiz, bu seferlik' dedi. Yalnız Tekir, kaydının silinmesine itiraz etti; dilekçeye pati bastı.",
+    L: {
+      t: "Kütüğü baştan tarayın",
+      e: [3, -2, 0, 3],
+      cut: "sandik_pay",
+      clr: ["sandik_hayalet", "sandik_38_kalsin"],
+    },
+    R: {
+      t: "Tekir'in itirazı kabul",
+      e: [2, 0, 0, -3],
+      inc: "tekir",
+      clr: ["sandik_hayalet", "sandik_38_kalsin"],
+      not: "Tekir artık kütükte kayıtlı bir seçmen.",
+    },
+  },
+  {
+    id: "sandik_sarki",
+    who: "burak",
+    konu: "Seçim şarkısı",
+    pre: true,
+    once: true,
+    months: [6, 7, 8],
+    w: 4,
+    text: "Dayı, seçim şarkısının remiksini yaptım: davul, zurna, bir de bas drop. Bir kere dinleyen bir hafta söylüyor, çocuklar bile ezberliyor; o kadar bulaşıcı. Nuri Bey 'marş bu mu' diye aradı, kapattım.",
+    L: {
+      t: "Sade marş yeter",
+      e: [-3, 1, 0, 3],
+      rel: {
+        albay: 1,
+      },
+    },
+    R: {
+      t: "Remiks çalsın",
+      e: [4, -3, 3, -3],
+      rel: {
+        albay: -1,
+      },
+      anket: {
+        ad: "Başkanın remiksi",
+        puan: 1,
+      },
+      pol: {
+        id: "sandik_sarki",
+        ad: "Seçim şarkısı",
+        ay: 6,
+        msg: "Seçim şarkısı hoparlörlerden indi, kulaklardan inmedi.",
+        yan: [
+          {
+            card: "sandik_sarki_ders",
+            p: 0.2,
+          },
+        ],
+      },
+    },
+  },
+  {
+    id: "sandik_sarki_ders",
+    who: "elif",
+    konu: "Derste şarkı",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, 3-B sınıfı çarpım tablosunu seçim şarkınızın ritmiyle söylüyor: 'Yedi kere sekiz, Karakavak'a hizmet!' Sonuç elli altı çıkmıyor ama coşku yerinde. Okulda seçim şarkısı yasak; ilçe eğitimden yazı geldi.",
+    L: {
+      t: "Şarkı yayından kalksın",
+      e: [-1, 0, 0, 4],
+      cut: "sandik_sarki",
+      rel: {
+        burak: -1,
+      },
+    },
+    R: {
+      t: "Tablo da ezberlenir",
+      e: [3, 0, -1, -4],
+      rel: {
+        burak: 1,
+      },
+      anket: {
+        ad: "Derste seçim şarkısı",
+        puan: -1,
+      },
+    },
+  },
+  {
+    id: "sandik_pankart",
+    who: "vekil",
+    konu: "Pankart krizi",
+    pre: true,
+    once: true,
+    months: [8, 9, 10],
+    w: 4,
+    text: "Başkanım, seçim pankartlarını cetvelle ölçtüm: benim fotoğrafım sizinkinden iki santim küçük. Pankartın fotoğrafını genel merkeze yolladım, 'bu nasıl hiyerarşi' diye sordular. Sabaha kadar biri büyüyecek.",
+    L: {
+      t: "Bizimki büyük kalsın",
+      e: [0, 1, 0, -6],
+    },
+    R: {
+      t: "Suat Bey'inki büyüsün",
+      e: [0, -2, 0, 6],
+      anket: {
+        ad: "Kendi pankartında kaybolan başkan",
+        puan: -1,
+      },
+      not: "Tuncay'ın manşeti hazır: 'Başkan kendi pankartında kayboldu.'",
+    },
+  },
+  {
+    id: "sandik_bekci",
+    who: "vekil",
+    konu: "Park bekçisi",
+    pre: true,
+    once: true,
+    months: [10, 11, 0],
+    w: 4,
+    text: "Başkanım, seçime üç ay kaldı sayılır; müjdem hazır: 120 park bekçisi alalım. İlçede iki park var, biri daha yapılmadı ama bekçisi hazır beklesin. Hepsi hemşehri çocuğu. Maaşı seçimden sonra düşünürüz.",
+    L: {
+      t: "Önce park, sonra bekçi",
+      e: [-2, 3, 0, -5],
+    },
+    R: {
+      t: "Bekçiler işbaşına",
+      e: [4, -3, 2, 4],
+      anket: {
+        ad: "120 park bekçisi",
+        puan: 2,
+      },
+      pol: {
+        id: "sandik_bekci",
+        ad: "120 park bekçisinin maaşı",
+        e: [0, -2, 0, 0],
+        ay: 8,
+        msg: "120 park bekçisinin sözleşmesi bitti; iki park yine kendi kendini bekliyor.",
+      },
+      next: {
+        id: "sandik_bekci_maas",
+        in: [4, 5],
+        if: {
+          pol: "sandik_bekci",
+        },
+      },
+      not: "Sevim Hanım bekçi bordrosunu seçimden sonraya not etti.",
+    },
+  },
+  {
+    id: "sandik_bekci_maas",
+    who: "sevim",
+    konu: "Bekçi bordrosu",
+    chain: true,
+    text: "Başkanım, seçim bitti, bordro geldi: 120 park bekçisi. İlçede hâlâ iki park var, biri hâlâ yapılmadı. Bekçi başına 0,016 park düşüyor; bekçiler nöbeti birbirini bekleyerek tutuyor.",
+    L: {
+      t: "Sözleşme bitene kadar",
+      e: [2, -3, 0, 2],
+    },
+    R: {
+      t: "Hepsi evine",
+      e: [-6, 4, -2, -2],
+      cut: "sandik_bekci",
+      rel: {
+        vekil: -1,
+      },
+      anket: {
+        ad: "Seçim ertesi 120 bekçiye çıkış",
+        puan: -2,
+      },
+    },
+  },
+  {
+    id: "sandik_acilis",
+    who: "fikret",
+    konu: "Açılış maratonu",
+    pre: true,
+    once: true,
+    months: [0, 1],
+    w: 5,
+    text: "Başkanım, seçim yasakları başlamadan 48 saate 11 açılış sığdırdım: bir bank, bir çöp kutusu, sabah kapattığımız Fatma Teyze'nin çukuru... Makas köreldi, son kurdeleyi dişle keseriz. Tuncay kronometre tutuyor.",
+    L: {
+      t: "Maraton başlasın",
+      e: [3, -4, 3, 2],
+      rel: {
+        tuncay: -1,
+      },
+      set: "sandik_maraton",
+      anket: {
+        ad: "48 saatte 11 açılış",
+        puan: 2,
+      },
+      not: "Tuncay kronometreyi manşete koyacak.",
+    },
+    R: {
+      t: "Tek açılış, gerisi sonra",
+      e: [2, 1, -3, -2],
+    },
+  },
+  {
+    id: "ocak_teklif",
+    who: "cengiz",
+    konu: "Taş ocağı",
+    once: true,
+    minM: 8,
+    w: 0.8,
+    text: "Başkanım, Kavaklı'nın arkasındaki tepeye taş ocağı açalım. Hisse belediyenin, taş Levent Bey'in fabrikasına. Patlatma çok hafif, kapı zili gibi; nikâh salonundan duyulmaz, söz. Tepe zaten boş duruyor.",
+    L: {
+      t: "Tepe tepe kalsın",
+      e: [4, -2, -4, -2],
+      rel: {
+        levent: -1,
+      },
+    },
+    R: {
+      t: "Ocak açılsın",
+      e: [-3, 5, 4, 2],
+      rel: {
+        levent: 1,
+      },
+      pol: {
+        id: "ocak_hisse",
+        ad: "Taş ocağı hissesi",
+        e: [0, 1, 0, 0],
+        ay: 24,
+        doneCard: "ocak_gol",
+        msg: "Taş ocağının ruhsatı doldu, patlatmalar sustu. Tepenin yarısı çimento oldu.",
+        yan: [
+          {
+            card: "ocak_nikah",
+            p: 0.12,
+            min: 4,
+          },
+        ],
+      },
+      next: {
+        id: "ocak_yol",
+        in: [2, 3],
+        if: {
+          pol: "ocak_hisse",
+        },
+      },
+      not: "Kavaklı'da camlar şimdiden titriyor.",
+    },
+  },
+  {
+    id: "ocak_yol",
+    who: "burak",
+    konu: "Traktör nöbeti",
+    chain: true,
+    fav: "L",
+    text: "Dayı, patlatmada Kavaklı'da 11 evde çatlak çıktı; köylüler traktörle ocağın yolunu kesti. Ben de nöbetten canlı yayındayım, bir milyon izleyici var. Yorumlar 'başkan nerede' diye akıyor. Bu hikâyede sen kimsin?",
+    L: {
+      t: "Nöbete çayla gidelim",
+      e: [5, -3, -2, -2],
+      rel: {
+        muhtar: 1,
+        cengiz: -1,
+      },
+      set: "ocak_nobet",
+      next: {
+        id: "ocak_toz",
+        in: [3, 5],
+        if: {
+          pol: "ocak_hisse",
+        },
+      },
+    },
+    R: {
+      t: "Zabıta yolu açsın",
+      e: [-5, 2, 3, 3],
+      rel: {
+        muhtar: -2,
+      },
+      set: ["ocak_nobet", "ocak_dagit"],
+      anket: {
+        ad: "Traktör nöbetine zabıta",
+        puan: -2,
+      },
+      next: {
+        id: "ocak_toz",
+        in: [3, 5],
+        if: {
+          pol: "ocak_hisse",
+        },
+      },
+      not: "Kavaklı bu traktör nöbetini sandığa kadar unutmayacak.",
+    },
+  },
+  {
+    id: "ocak_toz",
+    who: "dursun",
+    konu: "Gri kavun",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, ocağın tozu ovaya indi, kavunlar griye boyandı. Pazarda 'çimento kavunu' diye alay ediyorlar; Hacı Bekir kavunları tek tek yıkayıp satıyor. Ya ocak kapanır ya bu gidişle kavun yerine taş satarız.",
+    alt: [
+      {
+        if: {
+          pol: "tescil",
+        },
+        text: "Başkanım, ocağın tozu ovaya indi, kavunlar griye boyandı. Tescil denetçisi geldi, 'Karakavak kavunu gri olmaz' diye tutanak tuttu; tescil askıya alınacak. Ya ocak kapanır ya kavunun markası gider.",
+      },
+    ],
+    L: {
+      t: "Ocak kapansın",
+      e: [5, -5, 3, -3],
+      cut: "ocak_hisse",
+      set: "ocak_kapandi",
+      rel: {
+        levent: -1,
+        cengiz: -1,
+      },
+      next: {
+        id: "ocak_gol",
+        in: [5, 8],
+      },
+    },
+    R: {
+      t: "Kavunlar yıkansın",
+      e: [-5, -2, 2, 3],
+      rel: {
+        levent: 1,
+      },
+    },
+  },
+  {
+    id: "ocak_nikah",
+    who: "fikret",
+    konu: "Patlamalı nikâh",
+    chain: true,
+    text: "Başkanım, nikâh salonunda gelin 'evet' derken ocakta patlatma oldu, camlar indi. Damat gelini kaptığı gibi masanın altına girdi; video üç milyon izlendi. Şimdi üç çift daha 'patlamalı nikâh' randevusu istiyor.",
+    L: {
+      t: "Patlatmalar dursun",
+      e: [4, -3, 0, -2],
+      cut: "ocak_hisse",
+      set: "ocak_kapandi",
+      rel: {
+        cengiz: -1,
+      },
+      next: {
+        id: "ocak_gol",
+        in: [5, 8],
+      },
+    },
+    R: {
+      t: "Patlamalı nikâh paketi",
+      e: [-3, 4, 3, -2],
+    },
+  },
+  {
+    id: "ocak_gol",
+    who: "kaan",
+    konu: "Ocak gölü",
+    chain: true,
+    text: "Başkanım, taş ocağının çukurunu yağmur doldurdu; tepenin arkasında masmavi bir göl çıktı! Kavaklılı çocuklar yüzüyor, kıyıda Dursun Ağa'nın inekleri. İskele, cam kafe, bir de atlama kulesi kuralım.",
+    L: {
+      t: "Göl doğal kalsın",
+      e: [5, -1, -2, 0],
+      set: "ocak_gol",
+      rel: {
+        dursun: 1,
+      },
+    },
+    R: {
+      t: "İskele ve kafe",
+      e: [-2, 4, 5, 0],
+      set: "ocak_gol",
+    },
+  },
+  {
+    id: "ocak_rapor",
+    who: "nermin",
+    konu: "Çatlak raporu",
+    pre: true,
+    once: true,
+    req: "ocak_nobet",
+    w: 3,
+    fav: "L",
+    text: "Başkanım, raporum hazır: Kavaklı'da çatlak ev sayısı 11'den 47'ye çıktı, hepsinde seçmen oturuyor. Mahalle 'Kavaklı sandığı da çatlak çıkar' diyor. Seçimden önce tamir mi, yoksa 'rapor siyasi' mi?",
+    alt: [
+      {
+        req: "ocak_dagit",
+        text: "Başkanım, raporum hazır: Kavaklı'da çatlak ev 47, hepsinde seçmen var. Traktör nöbetini zabıtayla dağıttığınızı da unutmadılar; Kavaklı sandığa traktörle gidecek, sizin için değil. Seçimden önce tamir mi?",
+      },
+      {
+        req: "ocak_kapandi",
+        text: "Başkanım, ocak kapandı ama çatlaklar kapanmadı: Kavaklı'da çatlak ev 11'den 47'ye çıktı, hepsinde seçmen oturuyor. Kavaklı sandığı bunu soracak. Seçimden önce tamir mi, yoksa 'rapor siyasi' mi?",
+      },
+    ],
+    L: {
+      t: "Seçimden önce tamir",
+      e: [4, -6, 2, 0],
+      rel: {
+        muhtar: 1,
+      },
+      set: "ocak_tamir",
+      anket: {
+        ad: "Kavaklı'da 47 evin tamiri",
+        puan: 2,
+      },
+    },
+    R: {
+      t: "Rapor siyasi",
+      e: [-2, 2, 0, 2],
+      rel: {
+        muhtar: -1,
+      },
+      anket: {
+        ad: "Kavaklı'da 47 çatlak ev",
+        puan: -3,
+      },
+      not: "Kavaklı sandığı bu raporu hatırlayacak.",
+    },
+  },
+  {
+    id: "gece_pazari",
+    who: "hatice",
+    konu: "Gece pazarı",
+    once: true,
+    months: [4, 5],
+    w: 2,
+    text: "Başkanım, yaz akşamları meydanda gece pazarı kuralım: gözleme, kavun, balık, el emeği. Hacı Bekir bile ilk kez bana hak veriyor. Yalnız gece gürültü olur, balık kokusuna kedi de gelir; orası ayrı.",
+    L: {
+      t: "Meydan gece uyusun",
+      e: [-3, 1, -4, 0],
+      rel: {
+        bekir: -1,
+      },
+    },
+    R: {
+      t: "Gece pazarı kurulsun",
+      e: [3, -3, 5, 0],
+      rel: {
+        bekir: 1,
+      },
+      pol: {
+        id: "gece_pazari",
+        ad: "Gece pazarı",
+        e: [0, 0, 1, 0],
+        ay: 6,
+        msg: "Yaz bitti; gece pazarının son tezgâhı da toplandı.",
+        yan: [
+          {
+            card: "gece_okey",
+            p: 0.15,
+          },
+          {
+            card: "gece_tekir",
+            p: 0.15,
+          },
+          {
+            card: "gece_naciye",
+            p: 0.15,
+          },
+        ],
+      },
+    },
+  },
+  {
+    id: "gece_tekir",
+    who: "recep",
+    konu: "Levrek vakası",
+    chain: true,
+    norel: true,
+    text: "Başkanım, Tekir gece pazarında balıkçının tezgâhından iki levrek aşırdı, gözü üçüncüde. Balıkçı tutanak istiyor; Tekir pişman görünmüyor. Kediye tutanak yazılır mı bilmiyorum, yönetmelikte yok.",
+    L: {
+      t: "Pazar kapansın",
+      e: [-2, 0, -4, 0],
+      cut: "gece_pazari",
+    },
+    R: {
+      t: "Levrekleri belediye öder",
+      e: [2, -2, 0, 0],
+      inc: "tekir",
+      not: "Tekir bu iyiliği unutmayacak. Balıkçı da.",
+    },
+  },
+  {
+    id: "gece_okey",
+    who: "rahmi",
+    konu: "Sabah okeyi",
+    chain: true,
+    text: "Başkanım, gece pazarı yüzünden kıraathane sabaha kadar açık kaldı, okey turnuvası kendiliğinden başladı: yirmi iki masa, kırk dört emekli, bir de Albay. Çay ocağı rekor kırdı, kimse evine gitmiyor.",
+    L: {
+      t: "Pazar da masa da kapansın",
+      e: [-3, 0, -3, 2],
+      cut: "gece_pazari",
+      rel: {
+        hayri: 1,
+      },
+    },
+    R: {
+      t: "Kupayı belediye koysun",
+      e: [4, -2, 5, -2],
+      rel: {
+        hayri: -1,
+      },
+    },
+  },
+  {
+    id: "gece_naciye",
+    who: "naciye",
+    konu: "Kavun anonsu",
+    chain: true,
+    fav: "L",
+    text: "Evladım, gece yarısı hoparlörden 'kavun var kavun, bal kavun' diye bağırıyorlar. Üç gecedir uyumadım, rüyamda kavun kovalıyor beni. Ya o pazar kapanır ya ben yatağımı meydana sererim.",
+    L: {
+      t: "Pazar kapansın anne",
+      e: [1, 0, -4, 0],
+      cut: "gece_pazari",
+    },
+    R: {
+      t: "Kulak tıkacı gönderelim",
+      e: [-2, 0, 3, 0],
+    },
+  },
+  {
+    id: "askida_fatura",
+    who: "hatice",
+    konu: "Askıda fatura",
+    once: true,
+    minM: 6,
+    text: "Başkanım, 'askıda fatura' başlatalım: gücü yeten komşusunun faturasını ödesin. Denemede ilk faturayı Nermin Hanım astı: makam odasının elektriği. Altına 'Işık gece de yanıyor' yazmış. Esnaf neyi asar, belli olmaz.",
+    L: {
+      t: "Askı sadaka gibi durur",
+      e: [-4, 1, 0, 2],
+    },
+    R: {
+      t: "Askılar kurulsun",
+      e: [5, -1, 2, -2],
+      rel: {
+        nermin: 1,
+      },
+      pol: {
+        id: "askida",
+        ad: "Askıda fatura",
+        e: [1, 0, 0, -1],
+        ay: 8,
+        msg: "Askıda fatura kampanyası bitti; son asılan fatura çay ocağınındı.",
+        yan: [
+          {
+            card: "askida_ceza",
+            p: 0.15,
+          },
+        ],
+      },
+    },
+  },
+  {
+    id: "askida_ceza",
+    who: "recep",
+    konu: "Askıda ceza",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, askıda fatura 'askıda ceza'ya döndü: esnaf birbirinin zabıta cezasını ödüyor. Tahsilatım rekor kırdı ama kural dinleyen yok. Hacı Bekir kaldırıma masa attı, cezasını da peşin askıya astı.",
+    L: {
+      t: "Askılar kaldırılsın",
+      e: [-3, 0, -3, 2],
+      cut: "askida",
+      rel: {
+        bekir: -1,
+      },
+    },
+    R: {
+      t: "Tahsilat tahsilattır",
+      e: [0, 5, 4, -2],
+    },
+  },
+  {
+    id: "mezar_parsel",
+    who: "hayri",
+    konu: "Kabristan",
+    once: true,
+    minM: 6,
+    fav: "L",
+    text: "Başkanım, kabristanda 12 yer kaldı. Sevim Hanım 'manzaralı parsel' tarifesi hazırlamış: dere manzarası iki kat, 36 ay taksit. Ben 'hiç değilse ölüm faizsiz olsun' dedim. Allah hepimize rahatlık versin.",
+    L: {
+      t: "Ücretsiz, yeni alan açın",
+      e: [5, -6, 0, 0],
+      rel: {
+        sevim: -1,
+      },
+      next: {
+        id: "mezar_katli",
+        in: [3, 5],
+      },
+    },
+    R: {
+      t: "Tarife ve taksit",
+      e: [-6, 7, 0, 2],
+      rel: {
+        sevim: 1,
+      },
+      set: "mezar_tarife",
+      next: {
+        id: "mezar_katli",
+        in: [3, 5],
+      },
+      not: "Hayri Hoca cuma vaazında taksiti anacak.",
+    },
+  },
+  {
+    id: "mezar_katli",
+    who: "cengiz",
+    konu: "Katlı mezarlık",
+    chain: true,
+    text: "Başkanım, yeni alana ne gerek var? Asansörlü, dört katlı mezarlık yapalım! Zemin kat bahçeli, en üst kat manzaralı. Asansör olunca tabut merdivende dönmez. Otoparkı da yaparım, bayram sabahları lazım olur.",
+    alt: [
+      {
+        req: "mezar_tarife",
+        text: "Başkanım, Sevim Hanım'ın manzaralı parselleri kapışıldı, yer kalmadı. Asansörlü, dört katlı mezarlık yapalım: en üst kat manzaralı ve pahalı, zemin kat indirimli. Taksitler asansörle birlikte biter.",
+      },
+    ],
+    L: {
+      t: "Toprak toprağa",
+      e: [4, -1, -2, 0],
+      rel: {
+        hayri: 1,
+      },
+    },
+    R: {
+      t: "Asansörlü mezarlık",
+      e: [-5, -2, 4, 2],
+      rel: {
+        hayri: -1,
+      },
+      set: "mezar_katli",
+      pol: {
+        id: "mezar_insaat",
+        ad: "Katlı mezarlık inşaatı",
+        e: [0, -1, 1, 0],
+        ay: 6,
+        done: [0, 6, 0, 0],
+        msg: "Katlı mezarlık açıldı; asansörde 'en fazla dört kişi' yazıyor.",
+        tags: ["insaat"],
+      },
+    },
+  },
+  // ══ ilçe hayatı ve mevcut kararların yan etkileri ══
+  {
+    id: "kemer_cay",
+    who: "kaymakam",
+    konu: "Çay hesabı",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, genelge gereği kâğıdın arkası da kullanılıyor. Ankara'ya giden raporun arkasından Hüseyin'in çay hesabı çıktı: 'Başkan 14 bardak, veresiye.' Ankara kızmadı; bizi 'çayını bile hesaplayan belediye' diye örnek gösterdi.",
+    L: {
+      t: "Hüseyin sunuma gitsin",
+      e: [0, -3, 0, 6],
+      rel: {
+        huseyin: 1,
+      },
+    },
+    R: {
+      t: "Övgü yeter, kemer gevşesin",
+      e: [2, -2, 4, -5],
+      cut: "kemer",
+    },
+  },
+  {
+    id: "kemer_asansor",
+    who: "fikret",
+    konu: "Asansör kapalı",
+    chain: true,
+    text: "Başkanım, tasarruf için asansörü kapattık. Nuri Bey meclise dördüncü kata merdivenle çıktı; her sahanlıkta durup 'eskiden askerde' diye başladı. Toplantı 40 dakika gecikti, Hilmi Bey merdivende uyudu.",
+    L: {
+      t: "Genelge asansörde biter",
+      e: [3, -3, 1, -4],
+      cut: "kemer",
+    },
+    R: {
+      t: "Sahanlığa sandalye",
+      e: [-3, -1, 0, 3],
+      rel: {
+        albay: 1,
+      },
+      not: "Nuri Bey artık her sahanlıkta oturup anlatıyor.",
+    },
+  },
+  {
+    id: "eb_ihbar",
+    who: "kemal",
+    konu: "Çukur ihbarı",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, e-Belediye'den bir ayda 4.000 çukur ihbarı geldi; 3.998'i Fatma Teyze'den, kalan ikisi torunundan. Usul gereği her birini basıp ıslak imzalıyor, tarayıp geri yolluyoruz. Kâğıt üçe katlandı, çukur yerinde.",
+    L: {
+      t: "Sistemi kapatın",
+      e: [-3, 4, 0, -4],
+      cut: "ebelediye",
+    },
+    R: {
+      t: "Önce o çukuru kapatın",
+      e: [5, -5, 0, 1],
+      rel: {
+        fatma: 1,
+      },
+    },
+  },
+  {
+    id: "emekli_tur",
+    who: "rahmi",
+    konu: "Boş kıraathane",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, emekliler sabah ilk otobüse binip akşam son seferle iniyor; otobüs klimalı, bilet bedava. Kıraathane boşaldı, dün okeyi dört elden kendimle oynadım. Madem öyle, otobüse bir okey masası koyun!",
+    L: {
+      t: "Otobüse okey masası",
+      e: [4, -3, 2, -4],
+      set: "okey_otobus",
+    },
+    R: {
+      t: "Bedava ulaşım bitsin",
+      e: [-8, 5, 3, 0],
+      cut: "emekli",
+      rel: {
+        fatma: -1,
+      },
+    },
+  },
+  {
+    id: "pano_horoz",
+    who: "naciye",
+    konu: "Gece üçte horoz",
+    chain: true,
+    fav: "L",
+    text: "Evladım, o LED panonun ışığından komşunun horozu gündüz sandı, gece üçte ötüyor. Fırıncı sevindi, ekmeği üçte çıkarıyor; çarşı sabah altıda sıcak ekmek kokuyor. Ben uyuyamıyorum ama, o kimin umurunda.",
+    L: {
+      t: "Panoyu söküp atın",
+      e: [4, -3, -3, 0],
+      cut: "pano",
+      set: "pano_horoz",
+    },
+    R: {
+      t: "Horoza plaket",
+      e: [-4, -1, 5, 0],
+      set: ["pano_horoz", "horoz_plaket"],
+    },
+  },
+  {
+    id: "kres_okey",
+    who: "albay",
+    konu: "Kıraathanede torun",
+    chain: true,
+    text: "Başkanım, kreş dolunca dedeler torunları kıraathaneye getirmeye başladı. Çocuklar üç haftada okey öğrendi; dün beş yaşındaki Zeynep beni yendi! Otuz yıl orduda yenilmedim. Rahmi'nin dükkânı hiç bu kadar dolmamıştı.",
+    L: {
+      t: "Kıraathane dede kreşi",
+      e: [-4, 5, 4, -3],
+      cut: "kres",
+      rel: {
+        rahmi: 1,
+      },
+      set: "kres_okey",
+    },
+    R: {
+      t: "Kreşe ek sınıf",
+      e: [6, -6, -1, 0],
+      set: "kres_okey",
+    },
+  },
+  {
+    id: "ruzgar_disko",
+    who: "burak",
+    konu: "Gölge disko",
+    chain: true,
+    text: "Dayı, gün batımında türbinin gölgesi kıraathanenin camından geçiyor, okey taşları disko ışığı gibi yanıp sönüyor. Videosu bir milyon izlendi; gençler akşam 'gölge disko'ya geliyor. Emekliler 'başımız dönüyor' diyor.",
+    L: {
+      t: "Türbinler dursun",
+      e: [5, -3, -3, -1],
+      cut: "ruzgar",
+    },
+    R: {
+      t: "Gölge Disko Gecesi",
+      e: [-2, -2, 6, 0],
+      rel: {
+        albay: -1,
+        rahmi: 1,
+      },
+    },
+  },
+  {
+    id: "tescil_sahte",
+    who: "dursun",
+    konu: "Sahte Karakavak",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, komşu ilçe kendi kavununa 'Karakavak' etiketi yapıştırıp yarı fiyata satıyor. Kavunları ekşi çıktı, İstanbul'da 'Karakavak kavunu da bozuldu' diyorlar. Coğrafi işaret ne işe yaradı? Recep tek tek mühürlemeye hazır.",
+    L: {
+      t: "Kavun pasaportu",
+      e: [2, -5, 4, 0],
+      rel: {
+        recep: 1,
+      },
+      set: "kavun_pasaport",
+    },
+    R: {
+      t: "Etiketi komşuya satalım",
+      e: [-2, 7, -6, 0],
+      cut: "tescil",
+    },
+  },
+  {
+    id: "yanlis_sela",
+    who: "hayri",
+    konu: "Yanlış selâ",
+    once: true,
+    minM: 4,
+    fav: "L",
+    text: "Başkanım, cızırdayan hoparlörden 'Kahveci Rahmi vefat etmiştir' diye selâ verildi. Rahmi sağ; kıraathanede taziye kabul ediyor, helva bedava, çay parayla. Ciro rekor kırdı, 'bir anons daha' diye kapıda bekliyor.",
+    L: {
+      t: "Yeni ses sistemi",
+      e: [4, -6, 0, 2],
+      set: "sela_ses",
+    },
+    R: {
+      t: "'Yaşıyorum' kermesi",
+      e: [-2, 0, 6, -2],
+      rel: {
+        rahmi: 1,
+      },
+      set: "rahmi_kermes",
+    },
+  },
+  {
+    id: "guzel_tarih",
+    who: "fikret",
+    konu: "Güzel tarih",
+    once: true,
+    minM: 6,
+    months: [11],
+    w: 4,
+    text: "Başkanım, ayın on ikisi, on ikinci ay: takvimin en güzel tarihi. 27 çift o gün nikâhını sizin kıymanızı istiyor. Nikâh başı üç dakika, 27 kere 'evet'. Naciye Hanım 'bizim zamanımızda tarih değil kısmet vardı' diyor.",
+    L: {
+      t: "Hepsini ben kıyarım",
+      e: [6, -3, 1, 0],
+      set: "nikah27",
+      anket: {
+        ad: "Bir günde 27 nikâh",
+        puan: 1,
+      },
+      next: ["nikah_ses", 0],
+    },
+    R: {
+      t: "Nikâh memuru kıysın",
+      e: [-4, 1, 0, 2],
+    },
+  },
+  {
+    id: "nikah_ses",
+    who: "nermin",
+    konu: "Kısık ses",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, 27 'evet'ten sonra sesiniz çıkmıyor. Dünkü mecliste üç saat tek başıma konuştum; kimse itiraz etmedi, siz de edemediniz. Bütçeye kreş, kütüphane, bir de otobüs durağına gölgelik girdi. Oylayalım mı?",
+    L: {
+      t: "(Fısıltıyla) Kabul",
+      e: [5, -6, 0, 0],
+    },
+    R: {
+      t: "Sesim gelince oylarız",
+      e: [-3, 2, 0, 0],
+    },
+  },
+  {
+    id: "karekod_gelin",
+    who: "naciye",
+    konu: "Karekodlu gelin",
+    once: true,
+    minM: 6,
+    text: "Evladım, dünkü düğünde gelinin boynunda altın yerine karekod asılıydı; herkes telefonla okuttu, para yolladı. Ben çeyrek taktım, alkışı ben topladım. Şimdi nikâh salonuna 'takı terminali' konacakmış. Konursa düğüne gitmem.",
+    L: {
+      t: "Terminal kurulsun",
+      e: [3, 4, -5, 0],
+    },
+    R: {
+      t: "Salonda gelenek bölgesi",
+      e: [-2, -2, 5, 0],
+    },
+  },
+  {
+    id: "bes_bacak",
+    who: "fatma",
+    konu: "Beş bacaklı koç",
+    once: true,
+    fav: "L",
+    text: "Başkanım, internetten kurbanlık koç aldım, parasını da yolladım. Fotoğrafa şimdi gözlükle baktım: koçun beş bacağı var. Satıcı 'cins hayvan, fazla bacak fazla sevap' diyor. Belediye bu işe bir el atmaz mı?",
+    L: {
+      t: "Mühürlü kurban pazarı",
+      e: [4, -5, 2, 0],
+    },
+    R: {
+      t: "Emniyete bildirin",
+      e: [-3, 0, 0, 3],
+      not: "Fatma Teyze koçunu hâlâ kapıda bekliyor.",
+    },
+  },
+  {
+    id: "geciken_kitap",
+    who: "albay",
+    konu: "Geciken kitap",
+    once: true,
+    minM: 6,
+    text: "Başkanım, 1978'de ilçe kütüphanesinden aldığım 'Harp Tarihi'ni iade ediyorum. Sevim Hanım gecikme cezasını hesapladı: bugünün parasıyla 12 bin lira. Cezamı cephede ödedim! Ama nizam nizamdır, takdir sizin.",
+    L: {
+      t: "Ceza kesilsin",
+      e: [-3, 3, 0, 2],
+      rel: {
+        sevim: 1,
+      },
+    },
+    R: {
+      t: "İade affı haftası",
+      e: [4, -2, 0, 0],
+      not: "Af haftasında 40 kitap, bir de kayıp okuma masası döndü.",
+    },
+  },
+  {
+    id: "hakem_albay",
+    who: "orhan",
+    konu: "Hakem yok",
+    once: true,
+    minM: 8,
+    fav: "L",
+    text: "Başkanım, hakemler artık Karakavak maçlarına gelmiyor; federasyon 'kendi hakeminizi bulun' dedi. Nuri Bey düdüğü çoktan boynuna astı, kapıda bekliyor. Yalnız askerde maç 90 dakika değil, 'bitene kadar' sürermiş.",
+    L: {
+      t: "Albay yönetsin",
+      e: [5, -2, 2, -4],
+      rel: {
+        albay: 1,
+      },
+      not: "Maç 130 dakika sürdü; ikinci yarıda sahaya Dursun'un ineği girdi.",
+    },
+    R: {
+      t: "Maç komşu ilçede",
+      e: [-4, -1, -2, 5],
+    },
+  },
+  {
+    id: "demleme_bar",
+    who: "rahmi",
+    konu: "Demleme bar",
+    once: true,
+    minM: 10,
+    fav: "L",
+    text: "Başkanım, torunum yetmiş yıllık kıraathanenin köşesine demleme kahve barı açtı. Kahve 180 lira; emekliler okey masasında soğutuyor, torun da 'soğuk demleme' diye yeniden satıyor. Tabelaya 'Rahmi's' yazmış!",
+    L: {
+      t: "Kıraathane dokunulmaz",
+      e: [4, -1, -3, 0],
+    },
+    R: {
+      t: "Kahve festivali yapalım",
+      e: [-2, -3, 6, 0],
+    },
+  },
+  {
+    id: "minare_sinyal",
+    who: "hayri",
+    konu: "Şerefede sinyal",
+    once: true,
+    fav: "L",
+    text: "Başkanım, Yukarıçeşme'de telefonun tek çektiği yer minarenin şerefesi. Ezan vakti sıra oluyor; kapıya 'görüşme 3 dakika' yazdım. Dün bir genç oradan canlı yayın açtı, müezzin de yayına konuk oldu.",
+    L: {
+      t: "Baz istasyonuna arsa",
+      e: [-3, 4, 2, 0],
+      not: "Köyde 'baz radyasyonu' söylentisi şimdiden başladı.",
+    },
+    R: {
+      t: "Telefona drone takalım",
+      e: [5, -4, 0, -2],
+    },
+  },
+  {
+    id: "son_sakin",
+    who: "muhtar",
+    konu: "Köyün son sakini",
+    once: true,
+    minM: 12,
+    fav: "L",
+    text: "Başkanım, Aşağıçeşme'de 84 yaşında tek bir sakin kaldı: Hıdır Emmi. Yol istiyor, su istiyor. 'Bir de sandık gelsin, oyumu kullanayım' diyor. Sevim Hanım tek seçmenin yolunu hesaplıyor, hesap makinesi ağlıyor.",
+    L: {
+      t: "Yol da su da gelsin",
+      e: [6, -8, 0, 0],
+      anket: {
+        ad: "Hıdır Emmi'nin yolu",
+        puan: 1,
+      },
+    },
+    R: {
+      t: "Emmiyi ilçeye alalım",
+      e: [-4, 3, 0, 1],
+      not: "Hıdır Emmi her sabah otogarda köyün yolunu soruyor.",
+    },
+  },
+  {
+    id: "sesli_mesaj",
+    who: "muhtar",
+    konu: "Yanlış grup",
+    once: true,
+    minM: 6,
+    fav: "L",
+    text: "Başkanım, dün belediye grubuna benden dört dakikalık bir sesli mesaj düştü. Sizi taklit ediyorum: 'Asfalt yolda arkadaşlar, yolda!' Mahalle grubuna atacaktım. Ardından yazdığım 'o size değildi' de gruba düştü.",
+    L: {
+      t: "Güldüm, geçelim",
+      e: [4, 0, 0, -3],
+    },
+    R: {
+      t: "Meclis kaydına girsin",
+      e: [-3, 0, 0, 3],
+      rel: {
+        nermin: 1,
+      },
+      not: "Muhtar Rıza bunu unutmayacak.",
+    },
+  },
+  {
+    id: "deprem_kahini",
+    who: "tuncay",
+    konu: "Deprem kâhini",
+    once: true,
+    minM: 6,
+    text: "Başkanım, bir hesap 'Salı 14.20, Karakavak' diye deprem tarihi verdi. Esnaf kepenk indirdi, düğün cumaya alındı, Burak canlı yayın hazırlıyor. Manşetim hazır ama hangisi: 'KORKMAYIN' mı, 'KAÇIN' mı?",
+    L: {
+      t: "Resmî yalanlama",
+      e: [-3, 0, 4, 0],
+    },
+    R: {
+      t: "Salı tatbikat günü",
+      e: [4, -3, -4, 4],
+      not: "Salı 14.20 geçti, deprem olmadı; tatbikata bütün ilçe katıldı.",
+    },
+  },
+  {
+    id: "haciz_tekir",
+    who: "sevim",
+    konu: "Haciz listesi",
+    once: true,
+    minM: 18,
+    fav: "L",
+    text: "Başkanım, asfaltçının alacağı için icra memuru geldi, demirbaş listesini çıkardı: 1 semaver, 1 makam koltuğu, 1 bayrak direği ve '1 adet kedi, tekir, belediyeye ait'. Tekir listeyi görünce masanın altına girdi.",
+    L: {
+      t: "Borcu kapatın",
+      e: [2, -8, 1, 3],
+      inc: "tekir",
+    },
+    R: {
+      t: "Makam koltuğu gitsin",
+      e: [5, -3, 0, -3],
+      not: "Makamda artık tabure var; Tekir koltuğun yerine kuruldu.",
+    },
+  },
 ];
 
 // ─── Seçimde karşınıza çıkabilecek adaylar ──────────────────────────────────
@@ -3033,6 +6959,16 @@ export const SYN: SynRule[] = [
     e: [1, 0, 0, 0],
     ad: "Konut ve inşaat",
     msg: "Kira masası ile inşaatlar aynı anda sürüyor; ev sahipleri fiyat kırmaya başladı.",
+  },
+  // ══ Kavun AŞ · Makam Aracı Destanı · kavşak kamerası ve tek evraklar ══
+  {
+    id: "kemer_kiralik",
+    a: "kemer",
+    b: "kiralik",
+    e: [0, 0, 0, -1],
+    card: "arac_genelge",
+    ad: "Tasarrufta kiralık araç",
+    msg: "Tasarruf genelgesi yürürlükteyken makam aracına kira ödeniyor; Ankara not aldı.",
   },
 ];
 
@@ -3258,11 +7194,295 @@ export const ENDINGS: Record<string, Ending> = {
     spot: "Dört dönemlik başkanlık, meydanda çay ve kavun ikramıyla uğurlandı.",
     kisa: "Dört dönem, onurlu veda",
   },
+  // ══ yay sonları (tur: gönüllü, ceza, komik) ══
+  batik_makam: {
+    who: "fikret",
+    konu: "Son mühür",
+    text: "Su dizinize geldi başkanım, siz hâlâ imzalıyorsunuz. Son evrak ıslak ama mühür tuttu. Bütün ilçe kıyıda; Hüseyin kayıktan çay uzatıyor, Nuri Bey selam durdu, Tekir minarenin şerefesinden bakıyor. Kayığa buyurun.",
+    manset: "BAŞKAN MAKAMIYLA BATTI",
+    spot: "Makamını Eski Karakavak'a taşıyan başkan, baraj dolarken son evrağını dizine kadar suda imzaladı; ilçe onu kıyıdan kayıkla uğurladı.",
+    kisa: "Makamıyla battı",
+    tur: "komik",
+    btn: ["Kayığa selam", "Son mühür"],
+  },
+  saray_icra: {
+    who: "sevim",
+    konu: "Haciz tutanağı",
+    text: "Başkanım, icra memuru sarayın on iki katını tek tek mühürledi, asansörü de. Makamı konteynere taşıdık; sahibi aradı, meğer konteyner de kiralıkmış. Kaymakamlık görevden uzaklaştırma yazısını konteynerin kapısına astı.",
+    manset: "SARAY İCRAYA GİTTİ",
+    spot: "On iki katlı hizmet sarayı borç yüzünden haczedildi. Başkan makamı konteynere taşıdı; konteynerin de kiralık olduğu ortaya çıktı.",
+    kisa: "Sarayı icraya gitti",
+    tur: "ceza",
+    btn: ["Konteyner de mi?", "Anahtarı bırakayım"],
+  },
+  as_sube: {
+    who: "kaan",
+    konu: "Devir teslim",
+    text: "Tebrikler müdürüm! Kavun AŞ belediyeyi iştirak olarak devraldı; Karakavak Belediyesi artık 'Kavun AŞ İç Anadolu Bölge Müdürlüğü'. Meclis haftalık satış toplantısı oldu. Hedefi tutturursanız emekliliğe kadar şube sizin.",
+    manset: "BELEDİYE ŞİRKETE ŞUBE OLDU",
+    spot: "Karakavak Belediyesi, kendi kurduğu Kavun AŞ'nin İç Anadolu Bölge Müdürlüğü'ne dönüştü; başkan şube müdürü olarak emekliye ayrıldı.",
+    kisa: "Kendi şirketinde şube müdürü",
+    tur: "komik",
+    btn: ["Satış hedefine!", "Kurul toplansın"],
+  },
+  pedal: {
+    who: "fikret",
+    konu: "Tandem makam",
+    text: "Hayırlı olsun başkanım, Kamu Tasarrufu Koordinatörüsünüz! Yeni makam aracımız tandem bisiklet: önde siz, arkada ben pedal çeviriyorum. Bakanlık yokuşunda nefesim kesiliyor ama makam makamdır.",
+    manset: "KARAKAVAK'TAN PEDALLA ANKARA'YA",
+    spot: "Makam aracı yolda haczedilen başkan, bisikletiyle tasarruf kampanyasının yüzü oldu. Ankara'daki yeni makam aracı iki kişilik bir bisiklet.",
+    kisa: "Pedalla Ankara'ya terfi",
+    tur: "gonullu",
+    win: true,
+    btn: ["Pedallara!", "Arkadan çevir Fikret"],
+  },
+  kavun_krali: {
+    who: "fikret",
+    konu: "Taç giyildi",
+    text: "Başkanlık bitti, krallık başladı başkanım... pardon, majesteleri. Tabela asıldı: 'Kavun Krallığı Karakavak'. Ben başvezir oldum, Hüseyin saray çaycısı, Tekir veliaht. Kaymakam Bey yazının başına ne yazacağını hâlâ bilemiyor.",
+    manset: "KARAKAVAK'TA TAÇ GİYİLDİ",
+    spot: "Kavun Festivali'nde kabuk tacı giyen başkan, belediyeyi krallık ilan etti. Başvezir Fikret'in ilk fermanı: 'Çaylar saraydan.'",
+    kisa: "Kavun Kralı oldu",
+    tur: "komik",
+    win: true,
+    btn: ["Fermanı imzala", "Çaylar saraydan"],
+  },
+  setten: {
+    who: "naciye",
+    konu: "Sözleşme",
+    text: "Evladım, sözleşmeyi imzaladım; yüzde yirmisi benim, sette dolma da benden. Fikret makamda vekâleten oturuyor, koltuğu ısıtıyor. Sen İstanbul'da baronun gençliğini oynuyorsun. Aferin, yakıştı.",
+    manset: "BAŞKAN SETE, FİKRET MAKAMA",
+    spot: "Karakavak Belediye Başkanı istifa edip başrole geçti. Makama vekâleten Fikret oturdu, menajerliği kayınvalide Naciye Hanım üstlendi.",
+    kisa: "Makamdan sete geçti",
+    tur: "gonullu",
+    btn: ["Kamera, motor!", "Kestik, çay molası"],
+  },
+  kutuk: {
+    who: "kaymakam",
+    konu: "Görevden uzaklaştırma",
+    text: "Başkanım, seçmen kütüğü davasında görevden uzaklaştırıldınız. Bilirkişi kümesi tek tek saydı: 37 seçmen, 1 Tekir, 11 tavuk. Raporuna 'kütükte olmayan tek dürüst sakinler tavuklardır' diye yazdı.",
+    manset: "KÜMES SEÇMENİ MAKAMI YIKTI",
+    spot: "Tek odalı kümese 38 seçmen kaydettiren başkan, seçmen kütüğü davasında görevden uzaklaştırıldı. Tekir ifade vermedi, bir mırr bıraktı.",
+    kisa: "Kümes seçmenine takıldı",
+    tur: "ceza",
+    btn: ["Tavuklar şahidimdir", "Hüsnü Dede'ye selam"],
+  },
 };
 
 // ─── Miras: oyun sonu gazetesi başkanın neyle anılacağını yazar ────────────
 // if: ortak koşul dili (bayrak, sayaç, ilişki...). Sıra önemli: koşulu tutan ilk ikisi gazeteye girer, özel olan öne.
-export const MIRAS: MirasDef[] = [];
+export const MIRAS: MirasDef[] = [
+  // ══ Son Damla (kuraklık, batık köy) · Tek Öğrenci · kuraklık evrakları ══
+  {
+    if: {
+      req: "su_makam",
+    },
+    son: "batik_makam",
+    text: "Başkan, batık köyde dizine kadar suda imzaladığı son evrakla anılacak. Evrak hâlâ kurumadı; belediyenin girişinde, bir fanusun içinde damlıyor.",
+  },
+  {
+    if: {
+      req: "su_kayik",
+    },
+    text: "Su makam çadırına girince kayığa binen başkan olarak anılacak. Nuri Bey o günden beri 'kaptan' kelimesini ağzına almıyor.",
+  },
+  {
+    if: {
+      req: ["su_bitti", "su_torpil"],
+    },
+    text: "Kuraklık yılında bütün ilçe bidon taşırken kayınvalidesinin sokağında musluk hiç susmadı; Karakavak o sokağa hâlâ 'Naciye Çeşmesi' der.",
+  },
+  {
+    if: {
+      req: ["su_bitti", "su_kura"],
+    },
+    text: "Kuraklık yılında su kesintisini kurayla dağıtan, kayınvalidesinin sokağını da kuraya katan başkan. Naciye Hanım o bayram dolma yapmadı, ilçe bunu da yazdı.",
+  },
+  {
+    if: {
+      req: "okul_iyi",
+    },
+    text: "Yukarıçeşme'nin tek öğrencili okulunu kapatmayan başkan olarak anılacak. Okulun sınıf başkanlığı seçimi bugün ilçe seçiminden çekişmeli geçiyor.",
+  },
+  {
+    if: {
+      req: ["okul_kotu", "okul_kapandi"],
+    },
+    text: "Yukarıçeşme okulunu kapatan başkan. Tek öğrencisi Ayşe büyüdü, meclise girdi ve ilk önergesiyle okulu yeniden açtırdı; önerge oy birliğiyle geçti.",
+  },
+  {
+    if: {
+      req: "okul_kotu",
+      not: "okul_kapandi",
+    },
+    text: "Kar günü greyderi çarşıya yollayan başkan. Ayşe büyüyünce meclise girdi; ilk önergesi 'Kar yağınca greyder önce köy yoluna' oldu.",
+  },
+  // ══ Konteyner Makamı · Çoğunluk Kimde? · tek evraklar ══
+  {
+    if: {
+      req: ["bina_genis", "bina_saray"],
+    },
+    text: "Başkanın ek bloklu hizmet sarayı Karakavak'ın en yüksek binası oldu; ilçede 'on birinci kat' deyimi hâlâ 'taksidi ödenmemiş' anlamında kullanılıyor.",
+  },
+  {
+    if: {
+      req: "bina_iyi",
+    },
+    text: "Başkan, Cengiz Bey'in on iki katlı saray maketini girişte sergiletti; altındaki not ilçede meşhur oldu: 'Fazla katlar kasaya sığmadı.'",
+  },
+  {
+    if: {
+      req: "meclis_uzlasma",
+      rel: {
+        nermin: 2,
+      },
+    },
+    text: "Başkan, çoğunluğu kaybettiği yıl muhalefetle uzlaştı; Nermin Hanım'ın 'evet' dediği tek bütçe, meclis arşivinde çerçeveli duruyor.",
+  },
+  {
+    if: {
+      req: "meclis_yk",
+    },
+    text: "Başkan meclis çoğunluğunu yönetim kurulunda üç koltukla geri aldı; Hilmi Bey o kurulda yıllarca uyudu, huzur hakkını bir kez bile kaçırmadı.",
+  },
+  // ══ Kavun AŞ · Makam Aracı Destanı · kavşak kamerası ve tek evraklar ══
+  {
+    son: "as_sube",
+    if: {
+      req: "as_kuruldu",
+    },
+    text: "Karakavak'ın son belediye başkanı, Kavun AŞ İç Anadolu Bölge Müdürlüğü'nün ilk şube müdürü olarak anılacak. Emeklilik plaketinde belediye arması yok, şirket logosu var.",
+  },
+  {
+    son: "pedal",
+    if: {
+      req: "bisiklet",
+    },
+    text: "Makam aracı yolda haczedilip Ankara'ya bisikletle terfi eden başkan olarak anılacak. Tandemin arka selesi bugün belediyenin vitrininde, üstünde simit kırıntısı.",
+  },
+  {
+    if: {
+      req: ["as_kuruldu", "as_bagimsiz"],
+    },
+    text: "Belediyesini kendi kurduğu şirkete kaptırmayan başkan diye anılacak; Kavun AŞ bugün ilçenin en büyük işvereni, yönetim kurulu hâlâ on dört kişi.",
+  },
+  {
+    if: {
+      req: ["as_kuruldu", "as_kapandi"],
+    },
+    text: "Kavun AŞ'yi kurup bir yılda kapatan başkan olarak anılacak; şirketten geriye on dört kişilik kurulun bir fotoğrafı ve ayakta çalışan iki kişinin veda çayı kaldı.",
+  },
+  {
+    if: {
+      req: ["as_kuruldu", "as_sermaye"],
+      not: "as_bagimsiz",
+    },
+    text: "Kavun AŞ'nin sermayesini artıran başkan olarak anılacak; şirket bugün de zararda, yönetim kurulu bugün de on dört kişi, toplantılar hâlâ ayakta.",
+  },
+  {
+    if: {
+      req: "arac_iyi",
+    },
+    text: "Karakavak'ta hâlâ 'bisikletli başkan' diye anılır; Ankara'nın koordinatörlük teklifine pedal çevirerek hayır demişti. Dursun Ağa'nın traktörü ikinci makam aracı olarak emekli oldu.",
+  },
+  {
+    if: {
+      req: "arac_kotu",
+    },
+    text: "Makam aracını Cengiz Bey'e satıp aynı aracı ondan kiralayan başkan olarak anılacak; kira bittiğinde ödenen parayla iki araç alınırdı.",
+  },
+  // ══ Kavun Krallığı · Setten Makama · yapay zekâ ve fenomen evrakları ══
+  {
+    if: {
+      req: "kral_tac",
+    },
+    son: "kavun_krali",
+    text: "Karakavak'ın ilk ve son Kavun Kralı olarak anılacak; başvezir Fikret'in yazdığı fermanlar hâlâ çay ocağının duvarında asılı.",
+  },
+  {
+    if: {
+      req: "kral_muze",
+    },
+    text: "Başkan, kavun kabuğundan tacı giymeyip müzeye kaldıran başkan olarak anılacak; vitrindeki taçla fotoğraf sırası hâlâ uzun.",
+  },
+  {
+    if: {
+      req: "set_odul",
+    },
+    son: "setten",
+    text: "Başkan, makamı Fikret'e, menajerliği Naciye Hanım'a bırakıp sete giden ilk Karakavak başkanı olarak anılacak. 'Kavun Baronunun Gençliği' çay ocağında hâlâ açık.",
+  },
+  {
+    if: {
+      req: "set_bitti",
+    },
+    text: "Başkan, dizide kavun kamyonunun altında kalıp ertesi sabah makamında çay içen başkan olarak anılacak; taziye çelenklerini hâlâ Hüseyin sular.",
+  },
+  // ══ Sandık Hesabı · Taş Ocağı · gece pazarı, askıda fatura, kabristan ══
+  {
+    if: {
+      req: "sandik_38_kalsin",
+    },
+    son: "kutuk",
+    text: "Karakavak'ta kümeslere hâlâ 'seçim bürosu' denir. Başkanın 38 seçmenli kümesi dava dosyasıyla birlikte korunuyor; tavuklar ziyarete kapalı.",
+  },
+  {
+    if: {
+      req: "sandik_itiraf",
+    },
+    text: "Başkan, seçmen kütüğü davasında tam iş birliği yapan ilk başkan olarak anılacak. Kümesten 38 seçmen silindi; kütükte bugün yalnız Tekir'in itirazı duruyor.",
+  },
+  {
+    if: {
+      req: "sandik_maraton",
+    },
+    text: "Başkan, 48 saatte 11 açılışla anılacak. Kurdelesi dişle kesilen çöp kutusu hâlâ meydanda; üstündeki 'Hizmete açılmıştır' plaketi kutudan ağır.",
+  },
+  {
+    if: {
+      req: "ocak_dagit",
+      not: "ocak_tamir",
+    },
+    text: "Kavaklı'da duvar çatlaklarına hâlâ 'başkan çizgisi' denir. Traktör nöbetinin zabıtayla dağıtıldığı gün mahalle takviminde kırmızıyla işaretli.",
+  },
+  {
+    if: {
+      req: "ocak_gol",
+    },
+    text: "Başkan, taş ocağından kalan gölle anılacak. Kavaklılı çocuklar yazın orada yüzüyor; kıyıdaki tabelada hâlâ 'Patlatma saati: 14.00' yazıyor.",
+  },
+  {
+    if: {
+      req: "mezar_katli",
+    },
+    text: "Başkan, Karakavak'a asansörlü mezarlık kazandırmasıyla anılacak. Asansör bayram sabahları hâlâ dolu çıkıyor; en üst kat için bekleme listesi var.",
+  },
+  // ══ ilçe hayatı ve mevcut kararların yan etkileri ══
+  {
+    if: {
+      req: "rahmi_kermes",
+    },
+    text: "Başkan, Kahveci Rahmi'nin 'Yaşıyorum Kermesi'ne izin veren başkan olarak anılacak. Rahmi o günden beri her yıl kendi selâsının yıl dönümünü kutluyor.",
+  },
+  {
+    if: {
+      req: "nikah27",
+    },
+    text: "Başkan, bir günde 27 nikâh kıyıp sesini kaybeden başkan olarak anılacak. O yıl Karakavak'ta doğan dokuz çocuğa onun adı konuldu.",
+  },
+  {
+    if: {
+      req: "kavun_pasaport",
+    },
+    text: "Karakavak'ta her kavunun pasaportu var; Recep Amir'in mühür basan kolu hâlâ ağrır. Başkan, kavuna vize getiren başkan olarak anılacak.",
+  },
+  {
+    if: {
+      req: "okey_otobus",
+    },
+    text: "Başkan, okey masalı belediye otobüsüyle anılacak. Emekliler hâlâ son durakta inmiyor: 'El bitmeden olmaz.'",
+  },
+];
 
 export const INTRO: CardDef[] = [
   {

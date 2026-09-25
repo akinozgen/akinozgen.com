@@ -103,7 +103,9 @@ for (let g = 0; g < N; g++) {
       defter += E.defterOf(s);
     }
     if (c.kind === "sonuc") kazanc++;
-    const side = insan(s, rng);
+    const c0 = s.cur,
+      tek = c0.kind === "normal" && !!c0.L.son !== !!c0.R.son; // yay sonu: %30 merakla seçilir (sim.mjs gibi)
+    const side = tek ? (rng() < 0.3 === !!c0.L.son ? "L" : "R") : insan(s, rng);
     if (yeni.has(c.id)) {
       const t = (taraf[c.id] ||= { L: 0, R: 0 });
       t[c.flip ? (side === "L" ? "R" : "L") : side]++;

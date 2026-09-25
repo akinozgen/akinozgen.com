@@ -12,9 +12,9 @@ export const FACTS = [
   { ad: "dev kavun heykeli", re: /kavun heykel/i, flag: "devkavun", ok: ["devkavun", "devkavun2"] },
   { ad: "Karakavak Towers", re: /Towers/, flag: "towers", ok: ["towers", "towersL", "skandal"] },
   { ad: "eşek Karaca", re: /Karaca\b/, flag: "karaca", ok: ["esek", "karaca"] },
-  { ad: "e-Belediye", re: /e-Belediye/, ok: ["ebelediye", "ebelediye_coktu", "tek_kullanici"] },
+  { ad: "e-Belediye", re: /e-Belediye/, ok: ["eb_ihbar", "ebelediye", "ebelediye_coktu", "tek_kullanici"] },
   { ad: "sondaj kulesi", re: /sondaj/i, ok: ["petrol_rezalet", "petrol_kule"] },
-  { ad: "coğrafi işaret", re: /coğrafi işaret/i, ok: ["cografi_isaret", "tescil_sonuc", "ova_kavga"] },
+  { ad: "coğrafi işaret", re: /coğrafi işaret/i, ok: ["tescil_sahte", "cografi_isaret", "tescil_sonuc", "ova_kavga"] },
   { ad: "kent lokantası", re: /kent lokanta/i, ok: ["kent_lokantasi", "kuyruk_birlesti"] },
   { ad: "tanzim çadırı", re: /tanzim/i, ok: ["tanzim", "tanzim_ispanak", "kuyruk_birlesti"] },
   {
@@ -24,7 +24,11 @@ export const FACTS = [
   },
   { ad: "kiralık scooter", re: /scooter/i, ok: ["scooter", "scooter_dere", "scooter_garanti"] },
   { ad: "tribün", re: /tribün/i, ok: ["tribun", "kume"] },
-  { ad: "dizi çekimi", re: /\bdizi\b/i, ok: ["dizi", "dizi2"] },
+  {
+    ad: "dizi çekimi",
+    re: /\bdizi\b/i,
+    ok: ["set_evi", "set_teklif", "set_kostum", "set_viral", "set_mesai", "set_sezon", "set_intikam", "dizi", "dizi2"],
+  },
   { ad: "Norveç heyeti", re: /Norveç/, ok: ["kardes", "norvec"] },
   { ad: "lojman", re: /lojman/i, ok: ["ogretmen_lojman", "doktor_lojman"] },
   { ad: "Karakavak jetonu", re: /jeton/i, ok: ["sakiz"] },
@@ -33,8 +37,26 @@ export const FACTS = [
   { ad: "AVM", re: /\bAVM/, ok: ["avm", "avmL", "towers"] },
   { ad: "sanal tarla", re: /sanal (kavun )?tarla/i, ok: ["sanal_ciftlik", "ciftlik_cikis", "ciftlik_kacti"] },
   { ad: "güneş paneli", re: /panel/i, ok: ["ges_tarla", "ges_festival", "ova_kavga", "gunes", "elektrik"] },
-  { ad: "metro sözü", re: /metro/i, flag: "metro_soz", ok: ["deepfake"] },
+  { ad: "metro sözü", re: /metro/i, flag: "metro_soz", ok: ["su_kapsul", "deepfake"] },
   { ad: "petrol müjdesi", re: /petrol/i, ok: ["petrol", "petrol_tahlil", "petrol_rezalet", "petrol_kule"] },
+  {
+    ad: "hizmet sarayı",
+    re: /hizmet saray/i,
+    flag: "bina_saray",
+    ok: ["bina_saray", "bina_temel", "bina_uyari", "bina_kat", "bina_icra"],
+  },
+  {
+    ad: "Kavun AŞ",
+    re: /Kavun AŞ/,
+    flag: "as_kuruldu",
+    ok: ["as_kurulus", "as_akraba", "as_su", "as_kafe", "as_arac", "as_zarar", "as_devir"],
+  },
+  {
+    ad: "Kavunlandia",
+    re: /Kavunlandia/i,
+    flag: "kral_park",
+    ok: ["kral_park", "kral_tac"],
+  },
 ];
 
 const arr = x => [].concat(x ?? []);

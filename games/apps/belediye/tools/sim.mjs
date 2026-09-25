@@ -87,6 +87,18 @@ const policies = {
   },
 };
 const seenAll = {};
+// Oyunu bitiren seçenek (yay sonu): etkisi sıfır göründüğü için risk hesabı onu hep "güvenli" sanırdı.
+// Oyuncu "oyun biter" notunu okur; merak edenler (%30) sonu seçer, gerisi öbür tarafa gider.
+const SON_MERAK = 0.3;
+const sonMu = (s, rng) => {
+  const c = s.cur;
+  if (c.kind !== "normal" && c.kind !== "kriz") return null;
+  const l = !!c.L.son,
+    r = !!c.R.son;
+  if (l === r) return null;
+  const son = l ? "L" : "R";
+  return rng() < SON_MERAK ? son : son === "L" ? "R" : "L";
+};
 // yan etki evrakları (yürürlükteki kararların doğurduğu)
 const YAN = new Set(
   E.CARDS.flatMap(c => [c.L, c.R])
@@ -144,7 +156,7 @@ for (const [name, pol] of Object.entries(policies)) {
         defterAt += E.defterOf(s);
       }
       if (c.kind === "erkensonuc") earlyW++;
-      const side = pol(s, rng);
+      const side = sonMu(s, rng) || pol(s, rng);
       // kartın yazıldığı taraf (masada yarı yarıya ters çevrilir): baskın seçenek ölçümü için
       if (c.kind === "normal") {
         const t = (tally[c.id] ||= { L: 0, R: 0 });

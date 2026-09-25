@@ -200,3 +200,32 @@ Başkanın isteği: "bi tslintten bi prettierden geçir, özellikle sabitler kor
 - Doğrulama: biçim öncesi ve sonrası derlemenin küçültülmüş çıktısı karşılaştırıldı. Tek fark sürüm damgası ve ona bağlı dosya adları. Simülasyon çıktısı bayt bayt aynı.
 - Kaynak boyutunu ölçen iki test (spiker 30 KB, meydan 70 KB) artık küçültülmüş kodu ölçüyor; yoksa yalnız girinti yüzünden aşıyorlardı.
 - Windows'ta `core.autocrlf` dosyaları CRLF açıyor: Prettier `endOfLine: auto`. Gösteri sayfalarının import silicisi de `\r\n`'i tanıyor. Bunu, `git stash` dosyaları CRLF'e çevirince tv-mock'un kırılmasından öğrendik.
+
+## İkinci genişletme: yaylar, yan etkiler, sonlar (2026-09-25)
+Başkanın isteği: "Dünkü genişletme koşusunu tekrar yapalım; araştırıp fikir getiren ajanlar çıkar, 70 kart daha, yan etkiler, süreli etkiler, birkaç yay daha; sona etki edecek şekilde." Oyunda o sırada 215 evrak vardı; başkan 295 sanıyordu.
+- **Araştırma:** üç ajan çalıştı. Yerel siyaset ve yönetim (45 fikir, 6 yay), ilçe hayatı ve afet (45 fikir, 6 yay), oyun tasarımı. Tasarım araştırması Reigns, Suzerain, Democracy, Frostpunk, Crusader Kings ve Fallen London'dan şu dersleri çıkardı:
+  - ceza sonları tek seçimle gelmemeli, telgraflanmalı ve kaçış yolu olmalı;
+  - yan etki sabit zarla değil bekleme ve soğumayla gelmeli;
+  - skandal görünür ve adlı olmalı;
+  - miras cümlesi somut olmalı, ahlak dersi vermemeli.
+- **Mekanikler** (`73a4866`): yay sonu (`son`, türleriyle), yan etki (`pol.yan`), sandık defteri (`anket`), miras (`MIRAS`), hafıza notu (`not`), sonlar defteri. Kurallar denetimde: ceza sonu yalnız zincir evrakında olur; yan etki olasılığı 0,3'ü aşmaz; yan etki evrakı kararı kaldırma seçeneği sunmazsa uyarı verir; aynı evrakın iki tarafı birden oyunu bitiremez.
+- **Yazım:** altı yazar ajanı ortak bir kılavuzla (şema, denge, ton, gerçek ad yasağı) paralel yazdı. Her biri eki `tools/ek-dene.mjs` ile kendisi sınadı. Ekler kaynağa bir betikle dikildi; mevcut evraklara hatırlama metinleri ve yan etkiler de eklendi.
+- **İçerik:** 126 yeni evrak; `CARDS` 215'ten 341'e çıktı. On yay:
+  - Son Damla: kuraklık, batık köy, zaman kapsülü, obruk.
+  - Tek Öğrenci.
+  - Konteyner Makamı: riskli bina, hizmet sarayı.
+  - Çoğunluk Kimde?: meclis.
+  - Kavun AŞ.
+  - Makam Aracı Destanı.
+  - Kavun Krallığı.
+  - Setten Makama.
+  - Sandık Hesabı: hemşehri kaydı, 38 seçmenli kümes, bekçi, açılış maratonu.
+  - Taş Ocağı.
+  Tek evraklar ve 20'den fazla yan etki de var: gece pazarı, kavşak kamerası, askıda fatura, tasarruf genelgesinin çay hesabı, LED panonun horozu...
+- **Yeni sonlar:** batık makam, saray icrası (ceza), şirketin şubesi, pedalla Ankara'ya (terfi), Kavun Kralı, setten makama, kümes seçmeni (ceza). Meclis yolundan var olan Tekir sonuna da gidilebiliyor. Miras cümlesi 32.
+- **Düzeltmeler:** mevcut metinlerdeki gerçek kurum ve marka adları (SGK, Sayıştay, AFAD, Halk Ekmek, Vakıflar, Millî Eğitim, DSİ, TikTok, Guinness) cins adlara çevrildi. `dizi2` ve `norvec` evrakları artık bayrak koyuyor; yeni yaylar bunlara bağlandı.
+- **Simülasyon yanılgısı:** oyunu bitiren seçeneğin etkisi sıfır olduğu için risk hesaplayan sanal oyuncular onu "en güvenli" sanıp seçiyordu. İlk ölçümde yay sonları oyunların %8-11'ini yiyordu, göstergeye bakan oyuncunun medyanı 175 aydan 126'ya düşmüştü. Artık sanal oyuncu sonu %30 merakla seçiyor.
+- **Denge** ("insan" oyuncu, 2000 oyun, önce → sonra):
+  - medyan 119 → 119 ay, ilk dönem %89 → %91, seçim %78 → %75, emekli %17 → %17;
+  - kasa batışı %32 → %26, yay sonları %5.
+  Usta ile insan arasındaki oran 1,5'te kaldı. Ankaracı oyuncu seçimlerin %49'u yerine %43'ünü kazanıyor, çünkü Ankara'yı memnun eden seçenekler çoğu kez defterde skandal olarak kalıyor.

@@ -169,8 +169,9 @@ test("akış: her dönem seçimden önce adaylar ilan edilir, seçimde aynı lis
         assert.equal(JSON.stringify(s.field), announced.field, "liste değişmiş");
         checked++;
       }
-      // hayatta kalsın diye göstergeleri ortada tut
-      E.choose(s, r() < 0.5 ? "L" : "R", r);
+      // hayatta kalsın diye göstergeleri ortada tut; yay sonu seçilmez (oyun seçimden önce bitmesin)
+      const side = r() < 0.5 ? "L" : "R";
+      E.choose(s, c[side].son && c.kind === "normal" ? (side === "L" ? "R" : "L") : side, r);
       for (const k of ["h", "k", "e", "a"]) s.m[k] = 50;
     }
     assert.ok(checked >= 1);
