@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const src = readFileSync(new URL("../src/meydan.js", import.meta.url), "utf8");
+const src = readFileSync(new URL("../tools/meydan.js", import.meta.url), "utf8");
 const load = () => new Function(src + "\nreturn { meydanSVG, meydan, MD_HOUR };")();
 const LIMIT = 70 * 1024;
 

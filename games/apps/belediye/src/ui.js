@@ -941,16 +941,22 @@ function pickMove(e) {
 // ─── Ana menü: canlı meydan üstünde logo, menü, ilan panosu ve bilgi kartı ──
 const SURUM = "/*SURUM*/"; // derlemede tarih ve içerik özetiyle dolar
 const YENILIK = [
-  ["Seçim gecesi canlı yayında", "KARAKAVAK TV sandıkları mahalle mahalle açıyor: bıyıklı spiker, alt bant, absürt kayan yazı."],
-  ["Ankara'dan davet", "Ankara tavan yapınca sizi yukarı çağırır. İsterseniz gidersiniz, isterseniz “Karakavak'ı bırakmam” dersiniz."],
-  ["Erken seçim", "Esnaf odası belediyeyi ele geçirirse sandık erken kurulur; Hacı Bekir güçlü girer."],
+  ["Seçim gecesi canlı yayında", "KARAKAVAK TV sandıkları mahalle mahalle açıyor."],
+  ["Ankara'dan davet", "Ankara tavan yapınca sizi yukarı çağırır; hayır diyebilirsiniz."],
+  ["Aday kaydı", "Vesikalığınızı seçin, adınızı yazın, mazbatayı alın."],
 ];
-let md = null, mnBusy = false, panelFrom = null; // md: meydan sahnesinin denetimi (meydan.js yoksa sahne gradyan kalır)
+let mnBusy = false, panelFrom = null;
+// Meydan sahnesi: tek resim (tools/meydan.js'ten çizilip SDXL'den geçti). Canlı SVG tarayıcıyı yoruyordu.
+// Palet yerel saate göre: 21-5 gece, 6-16 gündüz, 17-20 akşamüstü. Tek dosyalık kopyada resimler gömülü.
+const MEYDAN = /*MEYDAN*/null;
+const mdPal = (h = new Date().getHours()) => (h >= 21 || h < 6 ? "gece" : h < 17 ? "gun" : "aksam");
 function sceneOn(on) {
-  if (typeof meydan !== "function") return;
-  if (on && !md) { $("#mn-scene").innerHTML = meydanSVG(); md = meydan($("#mn-scene")); return; }
-  if (md) { if (on) md.resume(); else md.pause(); }
+  if (!on) return;
+  const sc = $("#mn-scene"), p = mdPal();
+  sc.classList.remove("in");
+  if (sc.dataset.pal !== p) { sc.dataset.pal = p; $("#mn-img").src = MEYDAN?.[p] || `meydan/meydan-${p}.webp`; }
 }
+async function sceneEnter() { $("#mn-scene").classList.add("in"); await wait(reduced ? 200 : 900); }
 const mnItems = () => [...document.querySelectorAll("#mn-list .mn-item")].filter(b => !b.hidden);
 function mnOn(b, sound = true) {
   if (!b || b.classList.contains("on")) return;
@@ -1034,7 +1040,7 @@ function showTitle() {
 async function menuEnter(go) {
   if (mnBusy) return;
   mnBusy = true;
-  try { if (md && screen === "title") await md.enter(); } catch { /* sahne yoksa doğrudan */ }
+  if (screen === "title") await sceneEnter();
   mnBusy = false; go();
 }
 function enterGame() {
@@ -1070,8 +1076,13 @@ function wire() {
     b.addEventListener("pointerenter", e => { if (e.pointerType === "mouse" && !mnBusy) { b.focus({ preventScroll: true }); mnOn(b); } });
     b.addEventListener("focus", () => mnOn(b));
   }
-  // sekme arkadayken meydan sahnesi durur
-  document.addEventListener("visibilitychange", () => sceneOn(screen === "title" && !document.hidden));
+  // fareyle hafif parallaks: yalnız resmin kutusu kayar (tek katman, yeniden boyama yok)
+  const fine = matchMedia("(pointer: fine)");
+  let pxT = 0;
+  addEventListener("pointermove", e => {
+    if (screen !== "title" || reduced || !fine.matches || pxT) return;
+    pxT = requestAnimationFrame(() => { pxT = 0; const sc = $("#mn-scene"); sc.style.setProperty("--px", (e.clientX / innerWidth - .5).toFixed(3)); sc.style.setProperty("--py", (e.clientY / innerHeight - .5).toFixed(3)); });
+  });
   // ilk dokunuşta ses açılsın ki menü tıkları duyulsun
   for (const ev of ["pointerdown", "keydown"]) addEventListener(ev, () => snd.unlock(), { once: true, capture: true });
   $("#btn-go").addEventListener("click", startNew);

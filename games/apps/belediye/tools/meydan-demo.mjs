@@ -1,4 +1,4 @@
-// Ana menü meydanı gösterisi: src/meydan.js'i tam ekran kurar, üstüne sahte menü katmanı koyar (yatayda sol %36,
+// Ana menü meydanı gösterisi: tools/meydan.js'i tam ekran kurar, üstüne sahte menü katmanı koyar (yatayda sol %36,
 // dikeyde alt %55 koyu geçiş), başsız Chrome ile her boy × her palet için ekran görüntüsü ve enter() kareleri alır.
 // Çıktı: .cache/meydan/demo.html + *.png · node tools/meydan-demo.mjs [çıktı klasörü]
 import { spawn } from "node:child_process";
@@ -8,7 +8,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const OUT = process.argv[2] || fileURLToPath(new URL("../.cache/meydan/", import.meta.url));
 mkdirSync(OUT, { recursive: true });
 for (const f of readdirSync(OUT)) if (f.endsWith(".png")) rmSync(OUT + "/" + f);
-const SRC = readFileSync(new URL("../src/meydan.js", import.meta.url), "utf8");
+const SRC = readFileSync(new URL("./meydan.js", import.meta.url), "utf8");
 const FONTS = readFileSync(new URL("../web-src/fonts.css", import.meta.url), "utf8")
   .replace(/url\(fonts\//g, `url(${new URL("../web-src/fonts/", import.meta.url).href}`);
 const html = `<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Meydan gösterisi</title>
