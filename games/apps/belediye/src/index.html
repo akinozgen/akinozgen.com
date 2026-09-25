@@ -6,11 +6,13 @@
 
 <div id="app" lang="tr">
 
-  <!-- Başlık -->
-  <section id="scr-title" class="screen" aria-label="Ana ekran">
-    <div class="poster">
-      <div class="stitch" aria-hidden="true"></div>
-      <svg class="glass" viewBox="0 -30 200 290" aria-hidden="true">
+  <!-- Ana menü: canlı Karakavak meydanı (meydan.js) üstünde logo, menü, bilgi kartı ve ilan panosu -->
+  <section id="scr-title" class="screen" aria-label="Ana menü">
+    <div class="mn-scene" id="mn-scene" aria-hidden="true"></div>
+    <div class="mn-shade" aria-hidden="true"></div>
+    <div class="mn">
+      <header class="mn-logo">
+        <svg class="mn-glass" viewBox="0 -30 200 290" aria-hidden="true">
         <defs>
           <linearGradient id="tea" x1="0" x2="1" y1="0" y2="0">
             <stop offset="0" stop-color="#5a1208"/><stop offset=".3" stop-color="#a0301a"/><stop offset=".52" stop-color="#c9482a"/><stop offset=".78" stop-color="#8e2412"/><stop offset="1" stop-color="#4e0f06"/>
@@ -41,21 +43,55 @@
         <path d="M150 226 L186 212" stroke="#cfd3d8" stroke-width="3.2" stroke-linecap="round"/>
         <ellipse cx="189" cy="210.5" rx="5.5" ry="3.2" fill="#cfd3d8" transform="rotate(-22 189 210.5)"/>
       </svg>
-      <div class="eyebrow">T.C. Karakavak Belediyesi</div>
-      <h1>Çaylar <span>Belediyeden</span></h1>
-      <p class="lede">Karakavak'ın yeni belediye başkanı sizsiniz. Evrak gelir; siz <b>sağa</b> ya da <b>sola</b> kaydırırsınız. Halkı, kasayı, esnafı ve Ankara'yı dengede tutun. Beş yılda bir de sandık var.</p>
-      <div class="actions">
-        <button id="btn-start" class="btn primary" type="button">Göreve başla</button>
-        <button id="btn-resume" class="btn" type="button" hidden>Kaldığım yerden</button>
-        <button id="btn-wall" class="btn" type="button">Eski başkanlarımız</button>
-        <button id="btn-help" class="btn" type="button">Nasıl oynanır</button>
+        <div class="mn-word">
+          <span class="mn-eyebrow">T.C. Karakavak Belediyesi</span>
+          <h1>Çaylar <span>Belediyeden</span></h1>
+        </div>
+      </header>
+      <nav class="mn-list" id="mn-list" aria-label="Ana menü">
+        <button id="btn-resume" class="mn-item" type="button" data-info="devam" hidden><b>Devam et</b><small id="mn-resume-sub"></small></button>
+        <button id="btn-start" class="mn-item" type="button" data-info="yeni"><b>Yeni dönem</b></button>
+        <button id="btn-wall" class="mn-item" type="button" data-info="duvar"><b>Eski başkanlarımız</b></button>
+        <button id="btn-help" class="mn-item" type="button" data-info="nasil"><b>Nasıl oynanır</b></button>
+        <button id="btn-ayar" class="mn-item" type="button" data-info="ayar"><b>Ayarlar</b></button>
+        <button id="btn-kunye" class="mn-item" type="button" data-info="kunye"><b>Künye</b></button>
+      </nav>
+      <aside class="mn-board" id="mn-board" aria-label="İlan panosu"></aside>
+      <aside class="mn-info" id="mn-info" aria-live="polite"></aside>
+
+      <!-- Ayarlar ve künye: meydanın üstünde açılan paneller -->
+      <div class="mn-panel" id="mn-ayar" role="dialog" aria-modal="true" aria-labelledby="ayar-h" hidden>
+        <h2 id="ayar-h">Ayarlar</h2>
+        <div class="ay-rows">
+          <label class="ay-row"><span>Ses</span><input type="checkbox" id="ay-ses" role="switch"><i aria-hidden="true"></i></label>
+          <label class="ay-row"><span>Ses düzeyi</span><input type="range" id="ay-vol" min="0" max="100" step="5"><output id="ay-vol-o"></output></label>
+          <label class="ay-row"><span>Titreşim <small>telefonda mühür basınca</small></span><input type="checkbox" id="ay-tit" role="switch"><i aria-hidden="true"></i></label>
+          <label class="ay-row"><span>Hızlı seçim gecesi <small>sayım kısa sürer</small></span><input type="checkbox" id="ay-hizli" role="switch"><i aria-hidden="true"></i></label>
+          <div class="ay-row"><span>Tanıtım <small>Fikret göstergeleri yeniden anlatsın</small></span><button id="ay-intro" class="btn sm" type="button">Yeniden göster</button></div>
+          <div class="ay-row danger"><span>Kayıtlar <small>kayıtlı dönem, rekor ve eski başkanlar duvarı</small></span><button id="ay-sil" class="btn sm" type="button">Hepsini sil</button></div>
+        </div>
+        <button class="btn mn-back" type="button" data-close>Geri</button>
       </div>
-      <div class="whoami">
-        <button id="btn-avatar" class="avatar" type="button" aria-label="Vesikalığı değiştir"><img id="avatar-img" alt="" draggable="false"><span>Değiştir</span></button>
-        <label class="namefield" for="in-name"><span>Başkanın adı</span><input id="in-name" type="text" maxlength="24" autocomplete="off" spellcheck="false"></label>
+      <div class="mn-panel" id="mn-kunye" role="dialog" aria-modal="true" aria-labelledby="kunye-h" hidden>
+        <h2 id="kunye-h">Künye</h2>
+        <dl class="kn">
+          <dt>Yapım</dt><dd>akinozgen.com</dd>
+          <dt>Makam şefi</dt><dd>Fikret</dd>
+          <dt>Belediye kedisi</dt><dd>Tekir (kadrolu)</dd>
+          <dt>Çay</dt><dd>Çaycı Hüseyin, belediye çay ocağı</dd>
+          <dt>Yazı karakterleri</dt><dd>Alfa Slab One, Barlow Condensed, Courier Prime, Old Standard TT (SIL Open Font License)</dd>
+          <dt>Sürükleme</dt><dd>interact.js (MIT)</dd>
+          <dt>Sürüm</dt><dd id="kn-ver"></dd>
+        </dl>
+        <p class="kn-note">Bu oyun kurgudur. Kişi, kurum ve olayların gerçekle ilgisi yoktur; benzerlik tesadüfse tesadüftür, değilse de tesadüftür.</p>
+        <button class="btn mn-back" type="button" data-close>Geri</button>
       </div>
-      <p class="best" id="best"></p>
-      <p class="keys">Sürükleyin ya da <kbd>←</kbd> <kbd>→</kbd> tuşlarını kullanın</p>
+
+      <footer class="mn-foot">
+        <span id="mn-ver"></span>
+        <span class="best" id="best"></span>
+        <button id="btn-mute2" class="mn-mute" type="button" aria-label="Ses"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6h3l4-3v10L5 10H2z" fill="currentColor"/><path class="wave" d="M11 5.5c1 .8 1 4.2 0 5M12.8 4c2 1.6 2 6.4 0 8" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/></svg></button>
+      </footer>
     </div>
   </section>
 
@@ -210,12 +246,28 @@
   </section>
 
   <!-- Vesikalık seçimi -->
-  <section id="scr-pick" class="screen" aria-label="Vesikalık seçimi" hidden>
-    <div class="pick-in">
-      <div class="plaque"><h2>Başkanlık Vesikalığı</h2><p>Hangisi sizsiniz?</p></div>
-      <div class="picks" id="picks"></div>
+  <section id="scr-pick" class="screen" aria-label="Aday kaydı" hidden>
+    <div class="ak">
+      <header class="ak-head"><span class="mn-eyebrow">Yeni dönem</span><h2>Aday kaydı</h2><p>Seçim kurulu vesikalığınızı ve adınızı bekliyor.</p></header>
+      <div class="ak-main">
+        <figure class="ak-card">
+          <div class="ak-photo"><img id="avatar-img" alt="" draggable="false"></div>
+          <figcaption>
+            <label class="ak-name" for="in-name"><span>Başkanın adı</span><input id="in-name" type="text" maxlength="24" autocomplete="off" spellcheck="false"></label>
+            <b class="ak-lakap" id="ak-lakap"></b>
+            <p class="ak-bio" id="ak-bio"></p>
+          </figcaption>
+        </figure>
+        <div class="ak-side">
+          <div class="ak-grid" id="picks" role="radiogroup" aria-label="Vesikalıklar"></div>
+          <button id="btn-zar" class="btn sm ak-zar" type="button">Rastgele aday</button>
+        </div>
+      </div>
       <p class="pick-note" id="pick-note"></p>
-      <button id="btn-pick-back" class="btn" type="button">Vazgeç</button>
+      <div class="ak-act">
+        <button id="btn-pick-back" class="btn" type="button">Vazgeç</button>
+        <button id="btn-go" class="btn primary" type="button">Mazbatayı al</button>
+      </div>
     </div>
   </section>
 </div>

@@ -11,8 +11,11 @@ const root = new URL("./", import.meta.url);
 const SITE = process.argv.includes("--site");
 const SITE_URL = "https://akinozgen.com/games/belediye/";
 const read = p => readFileSync(new URL(p, root), "utf8");
-const js = ["cards.js", "engine.js", "anchor.js", "broadcast.js", "ui.js"].map(f => read("src/" + f)).join("\n\n");
-new Function(js); // sözdizimi kontrolü (çalıştırmaz)
+const SRC = ["cards.js", "engine.js", "anchor.js", "broadcast.js", "ui.js"].map(f => read("src/" + f)).join("\n\n");
+new Function(SRC); // sözdizimi kontrolü (çalıştırmaz)
+// menüdeki sürüm: derleme günü ve kaynağın kısa özeti ("2026.09.25 · 3f9c2a1")
+const SURUM = `${new Date().toISOString().slice(0, 10).replaceAll("-", ".")} · ${createHash("sha1").update(SRC + read("src/style.css")).digest("hex").slice(0, 7)}`;
+const js = SRC.replace('"/*SURUM*/"', JSON.stringify(SURUM));
 
 const DESC = "Karakavak'ın belediye başkanı sizsiniz: evrakı sağa sola kaydırın, halkı, kasayı, esnafı ve Ankara'yı dengede tutun.";
 const tpl = read("src/index.html");

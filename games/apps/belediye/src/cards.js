@@ -35,7 +35,7 @@ const PEOPLE = {
   ingrid:   { ad: "Ingrid Hanım", unvan: "Kardeş Şehir Heyeti, Norveç" },
 };
 
-// ─── Başkanlık vesikalıkları: başlıkta seçilir, her birinin kendi adı var ────
+// ─── Başkanlık vesikalıkları: aday kaydında seçilir, her birinin kendi adı var ─
 // Oyuncu kendi adını yazmazsa bu ad kullanılır. Eski başkanlar duvarı da bu resimleri asar.
 // lakap + bio: seçim ekranındaki broşür. Gerçek kişi ya da parti yok; hepsi yerel siyasetin bilinen halleri.
 const BASKANLAR = {

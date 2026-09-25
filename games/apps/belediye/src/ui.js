@@ -11,7 +11,7 @@ const LS = {
 };
 const rngOf = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 // dokunmadan (klavyeyle) oynayanda tarayıcı titreşimi engeller ve konsola hata yazar; hiç çağırmayalım
-const vibrate = ms => { try { if (navigator.userActivation?.hasBeenActive !== false) navigator.vibrate?.(ms); } catch { } };
+const vibrate = ms => { try { if (LS.get("vibrate", true) && navigator.userActivation?.hasBeenActive !== false) navigator.vibrate?.(ms); } catch { } };
 
 let S = null, busy = false, screen = "title", lastOver = null, wallFrom = "title";
 // Derlemede web sürümü için true yapılır (service worker kaydı)
@@ -24,11 +24,11 @@ const photo = id => `<img src="${photoSrc(id)}" alt="" decoding="async" draggabl
 
 // ─── Ses: hepsi WebAudio ile üretiliyor ───────────────────────────────────
 const snd = (() => {
-  let ctx = null, master = null, on = LS.get("sound", true);
+  let ctx = null, master = null, on = LS.get("sound", true), vol = LS.get("volume", 50);
   const ks = {};
   const init = () => {
     if (ctx) return;
-    try { ctx = new (window.AudioContext || window.webkitAudioContext)(); master = ctx.createGain(); master.gain.value = .5; master.connect(ctx.destination); } catch { ctx = null; }
+    try { ctx = new (window.AudioContext || window.webkitAudioContext)(); master = ctx.createGain(); master.gain.value = vol / 100; master.connect(ctx.destination); } catch { ctx = null; }
   };
   const ready = () => on && ctx && ctx.state !== "closed";
   const env = (g, t, a, peak, d) => { g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(.0001, t + a + d); };
@@ -45,6 +45,14 @@ const snd = (() => {
     get on() { return on; },
     unlock() { if (on) { init(); ctx?.resume?.(); } },
     toggle() { on = !on; LS.set("sound", on); if (on) { init(); ctx?.resume?.(); } return on; },
+    get vol() { return vol; },
+    volume(v) { vol = Math.max(0, Math.min(100, Math.round(v))); LS.set("volume", vol); if (master) master.gain.value = vol / 100; },
+    // menüde madde değişince kısa, yumuşak bir tık
+    tick() {
+      if (!ready()) return; const t = ctx.currentTime;
+      const o = ctx.createOscillator(), g = ctx.createGain(); o.type = "triangle"; o.frequency.setValueAtTime(1500, t); o.frequency.exponentialRampToValueAtTime(950, t + .035);
+      env(g, t, .002, .07, .045); o.connect(g).connect(master); o.start(t); o.stop(t + .09);
+    },
     stamp() {
       if (!ready()) return; const t = ctx.currentTime;
       const o = ctx.createOscillator(), g = ctx.createGain(); o.type = "sine"; o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(46, t + .14); env(g, t, .004, .9, .2); o.connect(g).connect(master); o.start(t); o.stop(t + .3);
@@ -874,7 +882,7 @@ function renderWall() {
 function openWall() { wallFrom = screen === "wall" ? wallFrom : screen; show("wall"); $("#scr-wall").scrollTop = 0; renderWall(); }
 
 // ─── Akış ─────────────────────────────────────────────────────────────────
-// Başkanın vesikalığı başlıkta seçilir; ad kutusu boşsa vesikalığın adı kullanılır
+// Başkanın vesikalığı aday kaydında seçilir; ad kutusu boşsa vesikalığın adı kullanılır
 function customName() { return (LS.get("name", "") || "").trim().slice(0, 24); }
 function playerAvatar() {
   let a = LS.get("avatar", null);
@@ -888,34 +896,146 @@ function paintAvatar() {
   $("#in-name").placeholder = BASKANLAR[a].ad;
   $("#leader-name").textContent = playerName();
 }
+// ─── Aday kaydı: yeni dönemden önce vesikalık ve ad ───────────────────────
+function savedGame() { const sv = LS.get("save", null); return sv && sv.v === 2 && !sv.over && sv.cur ? sv : null; }
 function openPick() {
-  const box = $("#picks"), cur = playerAvatar(), own = customName();
+  const box = $("#picks"), cur = playerAvatar();
   box.textContent = "";
-  for (const id of MAYORS) {
-    const B = BASKANLAR[id], mk = (tag, txt) => { const e = document.createElement(tag); if (txt != null) e.textContent = txt; return e; };
-    const b = mk("button"), im = mk("img"), tx = mk("span");
-    b.type = "button"; b.className = "pick"; b.setAttribute("aria-pressed", String(id === cur));
-    im.src = photoSrc(id); im.alt = ""; im.draggable = false;
-    tx.className = "pk"; tx.append(mk("b", B.ad), mk("i", B.lakap), mk("small", B.bio));
-    b.append(im, tx);
-    b.addEventListener("click", () => { LS.set("avatar", id); showTitle(); $("#btn-avatar").focus(); });
+  MAYORS.forEach((id, i) => {
+    const b = document.createElement("button"), im = document.createElement("img");
+    b.type = "button"; b.className = "pick"; b.dataset.id = id; b.setAttribute("role", "radio"); b.setAttribute("aria-label", BASKANLAR[id].ad);
+    b.style.setProperty("--r", `${((i * 37) % 7) - 3}deg`);
+    im.src = photoSrc(id); im.alt = ""; im.draggable = false; b.append(im);
+    b.addEventListener("click", () => pickAvatar(id));
     box.appendChild(b);
-  }
-  $("#pick-note").textContent = own ? `Adınız “${own}” olarak kalır, yalnız vesikalık değişir.` : "Adını beğenmezseniz başlıktaki kutuya kendi adınızı yazın.";
+  });
+  $("#in-name").value = customName();
+  pickAvatar(cur, false);
   show("pick"); $("#scr-pick").scrollTop = 0;
+  box.querySelector('[aria-checked="true"]')?.focus({ preventScroll: true });
+}
+function pickAvatar(id, sound = true) {
+  LS.set("avatar", id);
+  for (const b of $("#picks").children) { const on = b.dataset.id === id; b.setAttribute("aria-checked", String(on)); b.tabIndex = on ? 0 : -1; }
+  const B = BASKANLAR[id], own = customName(), note = $("#pick-note"), sv = savedGame();
+  paintAvatar();
+  $("#ak-lakap").textContent = `“${B.lakap}”`; $("#ak-bio").textContent = B.bio;
+  note.classList.toggle("warn", !!sv);
+  note.textContent = sv ? "Kayıtlı bir döneminiz var; mazbatayı alırsanız o dönem kapanır."
+    : own ? `Mazbataya “${own}” yazılacak; vesikalık ${B.ad}'ın.` : "Ad kutusu boş kalırsa vesikalığın adıyla aday olursunuz.";
+  if (sound) snd.tick();
+}
+// ızgarada ok tuşları seçimi taşır (radyo düğmesi gibi); satır boyu ekrandaki sütun sayısından
+function pickMove(e) {
+  const list = [...$("#picks").children], i = list.indexOf(document.activeElement);
+  if (i < 0) return false;
+  const cols = list.filter(b => b.offsetTop === list[0].offsetTop).length || 1;
+  const d = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: cols, ArrowUp: -cols }[e.key];
+  if (!d) return false;
+  e.preventDefault();
+  const n = list[Math.max(0, Math.min(list.length - 1, i + d))];
+  pickAvatar(n.dataset.id); n.focus();
+  return true;
+}
+
+// ─── Ana menü: canlı meydan üstünde logo, menü, ilan panosu ve bilgi kartı ──
+const SURUM = "/*SURUM*/"; // derlemede tarih ve içerik özetiyle dolar
+const YENILIK = [
+  ["Seçim gecesi canlı yayında", "KARAKAVAK TV sandıkları mahalle mahalle açıyor: bıyıklı spiker, alt bant, absürt kayan yazı."],
+  ["Ankara'dan davet", "Ankara tavan yapınca sizi yukarı çağırır. İsterseniz gidersiniz, isterseniz “Karakavak'ı bırakmam” dersiniz."],
+  ["Erken seçim", "Esnaf odası belediyeyi ele geçirirse sandık erken kurulur; Hacı Bekir güçlü girer."],
+];
+let md = null, mnBusy = false, panelFrom = null; // md: meydan sahnesinin denetimi (meydan.js yoksa sahne gradyan kalır)
+function sceneOn(on) {
+  if (typeof meydan !== "function") return;
+  if (on && !md) { $("#mn-scene").innerHTML = meydanSVG(); md = meydan($("#mn-scene")); return; }
+  if (md) { if (on) md.resume(); else md.pause(); }
+}
+const mnItems = () => [...document.querySelectorAll("#mn-list .mn-item")].filter(b => !b.hidden);
+function mnOn(b, sound = true) {
+  if (!b || b.classList.contains("on")) return;
+  for (const x of mnItems()) x.classList.toggle("on", x === b);
+  renderInfo(b.dataset.info);
+  if (sound) snd.tick();
+}
+function renderInfo(kind) {
+  const H = (h, body) => `<h3>${esc(h)}</h3>${body}`, sv = savedGame();
+  let html = "";
+  if (kind === "devam" && sv) {
+    const left = TERM - 1 - (sv.month % TERM), poll = Math.round(pollOf(sv));
+    const risk = (k, v) => v <= 15 || (k !== "h" && v >= 85);
+    const cells = METERS.map(k => `<div class="${risk(k, sv.m[k]) ? "risk" : ""}">${METER_AD[k]}<b>${sv.m[k]}</b><i style="--v:${sv.m[k]}%"></i></div>`).join("")
+      + `<div>Anket<b>%${poll}</b><i style="--v:${poll}%;--c:var(--good)"></i></div>`;
+    html = H("Kaldığınız yer", `<div class="mi-save"><img src="${photoSrc(playerAvatar())}" alt=""><b>${esc(playerName())}</b>
+      <span>${esc(dateLabel(sv.month))} · ${sv.term}. dönem${sv.term >= MAX_TERMS ? " · son dönem" : ` · seçime ${left} ay`}</span><div class="mi-meters">${cells}</div></div>`);
+  } else if (kind === "yeni") {
+    html = H("Yeni dönem", `<p>Koltuk boş başkanım. Vesikalığınızı seçin, adınızı yazın, mazbatayı alın.</p>${sv ? `<p class="warn">Kayıtlı döneminiz kapanır.</p>` : ""}`);
+  } else if (kind === "duvar") {
+    const rows = LS.get("hall", []).filter(r => r && ENDINGS[r.key] && Number.isFinite(r.months)).slice(0, 3);
+    html = H("Eski başkanlarımız", rows.length
+      ? `<ul class="mi-wall">${rows.map(r => `<li><img src="${photoSrc(BASKANLAR[r.avatar] ? r.avatar : MAYORS[0])}" alt=""><div><b>${esc(r.name || "Başkan")}</b><span>${esc(durLabel(r.months))} · ${esc(ENDINGS[r.key].kisa)}</span></div></li>`).join("")}</ul>`
+      : "<p>Duvar henüz boş. İlk portre sizinki olsun.</p>");
+  } else if (kind === "nasil") {
+    html = H("Nasıl oynanır", "<p>Evrak gelir; sağa ya da sola kaydırırsınız. Halk, kasa, esnaf ve Ankara dengede dursun. Beş yılda bir sandık kurulur.</p>");
+  } else if (kind === "ayar") {
+    html = H("Ayarlar", "<p>Ses, titreşim, seçim gecesinin hızı ve kayıtlar.</p>");
+  } else if (kind === "kunye") {
+    html = H("Künye", "<p>Emeği geçenler, yazı karakterleri, lisanslar. Bir de kurgu uyarısı.</p>");
+  }
+  $("#mn-info").innerHTML = html;
+}
+// keep: alt ekrandan (genelge, duvar, aday kaydı) dönülünce o madde seçili kalır; oyundan dönülünce ilk madde
+function refreshMenu(keep = false) {
+  const best = LS.get("best", null), sv = savedGame();
+  $("#best").textContent = best && ENDINGS[best.key] ? `Rekor: ${durLabel(best.months)} · ${ENDINGS[best.key].kisa}` : "";
+  $("#btn-resume").hidden = !sv;
+  $("#mn-resume-sub").textContent = sv ? `${dateLabel(sv.month)} · ${sv.term}. dönem · ${playerName()}` : "";
+  $("#mn-ver").textContent = `Sürüm ${SURUM}`; $("#kn-ver").textContent = SURUM;
+  $("#mn-board").innerHTML = `<h3>İlan panosu</h3><p class="bd-sub">Belediyeden duyurular</p><ul>${YENILIK.map(([h, t]) => `<li><b>${esc(h)}</b>${esc(t)}</li>`).join("")}</ul>`;
+  const cur = keep && document.querySelector("#mn-list .mn-item.on"), first = cur && !cur.hidden ? cur : mnItems()[0];
+  for (const x of mnItems()) x.classList.remove("on");
+  mnOn(first, false);
+  return first;
+}
+function openPanel(id) {
+  panelFrom = document.activeElement;
+  $(".mn").classList.add("panel-open");
+  for (const q of ["#mn-list", "#mn-info", "#mn-board"]) $(q).inert = true;
+  const p = $("#mn-" + id); p.hidden = false;
+  if (id === "ayar") paintAyar();
+  p.querySelector("input, button")?.focus({ preventScroll: true });
+}
+function closePanel() {
+  const p = document.querySelector(".mn-panel:not([hidden])");
+  if (!p) return false;
+  p.hidden = true; $(".mn").classList.remove("panel-open");
+  for (const q of ["#mn-list", "#mn-info", "#mn-board"]) $(q).inert = false;
+  panelFrom?.focus({ preventScroll: true });
+  return true;
+}
+function paintAyar() {
+  $("#ay-ses").checked = snd.on; $("#ay-vol").value = snd.vol; $("#ay-vol-o").textContent = snd.vol;
+  $("#ay-tit").checked = LS.get("vibrate", true); $("#ay-hizli").checked = LS.get("ecSeen", false);
+  $("#ay-intro").textContent = LS.get("introSeen", false) ? "Yeniden göster" : "Gösterilecek";
+  const sil = $("#ay-sil"); sil.classList.remove("armed"); sil.textContent = "Hepsini sil";
 }
 function show(name) {
   screen = name;
   for (const s of ["title", "game", "over", "wall", "help", "pick", "secim"]) $("#scr-" + s).hidden = s !== name;
+  sceneOn(name === "title");
 }
 function showTitle() {
-  closeNote();
-  const best = LS.get("best", null), sv = LS.get("save", null);
-  $("#best").textContent = best && ENDINGS[best.key] ? `Rekorunuz: ${durLabel(best.months)} · ${ENDINGS[best.key].kisa}` : "";
-  $("#btn-resume").hidden = !(sv && sv.v === 2 && !sv.over && sv.cur);
-  $("#in-name").value = customName();
-  paintAvatar();
+  closeNote(); closePanel(); paintAvatar();
+  const first = refreshMenu(["help", "wall", "pick"].includes(screen));
   show("title");
+  first?.focus({ preventScroll: true });
+}
+// menüden oyuna: meydan sahnesi makam penceresine yaklaşır, sonra masa açılır
+async function menuEnter(go) {
+  if (mnBusy) return;
+  mnBusy = true;
+  try { if (md && screen === "title") await md.enter(); } catch { /* sahne yoksa doğrudan */ }
+  mnBusy = false; go();
 }
 function enterGame() {
   show("game"); $("#toasts").textContent = ""; paintAvatar(); setMeters(); renderOngoing();
@@ -940,9 +1060,36 @@ function resume() {
 
 function wire() {
   buildMeters();
-  $("#btn-start").addEventListener("click", startNew);
-  $("#btn-resume").addEventListener("click", resume);
+  $("#btn-start").addEventListener("click", openPick);
+  $("#btn-resume").addEventListener("click", () => menuEnter(resume));
   $("#btn-wall").addEventListener("click", openWall);
+  $("#btn-ayar").addEventListener("click", () => openPanel("ayar"));
+  $("#btn-kunye").addEventListener("click", () => openPanel("kunye"));
+  for (const b of document.querySelectorAll("[data-close]")) b.addEventListener("click", closePanel);
+  for (const b of document.querySelectorAll("#mn-list .mn-item")) {
+    b.addEventListener("pointerenter", e => { if (e.pointerType === "mouse" && !mnBusy) { b.focus({ preventScroll: true }); mnOn(b); } });
+    b.addEventListener("focus", () => mnOn(b));
+  }
+  // sekme arkadayken meydan sahnesi durur
+  document.addEventListener("visibilitychange", () => sceneOn(screen === "title" && !document.hidden));
+  // ilk dokunuşta ses açılsın ki menü tıkları duyulsun
+  for (const ev of ["pointerdown", "keydown"]) addEventListener(ev, () => snd.unlock(), { once: true, capture: true });
+  $("#btn-go").addEventListener("click", startNew);
+  $("#btn-zar").addEventListener("click", () => { const cur = playerAvatar(), rest = MAYORS.filter(id => id !== cur); const id = pickOne(rest); pickAvatar(id); $(`#picks [data-id="${id}"]`).focus({ preventScroll: true }); });
+  $("#in-name").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); startNew(); } });
+  $("#ay-ses").addEventListener("change", e => { if (e.target.checked !== snd.on) snd.toggle(); paintMute(); });
+  $("#ay-vol").addEventListener("input", e => { snd.volume(+e.target.value); $("#ay-vol-o").textContent = snd.vol; });
+  $("#ay-vol").addEventListener("change", () => snd.tick());
+  $("#ay-tit").addEventListener("change", e => LS.set("vibrate", e.target.checked));
+  $("#ay-hizli").addEventListener("change", e => LS.set("ecSeen", e.target.checked));
+  $("#ay-intro").addEventListener("click", () => { LS.set("introSeen", false); paintAyar(); });
+  let silT = 0;
+  $("#ay-sil").addEventListener("click", e => { // iki adımlı: önce "Emin misiniz?", 3,5 sn içinde ikinci basış siler
+    const b = e.currentTarget;
+    if (!b.classList.contains("armed")) { b.classList.add("armed"); b.textContent = "Emin misiniz?"; clearTimeout(silT); silT = setTimeout(paintAyar, 3500); return; }
+    clearTimeout(silT); for (const k of ["save", "best", "hall"]) LS.del(k);
+    b.classList.remove("armed"); b.textContent = "Silindi"; refreshMenu(true);
+  });
   $("#btn-help").addEventListener("click", () => { show("help"); $("#scr-help").scrollTop = 0; });
   $("#btn-help-back").addEventListener("click", showTitle);
   $("#btn-wall2").addEventListener("click", openWall);
@@ -954,12 +1101,14 @@ function wire() {
   $("#btn-log-x").addEventListener("click", () => openLog(false));
   $("#log-scrim").addEventListener("click", () => openLog(false));
   wideLog.addEventListener("change", () => { openLog(false); logUnread = 0; if (S) renderLog(false); });
-  $("#in-name").addEventListener("input", e => LS.set("name", e.target.value.slice(0, 24)));
-  $("#btn-avatar").addEventListener("click", openPick);
-  $("#btn-pick-back").addEventListener("click", () => { showTitle(); $("#btn-avatar").focus(); });
-  const mute = $("#btn-mute");
-  const paintMute = () => { mute.setAttribute("aria-pressed", String(!snd.on)); mute.setAttribute("aria-label", snd.on ? "Sesi kapat" : "Sesi aç"); $("#mute-wave").style.opacity = snd.on ? 1 : .15; };
-  mute.addEventListener("click", () => { snd.toggle(); paintMute(); });
+  $("#in-name").addEventListener("input", e => { LS.set("name", e.target.value.slice(0, 24)); pickAvatar(playerAvatar(), false); });
+  $("#btn-pick-back").addEventListener("click", showTitle);
+  const mute = $("#btn-mute"), mute2 = $("#btn-mute2");
+  function paintMute() {
+    for (const b of [mute, mute2]) { b.setAttribute("aria-pressed", String(!snd.on)); b.setAttribute("aria-label", snd.on ? "Sesi kapat" : "Sesi aç"); }
+    $("#mute-wave").style.opacity = snd.on ? 1 : .15;
+  }
+  for (const b of [mute, mute2]) b.addEventListener("click", () => { snd.toggle(); paintMute(); });
   paintMute();
   for (const side of ["L", "R"]) {
     const b = $("#ch-" + side), dir = side === "L" ? -1 : 1;
@@ -972,10 +1121,23 @@ function wire() {
     b.addEventListener("blur", unpeek);
   }
   addEventListener("keydown", e => {
+    // Escape ayar paneli ve aday kaydında odak bir kutudayken de çalışır
+    if (e.key === "Escape" && screen === "title" && closePanel()) return;
+    if (e.key === "Escape" && screen === "pick") return $("#btn-pick-back").click();
     if (e.altKey || e.ctrlKey || e.metaKey || e.target.matches?.("input, textarea")) return;
     if (screen === "wall" && e.key === "Escape") return $("#btn-back").click();
     if (screen === "help" && e.key === "Escape") return showTitle();
-    if (screen === "pick" && e.key === "Escape") return $("#btn-pick-back").click();
+    if (screen === "pick") { pickMove(e); return; }
+    if (screen === "title") {
+      if ($(".mn").classList.contains("panel-open") || mnBusy) return;
+      const list = mnItems(), d = { ArrowDown: 1, ArrowUp: -1, s: 1, w: -1 }[e.key];
+      if (!d || !list.length) return;
+      e.preventDefault();
+      const i = Math.max(list.indexOf(document.activeElement), list.findIndex(x => x.classList.contains("on")));
+      const n = list[(i + d + list.length) % list.length];
+      n.focus({ preventScroll: true }); mnOn(n);
+      return;
+    }
     if (screen === "secim" && ["Enter", " ", "Escape"].includes(e.key)) { e.preventDefault(); return ($("#btn-ec-go").hidden ? $("#btn-ec-skip") : $("#btn-ec-go")).click(); }
     if (screen !== "game") return;
     const k = e.key.toLocaleLowerCase("tr");

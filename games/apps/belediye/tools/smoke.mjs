@@ -43,14 +43,14 @@ try {
   await viewport(400, 820, true);
   await send("Page.navigate", { url: page }); await sleep(2500);
   await shot("1-baslik-telefon");
-  // vesikalık seçimi: üçüncüyü seç, başlıkta resim ve ad değişsin
-  await ev(`document.querySelector("#btn-avatar").click()`); await sleep(700);
-  await shot("1b-vesikalik-telefon");
+  // aday kaydı: üçüncü vesikalığı seç, formdaki resim ve ad değişsin, mazbatayı al
+  await ev(`document.querySelector("#btn-start").click()`); await sleep(700);
+  await shot("1b-aday-telefon");
   await ev(`document.querySelectorAll("#picks .pick")[2].click()`); await sleep(400);
-  const av = JSON.parse(await ev(`JSON.stringify({ ls: localStorage.getItem("cb.avatar"), ph: document.querySelector("#in-name").placeholder, pick: document.querySelectorAll("#picks .pick b")[2].textContent, same: document.querySelector("#avatar-img").src === document.querySelectorAll("#picks .pick img")[2].src, title: !document.querySelector("#scr-title").hidden })`));
-  if (av.ls !== '"baskan-03"' || av.ph !== av.pick || !av.same || !av.title) errors.push("TEST: vesikalık seçimi başlığa yansımadı " + JSON.stringify(av));
+  const av = JSON.parse(await ev(`JSON.stringify({ ls: localStorage.getItem("cb.avatar"), ph: document.querySelector("#in-name").placeholder, pick: document.querySelectorAll("#picks .pick")[2].getAttribute("aria-label"), same: document.querySelector("#avatar-img").src === document.querySelectorAll("#picks .pick img")[2].src, on: document.querySelectorAll("#picks .pick")[2].getAttribute("aria-checked") === "true", scr: !document.querySelector("#scr-pick").hidden })`));
+  if (av.ls !== '"baskan-03"' || av.ph !== av.pick || !av.same || !av.on || !av.scr) errors.push("TEST: aday kaydında vesikalık seçimi forma yansımadı " + JSON.stringify(av));
   console.log("vesikalık:", av.ph);
-  await ev(`document.querySelector("#btn-start").click()`); await sleep(900);
+  await ev(`document.querySelector("#btn-go").click()`); await sleep(900);
   await shot("2-intro-telefon");
   for (let i = 0; i < 3; i++) { await key("ArrowRight"); await sleep(1300); }
   // yarım sürükleme: mühür görünsün
@@ -92,8 +92,8 @@ try {
   await shot("7-oyun-masaustu");
   await ev(`document.querySelector("#btn-menu").click()`); await sleep(600);
   await shot("8-baslik-masaustu");
-  await ev(`document.querySelector("#btn-avatar").click()`); await sleep(600);
-  await shot("8b-vesikalik-masaustu");
+  await ev(`document.querySelector("#btn-start").click()`); await sleep(600);
+  await shot("8b-aday-masaustu");
   await key("Escape"); await sleep(300);
   await ev(`document.querySelector("#btn-help").click()`); await sleep(500);
   await shot("9-genelge-masaustu");
