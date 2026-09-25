@@ -38,7 +38,7 @@ export const PEOPLE: Record<string, Person> = {
 
 // ─── Başkanlık vesikalıkları: aday kaydında seçilir, her birinin kendi adı var ─
 // Oyuncu kendi adını yazmazsa bu ad kullanılır. Eski başkanlar duvarı da bu resimleri asar.
-// cins: k (kadın) ya da e (erkek), resme bakılarak; ad zarı buna uygun ad verir (adlar.js).
+// cins: k (kadın) ya da e (erkek), resme bakılarak; ad zarı buna uygun ad verir (adlar.ts).
 // lakap + bio: seçim ekranındaki broşür. Gerçek kişi ya da parti yok; hepsi yerel siyasetin bilinen halleri.
 export const BASKANLAR: Record<string, Baskan> = {
   "baskan-01": { cins: "k", ad: "Aslı Kavaklıoğlu", lakap: "Kurdele Aslı", bio: "Aynı çeşmenin üç ayrı açılışında da kurdeleyi o kesti. Makası çantasından çıkmaz: düğünde, sünnette, bir keresinde de dalgınlıkla bir cenazede." },

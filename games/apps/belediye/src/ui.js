@@ -1,7 +1,7 @@
 // ─── Arayüz ───────────────────────────────────────────────────────────────
 import interact from "interactjs";
 import { ADAYLAR, BASKANLAR, ENDINGS, KULIS, PEOPLE, QUOTES, REACT } from "./cards.ts";
-import { MAX_TERMS, METERS, METER_AD, REL_AD, TERM, Z, calOf, choose, dateLabel, draw, durLabel, edgeRisk, newGame, pollOf, vaatCost } from "./engine.js";
+import { MAX_TERMS, METERS, METER_AD, REL_AD, TERM, Z, calOf, choose, dateLabel, draw, durLabel, edgeRisk, newGame, pollOf, vaatCost } from "./engine.ts";
 
 const $ = s => document.querySelector(s);
 const wait = ms => new Promise(r => setTimeout(r, ms));
@@ -894,10 +894,10 @@ function pickAvatar(id, sound = true) {
     : own ? `Mazbataya “${own}” yazılacak; vesikalık ${B.ad}'ın.` : "Ad kutusu boş kalırsa vesikalığın adıyla aday olursunuz.";
   if (sound) snd.tick();
 }
-// Ad zarı: vesikalığın cinsine uygun ad soyad (adlar.js). Yazılan ad gibi saklanır; "nameZar" adın zardan geldiğini hatırlar.
+// Ad zarı: vesikalığın cinsine uygun ad soyad (adlar.ts). Yazılan ad gibi saklanır; "nameZar" adın zardan geldiğini hatırlar.
 let zarSon = []; // son atılan adlar: art arda aynısı, yakın atışlarda aynı ad ya da soyad gelmesin
-let AD = null; // ad havuzu ayrı parçada (adlar.js), aday kaydı açılınca yüklenir
-const adYukle = () => import("./adlar.js").then(m => (AD = m));
+let AD = null; // ad havuzu ayrı parçada (adlar.ts), aday kaydı açılınca yüklenir
+const adYukle = () => import("./adlar.ts").then(m => (AD = m));
 function adZar() {
   if (!AD) { adYukle().then(adZar); return; }
   // kutudaki ad da son atış sayılır: sayfa yenilense de zar aynı adı geri vermez

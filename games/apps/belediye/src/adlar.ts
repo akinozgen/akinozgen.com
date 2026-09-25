@@ -2,8 +2,9 @@
 // k: kadın, e: erkek adları (BASKANLAR'daki cins). ADLAR_ORTAK iki cinse de konan adlar, iki havuzda da var.
 // Gerçek kişi yok: tanınmış siyasetçi ve ünlü soyadları havuza girmez (YASAK_SOYAD), soyadı sıradan olan ünlülerin
 // tam adı üretilemez (YASAK_TAM), tek bir siyasetçiyle özdeşleşmiş adlar da yok (YASAK_AD). test/adlar.test.mjs sınar.
-export const ADLAR_ORTAK = ["Deniz", "Derya", "Evren", "Umut", "Ümit", "Ekin", "Bilge", "Tuna", "Toprak", "Ayhan", "Işık", "Yüksel", "Hikmet", "Nurhan", "Özgür", "Servet"];
-export const ADLAR = {
+import type { Rng } from "./types.ts";
+export const ADLAR_ORTAK: string[] = ["Deniz", "Derya", "Evren", "Umut", "Ümit", "Ekin", "Bilge", "Tuna", "Toprak", "Ayhan", "Işık", "Yüksel", "Hikmet", "Nurhan", "Özgür", "Servet"];
+export const ADLAR: Record<"k" | "e", string[]> = {
   k: [...ADLAR_ORTAK,
     // eski usul, ninelerden
     "Ayşe", "Fatma", "Emine", "Hatice", "Zeynep", "Meryem", "Havva", "Hanife", "Zehra", "Hacer", "Hediye", "Hafize", "Hayriye", "Saadet",
@@ -62,7 +63,7 @@ export const ADLAR = {
 
 // Soyadları: çoğu sıradan; sonda mahallenin esnafı ve lakaptan dönme olanlar (tatlı sert, abartısız).
 // BASKANLAR'ın soyadları burada yok: zar başka bir adayın adını vermesin.
-export const SOYADLAR = [
+export const SOYADLAR: string[] = [
   "Acar", "Akay", "Akbaş", "Akçay", "Akdağ", "Akdemir", "Akdeniz", "Akgöz", "Akgün", "Akgül", "Akın", "Akkaya", "Akkoyun", "Akkuş",
   "Akman", "Akpınar", "Aksoy", "Aksu", "Aktaş", "Aktürk", "Akyol", "Akyüz", "Alagöz", "Alkan", "Alp", "Altay", "Altıntaş", "Altınok",
   "Altun", "Arıoğlu", "Arslan", "Aslan", "Aslantaş", "Aşkın", "Atalay", "Atasoy", "Ateş", "Avcı", "Ay", "Aydemir", "Aydın", "Aydınlı",
@@ -116,7 +117,7 @@ export const SOYADLAR = [
 
 // Tanınmış siyasetçilerin (cumhurbaşkanı, başbakan, parti lideri, bakan, büyükşehir başkanı) ve ünlülerin
 // gönderme gibi okunacak soyadları. Hiçbiri havuza girmez; girse bile üretici eler.
-export const YASAK_SOYAD = [
+export const YASAK_SOYAD: string[] = [
   // cumhurbaşkanları, başbakanlar, erken cumhuriyet
   "Atatürk", "İnönü", "Bayar", "Menderes", "Gürsel", "Sunay", "Korutürk", "Evren", "Özal", "Demirel", "Sezer", "Gül", "Erdoğan",
   "Ecevit", "Erbakan", "Çiller", "Akbulut", "Davutoğlu", "Erim", "Ürgüplü", "Melen", "Talu", "Ulusu", "Saka", "Günaltay",
@@ -151,7 +152,7 @@ export const YASAK_SOYAD = [
 ];
 
 // Soyadı sıradan ama tam adı tanınmış kişiler: bu birleşimler hiç üretilmez
-export const YASAK_TAM = [
+export const YASAK_TAM: string[] = [
   // siyaset
   "Mesut Yılmaz", "Cevdet Yılmaz", "Binali Yıldırım", "Aziz Yıldırım", "Hikmet Çetin", "Ömer Çelik", "Hüseyin Çelik", "Faruk Çelik",
   "Mehmet Şimşek", "Hakan Fidan", "Yılmaz Tunç", "Fahrettin Koca", "Ziya Selçuk", "Mahmut Özer", "Yusuf Tekin", "Fuat Oktay",
@@ -176,7 +177,7 @@ export const YASAK_TAM = [
 ];
 
 // Tek bir siyasetçiyle özdeşleşmiş adlar ve seçimde rakip çıkan oyun kişilerinin adları (seçim gecesi karışmasın)
-export const YASAK_AD = [
+export const YASAK_AD: string[] = [
   "Tayyip", "Devlet", "Binali", "Tansu", "Meral", "Necmettin", "Alparslan", "Selahattin", "Muharrem", "Ekrem", "Mansur", "Numan",
   "Berat", "Muhsin", "Hulusi", "Mevlüt", "Egemen", "Turgut", "Enver", "Talat", "Mithat", "Doğu", "Fahrettin", "Recep", "Recai",
   "Hüsamettin", "Ajda", "Tarkan", "Müslüm", "Hadise", "Kibariye", "Sertab", "Acun", "Serenay",
@@ -186,20 +187,21 @@ export const YASAK_AD = [
 // cins: "k" | "e" · rng: 0-1 arası sayı veren işlev · son: daha önce atılan adlar (en yenisi sonda)
 // Art arda aynı ad gelmez; son 8 atıştaki adlar ve soyadlar da mümkünse tekrar etmez. Ad + soyad isim kutusuna (24) sığar.
 export const rastgeleAd = (() => {
-  const kucuk = s => s.toLocaleLowerCase("tr");
+  const kucuk = (s: string) => s.toLocaleLowerCase("tr");
   const tam = new Set(YASAK_TAM.map(kucuk)), soy = new Set(YASAK_SOYAD.map(kucuk)), yad = new Set(YASAK_AD.map(kucuk));
   const havuz = { k: ADLAR.k.filter(a => !yad.has(kucuk(a))), e: ADLAR.e.filter(a => !yad.has(kucuk(a))) };
   const soyadlar = SOYADLAR.filter(s => !soy.has(kucuk(s)));
-  const uygun = (a, s, onceki) => a !== s && a.length + s.length < 24 && !tam.has(kucuk(a + " " + s)) && a + " " + s !== onceki;
-  return (cins, rng = Math.random, son = []) => {
+  const uygun = (a: string, s: string, onceki: string | undefined) => a !== s && a.length + s.length < 24 && !tam.has(kucuk(a + " " + s)) && a + " " + s !== onceki;
+  return (cins: "k" | "e", rng: Rng = Math.random, son: string[] = []): string => {
     const adlar = havuz[cins === "e" ? "e" : "k"], onceki = son[son.length - 1];
     const yakin = new Set(son.slice(-8).flatMap(t => String(t).split(" ")));
-    const sec = l => l[Math.min(l.length - 1, Math.floor(rng() * l.length))];
+    const sec = (l: string[]) => l[Math.min(l.length - 1, Math.floor(rng() * l.length))];
     for (let i = 0; i < 60; i++) {
       const a = sec(adlar), s = sec(soyadlar);
       if (!yakin.has(a) && !yakin.has(s) && uygun(a, s, onceki)) return a + " " + s;
     }
     // zar hep aynı yüze düşüyorsa (bozuk rng): sıradaki ilk uygun ad
     for (const a of adlar) for (const s of soyadlar) if (uygun(a, s, onceki)) return a + " " + s;
+    return adlar[0] + " " + soyadlar[0]; // havuz boşalmaz; yine de bir ad dönsün
   };
 })();

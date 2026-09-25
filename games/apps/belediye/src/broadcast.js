@@ -18,7 +18,7 @@
 // {sira} {tarih} {mah} {mahs} (sandık önünde: Lojman) {mahde}; ek almak için {lider:in} (in, i, e, de, den). Değeri olmayan yer tutucu
 // satırı eler; başlıkta tam ad sığmazsa kısa ad (tvShort) denenir.
 import { PEOPLE } from "./cards.ts";
-import { dateLabel } from "./engine.js";
+import { dateLabel } from "./engine.ts";
 
 export const KANAL = { ad: "KARAKAVAK TV", kisa: "KTV" };
 export const TV_MAX = { title: 34, sub: 90, tick: 110, quote: 70 };
