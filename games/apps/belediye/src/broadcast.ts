@@ -18,7 +18,7 @@
 // {sira} {tarih} {mah} {mahs} (sandık önünde: Lojman) {mahde}; ek almak için {lider:in} (in, i, e, de, den). Değeri olmayan yer tutucu
 // satırı eler; başlıkta tam ad sığmazsa kısa ad (tvShort) denenir.
 import { PEOPLE } from "./cards.ts";
-import { dateLabel, joinTR } from "./engine.ts";
+import { ACILIS, dateLabel, joinTR } from "./engine.ts";
 import type { Rng, Tally } from "./types.ts";
 
 /** Yayının o anki durumu (ui.ts seçim gecesi akışı doldurur) */
@@ -1039,6 +1039,12 @@ export function whyLines(res: Tally | null | undefined, playerName?: string) {
   // açılış seçimi: anket yerine kampanyanın kazanma şansı ve beyannamedeki sözler
   if (res.ilk) {
     if (Number.isFinite(res.sans)) out.push(`Kampanya anketi kazanma şansını %${d(res.sans)} gösteriyordu.`);
+    const mh = res.acilis ? ACILIS[res.acilis].muhur || 0 : 0;
+    if (res.acilis === "ezici")
+      out.push(`Ezici zafer: Ankara ödenek yolluyor, masada ${TV_SAYI[mh] || mh} mühür bekliyor.`);
+    else if (res.acilis === "zafer") out.push(`Rahat zafer: masada ${TV_SAYI[mh] || mh} mühür bekliyor.`);
+    else if (res.acilis === "kilpayi")
+      out.push("Kıl payı: Nermin Hanım itiraz edecek, mazbata gölgeli. İtirazı kapatan gölgeyi kaldırır.");
     const vz = res.vaatler || [];
     out.push(
       vz.length

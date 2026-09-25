@@ -7,10 +7,14 @@ import {
   METER_AD,
   REL_AD,
   TERM,
+  ACILIS,
+  HAVA,
+  KAMPANYA_KART,
+  MUHUR,
+  SANDIK,
   VAAT,
   VAAT_MAX,
   Z,
-  acilisSecimi,
   calOf,
   choose,
   dateLabel,
@@ -18,15 +22,18 @@ import {
   durLabel,
   defterOf,
   edgeRisk,
+  kampanyaBitir,
   kampanyaSans,
   mirasOf,
+  muhurEtki,
+  muhurOK,
   newGame,
   pollOf,
   shuffle,
   vaatCost,
 } from "./engine.ts";
 import type { TvCtx } from "./broadcast.ts";
-import type { Acilis, ChooseOut, Cur, Effect, Meter, Meters, Rng, Side, State, Tally } from "./types.ts";
+import type { Acilis, ChooseOut, Cur, Effect, Meter, Meters, Rng, Side, State, Tally, ZarSonuc } from "./types.ts";
 
 // sayfadaki öğeler hep var: bulunamazsa hata, boş dönmez
 const $ = <T extends Element = HTMLElement>(q: string) => document.querySelector(q) as T;
@@ -406,12 +413,29 @@ function setMeters(d?: Effect | null, td?: Effect | null) {
 }
 // Önizleme: ▲ artar ▼ azalır, ok sayısı büyüklük; renk: dengeye yaklaştırır / uzaklaştırır / tehlikeye sokar
 function showHints(side: "L" | "R" | null) {
+  const o = side && S?.cur ? S.cur[side] : null;
+  // kampanyada anket oynar: kesin artış oklarla, zarlı seçenek soru işaretiyle
+  const pp = $("#poll .pv");
+  if (o && S?.kampanya && (o.oy || o.zar)) {
+    pp.className = "pv on " + (o.zar ? "warn" : "good");
+    pp.textContent = o.zar ? "▲▼" : "▲".repeat(o.oy! >= 3 ? 2 : 1);
+  } else {
+    pp.className = "pv";
+    pp.textContent = "";
+  }
+  const mh = o && muhurHazir ? muhurEtki(o.e) : null;
   METERS.forEach((k, i) => {
     const pv = $("#m-" + k + " .pv"),
-      v = side && S?.cur ? S.cur[side].e[i] : 0;
+      e0 = o ? o.e[i] : 0,
+      v = mh ? mh.e[i] : e0;
+    if (mh?.i === i && !v) {
+      pv.className = "pv on muhur"; // mühür bu kaybı siler
+      pv.textContent = "◉";
+      return;
+    }
     if (!v || !S) {
-      pv.className = "pv";
-      pv.textContent = "";
+      pv.className = o?.zar && (o.zar.iyi.e?.[i] || o.zar.kotu.e?.[i]) ? "pv on warn" : "pv";
+      pv.textContent = pv.className === "pv" ? "" : "?";
       return;
     }
     const n = Math.abs(v) >= 15 ? 3 : Math.abs(v) >= 8 ? 2 : 1,
@@ -453,7 +477,8 @@ function renderOngoing() {
           const per = etkiKisa(o.e);
           const after = o.done ? ` → ${etkiKisa(o.done)}` : o.doneCard ? " → sürpriz" : "";
           const tail = (o.left != null ? `${o.left} ay` : "süresiz") + after;
-          return `<span class="pol${o.proj ? " proj" : ""}"><b>${esc(o.ad)}</b>${per ? `<i>${esc(per)}/ay</i>` : ""}<em>${esc(tail)}</em></span>`;
+          const not = per ? `${per}/ay` : o.ozet || "";
+          return `<span class="pol${o.proj ? " proj" : ""}"><b>${esc(o.ad)}</b>${not ? `<i>${esc(not)}</i>` : ""}<em>${esc(tail)}</em></span>`;
         })
         .join("")
     : `<span class="pol none">Her ay işleyen karar yok</span>`;
@@ -625,6 +650,7 @@ const SEAL = `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20
   "",
 )}</g><ellipse cx="20" cy="21" rx="7.4" ry="5.8" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M13.6 19.4c4.2 1.6 8.6 1.6 12.8 0M13 22.4c4.6 1.6 9.4 1.6 14 0M20 15.2v-2.4c1-1.3 2.4-1.5 3.6-1.1" fill="none" stroke="currentColor" stroke-width=".9" stroke-linecap="round"/></svg>`;
 const CLIP = `<svg class="clip" viewBox="0 0 12 36" aria-hidden="true"><path d="M3 33V7a3.5 3.5 0 0 1 7 0v21a2.3 2.3 0 0 1-4.6 0V9" fill="none" stroke="#8d949c" stroke-width="1.8" stroke-linecap="round"/></svg>`;
+const ASAMA = ["Açılış", "Saha", "Medya", "Son hafta"];
 const BIRIM: Record<string, string> = {
   fikret: "Özel Kalem Müdürlüğü",
   kemal: "Fen İşleri Müdürlüğü",
@@ -661,8 +687,12 @@ const moodOf = (r: number | null) =>
       : r >= 2
         ? "Güler yüzlü; hayır deseniz de anlayış gösterir."
         : "";
+const ucKisa = (x: ZarSonuc) =>
+  [x.oy ? `anket ${x.oy > 0 ? "+" : "−"}${Math.abs(x.oy)}` : "", etkiKisa(x.e)].filter(Boolean).join(", ") || "etkisiz";
 function optNote(o: Side) {
   const bits: string[] = [];
+  if (o.zar) bits.push(`%${Math.round(o.zar.p * 100)} tutar: ${ucKisa(o.zar.iyi)} · tutmazsa ${ucKisa(o.zar.kotu)}`);
+  else if (o.oy) bits.push(`kesin: anket ${o.oy > 0 ? "+" : "−"}${Math.abs(o.oy)}`);
   if (o.pol) {
     // aylık etkisi olan karar hep görünür; bitişinde bir sonucu varsa "sonu var" diye telgraf çekilir
     const p = o.pol,
@@ -689,10 +719,16 @@ function renderCard(c: Cur) {
   el.id = "card";
   el.setAttribute("aria-label", `${P.ad}: ${c.konu}`);
   const ivedi = c.kind === "ending" || c.kind === "secim" || c.kind === "davet" || c.konu === "ACİL";
+  const kmp = c.kind === "kampanya" && S?.kampanya;
   el.innerHTML = `
     <div class="doc-head"><div class="seal">${SEAL}</div>
-      <div class="org"><b>T.C.</b>KARAKAVAK BELEDİYE BAŞKANLIĞI<small>${esc(BIRIM[c.who] || "Yazı İşleri · Gelen Evrak")}</small></div>
-      ${ivedi ? `<div class="ivedi">İVEDİ</div>` : "<div></div>"}</div>
+      ${
+        kmp
+          ? `<div class="org"><b>SEÇİM BÜROSU</b>BELEDİYE BAŞKAN ADAYI<small>Kampanya · ${esc(ASAMA[KAMPANYA_KART[c.id]?.asama ?? 0])}</small></div>
+      <div class="ivedi kmp">${kmp.i + 1}/${kmp.sira.length}</div>`
+          : `<div class="org"><b>T.C.</b>KARAKAVAK BELEDİYE BAŞKANLIĞI<small>${esc(BIRIM[c.who] || "Yazı İşleri · Gelen Evrak")}</small></div>
+      ${ivedi ? `<div class="ivedi">İVEDİ</div>` : "<div></div>"}`
+      }</div>
     <div class="doc-meta"><span>Sayı: ${esc(c.sayi)}</span><span>${esc(c.tarih)}</span></div>
     <div class="doc-konu"><b>Konu:</b> ${esc(c.konu)}</div>
     <div class="who"><div class="photo">${photo(c.who)}${CLIP}</div><div><div class="nm">${esc(P.ad)}</div><div class="un">${esc(P.unvan)}</div>${relHTML(c.rel)}</div></div>
@@ -713,6 +749,9 @@ function renderCard(c: Cur) {
   $("#ch-R .t").textContent = c.R.t;
   $("#ch-L .n").textContent = optNote(c.L);
   $("#ch-R .n").textContent = optNote(c.R);
+  $("#ch-L").classList.toggle("zarli", !!c.L.zar);
+  $("#ch-R").classList.toggle("zarli", !!c.R.zar);
+  muhurKur(false);
   $("#announce").textContent = `${P.ad}, ${P.unvan}: ${c.text}`;
 }
 function tilt(el: HTMLElement, dx: number) {
@@ -803,7 +842,26 @@ async function commit(side: "L" | "R", dragged = false) {
   const kind = card.kind,
     before = { ...s.m },
     month = s.month;
-  const res = choose(s, side);
+  const muhurlu = muhurHazir;
+  const res = choose(s, side, Math.random, { muhur: muhurlu });
+  // kampanyanın dördüncü evrağı: sandık hemen açılır (kayıt da sandıktan sonraki hâli tutar)
+  const sandik = res.kampanyaBitti ? kampanyaBitir(s) : null;
+  muhurKur(false);
+  if (res.muhur)
+    toast(
+      `<b>Mühür</b>${METER_AD[res.muhur.k]} kaybı silindi (${res.muhur.v} puan)<span class="tr p">◉ ${s.cnt.muhur || 0} kaldı</span>`,
+      "ev",
+    );
+  else if (muhurlu) toast(`<b>Mühür</b>bu seçenekte kayıp yoktu; mühür cebinizde`, "ev");
+  if (res.zar) {
+    const oy = res.zar.oy ? `anket ${res.zar.oy > 0 ? "+" : "−"}${Math.abs(res.zar.oy)}` : "";
+    toast(
+      `<b>${res.zar.iyi ? "Tuttu" : "Tutmadı"}</b>${esc(res.zar.msg || "")}${oy ? `<span class="tr ${res.zar.oy! > 0 ? "p" : "n"}">${oy}</span>` : ""}`,
+      res.zar.iyi ? "ev" : "warn",
+    );
+    if (res.zar.iyi) snd.clink();
+  }
+  if (res.oy) pollChip(res.oy);
   showHints(null);
   setMeters(res.d, res.td);
   journalAdd(card, side, res, month);
@@ -822,6 +880,12 @@ async function commit(side: "L" | "R", dragged = false) {
   busy = false;
   setChoices(false);
   if (s.over) return gameOver();
+  if (sandik) {
+    await electionNight(sandik.res);
+    enterGame();
+    nextCard();
+    return;
+  }
   if (kind === "secim" && s.pending?.type === "sonuc" && s.pending.res) {
     await electionNight(s.pending.res);
     show("game");
@@ -843,11 +907,25 @@ function updateHud() {
   const left = TERM - 1 - (S.month % TERM),
     last = S.term >= MAX_TERMS,
     near = left <= 12 && !last;
-  const poll = Math.round(pollOf(S));
-  $("#dateline").textContent = dateLabel(S.month);
-  $("#countdown").textContent = last ? "Son dönem" : `Seçime ${left ? left + " ay" : "bu ay"}`;
-  $("#countdown").classList.toggle("near", near);
-  $("#termline").textContent = `${S.term}. dönem`;
+  const K = S.kampanya;
+  const poll = K ? Math.round(K.oy) : Math.round(pollOf(S));
+  $("#scr-game").classList.toggle("kmp", !!K);
+  $("#dateline").textContent = dateLabel(K ? -1 : S.month); // kampanya göreve başlamadan önce, martta
+  $("#countdown").textContent = K
+    ? `Sandığa ${K.sira.length - K.i} evrak`
+    : last
+      ? "Son dönem"
+      : `Seçime ${left ? left + " ay" : "bu ay"}`;
+  $("#countdown").classList.toggle("near", near || !!K);
+  $("#termline").textContent = K ? "Aday" : `${S.term}. dönem`;
+  $(".hud .role").textContent = K ? "Belediye başkan adayı" : "Belediye Başkanı";
+  const mn = S.cnt?.muhur || 0,
+    mp = S.ongoing.find(o => o.id === "muhur");
+  $("#btn-muhur").hidden = !mn;
+  $("#muhur-n").textContent = String(mn);
+  $("#btn-muhur").title = mn
+    ? `Mühür (${mn}${mp?.left != null ? `, ${mp.left} ay içinde` : ""}): basılı evrağın en ağır kaybı silinir, en çok ${MUHUR.tavan}. Tuş: M`
+    : "";
   const pb = GLYPH.p.box;
   tweenY($("#poll .lvl"), pb[0] + (1 - poll / 100) * (pb[1] - pb[0]));
   tweenNum($("#poll .num"), poll);
@@ -855,11 +933,12 @@ function updateHud() {
   const vaat = S.cnt?.vaat || 0,
     vc = vaatCost(S),
     df = defterOf(S);
-  $("#poll").setAttribute("aria-label", `Anket: yüzde ${poll}`);
-  $("#poll").title =
-    `Anket %${poll}` +
-    (vaat ? ` · tutulmamış ${vaat} vaat sandıkta −${vc} puan` : "") +
-    (df ? ` · sandık defteri ${df > 0 ? "+" : "−"}${Math.abs(Math.round(df * 10) / 10)} puan` : "");
+  $("#poll").setAttribute("aria-label", `${K ? "Kampanya anketi" : "Anket"}: yüzde ${poll}`);
+  $("#poll").title = K
+    ? `Kampanya anketi %${poll}: sandıkta kazanma şansı. Zar bunun çok altına düşerse ezici, altına düşerse rahat zafer; üstüne çıkarsa kıl payı.`
+    : `Anket %${poll}` +
+      (vaat ? ` · tutulmamış ${vaat} vaat sandıkta −${vc} puan` : "") +
+      (df ? ` · sandık defteri ${df > 0 ? "+" : "−"}${Math.abs(Math.round(df * 10) / 10)} puan` : "");
   $("#poll").classList.toggle("vaat", vaat > 0);
   $("#danis-n").textContent = String(S.danis);
   $("#btn-danis").classList.toggle("spent", S.danis <= 0);
@@ -986,9 +1065,53 @@ function fikretAdvice(s: State) {
   else if (nearE && b.e[0] < 0) t += " Seçim yakın ama; halk bunu unutmaz.";
   return t;
 }
+// Mühür: basılıyken seçilen seçeneğin halk kaybı silinir; yalnız sıradan evrakta
+let muhurHazir = false;
+function muhurKur(on: boolean) {
+  muhurHazir = on;
+  const b = $("#btn-muhur");
+  b.setAttribute("aria-pressed", String(on));
+  b.classList.toggle("on", on);
+  document.querySelector("#card")?.classList.toggle("muhurlu", on);
+  const n = (o: Side) => {
+    const m = on ? muhurEtki(o.e) : null;
+    return (
+      optNote(o) +
+      (m?.sil ? `${optNote(o) ? " · " : ""}mühür ${METER_AD[METERS[m.i]].toLocaleLowerCase("tr")} kaybını siler` : "")
+    );
+  };
+  if (S?.cur) {
+    $("#ch-L .n").textContent = n(S.cur.L);
+    $("#ch-R .n").textContent = n(S.cur.R);
+  }
+}
+function muhurBas() {
+  if (!S?.cur || busy || screen !== "game" || !(S.cnt.muhur || 0)) return;
+  if (!muhurHazir && !muhurOK(S)) {
+    openNote("Mühür yalnız sıradan evraka basılır başkanım; krize, seçime, özel yazıya geçmez.");
+    return;
+  }
+  closeNote();
+  muhurKur(!muhurHazir);
+  snd.tick();
+}
+function pollChip(v: number) {
+  const box = $("#poll .fx"),
+    c = document.createElement("span");
+  c.className = "chip " + (v > 0 ? "up" : "down");
+  c.textContent = (v > 0 ? "+" : "−") + Math.abs(v);
+  box.appendChild(c);
+  window.setTimeout(() => c.remove(), 1700);
+}
 function danis() {
   if (!S?.cur || busy || screen !== "game") return;
   if ($("#note")) return closeNote();
+  if (S.cur.kind === "kampanya") {
+    openNote(
+      "Adayım, riskli yolun oranı düğmede yazıyor. Anket yüksekse riske girmeyin, düşükse girin; kıl payı kazanmak da kazanmaktır, ama gölgesi olur.",
+    );
+    return;
+  }
   if (["intro", "ending", "tekir", "sonuc", "cay", "acilis"].includes(S.cur.kind)) {
     openNote("Bu evrakta akıl verecek bir şey yok başkanım, gönül rahatlığıyla imzalayın.");
     return;
@@ -2012,12 +2135,14 @@ function openKampanya() {
     b.className = "bn-v";
     b.dataset.id = id;
     b.setAttribute("role", "checkbox");
-    b.innerHTML = `<span class="bn-kutu" aria-hidden="true"></span><b>${esc(v.ad)}</b><span class="bn-guc">+${v.guc} puan</span><span class="bn-soz">${esc(v.soz)}</span>`;
+    const hemen = v.hemen ? etkiKisa(v.hemen) : "";
+    b.innerHTML = `<span class="bn-kutu" aria-hidden="true"></span><b>${esc(v.ad)}</b><span class="bn-guc">+${v.guc} şans</span><span class="bn-soz">${esc(v.soz)}</span>${hemen ? `<span class="bn-hemen">Meydanda hemen: ${esc(hemen)}</span>` : ""}`;
     b.addEventListener("click", () => toggleVaat(id));
     li.append(b);
     list.append(li);
   }
   paintKampanya();
+  bnYollar();
   show("kampanya");
   $("#scr-kampanya").scrollTop = 0;
   list.querySelector<HTMLElement>("button")?.focus({ preventScroll: true });
@@ -2039,20 +2164,49 @@ function paintKampanya() {
   }
   $("#bn-sans").textContent = `%${sans}`;
   $("#bn-bar").style.setProperty("--w", sans + "%");
-  $("#bn-not").textContent = secili.length
-    ? `${secili.length === 1 ? "Bir söz" : secili.length === 2 ? "İki söz" : "Üç söz"}: rahat kazanma şansı %${sans}. Gerisi kıl payı.${dolu ? " Daha fazla söz verilmez, bu kadarının hesabı bile uzun." : ""}`
-    : `Söz vermeden sandığa giderseniz rahat kazanma şansı %${sans}. Gerisi kıl payı.`;
+  const ez = Math.max(0, Math.round(sans - (SANDIK.ezici - 3) / SANDIK.egim));
+  $("#bn-not").textContent =
+    (secili.length
+      ? `${secili.length === 1 ? "Bir söz" : secili.length === 2 ? "İki söz" : "Üç söz"}: kazanma şansı %${sans}`
+      : `Söz vermeden sandığa giderseniz kazanma şansı %${sans}`) +
+    `, ezici zafer %${ez}. Dört kampanya evrakı anketi oynatır. Kazanamazsanız kıl payı.` +
+    (dolu ? " Daha fazla söz verilmez, bu kadarının hesabı bile uzun." : "");
 }
-async function sandigaGit() {
-  const vz = secili.slice(),
-    { acilis, res } = acilisSecimi(vz);
+// Yolların özeti ayarlardan yazılır (ayar değişince metin eskimesin)
+function bnYollar() {
+  const say = ["", "bir", "iki", "üç", "dört", "beş"];
+  const yol = (a: Acilis, ad: string, ek: string) => {
+    const A = ACILIS[a],
+      m = [`halk ${A.m.h}`, `kasa ${A.m.k}`];
+    if (A.muhur) m.push(`${say[A.muhur]} mühür`);
+    if (A.danis && A.danis > 3) m.push("bir danışma fazla");
+    if (A.kalem && a !== "sessiz") m.push(`sandık hafızasında +${A.kalem.puan}`);
+    return `<p class="bn-yol bn-${a}"><b>${ad}:</b> ${m.join(", ")}. ${ek}</p>`;
+  };
+  $("#bn-yollar").innerHTML =
+    yol(
+      "sessiz",
+      "Sessiz kampanya",
+      `Seçim gecesi, söz yok. Temiz sicil sandıkta +${ACILIS.sessiz.kalem!.puan}; ilk skandalda gider.`,
+    ) +
+    yol("ezici", "Ezici zafer", "Zafer ödeneği.") +
+    yol("zafer", "Rahat zafer", "") +
+    yol(
+      "kilpayi",
+      "Kıl payı",
+      `Gölgeli mazbata: bir yıl halkın kızgınlığı ${String(HAVA.golge[0]).replace(".", ",")} kat. Nermin'in iki itirazını kapatırsanız gölge kalkar, iki mühür gelir.`,
+    ) +
+    `<p class="bn-yol bn-muhur"><b>Mühür:</b> zararlı evrağa basın, en ağır kaybı silinsin (en çok ${MUHUR.tavan}). ${MUHUR.ay} ayda söner.</p>`;
+}
+// Sandığa giden: dört kampanya evrakı (anket oynar), sonra seçim gecesi ve göreve başlayış
+function sandigaGit() {
+  const vz = secili.slice();
   snd.unlock();
   const intro = !LS.get("introSeen", false);
   LS.set("introSeen", true);
-  S = newGame({ intro, acilis, vaatler: vz, secim: res });
+  S = newGame({ intro, kampanya: true, vaatler: vz });
   beyanname = [];
   secili = [];
-  await electionNight(res);
   enterGame();
   nextCard();
 }
@@ -2063,6 +2217,14 @@ function resume() {
   S = s;
   enterGame();
   updateHud();
+  // kampanya bitti, sandık açıldı ama seçim gecesi kapanmadan çıkılmışsa: gece yeniden, sonra göreve başlayış
+  if (s.cur.kind === "kampanya" && !s.kampanya && s.acilisSecim) {
+    electionNight(s.acilisSecim).then(() => {
+      enterGame();
+      nextCard();
+    });
+    return;
+  }
   // seçim evrakı imzalanmış ama sonuç ekranı kapanmadan çıkılmışsa: seçim gecesi yeniden gösterilir
   if (s.pending?.type === "sonuc" && s.pending.res && s.cur.kind === "secim") {
     electionNight(s.pending.res).then(() => {
@@ -2109,7 +2271,8 @@ function wire() {
   $("#btn-go").addEventListener("click", () => openKampanya());
   $("#btn-bn-back").addEventListener("click", () => show("pick"));
   $("#btn-sessiz").addEventListener("click", () => startNew("sessiz"));
-  $("#btn-sandik").addEventListener("click", () => void sandigaGit());
+  $("#btn-sandik").addEventListener("click", sandigaGit);
+  $("#btn-muhur").addEventListener("click", muhurBas);
   // Rastgele aday: başka bir hazır aday, adıyla birlikte (broşürdeki lakap ve biyografi o ada ait); ad zarı ayrı düğme
   $("#btn-zar").addEventListener("click", () => {
     const cur = playerAvatar(),
@@ -2274,6 +2437,7 @@ function wire() {
       e.preventDefault();
       commit("R");
     } else if (k === "f") danis();
+    else if (k === "m") muhurBas();
     else if (e.key === "Escape") closeNote();
   });
 }

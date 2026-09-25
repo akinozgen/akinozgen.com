@@ -1,5 +1,6 @@
 // Seçim beyannamesi testi: aday kaydından sonra en çok üç söz, canlı kampanya anketi, geri dönüp gelince seçim kalır;
-// sandığa gidilince seçim gecesi (aday etiketiyle) ve açılış evrakı, sessiz kampanyada doğrudan düşük başlangıç.
+// sandığa gidilince dört kampanya evrakı (anket üst barda, oranlar düğmede), seçim gecesi (aday etiketiyle), açılış
+// evrakı ve mühür; sessiz kampanyada doğrudan düşük başlangıç.
 // Ekran görüntüleri .cache/kampanya/ klasörüne yazılır. node tools/kampanya.mjs [çıktı klasörü] [adres]
 import { spawn } from "node:child_process";
 import { writeFileSync, mkdirSync } from "node:fs";
@@ -118,7 +119,7 @@ try {
     );
     check(new Set(ids).size === ids.length, `${w}: aynı söz iki kez`);
     check(
-      (await ev(`document.querySelector("#bn-sans").textContent`)) === `%${E.KAMPANYA.taban}`,
+      (await ev(`document.querySelector("#bn-sans").textContent`)) === `%${E.SANS.taban}`,
       `${w}: sözsüz anket tabanda değil`,
     );
     const secim = ids.slice(0, Math.min(4, ids.length));
@@ -172,7 +173,35 @@ try {
     const vz = ids.slice(0, Math.min(3, ids.length));
     for (const i of vz) await click(`#bn-list [data-id="${i}"]`);
     await click("#btn-sandik");
-    check(await until(`!document.querySelector("#scr-secim").hidden`, 5000), "sandığa git seçim gecesini açmadı");
+    // kampanya turu: dört evrak, her aşamadan biri; üst barda kampanya anketi ve kalan evrak
+    check(await until(`!document.querySelector("#scr-game").hidden`, 5000), "sandığa git kampanya turunu açmadı");
+    const sans = E.kampanyaSans(vz);
+    for (let i = 0; i < 4; i++) {
+      check(
+        await until(`document.querySelector("#card") && !document.querySelector("#ch-L").disabled`, 5000),
+        `${i + 1}. kampanya evrakı gelmedi`,
+      );
+      await sleep(300);
+      const k = JSON.parse(
+        await ev(`JSON.stringify({ cd: document.querySelector("#countdown").textContent, org: document.querySelector("#card .org").textContent,
+          n: [...document.querySelectorAll(".choice .n")].map(x => x.textContent), z: document.querySelectorAll(".choice.zarli").length,
+          s: JSON.parse(localStorage.getItem("cb.save")) })`),
+      );
+      check(k.cd === `Sandığa ${4 - i} evrak`, `${i + 1}. evrak: geri sayım "${k.cd}"`);
+      check(/SEÇİM BÜROSU/.test(k.org), `${i + 1}. evrak seçim bürosundan değil`);
+      check(
+        k.z === 1 && k.n.some(t => /^%\d+ tutar/.test(t)) && k.n.some(t => /^kesin: anket \+/.test(t)),
+        `${i + 1}. evrak: oranlar düğmede yok ${JSON.stringify(k.n)}`,
+      );
+      check(E.KAMPANYA_KART[k.s?.cur?.id]?.asama === i, `${i + 1}. evrak ${i}. aşamadan değil`);
+      if (i === 0) check(k.s.kampanya.oy === sans, `tur anketi %${sans} ile başlamadı`);
+      if (i === 0 && tur === 0) await shot("kampanya-evraki");
+      await click(i % 2 ? "#ch-R" : "#ch-L");
+    }
+    check(
+      await until(`!document.querySelector("#scr-secim").hidden`, 8000),
+      "dördüncü kampanya evrakından sonra seçim gecesi açılmadı",
+    );
     check(
       await until(
         `[...document.querySelectorAll(".tv-lbl")].some(e => /Belediye başkan adayı/.test(e.textContent))`,
@@ -193,12 +222,24 @@ try {
     await sleep(400);
     const konu = await ev(`document.querySelector("#card .doc-konu")?.textContent || ""`);
     const s = await saveNow();
-    check(s && (s.acilis === "zafer" || s.acilis === "kilpayi"), `açılış türü yok (${s?.acilis})`);
+    check(s && ["ezici", "zafer", "kilpayi"].includes(s.acilis), `açılış türü yok (${s?.acilis})`);
     if (s) {
+      // başlangıç = ayar + sözlerin meydandaki hemen etkisi (kampanya evraklarının göstergeye etkisi yok)
+      const bek = {};
+      E.METERS.forEach((k, i) => {
+        bek[k] = E.ACILIS[s.acilis].m[k];
+        for (const id of vz) bek[k] = Math.max(5, Math.min(95, bek[k] + (E.VAAT[id].hemen?.[i] || 0)));
+      });
       check(
-        JSON.stringify(s.m) === JSON.stringify(E.ACILIS[s.acilis].m),
-        `${s.acilis}: göstergeler ayarla aynı değil ${JSON.stringify(s.m)}`,
+        JSON.stringify(s.m) === JSON.stringify(bek),
+        `${s.acilis}: göstergeler ${JSON.stringify(s.m)}, beklenen ${JSON.stringify(bek)}`,
       );
+      check((s.cnt.muhur || 0) === (E.ACILIS[s.acilis].muhur || 0), `${s.acilis}: mühür sayısı ${s.cnt.muhur}`);
+      check(
+        (await ev(`!document.querySelector("#btn-muhur").hidden`)) === !!s.cnt.muhur,
+        `${s.acilis}: mühür düğmesi görünürlüğü yanlış`,
+      );
+      check(!s.kampanya, "kampanya turu kayıtta kaldı");
       check(JSON.stringify(s.vaatler) === JSON.stringify(vz), `sözler kayda geçmedi (${s.vaatler})`);
       check(s.cnt.vaat === vz.length, "vaat sayacı söz sayısı değil");
       check(
@@ -206,11 +247,38 @@ try {
         "sözlerin hesap evrakı takvimde yok",
       );
       check(
-        new RegExp(s.acilis === "zafer" ? "Ezici zafer" : "Kıl payı").test(konu),
+        new RegExp({ ezici: "Ezici zafer", zafer: "Rahat zafer", kilpayi: "Kıl payı" }[s.acilis]).test(konu),
         `açılış evrakı yanlış: "${konu}"`,
       );
     }
     await shot(`acilis-${tur}`);
+    // mühür: sıradan evrakta düğmeyle basılır, evrak "mühürlü" görünür; kaybı olan seçenekte harcanır
+    if (s?.cnt.muhur) {
+      await click("#ch-L");
+      await sleep(900);
+      check(await until(`!document.querySelector("#ch-L").disabled`, 5000), "açılıştan sonra evrak gelmedi");
+      const c = (await saveNow()).cur;
+      if (c.kind === "normal") {
+        await click("#btn-muhur");
+        check(
+          await ev(
+            `document.querySelector("#btn-muhur").getAttribute("aria-pressed") === "true" && document.querySelector("#card").classList.contains("muhurlu")`,
+          ),
+          "mühür basılmadı",
+        );
+        await shot(`muhurlu-${tur}`);
+        const kayip = c.L.e.some(v => v < 0),
+          n0 = (await saveNow()).cnt.muhur;
+        await click("#ch-L");
+        await sleep(1200);
+        const n1 = (await saveNow()).cnt.muhur || 0;
+        check(n1 === n0 - (kayip ? 1 : 0), `mühür sayısı ${n0} → ${n1} (kayıp ${kayip})`);
+        check(
+          await ev(`document.querySelector("#btn-muhur").getAttribute("aria-pressed") === "false"`),
+          "mühür sonraki evrakta basılı kaldı",
+        );
+      }
+    }
   }
 
   // ── sessiz kampanya: seçim gecesi yok, düşük başlar, söz yok
