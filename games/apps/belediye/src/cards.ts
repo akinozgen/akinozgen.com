@@ -1769,6 +1769,15 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "cukur",
+    alt: [
+      {
+        if: {
+          req: "vaat_cukur",
+          not: "vaat_cukur_tutuldu",
+        },
+        text: "Kapımın önündeki çukura üç kere düştüm oğlum... kızım... başkanım! Beyannamede '48 saatte kapanır' yazıyordu; ben 48 günü de saydım. Dördüncüde doğruca makamına gelirim.",
+      },
+    ],
     who: "fatma",
     konu: "Çukur",
     text: "Kapımın önündeki çukura üç kere düştüm oğlum... kızım... başkanım! Dördüncüde doğruca makamına gelirim.",
@@ -2115,6 +2124,10 @@ export const CARDS: CardDef[] = [
   {
     id: "festival",
     alt: [
+      {
+        req: "vaat_yildiz_tutuldu",
+        text: "Başkanım, Kavun Festivali geldi çattı. Dünya yıldızından sonra çıta yükseldi; çarşıda 'bu sene kim geliyor' diye iddiaya giriyorlar. Menajer 'ikinci geliş yarı fiyat' dedi. Konsere kimi çağıralım?",
+      },
       {
         req: "kral_tac",
         text: "Başkanım, Kavun Festivali geldi çattı. Kalabalık şimdiden 'Kral nerede?' diye soruyor, Hatice Abla tacınızı parlatıyor. Konsere kimi çağıralım? Taç takan sanatçıya indirim varmış.",
@@ -3077,6 +3090,18 @@ export const CARDS: CardDef[] = [
     fav: "L",
     text: "Başkanım, seçim yaklaşırken bir defter tuttum: verdiğiniz ama tutmadığınız sözler. Yarın meydanda okuyacağım. Sayfa bitmedi, arkasına da yazdım; kapağın içine de sıkıştırdım.",
     alt: [
+      {
+        req: "vaat_havalimani_tabela",
+        text: "Başkanım, seçim yaklaşırken bir defter tuttum: verdiğiniz ama tutmadığınız sözler. En üstte havalimanı var; tabelanın fotoğrafını yapıştırdım, altına 'uçak bekleniyor' yazdım. Yarın meydanda okuyacağım.",
+      },
+      {
+        req: "vaat_kura_torba",
+        text: "Başkanım, seçim yaklaşırken bir defter tuttum: verdiğiniz ama tutmadığınız sözler. En üstte işe alım kurası var; torbadan çıkan soyadlarını alt alta yazdım, sayfa soy ağacına döndü. Yarın meydanda okuyacağım.",
+      },
+      {
+        req: "vaat_uzay_montaj",
+        text: "Başkanım, seçim yaklaşırken bir defter tuttum: verdiğiniz ama tutmadığınız sözler. En üstte uzay kavunu var; montaj fotoğrafını büyüttüm, kavunun gölgesini kırmızıyla daire içine aldım. Yarın meydanda okuyacağım.",
+      },
       {
         req: "metro_soz",
         text: "Başkanım, seçim yaklaşırken bir defter tuttum: verdiğiniz ama tutmadığınız sözler. En üstte metro var, altını üç kere çizdim. Yarın meydanda okuyacağım, durak durak.",
@@ -6840,6 +6865,638 @@ export const CARDS: CardDef[] = [
       not: "Hüseyin tepsiyle Kavaklı yokuşunu üç kez çıktı.",
     },
   },
+  // ══ seçim beyannamesinin hesabı (VAATLER.kart) ══
+  {
+    id: "vaat_cukur",
+    who: "fatma",
+    konu: "Çukur sözü",
+    chain: true,
+    fav: "R",
+    text: "Başkanım, beyannamede '48 saatte çukur kapanır, kapanmazsa başkan nöbet tutar' yazıyordu. Kapımın önündeki çukura kronometre kurdum: 91 saat oldu. Sandalyeni getirdim, çayı da ben koyarım.",
+    L: {
+      t: "Nöbeti Fikret tutsun",
+      e: [-3, 0, 0, 0],
+      anket: {
+        ad: "Fikret'in çukur nöbeti",
+        puan: -2,
+      },
+      not: "Fikret çukurun başında üç gece uyudu; dördüncü gece içine düştü.",
+    },
+    R: {
+      t: "Çukur ekibi kurulsun",
+      e: [4, -2, 1, 0],
+      dec: "vaat",
+      set: "vaat_cukur_tutuldu",
+      rel: {
+        kemal: -1,
+      },
+      anket: {
+        ad: "48 saatlik çukur ekibi",
+        puan: 2,
+      },
+      pol: {
+        id: "cukur_ekibi",
+        ad: "Çukur ekibi",
+        e: [1, -1, 0, 0],
+        ay: 6,
+        msg: "Çukur ekibinin mesaisi bitti; 48 saati geçen tek çukur Fen İşleri'nin önünde kaldı.",
+      },
+    },
+  },
+  {
+    id: "vaat_halkgunu",
+    who: "huseyin",
+    konu: "Salı sözü",
+    chain: true,
+    fav: "R",
+    text: "Başkanım, beyannamede 'her salı kapım açık, çay benden' yazıyordu. Geçen salı 340 kişi geldi, 340 çay verdim. Yarısı iş istedi, doksanı borç, biri Tekir'in mamasını. Semaver dayanmaz; çay parası kimden?",
+    alt: [
+      {
+        req: "vaat_cay",
+        text: "Başkanım, beyannamede 'her salı kapım açık, çay benden' yazıyordu; bir de her mahalleye çay ocağı sözü var. Geçen salı 340 kişi geldi, 340 çay verdim. Ben tekim başkanım; çay parası kimden?",
+      },
+    ],
+    L: {
+      t: "Kapıya sıramatik konsun",
+      e: [-3, 1, 0, 0],
+      anket: {
+        ad: "Sıramatikli halk günü",
+        puan: -2,
+      },
+      not: "Sıramatik 340 numara verdi; kapı açıldığında sıra 12'deydi.",
+    },
+    R: {
+      t: "Kapı açık, çay bizden",
+      e: [4, -2, 0, 0],
+      dec: "vaat",
+      anket: {
+        ad: "Salı halk günü",
+        puan: 2,
+      },
+      pol: {
+        id: "sali_halk_gunu",
+        ad: "Salı halk günü",
+        e: [1, -1, 0, 0],
+        ay: 6,
+        msg: "Salı halk günleri mevsimi kapandı; makam kapısının menteşesi yenilendi.",
+      },
+    },
+  },
+  {
+    id: "vaat_cezasiz",
+    who: "recep",
+    konu: "Cezasız yıl",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, beyannamede 'bir yıl esnafa ceza yok' yazıyordu, aylardır tek ceza yazmadım. Kaldırıma masa, kapıya tezgâh; Hacı Bekir'in tabelası karşı dükkâna değdi. Fatma Teyze yoldan yürüyor. Defteri açayım mı?",
+    L: {
+      t: "Defter açılsın",
+      e: [3, 2, -5, 0],
+      rel: {
+        bekir: -1,
+      },
+      anket: {
+        ad: "Yarıda açılan ceza defteri",
+        puan: -2,
+      },
+      not: "Hacı Bekir ilk ceza makbuzunu çerçeveletip vitrine astı.",
+    },
+    R: {
+      t: "Yıl dolsun, defter kapalı",
+      e: [-3, -2, 6, 0],
+      dec: "vaat",
+      rel: {
+        bekir: 1,
+      },
+      anket: {
+        ad: "Cezasız çarşı yılı",
+        puan: 2,
+      },
+      pol: {
+        id: "cezasiz_carsi",
+        ad: "Cezasız çarşı",
+        e: [-1, 0, 1, 0],
+        ay: 4,
+        msg: "Cezasız yıl doldu; Recep Amir ceza defterini açtı, kalemini bulamadı.",
+      },
+    },
+  },
+  {
+    id: "vaat_bank",
+    who: "rahmi",
+    konu: "Bank sözü",
+    chain: true,
+    fav: "R",
+    text: "Başkanım, beyannamede 'her yüz metrede bir bank' yazıyordu. Bank gelmeyince emekliler kıraathaneye doldu; oturuyorlar, çay içmiyorlar. Dün Nuri Bey'le Hans Bey son sandalye için tavla attı, üç el sürdü.",
+    alt: [
+      {
+        if: {
+          pol: "emekli",
+        },
+        text: "Başkanım, beyannamede 'her yüz metrede bir bank' yazıyordu. Emekliler bedava otobüsten inip oturacak yer bulamayınca geri biniyor; kıraathaneye uğrayan yok. Durak başına bir bank olsa, bir çay da içerlerdi.",
+      },
+    ],
+    L: {
+      t: "Sandalyeler yeter",
+      e: [-2, 0, 1, 0],
+      anket: {
+        ad: "Oturacak yer yok",
+        puan: -1,
+      },
+      not: "Kıraathanede sandalyeye sıra numarası verilmeye başlandı.",
+    },
+    R: {
+      t: "Yüz kırk bank konsun",
+      e: [4, -4, -1, 0],
+      dec: "vaat",
+      anket: {
+        ad: "Yüz metrede bir bank",
+        puan: 2,
+      },
+    },
+  },
+  {
+    id: "vaat_mesaj",
+    who: "fikret",
+    konu: "Mesaj sözü",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, beyannamede 'her mesaja başkan cevap verir' yazıyordu. Telefonunuzda 11.400 okunmamış mesaj var: 3.000'i çiçekli günaydın, 200'ü Naciye Hanım'dan, biri Tekir'in pati izi. Cevapları kim yazacak?",
+    alt: [
+      {
+        req: "vaat_halkgunu",
+        text: "Başkanım, beyannamede 'her mesaja başkan cevap verir' yazıyordu. Salı kapıya sığmayanlar da yazmış: 11.400 okunmamış mesaj, 3.000'i çiçekli günaydın, 200'ü Naciye Hanım'dan. Cevapları kim yazacak?",
+      },
+    ],
+    L: {
+      t: "Hepsine tek tek cevap",
+      e: [5, -1, 1, -1],
+      dec: "vaat",
+      anket: {
+        ad: "11.400 mesaja tek tek cevap",
+        puan: 2,
+      },
+      pol: {
+        id: "mesaj_mesaisi",
+        ad: "Gece mesaj mesaisi",
+        e: [1, 0, 0, -1],
+        ay: 5,
+        msg: "Gece mesaj mesaisi bitti; son cevap saat 03.12'de gitti: 'Aleyküm selam.'",
+      },
+    },
+    R: {
+      t: "Toplu 'Ok' gitsin",
+      e: [-4, 0, 0, 0],
+      anket: {
+        ad: "11.400 kişiye toplu 'Ok'",
+        puan: -2,
+      },
+      not: "Toplu 'Ok' Hacı Bekir'in borç hatırlatmasına da gitti.",
+    },
+  },
+  {
+    id: "vaat_kura",
+    who: "vekil",
+    konu: "Kura sözü",
+    chain: true,
+    fav: "R",
+    text: "Başkanım, beyannamede 'işe alım kurayla' yazıyordu, güzel söz. Yalnız bizim hemşerinin oğlu kurada çıkmadı. Torbayı bir kere daha karıştırsak? Bu sefer Fikret karıştırsın, eli uğurludur.",
+    alt: [
+      {
+        if: {
+          pol: "kadro",
+        },
+        text: "Başkanım, beyannamede 'işe alım kurayla' yazıyordu. Hemşerinin oğlunu kurasız almıştınız ya, kardeşi de kurada çıkmadı. Torbayı bir kere daha karıştırsak? Bu sefer Fikret karıştırsın, eli uğurludur.",
+      },
+    ],
+    L: {
+      t: "Torba noterde kalsın",
+      e: [5, 0, 0, -6],
+      dec: "vaat",
+      anket: {
+        ad: "Noterli işe alım kurası",
+        puan: 2,
+      },
+    },
+    R: {
+      t: "Torbayı Fikret karıştırsın",
+      e: [-3, 0, 0, 5],
+      set: "vaat_kura_torba",
+      anket: {
+        ad: "Fikret'in kura torbası",
+        puan: -3,
+      },
+      not: "Kurada üç kez aynı soyadı çıktı; Tuncay saydı.",
+    },
+  },
+  {
+    id: "vaat_dakik",
+    who: "deniz",
+    konu: "Otobüs sözü",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, beyannamede 'geç kalan otobüs simit ısmarlar' yazıyordu. Kampüs otobüsü bu ay 64 kez geç kaldı; şoför Mümtaz Abi simitçiye 30 bin borçlandı. Simitçi artık otobüse binmiyor, yürüyerek geliyor.",
+    alt: [
+      {
+        if: {
+          pol: "emekli",
+        },
+        text: "Başkanım, beyannamede 'geç kalan otobüs simit ısmarlar' yazıyordu. Emekliye bedava otobüs gelince her durakta beş dakika hal hatır soruluyor; bu ay 64 kez geç kaldık. Şoför Mümtaz Abi simitçiye 30 bin borçlu.",
+      },
+    ],
+    L: {
+      t: "Simitler belediyeden",
+      e: [3, -2, 2, 0],
+      dec: "vaat",
+      anket: {
+        ad: "Gecikmeye simit",
+        puan: 2,
+      },
+      pol: {
+        id: "gecikme_simidi",
+        ad: "Gecikme simidi",
+        e: [1, -1, 0, 0],
+        ay: 6,
+        msg: "Gecikme simidi dönemi bitti; otobüsler hâlâ geç ama kimse aç binmedi.",
+      },
+    },
+    R: {
+      t: "Tarifeye 'civarı' yazılsın",
+      e: [-3, 1, 0, 0],
+      anket: {
+        ad: "'Civarı' yazan tarife",
+        puan: -2,
+      },
+      not: "Durak tabelası artık '08.00 civarı' diyor; Deniz fotoğrafını çekti.",
+    },
+  },
+  {
+    id: "vaat_bebek",
+    who: "sevim",
+    konu: "Altın sözü",
+    chain: true,
+    fav: "R",
+    text: "Başkanım, beyannamede 'her bebeğe çeyrek altın' yazıyordu. Seçimden dokuz ay sonra doğumhane doldu: 146 bebek, üç ikiz. Altın da o günden beri iki kat. Hesabı üç kere yaptım, üçünde de elim titredi.",
+    alt: [
+      {
+        if: {
+          pol: "kres",
+        },
+        text: "Başkanım, beyannamede 'her bebeğe çeyrek altın' yazıyordu. Seçimden dokuz ay sonra doğumhane doldu: 146 bebek, üç ikiz. Kreşin bekleme listesi şimdiden 146 kişi. Altın da iki kat oldu; hesabı üç kere yaptım.",
+      },
+    ],
+    L: {
+      t: "Çeyrekler takılsın",
+      e: [6, -8, 2, 1],
+      dec: "vaat",
+      anket: {
+        ad: "146 bebeğe çeyrek altın",
+        puan: 3,
+      },
+    },
+    R: {
+      t: "Altın yerine kavun fidanı",
+      e: [-4, -1, 0, 0],
+      set: "vaat_bebek_fidan",
+      anket: {
+        ad: "Altın yerine kavun fidanı",
+        puan: -2,
+      },
+      not: "146 bebeğin adına fidan dikildi; Naciye Hanım 'altını nerede' diye sordu.",
+    },
+  },
+  {
+    id: "vaat_sinema",
+    who: "elif",
+    konu: "Sinema sözü",
+    chain: true,
+    fav: "R",
+    text: "Başkanım, beyannamede 'her cuma bedava sinema' yazıyordu. Perdeyi okul bahçesine gerdik, makine hazır; film kirası ayda 60 bin. Bedava tek film belediyenin eski tanıtım filmi: dört saat, yarısı kurdele kesimi.",
+    alt: [
+      {
+        if: {
+          pol: "gece_pazari",
+        },
+        text: "Başkanım, beyannamede 'her cuma bedava sinema' yazıyordu. Perdeyi gece pazarının ortasına gerdik; balıkçının anonsu filmi bastırıyor. Film kirası ayda 60 bin. Bedava tek film belediyenin dört saatlik tanıtım filmi.",
+      },
+    ],
+    L: {
+      t: "Tanıtım filmi oynasın",
+      e: [-3, 0, 0, 1],
+      anket: {
+        ad: "Dört saatlik tanıtım filmi",
+        puan: -1,
+      },
+      not: "İkinci haftada perdenin önüne yalnız Tekir geldi, o da uyudu.",
+    },
+    R: {
+      t: "Filmler kiralansın",
+      e: [3, -2, 2, 0],
+      dec: "vaat",
+      anket: {
+        ad: "Cuma sineması",
+        puan: 2,
+      },
+      pol: {
+        id: "cuma_sinemasi",
+        ad: "Cuma sineması",
+        e: [1, -1, 0, 0],
+        ay: 6,
+        msg: "Cuma sineması sezonu kapadı; son filmde perdede balık vardı, Tekir perdeye atladı.",
+      },
+    },
+  },
+  {
+    id: "vaat_ehliyet",
+    who: "mahir",
+    konu: "Ehliyet sözü",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, beyannamede 'her gence bedava ehliyet' yazıyordu. Kurs dolu, 180 genç sırada. Ehliyeti alan araba bulamıyor; dün üç genç babasının traktörüyle çarşıda tur attı, biri geri geri. Parası kimden?",
+    L: {
+      t: "Kurs parası belediyeden",
+      e: [4, -6, 3, 0],
+      dec: "vaat",
+      rel: {
+        deniz: 1,
+      },
+      anket: {
+        ad: "180 gence bedava ehliyet",
+        puan: 2,
+      },
+    },
+    R: {
+      t: "Bisiklet ehliyeti verelim",
+      e: [-3, 0, 0, 0],
+      rel: {
+        deniz: -1,
+      },
+      anket: {
+        ad: "Bisiklet ehliyeti",
+        puan: -2,
+      },
+      not: "Gençler bisiklet ehliyetlerini çerçeveletip kursun kapısına astı.",
+    },
+  },
+  {
+    id: "vaat_bagis",
+    who: "naciye",
+    konu: "Maaş sözü",
+    chain: true,
+    fav: "L",
+    text: "Evladım, beyannamede 'maaşımı bağışlayacağım' yazmışsın. Evin kirası, torunun dershanesi, benim ilaçlar... Muhalefet makbuz istiyormuş, ben de istiyorum. Bağışlayacaksan önce bizim mutfağa bağışla.",
+    L: {
+      t: "Bir ay bağışlarız",
+      e: [-3, 0, 0, 0],
+      anket: {
+        ad: "Bir aylık maaş bağışı",
+        puan: -2,
+      },
+      not: "Nermin Hanım tek makbuzun fotokopisini meclise dağıttı.",
+    },
+    R: {
+      t: "Maaş aşevine gitsin",
+      e: [4, 0, 0, 0],
+      dec: "vaat",
+      rel: {
+        naciye: -1,
+      },
+      anket: {
+        ad: "Aşevine giden başkan maaşı",
+        puan: 2,
+      },
+      not: "Naciye Hanım bu bayram sofraya yalnız pilav koydu.",
+    },
+  },
+  {
+    id: "vaat_tekir",
+    who: "selin",
+    konu: "Kadro sözü",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, beyannamede 'Tekir'e kadro' yazıyordu. Pati Derneği takipte: Tekir hâlâ gönüllü, sigortası yok, mama hakkı yok. Raporunu da ben yazdım: 'Çalışmaya elverişlidir, çoğunlukla uyur.' Kadro çıkacak mı?",
+    L: {
+      t: "Kadro çıksın",
+      e: [4, -2, 0, -3],
+      dec: "vaat",
+      inc: "tekir",
+      set: "vaat_tekir_tutuldu",
+      anket: {
+        ad: "Kadrolu kedi",
+        puan: 2,
+      },
+      not: "Ankara'dan yazı geldi: 'Kediye kadro hangi mevzuata dayanıyor?'",
+    },
+    R: {
+      t: "Plaket verelim, yeter",
+      e: [-3, 0, 0, 1],
+      anket: {
+        ad: "Kadrosuz Tekir",
+        puan: -1,
+      },
+      not: "Tekir plaketi masanın kenarından itti; düşünce çok ses çıktı.",
+    },
+  },
+  {
+    id: "vaat_merdiven",
+    who: "muhtar",
+    konu: "Merdiven sözü",
+    chain: true,
+    fav: "R",
+    text: "Başkanım, beyannamede 'Kavaklı yokuşuna yürüyen merdiven' yazıyordu. Kemal Bey ölçtü: yokuş 1.200 metre, dünyanın en uzun yürüyen merdiveni olurmuş. Mahalle 'rekoru da biz kırarız' diyor. İlk basamak ne zaman?",
+    L: {
+      t: "Yokuşa tutamak yeter",
+      e: [-3, -1, 0, 0],
+      anket: {
+        ad: "Tutamaklı yürüyen merdiven",
+        puan: -2,
+      },
+      not: "Mahalle tutamağın üstüne 'yürüyen merdiven' yazıp fotoğraf çekti.",
+    },
+    R: {
+      t: "İlk kırk metre yürüsün",
+      e: [4, -4, 1, 0],
+      dec: "vaat",
+      anket: {
+        ad: "Kırk metrelik yürüyen merdiven",
+        puan: 2,
+      },
+      pol: {
+        id: "yuruyen_merdiven",
+        ad: "Yürüyen merdiven inşaatı",
+        e: [0, -1, 0, 0],
+        ay: 5,
+        done: [4, 0, 1, 0],
+        msg: "Yürüyen merdivenin ilk kırk metresi açıldı; kalan 1.160 metreyi mahalle eskisi gibi yürüyor.",
+      },
+    },
+  },
+  {
+    id: "vaat_yildiz",
+    who: "hans",
+    konu: "Yıldız sözü",
+    chain: true,
+    fav: "L",
+    text: "Sayın Başkan, beyannamede 'festivale dünya yıldızı' yazıyordu. Menajeri aradım: ücret bütçenizin üçte biri, bir de sahneye beyaz güvercin istiyor. Kuzenim Bavyera bandosunda davulcu; dünyada tanınır. Bavyera'da.",
+    L: {
+      t: "Bavyera bandosu gelsin",
+      e: [1, -2, 1, 0],
+      anket: {
+        ad: "Bavyeralı dünya yıldızı",
+        puan: -1,
+      },
+      not: "Bando 'Karakavak kavunu' türküsünü polka çaldı; Nuri Bey ayakta dinledi.",
+    },
+    R: {
+      t: "Güvercinler de gelsin",
+      e: [7, -9, 5, 0],
+      dec: "vaat",
+      set: "vaat_yildiz_tutuldu",
+      anket: {
+        ad: "Festivaldeki dünya yıldızı",
+        puan: 3,
+      },
+    },
+  },
+  {
+    id: "vaat_sera",
+    who: "hatice",
+    konu: "Kavun sözü",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, beyannamede 'dört mevsim kavun' yazıyordu. Kooperatife her gün soran var: kışın kavun nerede? Sera kurarsak kadınlar kışın da çalışır; cam, ısıtma, gece bekçisi lazım. Dursun Ağa 'kavun sobayı sevmez' diyor.",
+    alt: [
+      {
+        if: {
+          pol: "ges",
+        },
+        text: "Başkanım, beyannamede 'dört mevsim kavun' yazıyordu. Ovanın yarısı güneş santraline kiralık, yazın bile kavun az; kışın kavunu soran soruyor. Sera kurarsak kadınlar kışın da çalışır; cam, ısıtma, bekçi lazım.",
+      },
+    ],
+    L: {
+      t: "Belediye serası kurulsun",
+      e: [3, -4, 3, 0],
+      dec: "vaat",
+      anket: {
+        ad: "Kışın yetişen kavun",
+        puan: 2,
+      },
+      pol: {
+        id: "belediye_serasi",
+        ad: "Belediye serası",
+        e: [0, -1, 1, 0],
+        ay: 6,
+        done: [3, 2, 1, 0],
+        msg: "Seranın ilk kış kavunu çıktı: yumruk kadar, tadı salatalık. Yine de kapışıldı.",
+      },
+    },
+    R: {
+      t: "Kışın ithal kavun satılsın",
+      e: [-3, -1, -2, 0],
+      rel: {
+        dursun: -1,
+      },
+      anket: {
+        ad: "İthal kış kavunu",
+        puan: -2,
+      },
+      not: "İthal kavunun etiketinde 'Karakavak usulü' yazıyordu; Dursun Ağa kesip baktı.",
+    },
+  },
+  {
+    id: "vaat_havalimani",
+    who: "dursun",
+    konu: "Havalimanı sözü",
+    chain: true,
+    fav: "R",
+    text: "Başkanım, beyannamede 'Karakavak'a havalimanı' yazıyordu. Kemal Bey ölçtü: ilçedeki tek düz yer benim kavun tarlam, o da 900 metre. İlaçlama uçağı iner, yolcu uçağı inmez. Tarlamı piste mi vereceğiz?",
+    alt: [
+      {
+        if: {
+          pol: "ges",
+        },
+        text: "Başkanım, beyannamede 'Karakavak'a havalimanı' yazıyordu. Ovanın düz yeri güneş santraline kiralık; geriye benim kavun tarlam kaldı, o da 900 metre. İlaçlama uçağı iner, yolcu uçağı inmez. Tarlam piste mi?",
+      },
+    ],
+    L: {
+      t: "Tarla piste, uçak gelsin",
+      e: [5, -8, 3, -2],
+      dec: "vaat",
+      set: "vaat_havalimani_tutuldu",
+      anket: {
+        ad: "Tek pistli kavun havalimanı",
+        puan: 2,
+      },
+    },
+    R: {
+      t: "Önce tabelası asılsın",
+      e: [-4, -1, 0, 1],
+      set: "vaat_havalimani_tabela",
+      anket: {
+        ad: "Uçaksız havalimanı tabelası",
+        puan: -3,
+      },
+      not: "Tabelayı gören gurbetçiler belediyeye bilet sormaya başladı.",
+    },
+  },
+  {
+    id: "vaat_uzay",
+    who: "burak",
+    konu: "Uzay sözü",
+    chain: true,
+    fav: "R",
+    text: "Dayı, beyannamede 'kavun uzaya çıkacak' yazıyordu. Roket yok ama meteoroloji balonu var: kavunu 30 kilometreye çıkarır, kamerası canlı yayın yapar. Yalnız rüzgâr doğudan eserse kavun komşu ilçeye düşer.",
+    L: {
+      t: "Montajla uzaya yollayalım",
+      e: [-3, 0, 0, 1],
+      set: "vaat_uzay_montaj",
+      anket: {
+        ad: "Montaj uzay kavunu",
+        puan: -3,
+      },
+      not: "Montajda kavunun gölgesi Ay'ın üstüne düşmüş; Tuncay hemen yakaladı.",
+    },
+    R: {
+      t: "Balon kalksın",
+      e: [5, -4, 2, -3],
+      dec: "vaat",
+      set: "vaat_uzay_tutuldu",
+      anket: {
+        ad: "Stratosferdeki kavun",
+        puan: 2,
+      },
+      not: "Kavun 31 kilometreye çıktı, komşu ilçenin pazarına düştü.",
+    },
+  },
+  {
+    id: "vaat_tarih",
+    who: "albay",
+    konu: "Tarih sözü",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, beyannamede 'ilçemizin tarihi yazılacak' diyordunuz. Yazdım: üç cilt, 1.400 sayfa. İkinci cilt yalnız benim askerlik hatıralarım; ilçe tarihinde çok yeri var. Matbaa her haneye bir takım için fiyat verdi.",
+    L: {
+      t: "Üç cilt basılsın",
+      e: [2, -4, 1, 1],
+      dec: "vaat",
+      anket: {
+        ad: "Üç ciltlik ilçe tarihi",
+        puan: 1,
+      },
+    },
+    R: {
+      t: "Askerlik cildi çıksın",
+      e: [-1, -1, 0, 0],
+      rel: {
+        albay: -1,
+      },
+      anket: {
+        ad: "Kırpılan ilçe tarihi",
+        puan: -1,
+      },
+      not: "Nuri Bey çıkarılan cildi kıraathanede her akşam sesli okuyor.",
+    },
+  },
 ];
 
 // ─── Seçimde karşınıza çıkabilecek adaylar ──────────────────────────────────
@@ -7579,6 +8236,43 @@ export const MIRAS: MirasDef[] = [
     },
     text: "Başkan, okey masalı belediye otobüsüyle anılacak. Emekliler hâlâ son durakta inmiyor: 'El bitmeden olmaz.'",
   },
+  // ══ vaat-miras ══
+  {
+    if: {
+      req: "vaat_havalimani_tutuldu",
+    },
+    text: "Başkan, Karakavak Havalimanı'nı açan başkan olarak anılacak. Pistine bugüne dek tek uçak indi, o da ilaçlama uçağı; kalkış tahtasında hâlâ 'Kavun: zamanında' yazıyor.",
+  },
+  {
+    if: {
+      req: "vaat_havalimani_tabela",
+    },
+    text: "Başkan, tabelası olan ama pisti olmayan havalimanıyla anılacak. Tabela hâlâ ilçe girişinde duruyor; gurbetçiler her yaz altında durup bilet soruyor.",
+  },
+  {
+    if: {
+      req: "vaat_uzay_tutuldu",
+    },
+    text: "Başkan, ilk Karakavak kavununu stratosfere yollayan başkan olarak anılacak. Kavun komşu ilçenin pazarına düştü; komşu ilçe hâlâ 'uzaydan gelen kavun' diye bilet kesiyor.",
+  },
+  {
+    if: {
+      req: "vaat_tekir_tutuldu",
+    },
+    text: "Başkan, Tekir'e kadro veren başkan olarak anılacak. Tekir'in sicili hâlâ tertemiz: bir gün mesaiye gelmedi, bir gün de izin istemedi.",
+  },
+  {
+    if: {
+      req: "vaat_bebek_fidan",
+    },
+    text: "Başkan, 146 bebeğe çeyrek altın yerine kavun fidanı veren başkan olarak anılacak. İki fidan kavun verdi; sahiplerine ilçede hâlâ 'altın bebekler' deniyor.",
+  },
+  {
+    if: {
+      req: "vaat_kura_torba",
+    },
+    text: "Başkan, işe alım kurasını makam şefine çektiren başkan olarak anılacak. Torba bugün belediye vitrininde; içindeki kâğıtların çoğunda aynı soyadı yazıyor.",
+  },
 ];
 
 // ─── Seçim beyannamesi: göreve başlamadan önceki kampanyanın vaatleri ─────
@@ -7601,6 +8295,150 @@ export const VAATLER: VaatDef[] = [
     guc: 8,
     kart: "vaat_cay",
     ay: [8, 22],
+  },
+  {
+    id: "cukur",
+    ad: "Çukura 48 saat",
+    soz: "Her çukur 48 saatte kapanacak. Kapanmazsa başkan o çukurun başında bizzat nöbet tutacak.",
+    guc: 9,
+    kart: "vaat_cukur",
+    ay: [6, 14],
+  },
+  {
+    id: "halkgunu",
+    ad: "Her salı kapım açık",
+    soz: "Her salı makam kapısı ardına kadar açık: randevu yok, sekreter yok, sıra yok. Çay da başkandan.",
+    guc: 6,
+    kart: "vaat_halkgunu",
+    ay: [6, 14],
+  },
+  {
+    id: "cezasiz",
+    ad: "Esnafa bir yıl ceza yok",
+    soz: "Zabıtanın ceza defteri bir yıl kapalı kalacak. Esnaf nefes alacak, zabıta da çayını rahat içecek.",
+    guc: 8,
+    kart: "vaat_cezasiz",
+    ay: [7, 11],
+  },
+  {
+    id: "bank",
+    ad: "Yüz metrede bir bank",
+    soz: "Hiçbir emekli yüz metreden fazla ayakta kalmayacak. Her yüz metreye bir bank, her banka bir gölgelik.",
+    guc: 6,
+    kart: "vaat_bank",
+    ay: [8, 18],
+  },
+  {
+    id: "mesaj",
+    ad: "Her mesaja başkan cevabı",
+    soz: "Kim yazarsa yazsın, başkan her mesaja kendi eliyle cevap verecek. Gece yarısı da olsa, bayram da olsa.",
+    guc: 7,
+    kart: "vaat_mesaj",
+    ay: [9, 20],
+  },
+  {
+    id: "kura",
+    ad: "İşe alım kurayla olacak",
+    soz: "Belediyeye kimin gireceğini torba belirleyecek. Kurayı noter çekecek, torbayı herkes görecek.",
+    guc: 9,
+    kart: "vaat_kura",
+    ay: [10, 22],
+  },
+  {
+    id: "dakik",
+    ad: "Dakikası dakika otobüs",
+    soz: "Otobüs saatinde kalkmazsa şoför her yolcuya simit ısmarlayacak. Tarifeyi şoför değil saat belirleyecek.",
+    guc: 7,
+    kart: "vaat_dakik",
+    ay: [10, 22],
+  },
+  {
+    id: "bebek",
+    ad: "Her bebeğe çeyrek altın",
+    soz: "Karakavak'ta doğan her bebeğe belediyeden çeyrek altın. Nüfus artar, bereket gelir, düğünler erkene alınır.",
+    guc: 10,
+    kart: "vaat_bebek",
+    ay: [11, 20],
+  },
+  {
+    id: "sinema",
+    ad: "Her cuma bedava sinema",
+    soz: "Her cuma okul bahçesinde perde, çekirdek bizden. Karakavak'ın gençleri filmi komşu ilçede izlemeyecek.",
+    guc: 6,
+    kart: "vaat_sinema",
+    ay: [12, 26],
+  },
+  {
+    id: "ehliyet",
+    ad: "Her gence bedava ehliyet",
+    soz: "On sekizini dolduran her genç direksiyona belediyenin parasıyla geçecek. Kurs da sınav harcı da bizden.",
+    guc: 8,
+    kart: "vaat_ehliyet",
+    ay: [14, 28],
+  },
+  {
+    id: "bagis",
+    ad: "Başkan maaşı bağışlanacak",
+    soz: "Başkan maaşının kuruşuna dokunmayacak; her ay aşevine gidecek, makbuzu da cami duvarına asılacak.",
+    guc: 7,
+    kart: "vaat_bagis",
+    ay: [14, 30],
+  },
+  {
+    id: "tekir",
+    ad: "Tekir'e kadro",
+    soz: "Belediyenin en eski çalışanı Tekir artık gönüllü değil, kadrolu olacak. Mama hakkı, yaka kartı, kulübe.",
+    guc: 8,
+    kart: "vaat_tekir",
+    ay: [16, 32],
+  },
+  {
+    id: "merdiven",
+    ad: "Yokuşa yürüyen merdiven",
+    soz: "Kavaklı yokuşunu artık kimse yürümeyecek, yokuş yürüyecek. Pazar filesiyle nefes nefese çıkmak tarih olacak.",
+    guc: 11,
+    kart: "vaat_merdiven",
+    ay: [18, 34],
+  },
+  {
+    id: "yildiz",
+    ad: "Festivale dünya yıldızı",
+    soz: "Kavun Festivali'nin sahnesine bu sefer bir dünya yıldızı çıkacak. Adını vermiyoruz; gelince görürsünüz.",
+    guc: 10,
+    kart: "vaat_yildiz",
+    ay: [20, 40],
+  },
+  {
+    id: "sera",
+    ad: "Dört mevsim kavun",
+    soz: "Karakavak kavunu artık yalnız yazın değil, dört mevsim sofrada. Belediye serası kışın da kavun verecek.",
+    guc: 9,
+    kart: "vaat_sera",
+    ay: [22, 40],
+  },
+  {
+    id: "havalimani",
+    ad: "Karakavak Havalimanı",
+    soz: "Kavun ovasına pist, çarşıya terminal. Gurbetçi bayrama uçakla gelecek, kavun İstanbul'a uçakla gidecek.",
+    guc: 13,
+    kart: "vaat_havalimani",
+    ay: [26, 44],
+  },
+  {
+    id: "uzay",
+    ad: "Kavun uzaya çıkacak",
+    soz: "Dünyanın ilk uzay kavunu Karakavak'tan kalkacak. Astronotlar tatlıyı artık bizden yiyecek.",
+    guc: 12,
+    kart: "vaat_uzay",
+    ay: [28, 46],
+  },
+  {
+    id: "tarih",
+    ad: "İlçemizin tarihi yazılacak",
+    soz: "Yedi yüz yıllık Karakavak ilk kez kitap olacak. Her haneye bir nüsha, okul kütüphanelerine ikişer.",
+    guc: 5,
+    kart: "vaat_tarih",
+    ay: [32, 50],
   },
 ];
 

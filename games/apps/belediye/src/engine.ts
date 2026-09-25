@@ -107,10 +107,16 @@ export const MAX_ONGOING = 7;
 // Kazanma şansı taban + seçilen vaatlerin gücü (en çok üç vaat). Vaatler tutulmadıkça sandıkta ödenir, hesabı ilk dönemde sorulur.
 export const VAAT: Record<string, VaatDef> = Object.fromEntries(VAATLER.map(v => [v.id, v]));
 export const VAAT_MAX = 3;
+// hesap evrakı sözü kapatır: tutulsa da tutulmasa da açık söz sayacı düşer, sonucu defter adıyla taşır
+const VAAT_KART = new Set(VAATLER.map(v => v.kart));
 export const KAMPANYA = { taban: 40, tavan: 80 };
-export const ACILIS: Record<Acilis, { m: State["m"]; danis?: number; rel?: Record<string, number> }> = {
+// kalem: sandık hafızasına giden kalem (rahat zafer ilk seçimde de hatırlanır; yüksek başlangıç beş yılda söner)
+export const ACILIS: Record<
+  Acilis,
+  { m: State["m"]; danis?: number; rel?: Record<string, number>; kalem?: { ad: string; puan: number } }
+> = {
   sessiz: { m: { h: 44, k: 48, e: 48, a: 46 } },
-  zafer: { m: { h: 62, k: 50, e: 56, a: 56 }, danis: 4 },
+  zafer: { m: { h: 62, k: 50, e: 56, a: 56 }, danis: 4, kalem: { ad: "Sandıktan güçlü çıkış", puan: 3 } },
   kilpayi: { m: { h: 36, k: 46, e: 46, a: 44 }, rel: { nermin: -1 } },
 };
 export const kampanyaSans = (vaatler: string[]) =>
@@ -241,6 +247,7 @@ export function newGame(
   const A = ACILIS[opts.acilis];
   s.m = { ...A.m };
   if (A.danis) s.danis = A.danis;
+  if (A.kalem) s.defter = [{ ...A.kalem, m: 0 }];
   Object.assign(s.rel, A.rel);
   s.acilis = opts.acilis;
   s.pending = { type: "acilis" };
@@ -907,6 +914,8 @@ export function choose(s: State, side: "L" | "R", rng: Rng = Math.random): Choos
   });
   bump(s, o.inc, 1);
   bump(s, o.dec, -1);
+  const decVaat = typeof o.dec === "string" ? o.dec === "vaat" : !!o.dec?.vaat;
+  if (VAAT_KART.has(c.id) && !decVaat) bump(s, "vaat", -1);
   // sandık defteri: kalem adıyla yazılır; skandal/eser sayaçları kapılar için (gazeteci kartı, müfettiş yayı)
   if (o.anket) {
     (s.defter ||= []).push({ ...o.anket, m: s.month });

@@ -1,5 +1,7 @@
 // Denge simülasyonu: motoru binlerce kez farklı oyuncu tipleriyle oynatır.
-// node tools/sim.mjs [oyunSayısı] [ayar=değer ...]
+// node tools/sim.mjs [oyunSayısı] [ayar=değer ...] [acilis=karisik|sessiz|zafer|kilpayi|kumar|eski]
+// acilis: göreve başlayış. kumar: her oyun üç rastgele sözle sandığa gider. karisik (varsayılan): yarısı sessiz,
+// yarısı kumar (oyuncular gibi). eski: beyanname öncesinin 50'li başlangıcı.
 import { motor } from "./lib/sayfa.mjs";
 import { lintContent } from "./lint.mjs";
 
@@ -10,6 +12,24 @@ for (const a of process.argv.slice(3)) {
   if (k in E.TUNE) E.TUNE[k] = Number(v);
 }
 console.log("TUNE", JSON.stringify(E.TUNE));
+const ACILIS = process.argv.find(a => a.startsWith("acilis="))?.slice(7) || "karisik";
+console.log("açılış:", ACILIS);
+const sozler = rng =>
+  E.shuffle(
+    E.VAATLER.map(v => v.id),
+    rng,
+  ).slice(0, E.VAAT_MAX);
+const baslat = rng => {
+  if (ACILIS === "eski") return E.newGame();
+  const a = ACILIS === "karisik" ? (rng() < 0.5 ? "sessiz" : "kumar") : ACILIS;
+  if (a === "sessiz") return E.newGame({ acilis: "sessiz" });
+  if (a === "kumar") {
+    const vz = sozler(rng),
+      { acilis, res } = E.acilisSecimi(vz, rng);
+    return E.newGame({ acilis, vaatler: vz, secim: res, rng });
+  }
+  return E.newGame({ acilis: ACILIS, vaatler: ACILIS === "sessiz" ? [] : sozler(rng), rng });
+};
 
 function mulberry(seed) {
   return () => {
@@ -138,7 +158,7 @@ for (const [name, pol] of Object.entries(policies)) {
     yanSeen = 0;
   for (let g = 0; g < N; g++) {
     const rng = mulberry(g * 7919 + 13);
-    const s = E.newGame();
+    const s = baslat(rng);
     let guard = 0;
     while (!s.over && guard++ < 3000) {
       const c = E.draw(s, rng);

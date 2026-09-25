@@ -126,3 +126,22 @@ test("açılış evrakının metni her söz birleşiminde sığar ve farkı anar
       for (const o of [c.L, c.R]) assert.ok(o.t.length <= 26);
     }
 });
+
+test("hesap evrakı sözü kapatır: tutulsa da tutulmasa da açık söz sayacı bir düşer, sonuç defterde adıyla", async () => {
+  const E = await load();
+  for (const side of ["L", "R"]) {
+    const v = E.VAATLER[0],
+      s = E.newGame({ acilis: "zafer", vaatler: [v.id], rng: rng(1) });
+    assert.equal(s.cnt.vaat, 1);
+    const c = E.CARD[v.kart];
+    s.cur = { ...c, kind: "normal", L: { ...c.L }, R: { ...c.R } };
+    E.choose(s, side, rng(1));
+    assert.equal(s.cnt.vaat, 0, `${side}: söz kapanmadı`);
+    const k = c[side].anket;
+    if (k)
+      assert.ok(
+        s.defter.some(x => x.ad === k.ad),
+        `${side}: defterde "${k.ad}" yok`,
+      );
+  }
+});
