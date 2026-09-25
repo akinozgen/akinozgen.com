@@ -2978,9 +2978,10 @@ div.ay-row {
   .ak-bio {
     font-size: 0.9688rem;
   }
+  /* 24 vesikalık: 6 × 4, broşürün yanında ekrana sığar */
   .ak-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.625rem;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 0.5rem;
   }
   .ak-act {
     position: static;

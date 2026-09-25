@@ -56,7 +56,7 @@ export const ADLAR: Record<"k" | "e", string[]> = {
     "Celal", "Cemal", "Cemil", "Cevat", "Cevdet", "Cumali", "Dursun", "Durmuş", "Emin", "Esat", "Eşref", "Faik",
     "Fahri", "Faruk", "Fazıl", "Ferit", "Fethi", "Fevzi", "Fuat", "Galip", "Haydar", "Hayrettin", "Hamza", "Hurşit",
     "İhsan", "İlhan", "İlyas", "İrfan", "İsa", "İzzet", "Kenan", "Kerim", "Latif", "Mahir", "Mecit", "Memduh", "Musa",
-    "Mümtaz", "Naci", "Nafiz", "Necip", "Nevzat", "Niyazi", "Nuh", "Ragıp", "Reşat", "Sait", "Sefer", "Selim", "Seyfi",
+    "Mümtaz", "Naci", "Nafiz", "Necip", "Nevzat", "Niyazi", "Nuh", "Ragıp", "Reşat", "Sait", "Sefer", "Selim", "Sezai", "Seyfi",
     "Seyit", "Sırrı", "Şakir", "Şemsettin", "Şerafettin", "Tacettin", "Tayyar", "Temel", "Vasfi", "Zihni", "Zülfü",
     "Hıdır", "İdris", "Kadri", "Şerif", "Hayrullah", "Veysel", "Cuma", "Abdurrahman", "Seyfettin", "Zeynel", "Bilal",
     "Nezir", "Nurullah", "Hamit", "Hakkı", "Tahir", "Talip", "Yıldırım", "İsmet", "Necmi", "Rıdvan",

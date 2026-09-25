@@ -45,7 +45,7 @@ Sitenin tamamını yerelde denemek için ana projede `npm run build` çalıştı
 | Yol | İçerik |
 |---|---|
 | `src/types.ts` | Ortak tipler: sayaçlar, evrak şeması (`CardDef`), oyun durumu (`State`), seçim sonucu (`Tally`) |
-| `src/cards.ts` | 32 karakter, 16 başkan adayı: ad, lakap, kısa biyografi (`BASKANLAR`), 341 evrak (birbirine bağlı yaylar ve yan etkiler dahil), etkileşim tablosu (`SYN`), seçim adayları (`ADAYLAR`) ve seçmen grupları, kriz kartları, 20 son (7'si yay sonu), gazetenin miras cümleleri (`MIRAS`). Kart şeması dosyanın başında |
+| `src/cards.ts` | 32 karakter, 24 başkan adayı (12 kadın, 12 erkek): ad, lakap, kısa biyografi (`BASKANLAR`), 341 evrak (birbirine bağlı yaylar ve yan etkiler dahil), etkileşim tablosu (`SYN`), seçim adayları (`ADAYLAR`) ve seçmen grupları, kriz kartları, 20 son (7'si yay sonu), gazetenin miras cümleleri (`MIRAS`). Kart şeması dosyanın başında |
 | `src/adlar.ts` | Aday kaydındaki ad zarı: 299 kadın, 313 erkek adı (16'sı ortak), 488 soyadı (beşte biri çarşı esnafı), gerçek kişi yasak listeleri (`YASAK_SOYAD`, `YASAK_TAM`, `YASAK_AD`) ve `rastgeleAd(cins, rng, son)`. Cins `BASKANLAR`'dan gelir; `test/adlar.test.mjs` sınar |
 | `src/engine.ts` | DOM'suz oyun motoru: ortak koşul dili (`condOK`), sayaçlar, koşullu ve aralıklı zincirler, etiket etkileşimleri, vaat defteri. Denge ayarları `TUNE` nesnesinde |
 | `src/ui.ts` | Sürükleme, mühür, göstergeler, WebAudio sesleri, Fikret'in tavsiyeleri, gazete, koridor duvarı, seçim gecesi akışı, ana menü, aday kaydı, ayarlar |
@@ -57,7 +57,7 @@ Sitenin tamamını yerelde denemek için ana projede `npm run build` çalıştı
 | `public/` | Derlemeye olduğu gibi kopyalananlar: ikonlar, manifest, font lisansı, vesikalıklar, meydan resimleri |
 | `public/portraits/` | Vesikalıklar: her kişi için `<anahtar>.webp` (anahtar `cards.ts`'teki `PEOPLE`), başkanlık vesikalıkları için `baskan-*.webp` (anahtar `BASKANLAR`) |
 | `public/meydan/` | Ana menünün arka planı, üç saat için (`meydan-aksam/gece/gun.webp`, 1536×1024). `tools/meydan.js`'in vektör karesi ChatGPT ile parlak plastik oyuncak diyoramaya çevrildi. Lamba, pencere, buhar ve yıldız ışıklarının yeri `ui.ts`'teki `MD_NOKTA`'da |
-| `tools/portrait.js` | Vesikalıkların ilk tarifleri ve SVG çizeri; oyuna girmez. Şimdiki resimler bunlardan SDXL img2img ile üretildi (bkz. NOTES) |
+| `tools/portrait.js` | Vesikalıkların ilk tarifleri ve SVG çizeri; oyuna girmez. Şimdiki resimler bunlardan SDXL img2img ile üretildi (bkz. NOTES). Başkanlık vesikalıkları tohumdan (`mayorFace`) ya da elle yazılmış tariften (`MAYOR_RECIPES`: lakaba uyan aksesuar) çizilir |
 | `vite.config.js` | Derleme: açılışta üç JS parçası (oyun, `kutuphane` = interact.js, `icerik` = cards.ts) ve bir CSS; seçim gecesi ve ad havuzu (`adlar.ts`, aday kaydı açılınca) ayrı parça. Göreli yollar, menüdeki sürüm (`__SURUM__`), derlemenin bütün dosyalarını önbelleğe alan service worker eklentisi |
 | `tools/` | Sunucu, simülasyon, içerik denetimi (`lint.mjs`), içerik denemesi (`ek-dene.mjs`: bir ek dosyasını oyuna takıp denetim ve kısa simülasyon çalıştırır, kaynağa dokunmaz) ve tarayıcı testleri; ortak yardımcılar `tools/lib/sayfa.mjs`'te |
 | `NOTES.md` | Geliştirme günlüğü: kararlar, denge ölçümleri, geri bildirimler |

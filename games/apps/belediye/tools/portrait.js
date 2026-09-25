@@ -2,7 +2,7 @@
 // Oyun bu dosyayı yüklemez; vesikalıklar public/portraits/ altındaki resimlerdir.
 // tools/portraits.mjs eksik resimleri buradaki tariflerden çizer. Şimdiki resimler bu çizimlerden SDXL img2img ile
 // parlak 3D stile çevrildi; --force onların üstüne düz çizim yazar.
-/* exported portrait, mayorFace, RECIPES */
+/* exported portrait, mayorFace, RECIPES, MAYOR_RECIPES */
 function shade(hex, amt) {
   const n = parseInt(hex.slice(1), 16);
   const f = amt < 0 ? 0 : 255,
@@ -288,6 +288,28 @@ function portrait(p) {
             ),
           )
           .join("");
+      break;
+    // başkanlık vesikalıklarının lakap ayrıntıları (SDXL kompozisyonu düz çizimden alır: ayrıntı burada olmalı)
+    case "megafon": // tatbikat megafonu (Tatbikat Ziya)
+      top += `<path d="M58 80 L76 70 L78 90 Z" fill="#f2f2ee"/><ellipse cx="77" cy="80" rx="2.6" ry="10.2" fill="#d8d9d4"/><rect x="53" y="78" width="7" height="6" rx="1.4" fill="#d23a2e"/><rect x="56" y="84" width="3.2" height="7" rx="1.2" fill="#2b2b33"/><ellipse cx="57.6" cy="92" rx="4.6" ry="3.8" fill="${sk}"/>`;
+      break;
+    case "kavun": // göğsünün önünde tıklattığı kavun (Tıktık Ahmet)
+      top += `<ellipse cx="54" cy="88" rx="15" ry="12.5" fill="#e3c64a"/><path d="M42 82 Q48 88 42 95 M50 76 Q56 88 50 100 M58 76 Q52 88 58 100 M66 82 Q60 88 66 95 M41 86 Q54 80 67 86 M40 91 Q54 97 68 91" stroke="#b9a23a" stroke-width="1.1" fill="none"/><ellipse cx="68.5" cy="80" rx="4.6" ry="3.8" fill="${sk}"/><ellipse cx="41" cy="95" rx="4.8" ry="4" fill="${sk}"/>`;
+      break;
+    case "mikrofon": // el mikrofonu, ağzının önünde (Mikrofon Ercan)
+      top += `<rect x="58.4" y="68" width="6" height="26" rx="2.4" fill="#26262c" transform="rotate(-18 61.4 81)"/><circle cx="57" cy="64.5" r="6.4" fill="#8a8e96"/><path d="M51.6 62.6 L62.4 62.6 M51.2 65.6 L62.8 65.6 M52.2 68.4 L61.8 68.4" stroke="#5a5e66" stroke-width=".8"/><ellipse cx="65" cy="90" rx="5.4" ry="4.4" fill="${sk}"/>`;
+      break;
+    case "yastik": // boyun yastığı (Hep Yolda Sezai)
+      top += `<path d="M37.5 69 Q39 83 50 83.5 Q61 83 62.5 69" stroke="#5f86c8" stroke-width="7.5" fill="none" stroke-linecap="round"/><path d="M39.5 71 Q41 81 50 81.5" stroke="#86a8e0" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+      break;
+    case "rulo": // göğsünün önünde çapraz tuttuğu rulo proje (İmar Affı Nevzat)
+      top += `<g transform="rotate(-28 56 86)"><rect x="34" y="81" width="44" height="10" rx="5" fill="#9cc0e6"/><ellipse cx="78" cy="86" rx="2.6" ry="5" fill="#6a92c4"/><path d="M42 81.4 L42 90.6 M52 81.4 L52 90.6 M62 81.4 L62 90.6" stroke="#6a92c4" stroke-width=".8"/></g><ellipse cx="66" cy="90" rx="5.2" ry="4.2" fill="${sk}"/>`;
+      break;
+    case "drone": // omzunun üstünde küçük drone (Drone Figen)
+      top += `<g transform="translate(78 30)"><path d="M-8 -3 L8 3 M-8 3 L8 -3" stroke="#e8eaee" stroke-width="1.6"/><rect x="-4" y="-2.4" width="8" height="4.8" rx="1.6" fill="#f4f5f7"/><circle cx="0" cy="0" r="1.1" fill="#3a8ad8"/><ellipse cx="-8.5" cy="-3.4" rx="4" ry="1" fill="#c9ccd2"/><ellipse cx="8.5" cy="-3.4" rx="4" ry="1" fill="#c9ccd2"/><ellipse cx="-8.5" cy="3.2" rx="4" ry="1" fill="#c9ccd2"/><ellipse cx="8.5" cy="3.2" rx="4" ry="1" fill="#c9ccd2"/></g>`;
+      break;
+    case "cuzdan": // kırmızı aile cüzdanı (Nikâh Şükran)
+      top += `<rect x="59" y="79" width="12" height="16" rx="1.2" fill="#b3261e"/><rect x="60.2" y="80.2" width="9.6" height="13.6" rx=".8" fill="none" stroke="#e0b24a" stroke-width=".6"/><circle cx="65" cy="85.6" r="2.2" fill="none" stroke="#e0b24a" stroke-width=".7"/><ellipse cx="66" cy="95" rx="5" ry="3.4" fill="${sk}"/>`;
       break;
     case "duduk":
       top += `<path d="M44 76 Q50 88 56 76" stroke="#e8e8e8" stroke-width="1" fill="none"/><rect x="48" y="86" width="6" height="3.6" rx="1.4" fill="#c0c4ca"/>`;
@@ -634,3 +656,93 @@ function mayorFace(seed) {
   if (r() < 0.25) p.acc = "rozet";
   return p;
 }
+
+// Tarifi elle yazılmış başkanlık vesikalıkları: lakaba uyan bir ayrıntı taşırlar (kavun, baret, düdük...).
+// Tarifi olmayanlar mayorFace(sıra) ile tohumdan çizilir. SDXL tanımları repo dışındaki vesikalik-sd/prompts.json'da.
+const MAYOR_RECIPES = {
+  "baskan-17": {
+    shirt: "#3d2f2a",
+    bg: "#a8c49a",
+    skin: "#c68b5f",
+    hair: "kasket",
+    hc: "#a3a09a",
+    must: "pala",
+    collar: "vest",
+    acc: "kavun",
+    hat: "#6b5a44",
+  },
+  "baskan-18": {
+    shirt: "#e8792a",
+    bg: "#b0a58c",
+    skin: "#d9a27a",
+    hair: "baret",
+    hat: "#f1efe8",
+    hc: "#77726c",
+    must: "pala",
+    collar: "yelek",
+  },
+  "baskan-19": {
+    shirt: "#23252e",
+    bg: "#9aa9c4",
+    skin: "#e0ad86",
+    hair: "kisa",
+    hc: "#2a2420",
+    gl: "rect",
+    collar: "blazer",
+    acc: "megafon",
+  },
+  "baskan-20": {
+    shirt: "#23252e",
+    bg: "#c7b8d8",
+    skin: "#e8b894",
+    hair: "slick",
+    hc: "#1f1a17",
+    must: "kalem",
+    collar: "tie",
+    tie: "#7a2230",
+    acc: "mikrofon",
+  },
+  "baskan-21": {
+    shirt: "#34384a",
+    bg: "#b0a58c",
+    skin: "#e0ad86",
+    hair: "kisa",
+    hc: "#a3a09a",
+    gl: "half",
+    collar: "tie",
+    tie: "#1f4a7a",
+    acc: "yastik",
+  },
+  "baskan-22": {
+    shirt: "#1f3a33",
+    bg: "#d2c6a8",
+    skin: "#c68b5f",
+    hair: "kivircik",
+    hc: "#2a2420",
+    beard: "short",
+    collar: "vest",
+    acc: "rulo",
+  },
+  "baskan-23": {
+    shirt: "#2b3550",
+    fem: true,
+    bg: "#9aa9c4",
+    skin: "#f0c9a6",
+    hair: "bob",
+    hc: "#5a3a2a",
+    gl: "round",
+    collar: "blazer",
+    acc: "drone",
+  },
+  "baskan-24": {
+    shirt: "#4a2f3a",
+    fem: true,
+    bg: "#c7b8d8",
+    skin: "#e8b894",
+    hair: "topuz",
+    hc: "#d8d4ca",
+    gl: "cat",
+    collar: "cardigan",
+    acc: "cuzdan",
+  },
+};

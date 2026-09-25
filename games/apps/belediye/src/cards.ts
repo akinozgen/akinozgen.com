@@ -272,6 +272,54 @@ export const BASKANLAR: Record<string, Baskan> = {
     lakap: "Anons Zehra",
     bio: "Yirmi yıl mahalle hoparlöründen 'Duyduk duymadık demeyin, dört ayaklı bir köpek kaybolmuştur' diye anons yaptı. Sesini herkes tanır; yüzünü ilk kez seçim afişinde gördüler.",
   },
+  "baskan-17": {
+    cins: "e",
+    ad: "Ahmet Toprakçı",
+    lakap: "Tıktık Ahmet",
+    bio: "Kavunu parmakla tıklatıp hangi köyden geldiğini bilir. İhale dosyalarını da tıklatarak okudu, en tok ses vereni seçti. Tok sesli iki köprünün içi boş çıktı; o hâlâ kavuna güvenir.",
+  },
+  "baskan-18": {
+    cins: "e",
+    ad: "Sinan Kepçeli",
+    lakap: "Hafriyat Sinan",
+    bio: "Yirmi yılda açtırdığı her çukurun toprağını aynı arsaya döktürdü; ilçenin tek tepesi ondan kaldı. Tepeye adı verildi, o da tepeye teleferik sözü verdi. Teleferik de kazıyla başlayacakmış.",
+  },
+  "baskan-19": {
+    cins: "e",
+    ad: "Ziya Sirenci",
+    lakap: "Tatbikat Ziya",
+    bio: "Her ay deprem tatbikatı yaptırdı. Karakavak'ta çay kaşığı düşse herkes masanın altına girer, halay toplanma alanında çekilir. Tek gerçek sarsıntıda tatbikat sanıp ilçeye not verdi.",
+  },
+  "baskan-20": {
+    cins: "e",
+    ad: "Ercan Kürsüoğlu",
+    lakap: "Mikrofon Ercan",
+    bio: "Hiçbir konuşması iki saatten kısa sürmedi; bir sünnet düğününde çocuğu uyuttu, davulcuyu ağlattı. Mikrofonu elinden almak için belediye üç kez ihale açtı, açılışlarda da o konuştu.",
+  },
+  "baskan-21": {
+    cins: "e",
+    ad: "Sezai Bavullu",
+    lakap: "Hep Yolda Sezai",
+    bio: "Beş yılın dördünü Ankara yolunda 'ödenek takibinde' geçirdi. Meclis onu görüntülü aramadan tanır; bayramda ilçeye gelince muhtar kimlik sordu. Boyun yastığı makamda asılı duruyor.",
+  },
+  "baskan-22": {
+    cins: "e",
+    ad: "Nevzat Katlı",
+    lakap: "İmar Affı Nevzat",
+    bio: "Kaçak kat affını on bir kez çıkardı. Kendi evi kâğıt üstünde iki, gerçekte yedi katlı; asansör affa girmedi diye merdivenle çıkıyor. Tapuda 'çatı katı' yazan yer üç kat.",
+  },
+  "baskan-23": {
+    cins: "k",
+    ad: "Figen Havacı",
+    lakap: "Drone Figen",
+    bio: "Kampanyasında otuz drone gökyüzüne adını yazdı; biri bozulunca 'FİGAN' okundu, oyları o gece arttı. İlçenin bütün yollarını yukarıdan çektirdi; yukarıdan bakınca çukur görünmüyormuş.",
+  },
+  "baskan-24": {
+    cins: "k",
+    ad: "Şükran Akyüzük",
+    lakap: "Nikâh Şükran",
+    bio: "Otuz yıl nikâh memurluğu yaptı, 3.412 çifti evlendirdi. Seçmen listesini düğün defterinden çıkardı; ilçenin yarısı onun önünde 'evet' dedi, öbür yarısı şahit oldu. Hepsinin yıl dönümünü bilir.",
+  },
 };
 
 // ─── Evraklar ─────────────────────────────────────────────────────────────

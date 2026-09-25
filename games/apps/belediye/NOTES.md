@@ -229,3 +229,28 @@ Başkanın isteği: "Dünkü genişletme koşusunu tekrar yapalım; araştırıp
   - medyan 119 → 119 ay, ilk dönem %89 → %91, seçim %78 → %75, emekli %17 → %17;
   - kasa batışı %32 → %26, yay sonları %5.
   Usta ile insan arasındaki oran 1,5'te kaldı. Ankaracı oyuncu seçimlerin %49'u yerine %43'ünü kazanıyor, çünkü Ankara'yı memnun eden seçenekler çoğu kez defterde skandal olarak kalıyor.
+
+## Yeni başkanlar (2026-09-25)
+Başkanın isteği: "Birkaç yeni başkan daha üretelim, kadın erkek sayısını da eşitleriz; quirky şeyler tasarla, isim, bio, avatar akışını tekrar canlandır." 16 başkanlık vesikalığının 10'u kadın, 6'sı erkekti.
+- **Yeni başkanlar:** 6 erkek, 2 kadın eklendi; artık 12'ye 12, toplam 24. Her birinin lakabına uyan bir aksesuarı var:
+
+  | Başkan | Lakap | Aksesuar |
+  |---|---|---|
+  | Ahmet Toprakçı | Tıktık Ahmet | kavun |
+  | Sinan Kepçeli | Hafriyat Sinan | beyaz baret, turuncu yelek |
+  | Ziya Sirenci | Tatbikat Ziya | megafon |
+  | Ercan Kürsüoğlu | Mikrofon Ercan | mikrofon |
+  | Sezai Bavullu | Hep Yolda Sezai | boyun yastığı |
+  | Nevzat Katlı | İmar Affı Nevzat | rulo proje |
+  | Figen Havacı | Drone Figen | drone |
+  | Şükran Akyüzük | Nikâh Şükran | kırmızı aile cüzdanı |
+
+  "Yolcu" soyadı zarın havuzundaydı, Sezai "Bavullu" oldu. "Sezai" erkek ad havuzuna eklendi.
+- **Hat:** `tools/portrait.js`'e altı yeni aksesuar ve `MAYOR_RECIPES` eklendi. Düz çizim önce oyunda üretilir, sonra repo dışındaki `vesikalik-sd` klasöründe SDXL img2img ile parlak oyuncak stiline çevrilir. O klasörün `export.mjs` ve `apply.py` betikleri eski `src/cards.js` ve `web-src/portraits` yollarını arıyordu; yeni düzene çevrildi.
+- **SDXL'de öğrenilenler:**
+  - 1024 pikselde bir resim 367 saniye sürdü. Masaüstü uygulamaları kartın ~2 GB'ını tutuyor; bellek taşınca Windows paylaşımlı belleğe düşüyor, kart %100 çalışıp neredeyse ilerlemiyor. 768 pikselde, dikkat dilimleme ve VAE döşemeyle resim başına 18-20 saniyeye indi. Çıktı zaten 384 piksel.
+  - 77 belirteci aşan tanımlar sondaki stil sözcüklerini kesiyor; tanımlar kısaltıldı.
+  - Aksesuar ancak düz çizimde büyük ve tanımın başındaysa çıkıyor. Blur 14 küçük ayrıntıyı siliyor; aksesuarlı başkanlarda blur 4-6, strength 0,80-0,85 kullanıldı.
+  - Kulağa tutulan kavun, saplı küçük şekil yüzünden her tohumda armuda döndü. Göğüste büyük, fileli bir kavun olunca düzeldi.
+  - Mikrofon ve rulo proje için birkaç tohum denendi.
+- **Arayüz:** aday kaydı ızgarası geniş ekranda 4 yerine 6 sütun oldu; 24 vesikalık 6×4 halinde ekrana sığıyor.

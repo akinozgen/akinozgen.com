@@ -13,8 +13,8 @@ const SIZE = 384,
   QUALITY = 0.9;
 const read = p => readFileSync(new URL(p, import.meta.url), "utf8");
 const { PEOPLE, BASKANLAR } = await import("../src/cards.ts");
-const { portrait, mayorFace, RECIPES } = new Function(
-  read("./portrait.js") + "\nreturn { portrait, mayorFace, RECIPES };",
+const { portrait, mayorFace, RECIPES, MAYOR_RECIPES } = new Function(
+  read("./portrait.js") + "\nreturn { portrait, mayorFace, RECIPES, MAYOR_RECIPES };",
 )();
 
 const args = process.argv.slice(2),
@@ -22,7 +22,7 @@ const args = process.argv.slice(2),
   only = args.filter(a => !a.startsWith("--"));
 const jobs = [
   ...Object.keys(PEOPLE).map(id => [id, RECIPES[id]]),
-  ...Object.keys(BASKANLAR).map((id, i) => [id, mayorFace(i + 1)]),
+  ...Object.keys(BASKANLAR).map((id, i) => [id, MAYOR_RECIPES[id] || mayorFace(i + 1)]),
 ].filter(([id]) => (only.length ? only.includes(id) : force || !existsSync(new URL(id + ".webp", DIR))));
 for (const [id, p] of jobs)
   if (!p) {
