@@ -626,7 +626,7 @@ function ballotBoxes(res, rng) {
   return boxes;
 }
 let tvStop = null; // açık yayının zamanlayıcılarını ve spikeri durdurur
-function electionNight(res, preview = false) {
+function electionNight(res) {
   tvStop?.();
   return new Promise(done => {
     const r = rngOf(res.month * 131 + res.term * 7 + 3), boxes = ballotBoxes(res, r), N = boxes.length;
@@ -713,7 +713,7 @@ function electionNight(res, preview = false) {
     const ctxOf = (extra = {}) => {
       const tot = sum(cum);
       return { res, playerName: name, pct: tot ? Object.fromEntries(ids.map((id, i) => [id, 100 * cum[i] / tot])) : {}, leader, opened: finished ? 1 : tot / all,
-        mahalle: MAHALLE[mahNow][0], early: !!res.early, preview, flags: S?.flags || {}, seen, ...extra };
+        mahalle: MAHALLE[mahNow][0], early: !!res.early, flags: S?.flags || {}, seen, ...extra };
     };
     const showKJ = (phase, extra = {}) => {
       if (phase === "lider" && extra.lead !== leader) phase = "sayim"; // öne geçen yeniden geriye düştüyse haber bayatladı
@@ -773,7 +773,7 @@ function electionNight(res, preview = false) {
       cum.forEach((v, i) => { disp[i] = v; }); paint();
       const w = res.cands[0], tekirWon = w.id === "tekir";
       rows[w.id].li.classList.add("won");
-      $("#tv-live").textContent = preview ? "Prova sonucu" : "Kesin sonuç";
+      $("#tv-live").textContent = "Kesin sonuç";
       $(".tv-kj-tab").textContent = "Seçim sonucu";
       st.mood(tekirWon ? "smug" : res.win ? "happy" : "sad");
       st.setWall(tekirWon ? "Tekir başkan!" : `Kazanan: ${tvShort(w.id, name)}`);
@@ -792,7 +792,6 @@ function electionNight(res, preview = false) {
       if (res.win) snd.win(); else snd.paper();
       renderElectionAfter(res);
       $("#btn-ec-skip").hidden = true; const go = $("#btn-ec-go"); go.hidden = false; go.focus({ preventScroll: true });
-      if (preview) return; // prova: günlüğe yazılmaz, hızlı sayım hakkı da harcanmaz
       LS.set("ecSeen", true);
       journalNote(`<b>Seçim</b>${esc(line)}`, res.win ? "ev" : "warn");
     };
@@ -809,31 +808,19 @@ function electionNight(res, preview = false) {
       later(next, (520 + 760 * Math.pow(opened / (N - 1), 1.6)) * speed);
     };
 
-    $("#scr-secim").setAttribute("aria-label", (res.early ? "Erken seçim gecesi" : "Seçim gecesi") + (preview ? " (prova)" : ""));
+    $("#scr-secim").setAttribute("aria-label", res.early ? "Erken seçim gecesi" : "Seçim gecesi");
     $("#tv-date").textContent = `${res.early ? "Erken seçim · " : ""}${dateLabel(res.month)} · ${ids.length} aday`;
-    $("#tv-live").textContent = preview ? "Prova" : "Canlı";
+    $("#tv-live").textContent = "Canlı";
     $(".tv-kj-tab").textContent = "Son dakika";
     $("#tv-info").hidden = true; $("#btn-ec-go").hidden = true; $("#btn-ec-skip").hidden = false;
     strip(near(0)); paint();
     show("secim"); $("#scr-secim").scrollTop = 0;
-    st.year(calOf(res.month).year); st.mood("excited"); st.setWall(res.early ? "Erken seçim gecesi" : preview ? "Prova yayını" : "Sandıklar açılıyor");
+    st.year(calOf(res.month).year); st.mood("excited"); st.setWall(res.early ? "Erken seçim gecesi" : "Sandıklar açılıyor");
     showKJ("acilis"); setTicker(); fxShow();
     later(next, (reduced ? 600 : 2400) * speed);
     $("#btn-ec-skip").onclick = finish;
     $("#btn-ec-go").onclick = () => { $("#btn-ec-go").onclick = null; tvStop?.(); done(); };
   });
-}
-// Hile kodu: oyun masasında klavyeden "akparti" yazılınca seçim gecesi o anki gidişatla prova olarak açılır.
-// Oyunun bir kopyasıyla sayılır; ay, dönem, kayıt ve günlük değişmez. Devam deyince aynı evraka dönülür.
-const PROVA_KODU = "akparti";
-let kodBuf = "", kodT = 0;
-async function provaSecim() {
-  if (busy || !S || S.over || screen !== "game") return;
-  busy = true; closeNote();
-  const copy = JSON.parse(JSON.stringify(S)), r = rngOf((Date.now() % 1e9) | 0);
-  if (copy.field?.term !== copy.term) drawField(copy, r); // bu dönemin adayları ilan edildiyse onlarla, yoksa rastgele bir alanla
-  await electionNight(tally(copy, r), true);
-  show("game"); busy = false;
 }
 
 // Sonuçtan sonra: seçmen grubu dökümü (kazanandan başlayarak) ve "Neden?" satırları
@@ -1184,18 +1171,6 @@ function wire() {
     const k = e.key.toLocaleLowerCase("tr");
     // çekmece açıkken masa kilitli: yalnız kapatma tuşları
     if ($("#log").classList.contains("open")) { if (e.key === "Escape" || k === "g") openLog(false); return; }
-    // prova kodu: harfler kodun başıyla örtüştükçe biriktirilir. "a" hem kodun ilk harfi hem sol kısayolu:
-    // hemen karar verilmez, arkasından kodun devamı gelmezse kısa bir beklemeyle sol seçilir.
-    const ch = e.key.length === 1 ? k.replace("ı", "i") : "";
-    if (ch && PROVA_KODU.startsWith(kodBuf + ch)) {
-      kodBuf += ch; clearTimeout(kodT);
-      if (kodBuf === PROVA_KODU) { kodBuf = ""; provaSecim(); return; }
-      if (kodBuf === "a") kodT = setTimeout(() => { kodBuf = ""; commit("L"); }, 350);
-      else kodT = setTimeout(() => { kodBuf = ""; }, 2500);
-      return;
-    }
-    if (kodBuf === "a") { clearTimeout(kodT); commit("L"); } // "a" kısayoldu, kod değil
-    kodBuf = "";
     if (k === "g" && !wideLog.matches) return openLog(true);
     if (e.key === "ArrowLeft" || k === "a") { e.preventDefault(); commit("L"); }
     else if (e.key === "ArrowRight" || k === "d") { e.preventDefault(); commit("R"); }

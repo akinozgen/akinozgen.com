@@ -3,7 +3,7 @@
 // DOM'suz, saf fonksiyonlar. Bütün rastlantı dışarıdan verilen rng'den gelir: aynı tohum, aynı yayın.
 // Okuduğu globaller: PEOPLE, ADAYLAR, dateLabel. Gerçek kişi, parti, kurum ya da marka adı yok.
 //
-// ctx: { res, playerName, pct, leader, prev, opened, mahalle, early, preview, flags, seen }
+// ctx: { res, playerName, pct, leader, prev, opened, mahalle, early, flags, seen }
 //   res       tally() sonucu
 //   pct       o ana kadar açılan sandıklara göre yüzdeler {id: yüzde}; leader o anki birinci
 //   prev      (isteğe bağlı) bir önceki lider; "lider" evresinde liderliği kaptıranı anmak için
@@ -262,7 +262,6 @@ const TV_KJ = {
     title: ["Yayın yasağı kalktı", "Yayın yasağı kalktı", "Karakavak sandık başında", "Seçim gecesi başladı",
       "İlk sandıklar geliyor", "KTV seçim özel",
       [v => v.early, "Erken seçim gecesi"], [v => v.early, "Esnaf istedi, sandık geldi"],
-      [v => v.preview, "Prova yayını"], [v => v.preview, "Seçim gecesi provası"],
       [v => v.has("tekir"), "Adaylardan biri kedi"]],
     sub: ["İlk sandıklar Kavun Ovası köylerinden geliyor; tutanaklar kavun kasasında",
       "Stüdyoda üç uzman, iki görüş ve bir semaver var; sayım başlıyor",
@@ -277,8 +276,6 @@ const TV_KJ = {
       [v => v.has("bekir") && !v.early, "Çarşı ekran başında; Hacı Bekir kepenkleri yarıya indirdi"],
       [v => v.early, "Esnaf odası belediyeyi okey masasına taşıyınca sandık erken kuruldu"],
       [v => v.early, "Erken seçim kararı kıraathanede alındı; sandıklar okey masasından kalktı"],
-      [v => v.preview, "Prova yayınıdır: sandıklar gerçek, oylar hayalî, çaylar sıcak"],
-      [v => v.preview, "Bu gece prova; sonuç deftere yazılmayacak, çaylar yazılacak"],
       [v => v.has("burak"), "Burak yayını kendi hesabından da veriyor; gecikme 40 saniye"],
       [v => v.has("kaan"), "Kaan Bey sonuçları 'Karakavak 4.0' panelinden izleyecek; panel yükleniyor"]],
   },
@@ -314,8 +311,7 @@ const TV_KJ = {
       [v => v.gap >= 10, "Fark {fark} puan; öndeki adayın ekibi pastayı şimdiden sipariş etti"],
       [v => v.opened > 0 && v.opened < 0.2, "Daha {oran} açık; iki aday şimdiden balkona çıktı"],
       [v => v.has("tekir"), "Geçersiz oyların bir kısmında pati izi var; kurul 'niyet belli' dedi"],
-      [v => v.early, "Erken seçimde sayım hızlı; esnaf 'dükkânı açmamız lazım' diyor"],
-      [v => v.preview, "Prova sayımı sürüyor; sonuç deftere yazılmayacak, çaylar yazılacak"]],
+      [v => v.early, "Erken seçimde sayım hızlı; esnaf 'dükkânı açmamız lazım' diyor"]],
   },
   lider: {
     title: ["Liderlik el değiştirdi", "Liderlik el değiştirdi", [tvYes, "{lider} öne geçti"], "Zirvede değişiklik",
@@ -386,8 +382,7 @@ const TV_KJ = {
       [v => v.tekirWon, "Tekir'in ilk genelgesi: 'Mama saatleri değişmeyecek.' Meclis oybirliğiyle kabul etti"],
       [v => v.tekirWon, "Tekir zafer konuşması yerine balkonda güneşlendi; kalabalık yine de alkışladı"],
       [v => v.early && v.win, "Erken seçim bitti; okey masası meclis salonundan çıkarıldı"],
-      [v => v.early && v.winner === "bekir", "Meclis yarın kıraathanede; gündem: çay, okey, çay"],
-      [v => v.preview, "Prova yayınıdır; sonuç deftere yazılmadı, çaylar yazıldı"]],
+      [v => v.early && v.winner === "bekir", "Meclis yarın kıraathanede; gündem: çay, okey, çay"]],
   },
 };
 
@@ -423,8 +418,6 @@ const TV_TICK = {
     [v => v.has("nermin"), "Nermin Hanım tutanakları kendi defterine de yazıyor; kalem üçüncü kez değişti"],
     [v => v.early, "Erken seçim kararı okey masasında alındığı için sandıklardan biri kıraathaneye kuruldu"],
     [v => v.early, "Esnaf odası sandık başına 'veresiye oy yok' tabelası astı; kurul tabelayı indirtti"],
-    [v => v.preview, "Bu bir prova yayınıdır: sonuçlar gerçek değildir, çaylar gerçektir"],
-    [v => v.preview, "Prova sayımı sürüyor; seçim kurulu 'bir daha, bu sefer daha heyecanlı' istedi"],
     [v => v.youLead && v.opened < 1, "{you} cephesinde bayram havası; Fikret semaveri ikinci kez yaktı"],
     [v => v.youBehind && v.opened < 1, "{lider} önde; {you} cephesinden açıklama: 'Yukarıkavak daha gelmedi'"],
     [v => v.close && v.opened < 1, "Fark daralıyor; Kahveci Rahmi çay siparişlerini 'sonuç belli olunca' diye bekletiyor"],
@@ -581,7 +574,7 @@ function tvView(ctx, phase) {
   const early = !!(ctx.early ?? res.early);
   return {
     ctx, res, ids, has: id => ids.includes(id), n: ids.length, leader, second, gap, opened, mah, early,
-    preview: !!ctx.preview, flags: ctx.flags || {}, prev: ctx.prev || null, seen: ctx.seen,
+    flags: ctx.flags || {}, prev: ctx.prev || null, seen: ctx.seen,
     youLead: leader === "you", youBehind: !!leader && leader !== "you",
     close: gap != null && gap < 1.5, mid: opened > 0 && opened < 1,
     win: done && !!res.win, lost: done && !res.win && winner !== "tekir", tekirWon: done && winner === "tekir",
@@ -601,11 +594,6 @@ function kj(phase, ctx, rng) {
     // gerçek yayınlardaki gibi "KAZANAN: '…'" ağır basar; kaybeden oyuncunun açıklaması arada bir gelir
     const said = (who, list, w) => list.map(e => (typeof e === "string" ? [tvYes, `{${who}}: '${e}'`, w] : [e[0], `{${who}}: '${e[1]}'`, w]));
     subs = [...subs, ...said("kazanan", q(v.winner), 4), ...(v.win ? [] : said("you", q("you"), 0.8))];
-    if (v.preview) {
-      const pv = tvPool(titles, v, TV_MAX.title - 6, "title").map(x => ({ ...x, s: "PROVA: " + x.s }));
-      const t = tvDraw(pv, rng, v.seen);
-      if (t) return { title: t, sub: tvChoose(subs, v, rng, TV_MAX.sub, "sub", "Karakavak seçimini yaptı") };
-    }
   }
   const title = tvChoose(titles, v, rng, TV_MAX.title, "title", tvUp(KANAL.ad + " SEÇİM GECESİ"));
   const sub = tvChoose(subs, v, rng, TV_MAX.sub, "sub", "Karakavak seçim gecesi sürüyor");

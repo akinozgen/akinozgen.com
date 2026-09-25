@@ -44,7 +44,7 @@ const ctxOf = (res, i, r, extra = {}) => {
   const opened = [0, 0.03, 0.2, 0.37, 0.5, 0.8, 0.95, 0.998, 1][i % 9];
   const run = running(res, opened, r), prev = res.cands[(i + 1) % res.cands.length].id;
   return { res, playerName: NAMES[i % NAMES.length], ...run, prev, opened, mahalle: MAHALLE[i % MAHALLE.length],
-    early: res.early, preview: i % 5 === 0, flags: FLAGS[i % FLAGS.length], ...extra };
+    early: res.early, flags: FLAGS[i % FLAGS.length], ...extra };
 };
 
 // Bütün çıktıları bir kez üret; testlerin çoğu bu havuzu tarar
@@ -107,7 +107,7 @@ test("alt bant: sonuç evresinde kazanma, kaybetme, Tekir ve erken seçim ayrı 
   const titles = (res, extra = {}) => { const t = new Set(), s = new Set(); for (let g = 0; g < 60; g++) { const o = E.kj("sonuc", { res, playerName: "Aslı Kavaklıoğlu", opened: 1, ...extra }, rng(g)); t.add(o.title); s.add(o.sub); } return { t: [...t], s: [...s] }; };
   const win = RESULTS.find(r => r.win && !r.early && r.cands.length > 2), loss = RESULTS.find(r => !r.win && r.winner !== "tekir" && !r.early);
   const tek = RESULTS.find(r => r.winner === "tekir"), erken = RESULTS.find(r => r.early && r.winner === "bekir");
-  const w = titles(win), l = titles(loss), k = titles(tek), e = titles(erken), p = titles(win, { preview: true });
+  const w = titles(win), l = titles(loss), k = titles(tek), e = titles(erken);
   assert.ok(w.t.some(t => /YENİDEN BAŞKAN|MAKAM YERİNDE|ÇAYLAR YİNE/.test(t)), w.t.join(" | "));
   assert.ok(w.t.includes("KARAKAVAK SEÇİMİNİ YAPTI"));
   assert.ok(w.s.some(s => s.startsWith("Aslı Kavaklıoğlu: '")), "kazananın sözü yok");
@@ -118,7 +118,6 @@ test("alt bant: sonuç evresinde kazanma, kaybetme, Tekir ve erken seçim ayrı 
   assert.ok(k.s.some(s => s.startsWith("Tekir: '")));
   assert.ok(e.t.some(t => t.includes("ERKEN SEÇİM")), e.t.join(" | "));
   assert.ok(e.t.includes("BELEDİYE ÇARŞIYA TAŞINDI"));
-  assert.ok(p.t.every(t => t.startsWith("PROVA: ")), p.t.join(" | "));
 });
 
 test("alt bant: adaya özgü şakalar ve oyuncunun önde/geride olduğu satırlar gelir", () => {
@@ -186,14 +185,13 @@ test("son dakika: havuzlar geniş, bazı dünya ve ülke haberleri Karakavak'a b
   }
 });
 
-test("son dakika: adaylara, erken seçime, provaya, bayraklara ve sonuca göre değişir", () => {
+test("son dakika: adaylara, erken seçime, bayraklara ve sonuca göre değişir", () => {
   const texts = (pred, ctxFn, N = 60) => { const out = []; for (let g = 0; g < N; g++) { const res = RESULTS.filter(pred)[g % RESULTS.filter(pred).length]; out.push(...E.ticker(ctxFn(res), rng(g))); } return out.join("\n"); };
   const tek = texts(r => r.cands.some(c => c.id === "tekir"), res => ({ res, opened: 0.3 }));
   assert.match(tek, /kedi resmi|Tekir sandık kurulunun|Tekir'in afişi/);
   const noTek = texts(r => !r.cands.some(c => c.id === "tekir"), res => ({ res, opened: 0.3 }));
   assert.doesNotMatch(noTek, /Mırnav/);
   assert.match(texts(r => r.early, res => ({ res, early: true })), /Erken seçim kararı|veresiye oy yok/);
-  assert.match(texts(tvAll, res => ({ res, preview: true })), /prova/i);
   assert.doesNotMatch(texts(tvAll, res => ({ res })), /Karaca|itfaiye|Towers|dev kavun heykeline|bisikleti/, "bayrak yokken olay anıldı");
   assert.match(texts(tvAll, res => ({ res, flags: FLAGS[1] })), /Karaca|Towers|itfaiye|dev kavun|bisikleti/);
   // sonuç ancak bütün sandıklar açılınca haber olur
