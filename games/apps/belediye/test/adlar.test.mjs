@@ -1,10 +1,9 @@
 // Ad zarı testleri: havuzlar, yasak listeler, cins, tekrar ve yazım
-import { test } from "node:test";
+import { test } from "vitest";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { yukle } from "./yukle.mjs";
 
-const src = ["cards.js", "adlar.js"].map(f => readFileSync(new URL("../src/" + f, import.meta.url), "utf8")).join("\n");
-const A = new Function(src + "\nreturn { ADLAR, ADLAR_ORTAK, SOYADLAR, YASAK_SOYAD, YASAK_TAM, YASAK_AD, rastgeleAd, BASKANLAR, ADAYLAR, PEOPLE };")();
+const A = await yukle("cards", "adlar");
 const rng = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 const lc = s => s.toLocaleLowerCase("tr");
 const dups = a => a.filter((x, i) => a.indexOf(x) !== i);

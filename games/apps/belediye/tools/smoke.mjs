@@ -3,12 +3,14 @@
 import { spawn } from "node:child_process";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { sunucu } from "./lib/sayfa.mjs";
 
 const OUT = process.argv[2] || fileURLToPath(new URL("../.cache/smoke/", import.meta.url));
 mkdirSync(OUT, { recursive: true });
 const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe";
 const PORT = 9333;
-const page = process.argv[3] || new URL("../dist/oyna.html", import.meta.url).href;
+const srv = process.argv[3] ? null : await sunucu(); // önce `pnpm build`: dist/ sunulur
+const page = process.argv[3] || srv.url;
 const chrome = spawn(CHROME, ["--headless=new", "--mute-audio", "--disable-gpu", "--hide-scrollbars", `--remote-debugging-port=${PORT}`, `--user-data-dir=${OUT}/profile`, "--no-first-run", "about:blank"], { stdio: "ignore" });
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 

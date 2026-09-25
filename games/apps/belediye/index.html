@@ -1,9 +1,30 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>/* /games/belediye → /games/belediye/ : göreli yollar klasöre göre çözülsün */ if (!/\/$|\.html$/.test(location.pathname) && /^https?:$/.test(location.protocol)) location.replace(location.pathname + "/" + location.search + location.hash);</script>
 <title>Çaylar Belediyeden</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Barlow+Condensed:wght@500;600;700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap">
-<style>/*STYLE*/</style>
-
+<meta name="description" content="Karakavak'ın belediye başkanı sizsiniz: evrakı sağa sola kaydırın, halkı, kasayı, esnafı ve Ankara'yı dengede tutun.">
+<meta name="theme-color" content="#2a1a11">
+<meta name="color-scheme" content="dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Çaylar">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Çaylar Belediyeden">
+<meta property="og:description" content="Karakavak'ın belediye başkanı sizsiniz: evrakı sağa sola kaydırın, halkı, kasayı, esnafı ve Ankara'yı dengede tutun.">
+<meta property="og:url" content="https://akinozgen.com/games/belediye/">
+<meta property="og:image" content="https://akinozgen.com/games/belediye/icons/icon-512.png">
+<meta property="og:locale" content="tr_TR">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+</head>
+<body>
 <div id="app" lang="tr">
 
   <!-- Ana menü: canlı Karakavak meydanı (meydan.js) üstünde logo, menü, bilgi kartı ve ilan panosu -->
@@ -291,5 +312,6 @@
   </section>
 </div>
 
-<!--VENDOR-->
-<script>/*SCRIPT*/</script>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>

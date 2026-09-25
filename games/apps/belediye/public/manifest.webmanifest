@@ -1,0 +1,20 @@
+{
+  "name": "Çaylar Belediyeden",
+  "short_name": "Çaylar",
+  "description": "Karakavak'ın belediye başkanı sizsiniz: evrakı sağa sola kaydırın, halkı, kasayı, esnafı ve Ankara'yı dengede tutun.",
+  "lang": "tr",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0e1f18",
+  "theme_color": "#2a1a11",
+  "categories": ["games"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

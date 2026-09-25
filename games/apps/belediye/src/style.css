@@ -1,3 +1,8 @@
+/* Temel: kutu ölçüsü, güvenli alan boşlukları, taşmayan resim */
+html { box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+*, *::before, *::after { box-sizing: inherit; }
+img, svg { max-width: 100%; }
+
 :root {
   --desk: #1b3a2e; --desk-hi: #24493a; --desk-lo: #0e1f18;
   --wood: #2a1a11; --wood-hi: #43291a;

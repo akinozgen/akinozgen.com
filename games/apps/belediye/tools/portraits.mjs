@@ -1,4 +1,4 @@
-// Vesikalık resimlerini üretir: web-src/portraits/<kişi>.webp ve başkanlık vesikalıkları (cards.js'teki BASKANLAR)
+// Vesikalık resimlerini üretir: public/portraits/<kişi>.webp ve başkanlık vesikalıkları (cards.js'teki BASKANLAR)
 // node tools/portraits.mjs            yalnız eksik resimleri çizer, var olana dokunmaz
 // node tools/portraits.mjs --force    hepsini tariften yeniden çizer (DİKKAT: şimdiki 3D resimlerin üstüne düz çizim yazar)
 // node tools/portraits.mjs hans ayse  yalnız adı verilenleri yeniden çizer
@@ -7,11 +7,11 @@ import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-const DIR = new URL("../web-src/portraits/", import.meta.url);
+const DIR = new URL("../public/portraits/", import.meta.url);
 mkdirSync(DIR, { recursive: true });
 const SIZE = 384, QUALITY = 0.9;
 const read = p => readFileSync(new URL(p, import.meta.url), "utf8");
-const { PEOPLE, BASKANLAR } = new Function(read("../src/cards.js") + "\nreturn { PEOPLE, BASKANLAR };")();
+const { PEOPLE, BASKANLAR } = await import("../src/cards.js");
 const { portrait, mayorFace, RECIPES } = new Function(read("./portrait.js") + "\nreturn { portrait, mayorFace, RECIPES };")();
 
 const args = process.argv.slice(2), force = args.includes("--force"), only = args.filter(a => !a.startsWith("--"));
@@ -19,7 +19,7 @@ const jobs = [
   ...Object.keys(PEOPLE).map(id => [id, RECIPES[id]]),
   ...Object.keys(BASKANLAR).map((id, i) => [id, mayorFace(i + 1)]),
 ].filter(([id]) => (only.length ? only.includes(id) : force || !existsSync(new URL(id + ".webp", DIR))));
-for (const [id, p] of jobs) if (!p) { console.error(`tarif yok: ${id} (resmini elle web-src/portraits/${id}.webp olarak koyun)`); process.exitCode = 1; }
+for (const [id, p] of jobs) if (!p) { console.error(`tarif yok: ${id} (resmini elle public/portraits/${id}.webp olarak koyun)`); process.exitCode = 1; }
 const todo = jobs.filter(([, p]) => p);
 if (!todo.length) { console.log("eksik vesikalık yok"); process.exit(); }
 

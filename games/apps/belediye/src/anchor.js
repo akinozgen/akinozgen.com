@@ -1,10 +1,10 @@
 // Seçim gecesi stüdyosu (KTV)
 // studioSVG(): 1600×900 SVG metni. Harici dosya yok; sınıflar, kimlikler ve animasyonlar "st-" önekli.
 // studio(kök): spiker denetimi → { talk, say, mood, react, setWall, year, stop }
-let ST_N = 0;
-const ST_REST = { neutral: "n", excited: "x", shocked: "s", happy: "h", sad: "d", smug: "m" };
+export let ST_N = 0;
+export const ST_REST = { neutral: "n", excited: "x", shocked: "s", happy: "h", sad: "d", smug: "m" };
 
-function studioSVG() {
+export function studioSVG() {
   const p = "st" + ++ST_N + "-", u = n => `url(#${p}${n})`; // gradyan kimlikleri her kopyada ayrı
   const S = (o, c, a) => `<stop offset="${o}" stop-color="${c}"${a != null ? ` stop-opacity="${a}"` : ""}/>`;
   const L = (n, ...s) => `<linearGradient id="${p}${n}" x2="0" y2="1">${s.join("")}</linearGradient>`;
@@ -159,7 +159,7 @@ ${ln("M-18 -63q5 10 0 18M2 -65q5 10 0 18M22 -63q5 10 0 18", "#6b5642", 5)}${ln("
 }
 
 // Bütün dönüşümler ve animasyonlar yalnız transform ve opacity kullanır
-function studioCSS() {
+export function studioCSS() {
   const Y = v => `translateY(${v}px) `, R = v => `rotate(${v}deg) `, t = (s, v) => `${s}{transform:${v}}`, K = (n, b) => `@keyframes st-${n}{${b}}`;
   const E = "cubic-bezier(.3,1.5,.5,1)", I = " infinite", N = "none";
   const T = { // ruh hâli → gövde, baş, kaş L, kaş R, bebek, kapak L, kapak R, perçem, yanak, görünenler
@@ -223,7 +223,7 @@ ${K("tick", t("from", "translateX(1420px)") + t("to", "translateX(-2850px)"))}
 }
 
 // Denetim: studio(kök) → { talk, say, mood, react, setWall, year, stop }
-function studio(rootEl) {
+export function studio(rootEl) {
   const svg = rootEl?.matches?.("svg.st-root") ? rootEl : rootEl?.querySelector("svg.st-root");
   if (!svg) throw new Error("studio: stüdyo SVG'si bulunamadı");
   const mq = typeof matchMedia === "function" ? matchMedia("(prefers-reduced-motion: reduce)") : null;

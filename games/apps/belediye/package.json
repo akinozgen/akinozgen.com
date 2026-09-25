@@ -5,10 +5,11 @@
   "type": "module",
   "description": "Çaylar Belediyeden: Karakavak ilçesinin belediye başkanı olarak evrak kaydırdığınız kart oyunu.",
   "scripts": {
-    "build": "node build.mjs",
-    "build:site": "node build.mjs --site",
-    "dev": "node build.mjs && node tools/serve.mjs",
-    "test": "node --test \"test/**/*.test.mjs\"",
+    "dev": "vite",
+    "build": "vite build",
+    "build:site": "vite build --mode site --outDir ../../../public/games/belediye --emptyOutDir",
+    "preview": "vite preview",
+    "test": "vitest run",
     "sim": "node tools/sim.mjs 2000",
     "smoke": "node tools/smoke.mjs",
     "gesture": "node tools/gesture.mjs",
@@ -17,5 +18,12 @@
     "portraits": "node tools/portraits.mjs",
     "election": "node tools/election.mjs",
     "menu": "node tools/menu.mjs"
+  },
+  "dependencies": {
+    "interactjs": "1.10.27"
+  },
+  "devDependencies": {
+    "vite": "^8.2.2",
+    "vitest": "^5.0.0"
   }
 }

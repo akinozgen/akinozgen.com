@@ -1,14 +1,15 @@
 // Seçim gecesi stüdyosu: SVG sözleşmesi (boyut, harici kaynak yok, sınıf öneki)
-import { test } from "node:test";
+import { test } from "vitest";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { yukle } from "./yukle.mjs";
 
-const src = readFileSync(new URL("../src/anchor.js", import.meta.url), "utf8");
-const load = () => new Function(src + "\nreturn { studioSVG, studio };")();
+const load = () => yukle("anchor");
+const src = readFileSync(new URL("../src/anchor.js", import.meta.url), "utf8"); // boyut sınırı için
 const LIMIT = 30 * 1024;
 
-test("studioSVG: 1600×900, harici kaynak yok, bütün sınıflar st- önekli, 30 KB altı", () => {
-  const { studioSVG, studio } = load();
+test("studioSVG: 1600×900, harici kaynak yok, bütün sınıflar st- önekli, 30 KB altı", async () => {
+  const { studioSVG, studio } = await load();
   assert.equal(typeof studio, "function");
   const svg = studioSVG();
   assert.equal(typeof svg, "string");
@@ -28,8 +29,8 @@ test("studioSVG: 1600×900, harici kaynak yok, bütün sınıflar st- önekli, 3
   assert.ok(Buffer.byteLength(src) < LIMIT, `anchor.js ${Buffer.byteLength(src)} bayt`);
 });
 
-test("iki kopya aynı sayfada: gradyan kimlikleri çakışmaz", () => {
-  const { studioSVG } = load();
+test("iki kopya aynı sayfada: gradyan kimlikleri çakışmaz", async () => {
+  const { studioSVG } = await load();
   const ids = s => [...s.matchAll(/id="([^"]+)"/g)].map(m => m[1]).filter(i => i !== "st-year");
   const a = ids(studioSVG()), b = ids(studioSVG());
   assert.ok(a.length > 5);

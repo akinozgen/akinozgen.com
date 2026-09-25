@@ -3,12 +3,13 @@
 import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { motor, sunucu } from "./lib/sayfa.mjs";
 
 const OUT = process.argv[2] || fileURLToPath(new URL("../.cache/election/", import.meta.url));
-const PAGE = process.argv[3] || new URL("../dist/oyna.html", import.meta.url).href;
+const srv = process.argv[3] ? null : await sunucu(); // önce `pnpm build`: dist/ sunulur
+const PAGE = process.argv[3] || srv.url;
 mkdirSync(OUT, { recursive: true });
-const src = ["cards.js", "engine.js"].map(f => readFileSync(new URL("../src/" + f, import.meta.url), "utf8")).join("\n");
-const E = new Function(src + "\nreturn { newGame, electionCard, materialize };")();
+const E = await motor();
 const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe", PORT = 9346;
 const chrome = spawn(CHROME, ["--headless=new", "--mute-audio", "--disable-gpu", "--hide-scrollbars", `--remote-debugging-port=${PORT}`, `--user-data-dir=${OUT}/profile`, "--no-first-run", "about:blank"], { stdio: "ignore" });
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -109,4 +110,4 @@ try {
   check(moved === 11, `"a" kısayolu çalışmadı (ay ${moved})`);
   console.log("a kısayolu ay:", moved);
 } catch (e) { errors.push("TEST: " + e.message); }
-finally { console.log(errors.length ? errors.join("\n") : "hata yok"); try { ws?.close(); } catch { } chrome.kill(); setTimeout(() => process.exit(errors.length ? 1 : 0), 300); }
+finally { console.log(errors.length ? errors.join("\n") : "hata yok"); try { ws?.close(); } catch { } chrome.kill(); srv?.kapat(); setTimeout(() => process.exit(errors.length ? 1 : 0), 300); }

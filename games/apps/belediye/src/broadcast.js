@@ -17,31 +17,33 @@
 // Yer tutucular: {you} {lider} {ikinci} {kazanan} {prev} {a} {b} {n} {nY} (yazıyla) {nY1} (bir fazlası) {fark} {oran} {oranEk} {youf} {kpct}
 // {sira} {tarih} {mah} {mahs} (sandık önünde: Lojman) {mahde}; ek almak için {lider:in} (in, i, e, de, den). Değeri olmayan yer tutucu
 // satırı eler; başlıkta tam ad sığmazsa kısa ad (tvShort) denenir.
+import { PEOPLE } from "./cards.js";
+import { dateLabel } from "./engine.js";
 
-const KANAL = { ad: "KARAKAVAK TV", kisa: "KTV" };
-const TV_MAX = { title: 34, sub: 90, tick: 110, quote: 70 };
-const TV_W = 2.5; // duruma özgü satırın ağırlığı (genel satır 1)
+export const KANAL = { ad: "KARAKAVAK TV", kisa: "KTV" };
+export const TV_MAX = { title: 34, sub: 90, tick: 110, quote: 70 };
+export const TV_W = 2.5; // duruma özgü satırın ağırlığı (genel satır 1)
 
 // ── Yardımcılar
-const tvUp = s => String(s).toLocaleUpperCase("tr");
-const tvCap = s => (s ? s[0].toLocaleUpperCase("tr") + s.slice(1) : s);
-function tvNum(v, d = 1) {
+export const tvUp = s => String(s).toLocaleUpperCase("tr");
+export const tvCap = s => (s ? s[0].toLocaleUpperCase("tr") + s.slice(1) : s);
+export function tvNum(v, d = 1) {
   const [i, f] = Math.abs(v).toFixed(d).split(".");
   return (v < 0 ? "−" : "") + i.replace(/\B(?=(\d{3})+(?!\d))/g, ".") + (f ? "," + f : "");
 }
-const tvDec = v => tvNum(v, 1).replace(/,0$/, ""); // 41,0 → 41
-const TV_SAYI = ["sıfır", "bir", "iki", "üç", "dört", "beş", "altı", "yedi"];
+export const tvDec = v => tvNum(v, 1).replace(/,0$/, ""); // 41,0 → 41
+export const TV_SAYI = ["sıfır", "bir", "iki", "üç", "dört", "beş", "altı", "yedi"];
 // Sayıya iyelik eki: %37'si, %40'ı, %99,8'i, %100'ü (son okunan sözcüğe göre)
-const TV_EK1 = ["", "i", "si", "ü", "ü", "i", "sı", "si", "i", "u"];   // bir iki üç dört beş altı yedi sekiz dokuz
-const TV_EK10 = ["", "u", "si", "u", "ı", "si", "ı", "i", "i", "ı"];  // on yirmi otuz kırk elli altmış yetmiş seksen doksan
-function tvNumEk(s) {
+export const TV_EK1 = ["", "i", "si", "ü", "ü", "i", "sı", "si", "i", "u"];   // bir iki üç dört beş altı yedi sekiz dokuz
+export const TV_EK10 = ["", "u", "si", "u", "ı", "si", "ı", "i", "i", "ı"];  // on yirmi otuz kırk elli altmış yetmiş seksen doksan
+export function tvNumEk(s) {
   const d = String(s).replace(/\D/g, "");
   if (!/[1-9]/.test(d)) return "'ı";
   const t = d.replace(/0+$/, ""), z = d.length - t.length, last = +t[t.length - 1];
   return "'" + (z === 0 ? TV_EK1[last] : z === 1 ? TV_EK10[last] : z === 2 ? "ü" : z < 6 ? "i" : "u");
 }
 // Özel ada ek (ünlü uyumu, kaynaştırma, sertleşme): Nermin Hanım'ın, Rıza'ya, Burak'ta
-function tvEk(w, k) {
+export function tvEk(w, k) {
   const s = String(w).trim(), low = s.toLocaleLowerCase("tr");
   const vs = low.match(/[aıoueiöü]/g), last = vs ? vs[vs.length - 1] : "e";
   const endV = /[aıoueiöü]$/.test(low), hard = "çfhkpsşt".includes(low.slice(-1));
@@ -51,17 +53,17 @@ function tvEk(w, k) {
     de: (hard ? "t" : "d") + a2, den: (hard ? "t" : "d") + a2 + "n" }[k];
   return ek == null ? s : s + "'" + ek;
 }
-function tvFill(t, vars, short) {
+export function tvFill(t, vars, short) {
   return t.replace(/\{(\w+)(?::(\w+))?\}/g, (m, k, ek) => {
     const x = short && vars["_" + k] != null ? vars["_" + k] : vars[k];
     if (x == null || x === "") return m; // eksik değer: satır elenir
     return ek ? tvEk(x, ek) : String(x);
   });
 }
-const tvOk = (s, max) => !!s && s.length <= max && !/[{}]|undefined|null|NaN/.test(s);
-const tvYes = () => true;
+export const tvOk = (s, max) => !!s && s.length <= max && !/[{}]|undefined|null|NaN/.test(s);
+export const tvYes = () => true;
 // Havuzdan ağırlıklı seçim. mode: "title" (büyük harf, sığmazsa kısa ad), "sub" (cümle başı büyük), "tick", "raw"
-function tvPool(list, v, max, mode) {
+export function tvPool(list, v, max, mode) {
   const pool = [];
   for (const e of list) {
     const [p, t, w] = typeof e === "string" ? [null, e] : e;
@@ -73,7 +75,7 @@ function tvPool(list, v, max, mode) {
   }
   return pool;
 }
-function tvDraw(pool, rng, seen) {
+export function tvDraw(pool, rng, seen) {
   const fresh = seen ? pool.filter(x => !seen.has(x.s)) : pool, from = fresh.length ? fresh : pool;
   if (!from.length) return null;
   let r = rng() * from.reduce((a, x) => a + x.w, 0), pick = from[from.length - 1];
@@ -81,16 +83,16 @@ function tvDraw(pool, rng, seen) {
   seen?.add?.(pick.s);
   return pick.s;
 }
-const tvChoose = (list, v, rng, max, mode, fallback) => tvDraw(tvPool(list, v, max, mode), rng, v.seen) ?? fallback;
+export const tvChoose = (list, v, rng, max, mode, fallback) => tvDraw(tvPool(list, v, max, mode), rng, v.seen) ?? fallback;
 
 // ── Adlar
 // Mahalle şeridi için kısa ad. Bey'ler adıyla anılır (S. BEY ile N. BEY karışmasın).
-const TV_KISA = { vekil: "SUAT BEY", cengiz: "CENGİZ BEY", kaan: "KAAN BEY", albay: "NURİ BEY", burak: "BURAK", tekir: "TEKİR", tuncay: "TUNCAY" };
-function tvName(id, playerName) {
+export const TV_KISA = { vekil: "SUAT BEY", cengiz: "CENGİZ BEY", kaan: "KAAN BEY", albay: "NURİ BEY", burak: "BURAK", tekir: "TEKİR", tuncay: "TUNCAY" };
+export function tvName(id, playerName) {
   if (id === "you") return String(playerName || "").trim() || "Başkan";
   return PEOPLE[id]?.ad || String(id);
 }
-function tvShort(id, playerName) {
+export function tvShort(id, playerName) {
   if (TV_KISA[id]) return TV_KISA[id];
   const w = tvName(id, playerName).split(/\s+/).filter(Boolean);
   if (w.length <= 1) return tvUp(w[0] || "BAŞKAN").slice(0, 16);
@@ -99,7 +101,7 @@ function tvShort(id, playerName) {
 }
 
 // ── Mahalleler: ek almış hâlleri ve kendi satırları
-const TV_MAH = {
+export const TV_MAH = {
   "Kavun Ovası": { de: "Kavun Ovası'nda", sub: [
     "Köylerden ilk tutanaklar geldi; kavun kasasında taşındı, hâlâ kavun kokuyor",
     "Ovada katılım yüksek; seçmen hasat molasında sandığa uğramış",
@@ -152,7 +154,7 @@ const TV_MAH = {
 };
 
 // ── Öndeki adaya özgü satırlar (sayım ve liderlik evrelerinde)
-const TV_ONDE = {
+export const TV_ONDE = {
   you: ["{you} önde; makam odasında semaver ikinci kez kaynadı",
     "{you} önde; Fikret yine de 'Yukarıkavak gelmeden konuşmayalım' diyor",
     "{you} önde; kayınvalide Naciye Hanım dolmaları ocağa koydu"],
@@ -189,7 +191,7 @@ const TV_ONDE = {
 };
 
 // ── Kazanan sözleri ve yenilgi açıklamaları (≤ 70)
-const TV_SOZ = {
+export const TV_SOZ = {
   you: {
     win: ["Bu zafer Karakavak'ın; çaylar benden.", "Oy vermeyenlerin de başkanıyım, çay vermeyenlerin de.",
       "Seçim bitti, evrak bekliyor. Fikret, çay!", "İlk iş Yukarıkavak'ın yolu; traktör yoruldu.",
@@ -257,7 +259,7 @@ const TV_SOZ = {
 };
 
 // ── Alt bant (KJ) satırları
-const TV_KJ = {
+export const TV_KJ = {
   acilis: {
     title: ["Yayın yasağı kalktı", "Yayın yasağı kalktı", "Karakavak sandık başında", "Seçim gecesi başladı",
       "İlk sandıklar geliyor", "KTV seçim özel",
@@ -387,7 +389,7 @@ const TV_KJ = {
 };
 
 // ── Son dakika bandı. Kategori: secim + yerel (≈%40), ulusal (≈%30), dunya (≈%30)
-const TV_TICK = {
+export const TV_TICK = {
   secim: [
     "Yukarıkavak sandığını getiren traktör çamura saplandı; muhtar 'sandık bende, traktör sizde' dedi",
     "Sanayi sandığında itiraz: zarftan bakkal fişi çıktı. Fiş de sayıldı: 3 simit, 1 ayran",
@@ -530,18 +532,18 @@ const TV_TICK = {
     "Kutuplardan kopan buzdağı bir ülkenin yüzölçümünü geçti; bağımsızlık ilan etmedi, şimdilik",
   ],
 };
-const TV_GRUP = { secim: "karakavak", yerel: "karakavak", ulusal: "ulusal", dunya: "dunya" };
+export const TV_GRUP = { secim: "karakavak", yerel: "karakavak", ulusal: "ulusal", dunya: "dunya" };
 
 // ── Döviz ve fiyat kutusu: [ad, taban, oynaklık, yön (yoksa rastgele), yuvarlama adımı]
 // Dolar hep çıkar, sabır hep iner; simit ve çay esnaf fiyatıyla (yuvarlak) yazılır.
-const TV_FX = [
+export const TV_FX = [
   ["KAVUN/TL", 14.9, 0.12, null, 0.1], ["ÇAY/BARDAK", 17.5, 0.06, "▲", 0.5], ["DOLAR", 74.35, 0.02, "▲"], ["EURO", 81.9, 0.03],
   ["ALTIN/GR", 7412, 0.03], ["SİMİT", 45, 0.08, "▲", 2.5], ["TEKİR MAMASI/KG", 389.9, 0.06, null, 0.1], ["MAZOT/LT", 88.4, 0.04],
   ["SABIR/GÜN", 0.04, 0.5, "▼"], ["OKEY TAŞI", 12.75, 0.1, null, 0.25], ["MÜJDE/HAFTA", 4, 0.4, "▲", 1], ["KİRA/ODA", 18500, 0.05, "▲", 250],
 ];
 
 // ── Durum görünümü: satırların koşulları ve yer tutucuları buradan beslenir
-function tvView(ctx, phase) {
+export function tvView(ctx, phase) {
   ctx = ctx || {};
   const res = ctx.res || {}, cands = Array.isArray(res.cands) ? res.cands : [];
   const ids = cands.map(c => c.id), fin = Object.fromEntries(cands.map(c => [c.id, c.pct]));
@@ -584,7 +586,7 @@ function tvView(ctx, phase) {
 }
 
 // ── Alt bant
-function kj(phase, ctx, rng) {
+export function kj(phase, ctx, rng) {
   const v = tvView(ctx, phase), P = TV_KJ[phase] || TV_KJ.sayim;
   let titles = P.title, subs = P.sub;
   if (phase === "sayim" || phase === "lider") subs = [...subs, ...(TV_ONDE[v.leader] || []).map(t => [tvYes, t])];
@@ -601,7 +603,7 @@ function kj(phase, ctx, rng) {
 }
 
 // ── Son dakika bandı: [{ t, cat }]; ticker() yalnız metinleri döndürür
-function tickerTagged(ctx, rng) {
+export function tickerTagged(ctx, rng) {
   const v = tvView(ctx, "ticker");
   const n = 8 + Math.floor(rng() * 5);
   const nK = Math.round(n * 0.4), nU = Math.round(n * 0.3), nD = n - nK - nU;
@@ -624,10 +626,10 @@ function tickerTagged(ctx, rng) {
   }
   return out;
 }
-const ticker = (ctx, rng) => tickerTagged(ctx, rng).map(x => x.t);
+export const ticker = (ctx, rng) => tickerTagged(ctx, rng).map(x => x.t);
 
 // ── Döviz kutusu (i ile döner)
-function fx(i, rng) {
+export function fx(i, rng) {
   const N = TV_FX.length, [ad, base, vol, dir, step] = TV_FX[((Math.floor(i) || 0) % N + N) % N];
   let val = base * (1 + (rng() * 2 - 1) * vol);
   if (step) val = Math.round(val / step) * step;
@@ -636,14 +638,14 @@ function fx(i, rng) {
 }
 
 // ── Kazanan sözü ya da yenilgi açıklaması (≤ 70)
-function winnerQuote(id, ctx, rng) {
+export function winnerQuote(id, ctx, rng) {
   const v = tvView(ctx, "sonuc"), q = TV_SOZ[id] || TV_SOZ._;
   const won = !v.res.cands ? true : v.winner === id;
   return tvChoose(won ? q.win : q.lose, v, rng, TV_MAX.quote, "raw", won ? TV_SOZ._.win[0] : TV_SOZ._.lose[0]);
 }
 
 // ── "Neden?" paneli: TV diliyle sonuç okuması
-const TV_CALDI = {
+export const TV_CALDI = {
   nermin: "Nermin Hanım sizden {v} puan aldı; muhalefetin oyu bu kez sandığa geldi.",
   vekil: "Suat Bey sizden {v} puan aldı; Ankara'nın selamı sandığa kadar ulaştı.",
   cengiz: "Cengiz Bey sizden {v} puan aldı; beton her mahallede biraz oy döktü.",
@@ -655,7 +657,7 @@ const TV_CALDI = {
   albay: "Nuri Bey sizden {v} puan aldı; nizam intizam sevenler hazır ola geçti.",
   tekir: "Tekir sizden {v} puan aldı; kediye kızamayan seçmen oyunu ona verdi.",
 };
-function whyLines(res, playerName) {
+export function whyLines(res, playerName) {
   if (!res || !Array.isArray(res.cands)) return [];
   const out = [], d = x => tvDec(Number(x) || 0), w = res.cands[0];
   if (w && Number.isFinite(w.pct)) out.push(`Kesin sonuç: ${tvName(w.id, playerName)} %${d(w.pct)}${Number.isFinite(res.margin) ? `, fark ${d(res.margin)} puan` : ""}.`);

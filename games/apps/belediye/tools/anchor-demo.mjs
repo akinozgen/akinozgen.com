@@ -4,13 +4,11 @@
 import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync, mkdirSync, rmSync, readdirSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
-
+import { betik, FONTS } from "./lib/sayfa.mjs";
 const OUT = process.argv[2] || fileURLToPath(new URL("../.cache/anchor/", import.meta.url));
 mkdirSync(OUT, { recursive: true });
 for (const f of readdirSync(OUT)) if (f.endsWith(".png")) rmSync(OUT + "/" + f);
-const SRC = readFileSync(new URL("../src/anchor.js", import.meta.url), "utf8");
-const FONTS = readFileSync(new URL("../web-src/fonts.css", import.meta.url), "utf8")
-  .replace(/url\(fonts\//g, `url(${new URL("../web-src/fonts/", import.meta.url).href}`);
+const SRC = betik("anchor");
 const html = `<!doctype html><html lang="tr"><head><meta charset="utf-8"><title>KTV stüdyo gösterisi</title>
 <style>${FONTS}
 body { margin: 0; padding: 20px; background: radial-gradient(120% 80% at 50% 0%, #1d2b3f, #0b111b); font: 14px "Barlow Condensed", sans-serif; color: #ecd592; }

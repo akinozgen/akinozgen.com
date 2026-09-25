@@ -1,47 +1,49 @@
 // ─── Oyun motoru (DOM'suz; sim.mjs de bunu çalıştırır) ────────────────────
-const METERS = ["h", "k", "e", "a"];
-const METER_AD = { h: "Halk", k: "Kasa", e: "Esnaf", a: "Ankara" };
-const AYLAR = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
-const TERM = 60;        // ay
-const MAX_TERMS = 4;
-const Z = [0, 0, 0, 0];
-const CARD = Object.fromEntries(CARDS.map(c => [c.id, c]));
+import { ADAYLAR, BLOKLAR, CARDS, CAY_LINES, CRISES, DAVET, ENDINGS, INTRO, PEOPLE, SYN } from "./cards.js";
+
+export const METERS = ["h", "k", "e", "a"];
+export const METER_AD = { h: "Halk", k: "Kasa", e: "Esnaf", a: "Ankara" };
+export const AYLAR = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+export const TERM = 60;        // ay
+export const MAX_TERMS = 4;
+export const Z = [0, 0, 0, 0];
+export const CARD = Object.fromEntries(CARDS.map(c => [c.id, c]));
 
 // İlişkiler: −3 küs … +3 dost
-const REL_AD = { "-3": "Küs", "-2": "Dargın", "-1": "Soğuk", "0": "Nötr", "1": "Ilık", "2": "Sıcak", "3": "Dost" };
-const NOREL = new Set(["fikret", "tekir", "ingrid", "mahir"]);
+export const REL_AD = { "-3": "Küs", "-2": "Dargın", "-1": "Soğuk", "0": "Nötr", "1": "Ilık", "2": "Sıcak", "3": "Dost" };
+export const NOREL = new Set(["fikret", "tekir", "ingrid", "mahir"]);
 // Sandıkta sözü geçenler (ilişki başına oy puanı)
-const INFLUENCE = { muhtar: 0.8, hayri: 0.8, bekir: 0.7, hatice: 0.7, tuncay: 0.6, nermin: 0.6 };
+export const INFLUENCE = { muhtar: 0.8, hayri: 0.8, bekir: 0.7, hatice: 0.7, tuncay: 0.6, nermin: 0.6 };
 // Ayar düğmeleri (sim.mjs ile ölçüldü)
 // salience: koşulu tutan her şart kartın ağırlığını bu oranda artırır (özgül kart genel kartı yener)
 // vaat: tutulmamış her vaat anketten bu kadar puan götürür (en çok vaatMax)
 // 2026-09: 61 yeni kartla birlikte hafif sıkılaştırıldı (rescue 1.4→1.3, fatigue 7→6.5, base 19→17.5, scale 1.15→1.2)
-const TUNE = { damp: 0.9, edge: 12, crisisP: 0.3, crisisCd: 18, crisisAt: 18, rescue: 1.3, fatigue: 6.5, base: 17.5, scale: 1.2,
+export const TUNE = { damp: 0.9, edge: 12, crisisP: 0.3, crisisCd: 18, crisisAt: 18, rescue: 1.3, fatigue: 6.5, base: 17.5, scale: 1.2,
   salience: 0.5, vaat: 2, vaatMax: 8 };
-const MAX_ONGOING = 7;
+export const MAX_ONGOING = 7;
 
-const calOf = m => ({ mon: (3 + m) % 12, year: 2029 + Math.floor((3 + m) / 12) });
-const dateLabel = m => { const c = calOf(m); return AYLAR[c.mon] + " " + c.year; };
-const durLabel = n => {
+export const calOf = m => ({ mon: (3 + m) % 12, year: 2029 + Math.floor((3 + m) / 12) });
+export const dateLabel = m => { const c = calOf(m); return AYLAR[c.mon] + " " + c.year; };
+export const durLabel = n => {
   const y = Math.floor(n / 12), m = n % 12;
   return [y ? y + " yıl" : "", m ? m + " ay" : ""].filter(Boolean).join(" ") || "bir aydan kısa";
 };
-const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+export const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 // Uca uzaklık: halk için yalnız aşağısı tehlike (halkın sevgisi fazla gelmez)
-const edgeRisk = (k, v) => (k === "h" ? Math.max(0, 50 - v) : Math.abs(v - 50));
-const relBonus = s => clamp(Object.entries(INFLUENCE).reduce((a, [w, k]) => a + (s.rel[w] || 0) * k, 0), -8, 8);
+export const edgeRisk = (k, v) => (k === "h" ? Math.max(0, 50 - v) : Math.abs(v - 50));
+export const relBonus = s => clamp(Object.entries(INFLUENCE).reduce((a, [w, k]) => a + (s.rel[w] || 0) * k, 0), -8, 8);
 // Tutulmamış vaatler (s.cnt.vaat) sandıkta ödenir
-const vaatCost = s => Math.min(TUNE.vaatMax, (s.cnt?.vaat || 0) * TUNE.vaat);
+export const vaatCost = s => Math.min(TUNE.vaatMax, (s.cnt?.vaat || 0) * TUNE.vaat);
 // Yıpranma: her yeni dönemde sandık biraz daha zorlaşır
-const pollOf = s => TUNE.base + s.m.h * 0.45 + s.m.e * 0.08 + s.m.a * 0.04 + relBonus(s) - (s.term - 1) * TUNE.fatigue - vaatCost(s);
+export const pollOf = s => TUNE.base + s.m.h * 0.45 + s.m.e * 0.08 + s.m.a * 0.04 + relBonus(s) - (s.term - 1) * TUNE.fatigue - vaatCost(s);
 
 // ── Ortak koşul dili: kart kapıları, next.if ve alt.if hepsi bunu kullanır
 // { req: bayrak(lar), not: bayrak(lar), cnt: {sayaç: en az | [en az, en çok]}, pol: karar id(leri), nopol,
 //   tag: etiket(ler) (yürürlükteki kararlardan), notag, rel: {kişi: en az | [en az, en çok]} }
-const arr = x => [].concat(x ?? []);
-const inRange = (v, r) => (Array.isArray(r) ? v >= (r[0] ?? -Infinity) && v <= (r[1] ?? Infinity) : v >= r);
-const tagsOn = s => new Set(s.ongoing.flatMap(o => o.tags || []));
-function condOK(s, q) {
+export const arr = x => [].concat(x ?? []);
+export const inRange = (v, r) => (Array.isArray(r) ? v >= (r[0] ?? -Infinity) && v <= (r[1] ?? Infinity) : v >= r);
+export const tagsOn = s => new Set(s.ongoing.flatMap(o => o.tags || []));
+export function condOK(s, q) {
   if (!q) return true;
   if (q.req && !arr(q.req).every(f => s.flags[f])) return false;
   if (q.not && arr(q.not).some(f => s.flags[f])) return false;
@@ -57,11 +59,11 @@ function condOK(s, q) {
   return true;
 }
 // Kartın kendi kapıları ortak dile çevrilir
-const gateOf = c => ({ req: c.req, not: c.not, cnt: c.reqCnt, pol: c.reqPol, nopol: c.notPol, tag: c.reqTag, notag: c.notTag });
+export const gateOf = c => ({ req: c.req, not: c.not, cnt: c.reqCnt, pol: c.reqPol, nopol: c.notPol, tag: c.reqTag, notag: c.notTag });
 // Kaç özel şartla açıldığı: özgül kartlar torbada daha ağır basar
-const specificity = c => arr(c.req).length + Object.keys(c.reqCnt || {}).length + arr(c.reqPol).length + arr(c.reqTag).length + Object.keys(c.relMin || {}).length;
+export const specificity = c => arr(c.req).length + Object.keys(c.reqCnt || {}).length + arr(c.reqPol).length + arr(c.reqTag).length + Object.keys(c.relMin || {}).length;
 
-function newGame(opts = {}) {
+export function newGame(opts = {}) {
   return {
     v: 2, gid: Math.random().toString(36).slice(2, 10),
     m: { h: 50, k: 50, e: 50, a: 50 },
@@ -75,7 +77,7 @@ function newGame(opts = {}) {
 }
 
 // ── Uygulama: yumuşak kenar, yuvarlama, sınır
-function applyDelta(s, d) {
+export function applyDelta(s, d) {
   return METERS.map((k, i) => {
     const v = s.m[k]; let x = d[i] || 0;
     if (!x) return 0;
@@ -88,7 +90,7 @@ function applyDelta(s, d) {
   });
 }
 
-function addPol(s, p) {
+export function addPol(s, p) {
   s.ongoing = s.ongoing.filter(o => o.id !== p.id);
   // yer yoksa en eski sıradan karar kalkar (iş/inşaat değil), oyuncuya da haber verilir
   if (s.ongoing.length >= MAX_ONGOING) {
@@ -100,14 +102,14 @@ function addPol(s, p) {
 }
 
 // Sayaç: inc "ad" (+1) ya da {ad: n}; dec aynı biçimde düşürür, sayaç sıfırın altına inmez
-function bump(s, x, sign) {
+export function bump(s, x, sign) {
   if (!x) return;
   const o = typeof x === "string" ? { [x]: 1 } : x;
   for (const [k, v] of Object.entries(o)) s.cnt[k] = Math.max(0, (s.cnt[k] || 0) + sign * v);
 }
 // next: [kart, ay] ya da { id, in: ay | [en az, en çok], if: koşul, else: kart }
 // Koşul teslim anında yeniden sınanır; tutmazsa else gelir, else yoksa hiçbir şey gelmez (borç kapatıldıysa gibi)
-function schedule(s, n, rng) {
+export function schedule(s, n, rng) {
   if (!n) return;
   const [id, d] = Array.isArray(n) ? n : [n.id, n.in ?? 0];
   const lag = Array.isArray(d) ? d[0] + Math.floor(rng() * (d[1] - d[0] + 1)) : d;
@@ -117,7 +119,7 @@ function schedule(s, n, rng) {
 }
 
 // Ay başı: yürürlükteki kararlar işler, süresi dolanlar biter, birbirine değen kararlar etkileşir
-function tick(s) {
+export function tick(s) {
   const sum = [0, 0, 0, 0], events = [];
   for (const ad of s.dropped || []) events.push({ ad, msg: "Yeni karara yer açmak için yürürlükten kalktı." });
   s.dropped = [];
@@ -143,7 +145,7 @@ function tick(s) {
   return { sum, events };
 }
 
-function eligible(c, s) {
+export function eligible(c, s) {
   if (c.chain) return false;
   if (c.once && s.used[c.id]) return false;
   if (s.last[c.id] != null && s.month - s.last[c.id] < (c.cd ?? 36)) return false;
@@ -157,7 +159,7 @@ function eligible(c, s) {
 }
 
 // Yönetmen: tehlikedeki göstergeyi kurtarabilecek kartları öne çıkarır
-function rescueW(c, s) {
+export function rescueW(c, s) {
   let w = 1;
   METERS.forEach((k, i) => {
     const v = s.m[k];
@@ -171,14 +173,14 @@ function rescueW(c, s) {
   return w;
 }
 
-function cayCard(s) {
+export function cayCard(s) {
   const w = METERS.map(k => ({ k, d: Math.abs(s.m[k] - 50), v: s.m[k] })).sort((a, b) => b.d - a.d)[0];
   const line = w.d < 22 ? CAY_LINES.ok : CAY_LINES[w.k + (w.v < 50 ? "lo" : "hi")];
   return { id: "cay", kind: "cay", who: "fikret", konu: "Çay molası", text: "Çayınız başkanım. " + line,
     L: { t: "Açık olsun", e: Z }, R: { t: "Tavşan kanı", e: Z } };
 }
 
-function pick(s, rng) {
+export function pick(s, rng) {
   const items = CARDS.filter(c => eligible(c, s)).map(c => ({ c, w: (c.w ?? 1) * rescueW(c, s) * (1 + TUNE.salience * specificity(c)) }));
   const since = s.month - (s.last.cay ?? -4);
   if (since >= 8) items.push({ c: cayCard(s), w: 1 + (since - 8) * 0.35 });
@@ -190,7 +192,7 @@ function pick(s, rng) {
   return pool[pool.length - 1].c;
 }
 
-function crisisKey(s) {
+export function crisisKey(s) {
   const cands = METERS.map(k => ({ k, v: s.m[k] }))
     .filter(x => x.v <= TUNE.crisisAt || (x.k !== "h" && x.v >= 100 - TUNE.crisisAt))
     .map(x => ({ key: x.k + (x.v <= TUNE.crisisAt ? "0" : "100"), d: Math.abs(x.v - 50) }))
@@ -199,18 +201,18 @@ function crisisKey(s) {
   return cands[0]?.key || null;
 }
 
-function supporters(s) {
+export function supporters(s) {
   return Object.keys(INFLUENCE).map(w => ({ w, r: s.rel[w] || 0 })).filter(x => x.r !== 0).sort((a, b) => b.r - a.r);
 }
 
 // ─── Seçim: 2-5 aday, en çok oyu alan kazanır ─────────────────────────────
 // Anket (pollOf) sizin "iki adaylı" oyunuzdur; ana rakip kalanı alır. Her ek aday kendi oyunu
 // beta oranında sizden, kalanını ana rakipten çalar. Adaylar seçimden 9 ay önce belli olur.
-const ADAY_MAX = 5;
-const trPct = v => String(v).replace(".", ",");
-const joinTR = a => (a.length <= 1 ? a.join("") : a.slice(0, -1).join(", ") + " ve " + a[a.length - 1]);
-function shuffle(a, rng) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-function drawField(s, rng) {
+export const ADAY_MAX = 5;
+export const trPct = v => String(v).replace(".", ",");
+export const joinTR = a => (a.length <= 1 ? a.join("") : a.slice(0, -1).join(", ") + " ve " + a[a.length - 1]);
+export function shuffle(a, rng) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+export function drawField(s, rng) {
   const friend = w => (s.rel[w] || 0) >= 2; // dost aday olmaz, sizi destekler
   const ids = Object.keys(ADAYLAR);
   const main = ids.filter(w => ADAYLAR[w].ana).sort((a, b) => ADAYLAR[a].ana - ADAYLAR[b].ana).find(w => !friend(w)) || "kaan";
@@ -219,10 +221,10 @@ function drawField(s, rng) {
   s.field = { term: s.term, main, extras };
   return s.field;
 }
-const fieldOf = (s, rng) => (s.field?.term === s.term ? s.field : drawField(s, rng));
+export const fieldOf = (s, rng) => (s.field?.term === s.term ? s.field : drawField(s, rng));
 // Seçmen grubu dökümü: grupların profiline göre dağıtılır, sonra birkaç tur orantılı düzeltmeyle
 // hem her grup %100 eder hem de grupların ağırlıklı toplamı adayların oyunu tutturur
-function blocsOf(s, cands) {
+export function blocsOf(s, cands) {
   const prof = id => (id === "you" ? [s.m.h / 50, s.m.e / 50, s.m.a / 50, 1] : ADAYLAR[id].blok);
   const W = BLOKLAR.map(b => b[1]);
   let m = BLOKLAR.map((_, b) => cands.map(c => Math.max(0.1, c.pct) * Math.max(0.05, prof(c.id)[b])));
@@ -234,7 +236,7 @@ function blocsOf(s, cands) {
   }
   return BLOKLAR.map(([ad, w], b) => ({ ad, w, pay: norm(m[b]).map(v => Math.round(1000 * v) / 10) })); // pay[i] ↔ cands[i]
 }
-function tally(s, rng, early = false) {
+export function tally(s, rng, early = false) {
   const f = early && s.earlyField ? s.earlyField : fieldOf(s, rng);
   const p0 = clamp(pollOf(s) + (rng() * 8 - 4), 5, 95);
   let you = p0, main = 100 - p0;
@@ -255,7 +257,7 @@ function tally(s, rng, early = false) {
     early, order: [f.main, ...f.extras], p0: Math.round(p0 * 10) / 10, steal: ex.map(x => ({ id: x.id, v: Math.round(ADAYLAR[x.id].beta * x.v * 10) / 10 })),
     vaat: vaatCost(s), rel: Math.round(relBonus(s) * 10) / 10, fatigue: (s.term - 1) * TUNE.fatigue };
 }
-function fieldCard(s, rng) {
+export function fieldCard(s, rng) {
   const f = drawField(s, rng), rivals = [f.main, ...f.extras];
   const fr = Object.keys(ADAYLAR).filter(w => (s.rel[w] || 0) >= 2 && w !== "tekir").map(w => PEOPLE[w].ad);
   let text = `Başkanım, seçime dokuz ay var ve adaylar belli oldu: karşınızda ${joinTR(rivals.map(id => PEOPLE[id].ad))} var.`;
@@ -270,8 +272,8 @@ function fieldCard(s, rng) {
 
 // Esnaf tavan yapınca oyun bitmez: esnaf odası belediyeyi fiilen ele geçirir, meclis erken seçim kararı alır.
 // Hacı Bekir esnafın adayı olarak (dost olsa bile, oda onu gösterir) güçlü girer. Normal seçim takvimi bozulmaz.
-const EARLY_BEKIR = 22; // esnaf odası belediyeyi ele geçirmişken adayı güçlü girer
-function earlyCard(s, rng) {
+export const EARLY_BEKIR = 22; // esnaf odası belediyeyi ele geçirmişken adayı güçlü girer
+export function earlyCard(s, rng) {
   const tmp = { ...s, field: null }, f = drawField(tmp, rng);
   if (f.main !== "bekir" && !f.extras.includes("bekir")) f.extras = ["bekir", ...f.extras].slice(0, ADAY_MAX - 2);
   s.earlyField = { ...f, term: s.term };
@@ -282,7 +284,7 @@ function earlyCard(s, rng) {
     R: { t: "Meydana çıkalım", e: [6, -10, 3, 0] } };
 }
 
-function electionCard(s, rng) {
+export function electionCard(s, rng) {
   if (s.term >= MAX_TERMS) return endingCard("emekli", s);
   const p = Math.round(pollOf(s)), f = fieldOf(s, rng);
   const rivals = [f.main, ...f.extras];
@@ -298,14 +300,14 @@ function electionCard(s, rng) {
     R: { t: "Meydana çıkalım", e: [6, -10, 3, 0] } };
 }
 
-function endingCard(key, s, extra = {}) {
+export function endingCard(key, s, extra = {}) {
   const E = ENDINGS[key];
   return { id: "end_" + key, kind: "ending", key, who: E.who, konu: E.konu, text: E.text.replace("{oy}", extra.oy ?? "").replace("{rakip}", extra.rakip ?? ""),
     L: { t: key === "emekli" ? "Hakkınızı helal edin" : E.win ? "Hayırlı olsun" : "Ah be Fikret...", e: Z },
     R: { t: key === "emekli" ? "Son bir çay" : E.win ? "Karakavak'a selam" : "Bu da geçer", e: Z } };
 }
 
-function special(p, s, rng = Math.random) {
+export function special(p, s, rng = Math.random) {
   if (p.type === "ending") return endingCard(p.key, s, p);
   if (p.type === "tekir") return { id: "tekirsave", kind: "tekir", who: "tekir", konu: "Olağanüstü durum", restore: p.restore,
     text: "(Tam o kararı mühürleyecekken Tekir masaya atladı, evrakın üstüne kıvrılıp uyudu. Mühür basılamadı, karar askıda kaldı. Kimse kediyi uyandırmaya kıyamadı.) Mırrr.",
@@ -333,7 +335,7 @@ function special(p, s, rng = Math.random) {
 }
 
 // Kartı o anki duruma göre somutlaştırır: metin, ilişkiye göre etki, taraf değişimi
-function materialize(c, s, rng) {
+export function materialize(c, s, rng) {
   const kind = c.kind || (c.id.startsWith("intro") ? "intro" : "normal");
   const people = kind === "normal" && !c.norel && !NOREL.has(c.who);
   const r = s.rel[c.who] || 0, fav = c.fav || "R";
@@ -367,7 +369,7 @@ function materialize(c, s, rng) {
 }
 
 // Vakti gelmiş zincir kartı: koşulu tutmayan kuyruk kaydı else kartına döner ya da düşer
-function due(s) {
+export function due(s) {
   for (;;) {
     const i = s.queue.findIndex(q => q.at <= s.month);
     if (i < 0) return null;
@@ -377,7 +379,7 @@ function due(s) {
   }
 }
 
-function draw(s, rng = Math.random) {
+export function draw(s, rng = Math.random) {
   let c;
   if (s.pending) { c = special(s.pending, s, rng); s.pending = null; }
   else if (s.intro > 0) c = INTRO[INTRO.length - s.intro];
@@ -394,7 +396,7 @@ function draw(s, rng = Math.random) {
 }
 
 // side: "L" | "R" → { d: kararın etkisi, td: ayın işleyen kararları, events, rel, dead }
-function choose(s, side, rng = Math.random) {
+export function choose(s, side, rng = Math.random) {
   const c = s.cur, o = c[side];
   const before = { ...s.m };
   const out = { d: applyDelta(s, o.e), td: Z, events: [], rel: {} };

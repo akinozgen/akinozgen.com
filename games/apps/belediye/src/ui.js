@@ -1,4 +1,11 @@
 // ─── Arayüz ───────────────────────────────────────────────────────────────
+import interact from "interactjs";
+import { ADAYLAR, BASKANLAR, ENDINGS, KULIS, PEOPLE, QUOTES, REACT } from "./cards.js";
+import { ADLAR, rastgeleAd } from "./adlar.js";
+import { MAX_TERMS, METERS, METER_AD, REL_AD, TERM, Z, calOf, choose, dateLabel, draw, durLabel, edgeRisk, newGame, pollOf, vaatCost } from "./engine.js";
+import { studio, studioSVG } from "./anchor.js";
+import { fx, kj, ticker, tvName, tvNumEk, tvShort, whyLines } from "./broadcast.js";
+
 const $ = s => document.querySelector(s);
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -15,11 +22,10 @@ const vibrate = ms => { try { if (LS.get("vibrate", true) && navigator.userActiv
 
 let S = null, busy = false, screen = "title", lastOver = null, wallFrom = "title";
 // Derlemede web sürümü için true yapılır (service worker kaydı)
-const STANDALONE = /*STANDALONE*/false;
-// Vesikalıklar web-src/portraits/ altındaki resimlerdir; tek dosyalık kopyalarda derleyici hepsini PORTRAITS'e gömer.
-const PORTRAITS = /*PORTRAITS*/null;
+const STANDALONE = import.meta.env.PROD; // derlenmiş sürüm: çevrimdışı önbellek (service worker) kaydolur
+// Vesikalıklar public/portraits/ altındaki resimlerdir (derlemede olduğu gibi kopyalanır)
 const MAYORS = Object.keys(BASKANLAR);
-const photoSrc = id => PORTRAITS?.[id] || `portraits/${id}.webp`;
+const photoSrc = id => `portraits/${id}.webp`;
 const photo = id => `<img src="${photoSrc(id)}" alt="" decoding="async" draggable="false">`;
 
 // ─── Ses: hepsi WebAudio ile üretiliyor ───────────────────────────────────
@@ -319,7 +325,7 @@ function renderCard(c) {
     <div class="stamp L"><span>${esc(c.L.t)}</span></div>
     <div class="stamp R"><span>${esc(c.R.t)}</span></div>`;
   const old = $("#card");
-  if (old) { if (window.interact) interact(old).unset(); old.remove(); }
+  if (old) { interact(old).unset(); old.remove(); }
   $("#stack").appendChild(el);
   el.addEventListener("animationend", () => el.classList.remove("enter"), { once: true });
   bindDrag(el);
@@ -346,7 +352,6 @@ function untilt(el) {
 // Evrak sürükleme: interact.js işaretçi farklarını, yön kilidini ve fiske hızını yönetir.
 // Karar iki yoldan verilir: yeterince uzağa sürüklemek ya da kısa ama hızlı bir fiske.
 function bindDrag(el) {
-  if (!window.interact) return bindDragBasic(el);
   let dx = 0;
   interact(el).styleCursor(false).draggable({
     startAxis: "x", lockAxis: "x", // dikey hareketle sürükleme hiç başlamaz
@@ -366,35 +371,6 @@ function bindDrag(el) {
       },
     },
   });
-}
-// Kütüphane yüklenemezse (ör. çevrimdışı önizleme) basit işaretçi sürüklemesi
-function bindDragBasic(el) {
-  let st = null;
-  el.addEventListener("pointerdown", e => {
-    if (busy || e.button > 0) return;
-    st = { x: e.clientX, y: e.clientY, dx: 0, id: e.pointerId, lock: null };
-    try { el.setPointerCapture(e.pointerId); } catch { }
-  });
-  el.addEventListener("pointermove", e => {
-    if (!st || e.pointerId !== st.id) return;
-    const dx = e.clientX - st.x, dy = e.clientY - st.y;
-    if (!st.lock) {
-      if (Math.hypot(dx, dy) < 10) return;
-      st.lock = Math.abs(dx) > Math.abs(dy) * 1.4 ? "x" : "y";
-      if (st.lock === "x") { el.classList.remove("enter"); el.classList.add("dragging"); el.style.transition = "none"; }
-    }
-    if (st.lock === "x") { st.dx = dx; tilt(el, dx); }
-  });
-  const up = e => {
-    if (!st || e.pointerId !== st.id) return;
-    const { dx, lock } = st; st = null;
-    if (lock !== "x") return;
-    el.classList.remove("dragging");
-    if (e.type === "pointerup" && Math.abs(dx) > Math.max(70, el.offsetWidth * 0.26)) commit(dx < 0 ? "L" : "R", true);
-    else untilt(el);
-  };
-  el.addEventListener("pointerup", up);
-  el.addEventListener("pointercancel", up);
 }
 function setChoices(disabled) { $("#ch-L").disabled = disabled; $("#ch-R").disabled = disabled; }
 
@@ -940,7 +916,7 @@ function pickMove(e) {
 }
 
 // ─── Ana menü: canlı meydan üstünde logo, menü, ilan panosu ve bilgi kartı ──
-const SURUM = "/*SURUM*/"; // derlemede tarih ve içerik özetiyle dolar
+const SURUM = __SURUM__; // vite.config.js: derleme günü ve kaynağın kısa özeti
 const YENILIK = [
   ["Seçim gecesi canlı yayında", "KARAKAVAK TV sandıkları mahalle mahalle açıyor."],
   ["Ankara'dan davet", "Ankara tavan yapınca sizi yukarı çağırır; hayır diyebilirsiniz."],
@@ -948,8 +924,7 @@ const YENILIK = [
 ];
 let mnBusy = false, panelFrom = null;
 // Meydan sahnesi: tek resim (tools/meydan.js'in karesi ChatGPT ile oyuncak diyoramaya çevrildi). Canlı SVG tarayıcıyı yoruyordu.
-// Palet yerel saate göre: 21-5 gece, 6-16 gündüz, 17-20 akşamüstü. Tek dosyalık kopyada resimler gömülü.
-const MEYDAN = /*MEYDAN*/null;
+// Palet yerel saate göre: 21-5 gece, 6-16 gündüz, 17-20 akşamüstü.
 // Işıkların, buharın ve yıldızların resimdeki yeri (1536×1024 piksel); üç resimde bina biraz farklı duruyor.
 // mk: makam penceresi (giriş geçişi buraya yaklaşır) · l1-l3: sokak lambaları · stm: semaver
 const MD_NOKTA = {
@@ -965,7 +940,7 @@ function sceneOn(on) {
   const sc = $("#mn-scene"), p = mdPal();
   sc.classList.remove("in");
   if (sc.dataset.pal === p) return;
-  sc.dataset.pal = p; $("#mn-img").src = MEYDAN?.[p] || `meydan/meydan-${p}.webp`;
+  sc.dataset.pal = p; $("#mn-img").src = `meydan/meydan-${p}.webp`;
   const N = MD_NOKTA[p], pic = $("#mn-pic");
   for (const el of pic.querySelectorAll("[data-k]")) { const [x, y] = mdYuzde(N[el.dataset.k]); el.style.setProperty("--x", x); el.style.setProperty("--y", y); }
   const [wx, wy] = mdYuzde(N.mk); pic.style.setProperty("--wx", wx); pic.style.setProperty("--wy", wy);

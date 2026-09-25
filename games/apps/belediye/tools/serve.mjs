@@ -1,12 +1,12 @@
 // Yerel önizleme sunucusu: node tools/serve.mjs [port] [kök klasör]
-// Varsayılan kök dist/web; sitenin tamamını denemek için kök olarak sitenin dist/ klasörü verilebilir.
+// Varsayılan kök dist/ (vite build); sitenin tamamını denemek için kök olarak sitenin dist/ klasörü verilebilir.
 import { createServer } from "node:http";
 import { readFile, stat } from "node:fs/promises";
 import { extname, normalize, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const PORT = Number(process.argv[2] || 8765);
-const ROOT = resolve(process.argv[3] || fileURLToPath(new URL("../dist/web/", import.meta.url)));
+const ROOT = resolve(process.argv[3] || fileURLToPath(new URL("../dist/", import.meta.url)));
 const TYPES = {
   ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".json": "application/json",
   ".webmanifest": "application/manifest+json", ".woff2": "font/woff2", ".png": "image/png", ".svg": "image/svg+xml", ".txt": "text/plain; charset=utf-8",

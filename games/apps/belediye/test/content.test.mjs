@@ -1,20 +1,19 @@
 // İçerik grafı denetimi: gerçek içerik temiz olmalı, bozuk içerik yakalanmalı
-import { test } from "node:test";
+import { test } from "vitest";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import { lintContent } from "../tools/lint.mjs";
+import { yukle } from "./yukle.mjs";
 
-const src = ["cards.js", "engine.js"].map(f => readFileSync(new URL("../src/" + f, import.meta.url), "utf8")).join("\n");
-const load = () => new Function(src + "\nreturn { CARDS, CARD, CRISES, INTRO, PEOPLE, SYN, DAVET, ENDINGS };")();
+const load = () => yukle("cards", "engine");
 
-test("gerçek içerikte bağlantı, bayrak, sayaç ve etiket hatası yok", () => {
-  const r = lintContent(load());
+test("gerçek içerikte bağlantı, bayrak, sayaç ve etiket hatası yok", async () => {
+  const r = lintContent(await load());
   assert.deepEqual(r.errors, []);
   if (r.warnings.length) console.log("uyarılar:\n  " + r.warnings.join("\n  "));
 });
 
-test("denetim bozuk içeriği yakalıyor", () => {
-  const E = load();
+test("denetim bozuk içeriği yakalıyor", async () => {
+  const E = await load();
   const card = (id, extra = {}, L = {}, R = {}) => ({ id, who: "muhtar", konu: "Deneme", text: "Deneme metni.", L: { t: "Sol", e: [0, 0, 0, 0], ...L }, R: { t: "Sağ", e: [0, 0, 0, 0], ...R }, ...extra });
   E.CARDS.push(
     card("t_yetim", { chain: true }),                                        // hiçbir yerden bağlanmıyor

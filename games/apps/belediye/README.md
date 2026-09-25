@@ -23,12 +23,13 @@ Ana projeden tek komut isterseniz `npm run build:games` aynı işi yapar. Derlen
 
 | Komut | Ne yapar |
 |---|---|
-| `pnpm build:site` | Oyunu `../../../public/games/belediye/` klasörüne derler; klasörü önce boşaltır |
-| `pnpm build` | Yerel çıktılar: `dist/web/` (site kopyasının aynısı), `dist/oyna.html` (fontları gömülü tek dosya), `dist/caylar-belediyeden.html` (claude.ai önizlemesi) |
-| `pnpm dev` | Derler ve `dist/web/` klasörünü http://localhost:8765 adresinde açar |
-| `pnpm test` | İçerik grafı, motor ve mekanik testleri (`node --test`). İçerik denetimi `tools/lint.mjs`'te |
+| `pnpm build:site` | Oyunu Vite ile `../../../public/games/belediye/` klasörüne derler; klasörü önce boşaltır |
+| `pnpm build` | Aynı derleme `dist/` klasörüne (tarayıcı testleri bunu sunar) |
+| `pnpm dev` | Vite geliştirme sunucusu, http://localhost:8765 (derlemeden, anında yenilenir; service worker kapalı) |
+| `pnpm preview` | `dist/`'i http://localhost:8765 adresinde sunar |
+| `pnpm test` | İçerik grafı, motor, mekanik, seçim, yayın, ad ve sahne testleri (vitest). Her test `test/yukle.mjs` ile taze modül yükler. İçerik denetimi `tools/lint.mjs`'te |
 | `pnpm sim` | Motoru yedi oyuncu tipiyle (Ankara'yı hep yukarı iten ve davetleri reddeden "ankaracı" dahil) 2000'er kez oynatır; denge, ölüm sebepleri, etkileşim, vaat, beceri oranı ve baskın seçenek raporu verir. `node tools/sim.mjs 3000 fatigue=6` gibi ayarlar denenebilir |
-| `pnpm smoke` · `pnpm gesture` · `pnpm fit` | Headless Chrome testleri: uçtan uca oyun, dokunma ve fiske, telefonlarda sığma. Sessizdir; Chrome yolu farklıysa `CHROME` ortam değişkeniyle verilir. Çıktılar `.cache/` klasörüne yazılır |
+| `pnpm smoke` · `pnpm gesture` · `pnpm fit` | Headless Chrome testleri: uçtan uca oyun, dokunma ve fiske, telefonlarda sığma. Önce `pnpm build`: testler `dist/`'i kendi açtıkları yerel sunucudan (`tools/lib/sayfa.mjs`) oynar. Sessizdir; Chrome yolu farklıysa `CHROME` ortam değişkeniyle verilir. Çıktılar `.cache/` klasörüne yazılır |
 | `pnpm icons` | Uygulama ikonlarını yeniden çizer |
 | `pnpm election` | Headless Chrome'da seçim gecesi testi: 5 adaylı yarış kurar; sayım ortasında kartların oya göre dizildiğini, oyuncu kartını, KJ'yi, stüdyoyu ve kayan yazıyı, sonuçta yüzdeleri motorla karşılaştırır. Hareket azaltma, "Kaldığım yerden", erken seçim ve "a" kısayolunu da dener |
 | `pnpm menu` | Headless Chrome'da ana menü testi: beş ekran boyunda yerleşim ve meydan resmi, ↑/↓ gezinme, bilgi kartı, ayarların kaydı, iki adımlı silme, künye, aday kaydı, ad zarı ve oyuna giriş |
@@ -48,13 +49,14 @@ Sitenin tamamını yerelde denemek için ana projede `npm run build` çalıştı
 | `src/ui.js` | Sürükleme, mühür, göstergeler, WebAudio sesleri, Fikret'in tavsiyeleri, gazete, koridor duvarı, seçim gecesi akışı, ana menü, aday kaydı, ayarlar |
 | `src/broadcast.js` | KARAKAVAK TV'nin yazıları: duruma göre KJ (alt bant), kayan yazı (ilçe, ülke, dünya), kur kutusu, "Neden?" satırları. DOM'suz, `test/broadcast.test.mjs` sınar |
 | `src/anchor.js` | Seçim gecesi stüdyosu: bıyıklı spiker, masa, video duvarı, Tekir. Tek SVG; `studio()` konuşma, ruh hâli ve tepkileri denetler |
-| `src/style.css`, `src/index.html` | Makam masası |
-| `web-src/` | Yerel fontlar (SIL OFL), ikonlar, vesikalıklar, interact.js (MIT) |
-| `web-src/portraits/` | Vesikalıklar: her kişi için `<anahtar>.webp` (anahtar `cards.js`'teki `PEOPLE`), başkanlık vesikalıkları için `baskan-*.webp` (anahtar `BASKANLAR`) |
-| `web-src/meydan/` | Ana menünün arka planı, üç saat için (`meydan-aksam/gece/gun.webp`, 1536×1024). `tools/meydan.js`'in vektör karesi ChatGPT ile parlak plastik oyuncak diyoramaya çevrildi. Lamba, pencere, buhar ve yıldız ışıklarının yeri `ui.js`'teki `MD_NOKTA`'da |
+| `index.html`, `src/main.js` | Sayfa ve giriş: `main.js` yazı karakterlerini, stili ve `ui.js`'i yükler |
+| `src/style.css`, `src/fonts.css`, `src/fonts/` | Makam masası; yerel fontlar (SIL OFL), derlemede özetli adlarla |
+| `public/` | Derlemeye olduğu gibi kopyalananlar: ikonlar, manifest, font lisansı, vesikalıklar, meydan resimleri |
+| `public/portraits/` | Vesikalıklar: her kişi için `<anahtar>.webp` (anahtar `cards.js`'teki `PEOPLE`), başkanlık vesikalıkları için `baskan-*.webp` (anahtar `BASKANLAR`) |
+| `public/meydan/` | Ana menünün arka planı, üç saat için (`meydan-aksam/gece/gun.webp`, 1536×1024). `tools/meydan.js`'in vektör karesi ChatGPT ile parlak plastik oyuncak diyoramaya çevrildi. Lamba, pencere, buhar ve yıldız ışıklarının yeri `ui.js`'teki `MD_NOKTA`'da |
 | `tools/portrait.js` | Vesikalıkların ilk tarifleri ve SVG çizeri; oyuna girmez. Şimdiki resimler bunlardan SDXL img2img ile üretildi (bkz. NOTES) |
-| `build.mjs` | Derleyici: CSS/JS'yi tek sayfaya gömer; manifest ve service worker üretir |
-| `tools/` | Sunucu, simülasyon, içerik denetimi (`lint.mjs`) ve tarayıcı testleri |
+| `vite.config.js` | Derleme: göreli yollar, menüdeki sürüm (`__SURUM__`), derlemenin bütün dosyalarını önbelleğe alan service worker eklentisi |
+| `tools/` | Sunucu, simülasyon, içerik denetimi (`lint.mjs`) ve tarayıcı testleri; ortak yardımcılar `tools/lib/sayfa.mjs`'te |
 | `NOTES.md` | Geliştirme günlüğü: kararlar, denge ölçümleri, geri bildirimler |
 
 ## Teknik notlar
@@ -62,8 +64,8 @@ Sitenin tamamını yerelde denemek için ana projede `npm run build` çalıştı
 - **Adres:** Sayfa `/games/belediye/` altında göreli yollarla çalışır. Eğik çizgisiz gelinirse baştaki küçük betik adresi eğik çizgiye çevirir.
 - **Service worker:** Kapsamı yalnız `/games/belediye/`, sitenin geri kalanına dokunmaz. Önbellek adı içerikten türetilir; her derlemede eskisi silinir. Sayfanın kendisi önce ağdan alınır, yani güncelleme bir yenilemeyle gelir.
 - **Ölçek:** Bütün ölçüler `rem`. Kök yazı boyu ekran yüksekliğiyle, dar ekranda genişlikle orantılı: telefonda ~13px, 1080p'de ~19px, 1440p'de ~25px.
-- **Vesikalıklar:** Hazır resim dosyalarıdır; oyun onları çalışırken çizmez. Web sürümü `portraits/` klasöründen yükler, service worker hepsini önbelleğe alır; tek dosyalık kopyalar (`oyna.html`, önizleme) resimleri sayfaya gömer. Bir kişinin resmini değiştirmek için aynı adla yenisini koyup derlemek yeter (kare, 384px ve üstü). Başkanlık vesikalıkları `cards.js`'teki `BASKANLAR` listesinden gelir: oyuncu başlıkta birini seçer, ad kutusunu boş bırakırsa vesikalığın adı kullanılır, kendi adını yazarsa o kalır. Seçim isimlikte ve eski başkanlar duvarında görünür. Resmi olmayan kişi ya da listeye bağlı olmayan resim varsa test uyarır.
-- **Sürükleme:** Evrak sürükleme interact.js ile yapılır. Yön kilidi vardır, dikey hareket karar sayılmaz. Karar ya kartın ~%26'sı kadar sürüklemekle ya da kısa, hızlı bir fiskeyle verilir. Evrakın içinde `touch-action: none` şarttır: metin kutusu kaydırılabilir olunca tarayıcı sürüklemeyi yarıda kesiyordu.
+- **Vesikalıklar:** Hazır resim dosyalarıdır; oyun onları çalışırken çizmez. Oyun `portraits/` klasöründen yükler, service worker hepsini önbelleğe alır. Bir kişinin resmini değiştirmek için aynı adla yenisini koyup derlemek yeter (kare, 384px ve üstü). Başkanlık vesikalıkları `cards.js`'teki `BASKANLAR` listesinden gelir: oyuncu aday kaydında birini seçer, ad kutusunu boş bırakırsa vesikalığın adı kullanılır, kendi adını yazarsa o kalır. Seçim isimlikte ve eski başkanlar duvarında görünür. Resmi olmayan kişi ya da listeye bağlı olmayan resim varsa test uyarır.
+- **Sürükleme:** Evrak sürükleme interact.js (npm paketi, derlemede pakete girer) ile yapılır. Yön kilidi vardır, dikey hareket karar sayılmaz. Karar ya kartın ~%26'sı kadar sürüklemekle ya da kısa, hızlı bir fiskeyle verilir. Evrakın içinde `touch-action: none` şarttır: metin kutusu kaydırılabilir olunca tarayıcı sürüklemeyi yarıda kesiyordu.
 - **Denge:** `pnpm sim` son ölçümü (2000 oyun): rastgele oyuncu ~3 yıl dayanır. Okları okuyup arada canının istediğini seçen "insan" oyuncu ilk dönemi %88 bitirir, seçimlerin %78'ini kazanır, %16'sı 20 yılı doldurup emekli olur; medyanı 119 ay. Kesin sayıları hesaplayan "usta" 1,5 kat uzun yaşar. Ölümler sandık (%38) ve kasa (%32) arasında bölünür.
 - **Seçim:** Tek tur, en çok oyu alan kazanır. Adaylar seçimden 9 ay önce ilan edilir: ana rakip (çoğunlukla Nermin Hanım) ve duruma göre katılanlar (esnaf dipteyse Hacı Bekir, Ankara soğuksa Suat Bey, küs olunan muhtar ya da gazeteci...). Dost olan aday olmaz. Tekir nadiren, mama verildiyse daha sık aday olur; kazanırsa ayrı bir son gelir. Anket sizin teke tek oyunuzdur. Her ek aday kendi oyunun bir kısmını sizden, kalanını ana rakipten çalar; bu yüzden kalabalık yarışta %40 da kazandırabilir. Sonuç, KARAKAVAK TV'nin canlı seçim yayınında sandık sandık açılır: aday kartları oy geldikçe yer değiştirir, sizin kartınız altın çerçevelidir, üstte mahalle kutuları, ortada konuşan spiker, altta KJ ve ilçeden dünyaya absürt kayan yazı vardır. Sandıklar mahallelerin seçmen karışımından üretilir ve toplamları kesin sonuca eşitlenir, yani ekran sonucu değiştirmez, yalnız sırasını dramatize eder. Ardından seçmen grubu dökümü ve "Neden?" satırları gelir.
 - **Erken seçim:** Esnaf tavan yaparsa oyun bitmez. Esnaf odası belediyeyi ele geçirir ve meclis erken seçim kararı alır; Hacı Bekir esnafın adayı olarak güçlü girer. Kazanırsanız esnaf 70'e iner, dönem ve normal seçim takvimi yerinde kalır. Bekir kazanırsa okey masası sonu, başkası kazanırsa sandık sonu gelir.

@@ -1,10 +1,9 @@
 // Denge simülasyonu: motoru binlerce kez farklı oyuncu tipleriyle oynatır.
 // node tools/sim.mjs [oyunSayısı] [ayar=değer ...]
-import { readFileSync } from "node:fs";
+import { motor } from "./lib/sayfa.mjs";
 import { lintContent } from "./lint.mjs";
 
-const src = ["cards.js", "engine.js"].map(f => readFileSync(new URL("../src/" + f, import.meta.url), "utf8")).join("\n");
-const E = new Function(src + "\nreturn { CARDS, CARD, CRISES, DAVET, ENDINGS, INTRO, PEOPLE, SYN, newGame, draw, choose, METERS, pollOf, TERM, TUNE, edgeRisk };")();
+const E = await motor(); // cards.js + engine.js modülleri
 // node sim.mjs 2000 damp=0.9 scale=1.1 → ayar düğmelerini geçici değiştir
 for (const a of process.argv.slice(3)) { const [k, v] = a.split("="); if (k in E.TUNE) E.TUNE[k] = Number(v); }
 console.log("TUNE", JSON.stringify(E.TUNE));

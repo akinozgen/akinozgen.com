@@ -3,11 +3,12 @@
 // Metinler (KJ, kayan yazı, kur, "Neden?") src/broadcast.js'ten gelir; KJ için en uzun satırlar seçilir.
 //   node tools/tv-mock.mjs            → .cache/tv/mock.html ve .cache/tv/*.png
 //   node tools/tv-mock.mjs --no-shot  → yalnız sayfayı yazar (tarayıcıda elle açmak için)
-// Sayfa: fontlar web-src/fonts.css'ten, stil src/style.css'ten, işaretleme src/index.html'deki #scr-secim'den.
+// Sayfa: fontlar src/fonts.css'ten, stil src/style.css'ten, işaretleme index.html'deki #scr-secim'den.
 // Adres sonundaki #count · #result · #upset · #three hangi anın gösterileceğini seçer.
 import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { betik, FONTS } from "./lib/sayfa.mjs";
 
 const root = new URL("../", import.meta.url);
 const OUT = new URL(".cache/tv/", root);
@@ -26,15 +27,15 @@ function sectionOf(src, id) {
   }
   throw new Error(`#${id} kapanmıyor`);
 }
-const markup = sectionOf(read("src/index.html"), "scr-secim").replace(/(<section id="scr-secim"[^>]*?)\s+hidden>/, "$1>");
-const fonts = read("web-src/fonts.css").replace(/url\(fonts\//g, "url(../../web-src/fonts/");
+const markup = sectionOf(read("index.html"), "scr-secim").replace(/(<section id="scr-secim"[^>]*?)\s+hidden>/, "$1>");
+const fonts = FONTS;
 const base = `html { box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 *, *::before, *::after { box-sizing: inherit; }
 img, svg { max-width: 100%; }`;
 
 // Oyunun metin motoru (cards.js + engine.js + broadcast.js) sayfaya gömülür: KJ, kayan yazı, kur kutusu ve
 // "Neden?" satırları gerçek üreticiden gelir, uzunlukları gerçek olur. Oy sayıları elle.
-const ENGINE = ["cards.js", "engine.js", "broadcast.js"].map(f => read("src/" + f)).join("\n");
+const ENGINE = betik("cards", "engine", "broadcast");
 const ENGINE_JS = `window.TV = (() => {\n${ENGINE}\nreturn { kj, ticker, fx, whyLines, tvName, tvShort, dateLabel, ADAYLAR };\n})();`;
 
 // Sahte veri ve doldurucu: sayfanın içinde çalışır
@@ -84,7 +85,7 @@ $("#tv-cands").replaceChildren(...ids.map((id, i) => {
   const li = tpl.cloneNode(true);
   li.dataset.id = id; li.style.cssText = "--c:" + RENK[id] + ";--p:" + P[id].toFixed(2);
   li.classList.toggle("lead", i === 0); li.classList.toggle("you", id === "you"); li.classList.toggle("won", !!S.won && i === 0);
-  li.querySelector("img").src = "../../web-src/portraits/" + PIC[id] + ".webp";
+  li.querySelector("img").src = "../../public/portraits/" + PIC[id] + ".webp";
   li.querySelector(".tv-lbl").textContent = label(id);
   li.querySelector(".tv-name").textContent = tvName(id, NAME);
   li.querySelector(".tv-pct").textContent = "%" + pct(P[id]);

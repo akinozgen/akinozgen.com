@@ -1,10 +1,10 @@
-// Uygulama ikonlarını üretir: web-src/icons/{icon.svg, icon-192.png, icon-512.png, maskable-512.png, apple-touch-icon.png}
+// Uygulama ikonlarını üretir: public/icons/{icon.svg, icon-192.png, icon-512.png, maskable-512.png, apple-touch-icon.png}
 // node tools/icons.mjs   (headless Chrome ile SVG'den PNG çizer)
 import { writeFileSync, mkdirSync, rmSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-const DIR = new URL("../web-src/icons/", import.meta.url);
+const DIR = new URL("../public/icons/", import.meta.url);
 mkdirSync(DIR, { recursive: true });
 const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe";
 

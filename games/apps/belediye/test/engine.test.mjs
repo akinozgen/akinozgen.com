@@ -1,10 +1,10 @@
 // Motor ve içerik testleri: node --test test/
-import { test } from "node:test";
+import { test } from "vitest";
 import assert from "node:assert/strict";
-import { readFileSync, existsSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
+import { yukle } from "./yukle.mjs";
 
-const src = ["cards.js", "engine.js"].map(f => readFileSync(new URL("../src/" + f, import.meta.url), "utf8")).join("\n");
-const E = new Function(src + "\nreturn { CARDS, CARD, CRISES, DAVET, ENDINGS, INTRO, PEOPLE, BASKANLAR, SYN, newGame, draw, choose, METERS, TERM };")();
+const E = await yukle("cards", "engine");
 const rng = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 const all = [...E.CARDS, ...Object.values(E.CRISES), ...E.INTRO, ...E.DAVET];
 
@@ -60,9 +60,9 @@ test("rastgele oyunlar biter, takılmaz ve makul sürer", () => {
 });
 
 test("her kişinin ve başkanlık vesikalığının resmi var, başıboş resim yok", () => {
-  const dir = new URL("../web-src/portraits/", import.meta.url);
+  const dir = new URL("../public/portraits/", import.meta.url);
   const ids = [...Object.keys(E.PEOPLE), ...Object.keys(E.BASKANLAR)];
-  for (const id of ids) assert.ok(existsSync(new URL(id + ".webp", dir)), `web-src/portraits/${id}.webp yok`);
+  for (const id of ids) assert.ok(existsSync(new URL(id + ".webp", dir)), `public/portraits/${id}.webp yok`);
   assert.ok(Object.keys(E.BASKANLAR).length > 0, "BASKANLAR boş");
   for (const [id, b] of Object.entries(E.BASKANLAR)) {
     assert.ok(b.ad && b.ad.length <= 24, `${id}: ad boş ya da isim kutusuna sığmaz`);

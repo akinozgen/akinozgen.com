@@ -1,11 +1,10 @@
 // Motorun zamana yayılan mekanikleri: sayaçlar, koşullu/aralıklı zincir, etiket etkileşimi, yer açma, hatırlama, vaat
-import { test } from "node:test";
+import { test } from "vitest";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { yukle } from "./yukle.mjs";
 
-const src = ["cards.js", "engine.js"].map(f => readFileSync(new URL("../src/" + f, import.meta.url), "utf8")).join("\n");
 // her test kendi kopyasını alır: kart eklemek başka testi bozmasın
-const load = () => new Function(src + "\nreturn { CARDS, CARD, SYN, TUNE, MAX_ONGOING, newGame, draw, choose, materialize, eligible, addPol, tick, pollOf, condOK, specificity, schedule };")();
+const load = () => yukle("cards", "engine");
 const rng = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 const Z = [0, 0, 0, 0];
 const card = (id, extra = {}, L = {}, R = {}) => ({ id, who: "sevim", konu: "Deneme", text: "Deneme.", L: { t: "Sol", e: Z, ...L }, R: { t: "Sağ", e: Z, ...R }, ...extra });
@@ -13,8 +12,8 @@ const card = (id, extra = {}, L = {}, R = {}) => ({ id, who: "sevim", konu: "Den
 const play = (E, s, c, side, r = rng(1)) => { s.cur = { ...c, kind: "normal", L: { ...c.L, e: c.L.e }, R: { ...c.R, e: c.R.e } }; return E.choose(s, side, r); };
 const withCards = (E, ...cs) => { E.CARDS.push(...cs); for (const c of cs) E.CARD[c.id] = c; };
 
-test("sayaç: inc/dec adı ya da miktarıyla işler, sıfırın altına inmez; reqCnt kartı açar", () => {
-  const E = load(), s = E.newGame();
+test("sayaç: inc/dec adı ya da miktarıyla işler, sıfırın altına inmez; reqCnt kartı açar", async () => {
+  const E = await load(), s = E.newGame();
   const kapi = card("t_kapi", { reqCnt: { borc: [3, 5] } });
   assert.equal(E.eligible(kapi, s), false);
   play(E, s, card("a", {}, { inc: { borc: 2 } }), "L");
@@ -27,8 +26,8 @@ test("sayaç: inc/dec adı ya da miktarıyla işler, sıfırın altına inmez; r
   assert.equal(s.cnt.borc, 0);
 });
 
-test("zincir: gecikme aralığı içinde kalır", () => {
-  const E = load(), seen = new Set();
+test("zincir: gecikme aralığı içinde kalır", async () => {
+  const E = await load(), seen = new Set();
   for (let g = 0; g < 200; g++) {
     const s = E.newGame();
     E.schedule(s, { id: "asfalt", in: [3, 6] }, rng(g));
@@ -39,8 +38,8 @@ test("zincir: gecikme aralığı içinde kalır", () => {
   assert.equal(seen.size, 4, "aralığın her ayı görülmeli");
 });
 
-test("zincir: koşul teslim anında sınanır; tutmazsa else gelir, else yoksa düşer", () => {
-  const E = load();
+test("zincir: koşul teslim anında sınanır; tutmazsa else gelir, else yoksa düşer", async () => {
+  const E = await load();
   withCards(E, card("t_bedel", { chain: true }), card("t_affedildi", { chain: true }));
   const r = rng(7);
   // koşul tutuyor → asıl kart
@@ -58,8 +57,8 @@ test("zincir: koşul teslim anında sınanır; tutmazsa else gelir, else yoksa d
   assert.notEqual(c.id, "t_bedel"); assert.equal(s.queue.length, 0);
 });
 
-test("etiket etkileşimi: iki etiket birlikteyken her ay ek etki, ilk değişte bir kez kart ve haber", () => {
-  const E = load();
+test("etiket etkileşimi: iki etiket birlikteyken her ay ek etki, ilk değişte bir kez kart ve haber", async () => {
+  const E = await load();
   withCards(E, card("t_catisma", { chain: true }));
   E.SYN.push({ id: "t_syn", a: "kemer", b: "festival", e: [0, 0, 0, -2], card: "t_catisma", ad: "Tasarruf ve festival", msg: "Genelge ile konser aynı aya denk geldi." });
   const s = E.newGame();
@@ -77,8 +76,8 @@ test("etiket etkileşimi: iki etiket birlikteyken her ay ek etki, ilk değişte 
   assert.equal(s.queue.filter(q => q.id === "t_catisma").length, 1, "kart bir kez");
 });
 
-test("yer açma: dolu listede en eski sıradan karar kalkar, iş/inşaat korunur, oyuncuya haber gider", () => {
-  const E = load(), s = E.newGame();
+test("yer açma: dolu listede en eski sıradan karar kalkar, iş/inşaat korunur, oyuncuya haber gider", async () => {
+  const E = await load(), s = E.newGame();
   E.addPol(s, { id: "insaat", ad: "Köprü inşaatı", e: Z, ay: 12, done: [5, 0, 0, 0] });
   for (let i = 1; i < E.MAX_ONGOING; i++) E.addPol(s, { id: "p" + i, ad: "Karar " + i, e: Z });
   assert.equal(s.ongoing.length, E.MAX_ONGOING);
@@ -90,16 +89,16 @@ test("yer açma: dolu listede en eski sıradan karar kalkar, iş/inşaat korunur
   assert.ok(t.events.some(e => e.ad === "Karar 1" && /yer açmak/.test(e.msg)));
 });
 
-test("hatırlama metni: koşulu tutan varyant asıl metnin yerine geçer", () => {
-  const E = load(), s = E.newGame();
+test("hatırlama metni: koşulu tutan varyant asıl metnin yerine geçer", async () => {
+  const E = await load(), s = E.newGame();
   const c = card("t_hatir", { alt: [{ if: { cnt: { garanti: 1 } }, text: "Geçen yıl imzaladığınız garanti yüzünden..." }, { req: "x", text: "X metni" }] });
   assert.equal(E.materialize(c, s, rng(3)).text, "Deneme.");
   s.cnt.garanti = 1;
   assert.match(E.materialize(c, s, rng(3)).text, /imzaladığınız garanti/);
 });
 
-test("vaat: tutulmamış vaat anketi düşürür (tavanlı), yeni dönemde yarısı unutulur", () => {
-  const E = load(), s = E.newGame();
+test("vaat: tutulmamış vaat anketi düşürür (tavanlı), yeni dönemde yarısı unutulur", async () => {
+  const E = await load(), s = E.newGame();
   const p0 = E.pollOf(s);
   s.cnt.vaat = 2;
   assert.equal(Math.round((p0 - E.pollOf(s)) * 10) / 10, 2 * E.TUNE.vaat);
@@ -110,21 +109,21 @@ test("vaat: tutulmamış vaat anketi düşürür (tavanlı), yeni dönemde yarı
   assert.equal(s.cnt.vaat, 2);
 });
 
-test("özgüllük: daha çok şartla açılan kart torbada ağır basar", () => {
-  const E = load();
+test("özgüllük: daha çok şartla açılan kart torbada ağır basar", async () => {
+  const E = await load();
   assert.equal(E.specificity(card("x")), 0);
   assert.equal(E.specificity(card("x", { req: ["a", "b"], reqCnt: { k: 1 }, reqTag: "t" })), 4);
 });
 
-test("çoklu kesme: cut birden fazla kararı kaldırabilir", () => {
-  const E = load(), s = E.newGame();
+test("çoklu kesme: cut birden fazla kararı kaldırabilir", async () => {
+  const E = await load(), s = E.newGame();
   E.addPol(s, { id: "a", ad: "A", e: Z }); E.addPol(s, { id: "b", ad: "B", e: Z }); E.addPol(s, { id: "c", ad: "C", e: Z });
   play(E, s, card("t_kes", {}, { cut: ["a", "c"] }), "L");
   assert.deepEqual(s.ongoing.map(o => o.id), ["b"]);
 });
 
-test("eski kayıtlar bozulmadan açılır: yeni alanlar yokken motor çalışır", () => {
-  const E = load(), s = E.newGame();
+test("eski kayıtlar bozulmadan açılır: yeni alanlar yokken motor çalışır", async () => {
+  const E = await load(), s = E.newGame();
   delete s.dropped; delete s.syn;
   s.ongoing.push({ id: "eski", ad: "Eski karar", e: [0, 1, 0, 0], left: null }); // tags alanı yok
   const r = rng(11);

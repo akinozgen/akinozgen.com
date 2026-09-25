@@ -1,10 +1,9 @@
 // Seçim gecesi yayını (broadcast.js): alt bant, son dakika bandı, döviz kutusu, kazanan sözleri
-import { test } from "node:test";
+import { test } from "vitest";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { yukle } from "./yukle.mjs";
 
-const src = ["cards.js", "engine.js", "broadcast.js"].map(f => readFileSync(new URL("../src/" + f, import.meta.url), "utf8")).join("\n");
-const E = new Function(src + "\nreturn { ADAYLAR, PEOPLE, newGame, tally, KANAL, tvName, tvShort, kj, ticker, tickerTagged, fx, winnerQuote, whyLines, TV_TICK };")();
+const E = await yukle("cards", "engine", "broadcast");
 const rng = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 const up = s => s.toLocaleUpperCase("tr");
 const PHASES = ["acilis", "sayim", "lider", "mahalle", "son", "sonuc"];

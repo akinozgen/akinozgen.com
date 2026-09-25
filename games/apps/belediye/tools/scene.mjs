@@ -3,11 +3,12 @@
 import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { motor, sunucu } from "./lib/sayfa.mjs";
+const srv = process.argv[3] ? null : await sunucu(); // önce `pnpm build`: dist/ sunulur
 
 const OUT = process.argv[2] || fileURLToPath(new URL("../.cache/scene/", import.meta.url));
 mkdirSync(OUT, { recursive: true });
-const src = ["cards.js", "engine.js"].map(f => readFileSync(new URL("../src/" + f, import.meta.url), "utf8")).join("\n");
-const E = new Function(src + "\nreturn { CARD, newGame, materialize, addPol };")();
+const E = await motor();
 
 // Durum: 2. yıl, kasa dipte, Sevim Hanım'la aralar bozuk, üç karar yürürlükte
 const S = E.newGame();
@@ -33,7 +34,7 @@ try {
   ws.addEventListener("message", m => { const d = JSON.parse(m.data); if (d.id && pending.has(d.id)) { const p = pending.get(d.id); pending.delete(d.id); d.error ? p.rej(new Error(d.error.message)) : p.res(d.result); } if (d.method === "Runtime.exceptionThrown") errors.push(d.params.exceptionDetails.exception?.description || d.params.exceptionDetails.text); });
   await send("Runtime.enable"); await send("Page.enable");
   await send("Emulation.setDeviceMetricsOverride", { width: 400, height: 820, deviceScaleFactor: 1, mobile: true });
-  const page = process.argv[3] || new URL("../dist/oyna.html", import.meta.url).href;
+  const page = process.argv[3] || srv.url;
   await send("Page.navigate", { url: page }); await sleep(1200);
   await ev(`localStorage.setItem("cb.save", ${JSON.stringify(JSON.stringify(S))}); localStorage.setItem("cb.introSeen", "true"); location.reload()`);
   await sleep(2000);

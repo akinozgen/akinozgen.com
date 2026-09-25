@@ -7,12 +7,10 @@
 import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-
+import { FONTS } from "./lib/sayfa.mjs";
 const OUT = process.argv[2] || fileURLToPath(new URL("../.cache/meydan-render/", import.meta.url));
 mkdirSync(OUT, { recursive: true });
 const SRC = readFileSync(new URL("./meydan.js", import.meta.url), "utf8");
-const FONTS = readFileSync(new URL("../web-src/fonts.css", import.meta.url), "utf8")
-  .replace(/url\(fonts\//g, `url(${new URL("../web-src/fonts/", import.meta.url).href}`);
 export const W = 1344, H = 752; // SDXL'in 16:9'a en yakın kovası (8'in katı); çıktı bunun iki katı
 const html = `<!doctype html><html lang="tr"><head><meta charset="utf-8"><style>${FONTS}
 html, body { margin: 0; height: 100%; overflow: hidden; background: #000; }
