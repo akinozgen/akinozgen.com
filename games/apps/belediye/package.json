@@ -18,6 +18,7 @@
     "portraits": "node tools/portraits.mjs",
     "election": "node tools/election.mjs",
     "menu": "node tools/menu.mjs",
+    "kampanya": "node tools/kampanya.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write .",
