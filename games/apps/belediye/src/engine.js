@@ -1,5 +1,5 @@
 // ─── Oyun motoru (DOM'suz; sim.mjs de bunu çalıştırır) ────────────────────
-import { ADAYLAR, BLOKLAR, CARDS, CAY_LINES, CRISES, DAVET, ENDINGS, INTRO, PEOPLE, SYN } from "./cards.js";
+import { ADAYLAR, BLOKLAR, CARDS, CAY_LINES, CRISES, DAVET, ENDINGS, INTRO, PEOPLE, SYN } from "./cards.ts";
 
 export const METERS = ["h", "k", "e", "a"];
 export const METER_AD = { h: "Halk", k: "Kasa", e: "Esnaf", a: "Ankara" };

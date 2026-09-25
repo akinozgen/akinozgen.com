@@ -1,0 +1,222 @@
+// Ortak tipler: içerik şeması (cards.ts), oyun durumu ve motorun ürettikleri (engine.ts).
+// Yalnız tip; derlemede hiçbir şey üretmez.
+
+/** Göstergeler: h halk, k kasa, e esnaf, a Ankara */
+export type Meter = "h" | "k" | "e" | "a";
+export type Meters = Record<Meter, number>;
+/** Dört göstergeye etki, METERS sırasıyla [halk, kasa, esnaf, ankara] */
+export type Effect = number[];
+export type Rng = () => number;
+/** Tek değer ya da liste (bayrak, karar, etiket adları) */
+export type OneOrMany = string | string[];
+/** Sayaç ya da ilişki eşiği: en az n ya da [en az, en çok] */
+export type Range = number | [number, number];
+
+/** Ortak koşul dili (engine.ts'teki condOK) */
+export interface Cond {
+  req?: OneOrMany;
+  not?: OneOrMany;
+  cnt?: Record<string, Range>;
+  pol?: OneOrMany;
+  nopol?: OneOrMany;
+  tag?: OneOrMany;
+  notag?: OneOrMany;
+  rel?: Record<string, Range>;
+}
+
+/** Zincir: [kart, ay] ya da { id, in: ay | [en az, en çok], if, else } */
+export type Next = [string, number | [number, number]] | { id: string; in?: number | [number, number]; if?: Cond; else?: string };
+
+/** Yürürlüğe giren karar: her ay e kadar işler, ay dolunca done ve doneCard gelir */
+export interface PolDef {
+  id: string;
+  ad: string;
+  e?: Effect;
+  ay?: number;
+  done?: Effect;
+  msg?: string;
+  doneCard?: string;
+  tags?: string[];
+}
+
+/** Kart seçeneği (içerikte yazıldığı hâliyle) */
+export interface SideDef {
+  t: string;
+  e: Effect;
+  rel?: Record<string, number>;
+  set?: OneOrMany;
+  clr?: OneOrMany;
+  inc?: string | Record<string, number>;
+  dec?: string | Record<string, number>;
+  next?: Next;
+  pol?: PolDef;
+  cut?: OneOrMany;
+  /** Ankara daveti: kabul edilince gelen son (ENDINGS anahtarı) */
+  son?: string;
+}
+
+export type CardKind = "normal" | "intro" | "kriz" | "ending" | "tekir" | "sonuc" | "cay" | "secim" | "erkensonuc" | "adaylar" | "davet";
+
+/** Kart (içerik ya da motorun ürettiği özel evrak) */
+export interface CardDef {
+  id: string;
+  who: string;
+  konu: string;
+  text: string;
+  L: SideDef;
+  R: SideDef;
+  kind?: CardKind;
+  chain?: boolean;
+  once?: boolean;
+  cd?: number;
+  w?: number;
+  months?: number[];
+  minM?: number;
+  pre?: boolean;
+  req?: OneOrMany;
+  not?: OneOrMany;
+  reqCnt?: Record<string, Range>;
+  reqPol?: OneOrMany;
+  notPol?: OneOrMany;
+  reqTag?: OneOrMany;
+  notTag?: OneOrMany;
+  relMin?: Record<string, number>;
+  relMax?: Record<string, number>;
+  fav?: "L" | "R";
+  norel?: boolean;
+  alt?: { req?: OneOrMany; if?: Cond; text: string }[];
+  // motorun özel evraklarında
+  key?: string;
+  restore?: Meters;
+  oy?: string;
+  early?: boolean;
+}
+
+export interface Person { ad: string; unvan: string; pos?: string[]; neg?: string[] }
+export interface Baskan { ad: string; lakap: string; bio: string; cins: "k" | "e" }
+
+/** Seçimde karşınıza çıkabilecek aday */
+export interface Aday {
+  /** ana rakip sırası (küçük önce) */
+  ana?: number;
+  etiket: string;
+  slogan: string;
+  /** seçmen gruplarındaki ağırlığı, BLOKLAR sırasıyla */
+  blok: number[];
+  p?: number;
+  pSart?: number;
+  sart?: (s: State) => boolean;
+  guc?: (s: State) => number;
+  /** oyunun ne kadarını sizden çaldığı (kalanı ana rakipten) */
+  beta?: number;
+}
+
+export interface SynRule { id: string; a: string; b: string; e?: Effect; card?: string; ad?: string; msg?: string }
+
+export interface Ending { who: string; konu: string; text: string; manset: string; spot: string; kisa: string; win?: boolean; legacy?: boolean }
+
+// ── Oyun durumu
+export interface Ongoing {
+  id: string;
+  ad: string;
+  e: Effect;
+  left: number | null;
+  total: number | null;
+  done: Effect | null;
+  msg: string | null;
+  doneCard: string | null;
+  proj: boolean;
+  tags: string[];
+}
+export interface QueueItem { id: string; at: number; if?: Cond; else?: string }
+export interface LogEntry { m: number; who: string; konu: string; t: string; e: Effect }
+export interface Field { term: number; main: string; extras: string[] }
+
+export interface Tally {
+  cands: { id: string; pct: number }[];
+  blocs: { ad: string; w: number; pay: number[] }[];
+  winner: string;
+  win: boolean;
+  you: number;
+  margin: number;
+  month: number;
+  term: number;
+  early: boolean;
+  order: string[];
+  p0: number;
+  steal: { id: string; v: number }[];
+  vaat: number;
+  rel: number;
+  fatigue: number;
+}
+
+export type Pending =
+  | { type: "ending"; key: string; oy?: string; rakip?: string }
+  | { type: "tekir"; restore: Meters; cause: string }
+  | { type: "erken" }
+  | { type: "davet" }
+  | { type: "sonuc"; oy: string; win: boolean; big?: boolean; res?: Tally; early?: boolean };
+
+/** Masaya gelmiş, o ana göre somutlaşmış seçenek */
+export interface Side extends Omit<SideDef, "rel"> { rel: Record<string, number> }
+/** Masadaki evrak (materialize) */
+export interface Cur {
+  id: string;
+  kind: CardKind;
+  key?: string;
+  restore?: Meters;
+  oy?: string;
+  who: string;
+  konu: string;
+  early?: boolean;
+  text: string;
+  L: Side;
+  R: Side;
+  flip: boolean;
+  rel: number | null;
+  sayi: string;
+  tarih: string;
+  seed: number;
+}
+
+/** Olay günlüğü kaydı (ui.ts) */
+export interface JournalEntry { m: number; who: string; konu: string; side: "L" | "R"; t: string; e: Effect; notes: { html: string; cls?: string }[] }
+
+export interface State {
+  v: number;
+  gid: string;
+  m: Meters;
+  month: number;
+  term: number;
+  electionTerm: number;
+  fieldTerm?: number;
+  flags: Record<string, boolean>;
+  cnt: Record<string, number>;
+  last: Record<string, number>;
+  used: Record<string, boolean>;
+  queue: QueueItem[];
+  log: LogEntry[];
+  rel: Record<string, number>;
+  ongoing: Ongoing[];
+  bitti: string[];
+  cay: number;
+  signed: number;
+  tekirUsed: boolean;
+  danis: number;
+  danisTerm: number;
+  intro: number;
+  lastWho: string | null;
+  pending: Pending | null;
+  cur: Cur | null;
+  over: { key: string; months: number; term: number } | null;
+  field?: Field | null;
+  earlyField?: Field | null;
+  syn?: Record<string, number>;
+  dropped?: string[];
+  lastElection?: Tally;
+  journal?: JournalEntry[];
+}
+
+/** Motorun bir kararın ardından döndürdüğü */
+export interface TickEvent { ad: string; msg: string; e?: Effect | null; syn?: boolean }
+export interface ChooseOut { d: Effect; td: Effect; events: TickEvent[]; rel: Record<string, number>; over?: boolean; dead?: Meter }

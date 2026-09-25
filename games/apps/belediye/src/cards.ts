@@ -1,6 +1,7 @@
 // ─── Karakavak'ın insanları ───────────────────────────────────────────────
 // vesikalık: web-src/portraits/<anahtar>.webp · pos/neg: gönlü olunca / kırılınca tepki
-export const PEOPLE = {
+import type { Aday, Baskan, CardDef, Ending, Person, SynRule } from "./types.ts";
+export const PEOPLE: Record<string, Person> = {
   fikret:   { ad: "Fikret", unvan: "Makam Şefi" },
   muhtar:   { ad: "Muhtar Rıza", unvan: "Kavaklı Mahallesi Muhtarı", pos: ["Mahalle sizi bağrına basar.", "Kavaklı bunu unutmaz başkanım."], neg: ["Kahvede anlatırım bunu.", "Kırk yıllık hatırın yok mu?"] },
   bekir:    { ad: "Hacı Bekir", unvan: "Esnaf ve Sanatkârlar Odası Başkanı", pos: ["Esnaf bunu unutmaz!", "Bereketli olsun başkanım."], neg: ["Esnaf da bunu unutmaz.", "Çarşıda konuşulur bu."] },
@@ -39,7 +40,7 @@ export const PEOPLE = {
 // Oyuncu kendi adını yazmazsa bu ad kullanılır. Eski başkanlar duvarı da bu resimleri asar.
 // cins: k (kadın) ya da e (erkek), resme bakılarak; ad zarı buna uygun ad verir (adlar.js).
 // lakap + bio: seçim ekranındaki broşür. Gerçek kişi ya da parti yok; hepsi yerel siyasetin bilinen halleri.
-export const BASKANLAR = {
+export const BASKANLAR: Record<string, Baskan> = {
   "baskan-01": { cins: "k", ad: "Aslı Kavaklıoğlu", lakap: "Kurdele Aslı", bio: "Aynı çeşmenin üç ayrı açılışında da kurdeleyi o kesti. Makası çantasından çıkmaz: düğünde, sünnette, bir keresinde de dalgınlıkla bir cenazede." },
   "baskan-02": { cins: "e", ad: "Mehmet Emin Yurtsever", lakap: "Müjdeci Emin", bio: "On iki yılda Karakavak'a yedi fabrika müjdeledi. Arsa hep aynı, temel üç kez atıldı. Fabrika gelmedi ama müjdeler istihdam yarattı: iki basın danışmanı." },
   "baskan-03": { cins: "k", ad: "Gülten Arıkan", lakap: "Kasayı Boş Bulan", bio: "Apartman yöneticiliği, okul aile birliği, kooperatif... Nereye seçildiyse ilk iş 'kasayı boş bulduk' basın toplantısı yaptı. Kasalar sonra hep bankada çıktı." },
@@ -72,7 +73,7 @@ export const BASKANLAR = {
 //          pol: {id, ad, e (her ay), ay (süre; yoksa süresiz), done (bitişte), msg, doneCard, tags: [etiket]}
 // koşul:   {req, not, cnt, pol, nopol, tag, notag, rel}; ayrıntısı engine.js'teki condOK
 // sayaç vaat: tutulmamış vaatler, sandıkta anketten düşer (dec ile tutulur)
-export const CARDS = [
+export const CARDS: CardDef[] = [
   // ── Muhtar Rıza
   { id: "asfalt", who: "muhtar", konu: "Yol talebi", once: true,
     text: "Başkanım, Kavaklı'nın yolları köstebek yuvasına döndü. Seçimde asfalt sözü vermiştiniz, mahalle unutmadı.",
@@ -1029,7 +1030,7 @@ export const CARDS = [
 // ana: ilk uygun olan ana rakiptir, geri kalanlar şansa ve duruma göre katılır (en çok 5 aday).
 // p: aday olma ihtimali; sart(s) tutarsa pSart · guc(s): oy yüzdesi · beta: oyunun ne kadarını sizden çaldığı
 // blok: hangi seçmen grubundan oy topladığı (halk, esnaf, parti tabanı, kararsızlar), yalnız dökümde kullanılır
-export const ADAYLAR = {
+export const ADAYLAR: Record<string, Aday> = {
   nermin: { ana: 1, etiket: "Muhalefetin adayı", slogan: "Şeffaf belediye, şeffaf çay bardağı", blok: [1, .4, .2, 1] },
   vekil:  { ana: 2, etiket: "Ankara'nın adayı", slogan: "Ankara'yla el ele, Karakavak'la gönül gönüle", blok: [.5, .5, 1.6, .3],
             p: .05, pSart: .7, sart: s => s.m.a <= 30 || (s.rel.vekil || 0) <= -2, guc: s => 8 + Math.max(0, 40 - s.m.a) / 2, beta: .55 },
@@ -1052,11 +1053,11 @@ export const ADAYLAR = {
             p: .03, pSart: .12, sart: s => (s.cnt.tekir || 0) >= 3, guc: s => 4 + (s.cnt.tekir || 0), beta: .5 },
 };
 // Seçmen grupları ve ağırlıkları (dökümde)
-export const BLOKLAR = [["Halk", .55], ["Esnaf", .15], ["Parti tabanı", .15], ["Kararsızlar", .15]];
+export const BLOKLAR: [string, number][] = [["Halk", .55], ["Esnaf", .15], ["Parti tabanı", .15], ["Kararsızlar", .15]];
 
 // ─── Etkileşim tablosu: iki etiketli karar aynı anda yürürlükteyse ─────────
 // e: her ay ek etki · card: ilk kez değdiklerinde gelen kart · msg/ad: günlüğe düşen haber
-export const SYN = [
+export const SYN: SynRule[] = [
   { id: "kemer_insaat", a: "kemer", b: "insaat", e: [0, 0, 0, -1], card: "kemer_soru", ad: "Tasarruf ve inşaat", msg: "Tasarruf genelgesi yürürlükteyken inşaat sürüyor; Ankara not aldı." },
   { id: "mujde_kemer", a: "mujde", b: "kemer", e: [0, -1, 0, -1], ad: "Tasarrufta sondaj", msg: "Tasarruf genelgesine rağmen sondaj kulesinin kirası ödeniyor." },
   { id: "kuyruk", a: "lokanta", b: "kuyruk", e: [1, -1, 0, 0], card: "kuyruk_birlesti", ad: "Kuyruklar birleşti", msg: "Kent lokantası ile tanzim çadırının kuyrukları birbirine eklendi." },
@@ -1073,7 +1074,7 @@ export const SYN = [
 
 // ─── Kriz kartları: bir gösterge uca yaklaşınca Fikret can simidi getirir ─
 // İki seçenek de göstergeyi merkeze çeker; fark bedelde.
-export const CRISES = {
+export const CRISES: Record<string, Omit<CardDef, "id">> = {
   k0: { who: "sevim", konu: "Kasa alarmı",
     text: "Başkanım, kasada iki aylık maaş kalmadı. Bir çıkış yolu bulmazsak icra kapıya dayanır.",
     L: { t: "Ankara'dan avans", e: [0, 16, 0, -10] },
@@ -1107,7 +1108,7 @@ export const CRISES = {
 // ─── Ankara'dan davet: Ankara tavan yapınca oyun bitmez, sizi yukarı çağırırlar ─
 // Sırası reddetme sayısına (ankara_ret) göre: genel merkez → milletvekilliği → bakan yardımcılığı (sonra hep o).
 // L: reddet (Ankara küser, halk sever, peşine evrak gelir) · R: kabul (son: terfiyle biten final). Taraflar çevrilmez.
-export const DAVET = [
+export const DAVET: CardDef[] = [
   { id: "davet_gm", who: "vekil", konu: "Ankara'dan davet",
     text: "Başkanım, genel merkez sizi istiyor: Yerel Yönetimlerden Sorumlu Genel Başkan Yardımcılığı. Makam aracı, plaka, koltuk; koltuğun arkalığı sizinkinden yüksek. Karakavak'a 'arada uğrarsınız' diyorlar.",
     L: { t: "Karakavak'ı bırakmam", e: [8, 0, 2, -30], rel: { vekil: -1 }, set: "ankara_ret", inc: "ankara_ret", next: { id: "ret_manset", in: 0 } },
@@ -1124,7 +1125,7 @@ export const DAVET = [
 ];
 
 // ─── Sonlar ───────────────────────────────────────────────────────────────
-export const ENDINGS = {
+export const ENDINGS: Record<string, Ending> = {
   h0: { who: "huseyin", konu: "Son çay",
     text: "Başkanım, belediyenin önü tencere tava sesinden geçilmiyor. Halk 'istifa' diye bağırıyor. Ben de çay ocağını kapattım, kusura bakmayın.",
     manset: "HALK SABRETMEDİ", spot: "Tencere tava eyleminin ardından başkan binayı arka kapıdan terk etti.", kisa: "Tencere tavayla gitti" },
@@ -1167,7 +1168,7 @@ export const ENDINGS = {
     manset: "BİR DEVRİN SONU", spot: "Dört dönemlik başkanlık, meydanda çay ve kavun ikramıyla uğurlandı.", kisa: "Dört dönem, onurlu veda" },
 };
 
-export const INTRO = [
+export const INTRO: CardDef[] = [
   { id: "intro1", who: "fikret", konu: "Hoş geldiniz",
     text: "Hoş geldiniz başkanım! Ben Fikret, makam şefiniz. Evrak gelir; siz sağa ya da sola kaydırırsınız. Yukarıda dört gösterge var: Halk, Kasa, Esnaf, Ankara.",
     L: { t: "Önce çay", e: [0, 0, 0, 0] },
@@ -1182,7 +1183,7 @@ export const INTRO = [
     R: { t: "Başlayalım", e: [0, 0, 0, 0] } },
 ];
 
-export const CAY_LINES = {
+export const CAY_LINES: Record<string, string> = {
   hlo: "Kahvede adınız geçince okey taşları bile susuyor. Halkın gönlünü almak lazım.",
   hhi: "Düğünlerde adınıza halay çekiliyor. Sandık bu hafta kurulsa kazanırız.",
   klo: "Kasa tıngır tıngır. Sevim Hanım hesap makinesini bırakıp tespih çekmeye başladı.",
@@ -1194,12 +1195,12 @@ export const CAY_LINES = {
   ok: "Her şey yolunda görünüyor. Böyle sakin zamanlarda ben daha çok korkarım.",
 };
 
-export const REACT = {
+export const REACT: { pos: string[]; neg: string[] } = {
   pos: ["Sağ olun başkanım!", "Eksik olmayın!", "Allah razı olsun.", "Helal olsun size!"],
   neg: ["Peki... Anlaşıldı.", "Bunu unutmam başkanım.", "Hayırlısı diyelim.", "Siz bilirsiniz."],
 };
 
-export const KULIS = [
+export const KULIS: string[] = [
   "Makam odasındaki kaktüsün de istifa dilekçesi verdiği konuşuluyor.",
   "Çaycı Hüseyin'in semaveri yeni başkana devretmeden önce parlattığı öğrenildi.",
   "Tekir'in yeni başkanla görüşmeye sıcak baktığı kulislere yansıdı.",
@@ -1209,7 +1210,7 @@ export const KULIS = [
   "Fikret'in masadaki çay bardaklarını hâlâ kaldırmadığı gözlerden kaçmadı.",
 ];
 
-export const QUOTES = [
+export const QUOTES: string[] = [
   "Başkanım iyi insandı, çayını hep tavşan kanı içerdi.",
   "Evrakların çoğunu okudu. Hepsini değil ama çoğunu.",
   "Makam gelir geçer, çay ocağı kalır.",

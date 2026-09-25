@@ -1,11 +1,12 @@
 // Araçların ortak yardımcıları.
 //   sunucu(klasör)  derlenmiş oyunu (vite build → dist/) rastgele bir porttan sunar: { url, kapat }. Modül kodu dosyadan açılınca çalışmaz.
-//   motor()         oyun motoru ve içerik (cards.js + engine.js + adlar.js) tek nesnede; araçlar durum kurmak için kullanır
+//   motor()         oyun motoru ve içerik (cards + engine + adlar) tek nesnede; araçlar durum kurmak için kullanır
 //   betik(...ad)    src/ modüllerini import/export'suz düz betiğe çevirip birleştirir: oyundan bağımsız gösteri sayfalarına gömmek için
 //   FONTS           yazı karakteri CSS'i, dosya yolları mutlak (gösteri sayfaları .cache/ altında durur)
 import { createServer } from "node:http";
 import { readFile, stat } from "node:fs/promises";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { stripTypeScriptTypes } from "node:module";
 import { extname, join, normalize, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -35,12 +36,17 @@ export function sunucu(dir = DIST) {
   return new Promise(ok => srv.listen(0, "127.0.0.1", () => ok({ url: `http://127.0.0.1:${srv.address().port}/`, kapat: () => srv.close() })));
 }
 
+// TypeScript'e geçiş dosya dosya: modül .ts'ye çevrildiyse o (Node 24 tipleri kendisi siler), değilse .js
+export const kaynak = ad => new URL(existsSync(new URL(`src/${ad}.ts`, APP)) ? `src/${ad}.ts` : `src/${ad}.js`, APP);
+
 export async function motor() {
-  const ms = await Promise.all(["cards", "engine", "adlar"].map(m => import(new URL(`src/${m}.js`, APP).href)));
+  const ms = await Promise.all(["cards", "engine", "adlar"].map(m => import(kaynak(m).href)));
   return Object.assign({}, ...ms);
 }
 
-export const betik = (...adlar) => adlar.map(a => readFileSync(new URL(`src/${a}.js`, APP), "utf8")
-  .replace(/^import [^\n]*\n/gm, "").replace(/^export /gm, "")).join("\n");
+export const betik = (...adlar) => adlar.map(a => {
+  const u = kaynak(a), s = readFileSync(u, "utf8");
+  return (u.pathname.endsWith(".ts") ? stripTypeScriptTypes(s) : s).replace(/^import [^\n]*\n/gm, "").replace(/^export /gm, "");
+}).join("\n");
 
 export const FONTS = readFileSync(new URL("src/fonts.css", APP), "utf8").replace(/url\(\.\/fonts\//g, `url(${new URL("src/fonts/", APP).href}`);

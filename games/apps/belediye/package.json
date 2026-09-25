@@ -17,13 +17,15 @@
     "icons": "node tools/icons.mjs",
     "portraits": "node tools/portraits.mjs",
     "election": "node tools/election.mjs",
-    "menu": "node tools/menu.mjs"
+    "menu": "node tools/menu.mjs",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "interactjs": "1.10.27"
   },
   "devDependencies": {
     "vite": "^8.2.2",
-    "vitest": "^5.0.0"
+    "vitest": "^5.0.0",
+    "typescript": "^7.0.2"
   }
 }

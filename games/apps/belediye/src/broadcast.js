@@ -17,7 +17,7 @@
 // Yer tutucular: {you} {lider} {ikinci} {kazanan} {prev} {a} {b} {n} {nY} (yazıyla) {nY1} (bir fazlası) {fark} {oran} {oranEk} {youf} {kpct}
 // {sira} {tarih} {mah} {mahs} (sandık önünde: Lojman) {mahde}; ek almak için {lider:in} (in, i, e, de, den). Değeri olmayan yer tutucu
 // satırı eler; başlıkta tam ad sığmazsa kısa ad (tvShort) denenir.
-import { PEOPLE } from "./cards.js";
+import { PEOPLE } from "./cards.ts";
 import { dateLabel } from "./engine.js";
 
 export const KANAL = { ad: "KARAKAVAK TV", kisa: "KTV" };

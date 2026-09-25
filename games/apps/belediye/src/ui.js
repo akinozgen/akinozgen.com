@@ -1,6 +1,6 @@
 // ─── Arayüz ───────────────────────────────────────────────────────────────
 import interact from "interactjs";
-import { ADAYLAR, BASKANLAR, ENDINGS, KULIS, PEOPLE, QUOTES, REACT } from "./cards.js";
+import { ADAYLAR, BASKANLAR, ENDINGS, KULIS, PEOPLE, QUOTES, REACT } from "./cards.ts";
 import { MAX_TERMS, METERS, METER_AD, REL_AD, TERM, Z, calOf, choose, dateLabel, draw, durLabel, edgeRisk, newGame, pollOf, vaatCost } from "./engine.js";
 
 const $ = s => document.querySelector(s);

@@ -1,4 +1,4 @@
-// Vesikalık resimlerini üretir: public/portraits/<kişi>.webp ve başkanlık vesikalıkları (cards.js'teki BASKANLAR)
+// Vesikalık resimlerini üretir: public/portraits/<kişi>.webp ve başkanlık vesikalıkları (cards.ts'teki BASKANLAR)
 // node tools/portraits.mjs            yalnız eksik resimleri çizer, var olana dokunmaz
 // node tools/portraits.mjs --force    hepsini tariften yeniden çizer (DİKKAT: şimdiki 3D resimlerin üstüne düz çizim yazar)
 // node tools/portraits.mjs hans ayse  yalnız adı verilenleri yeniden çizer
@@ -11,7 +11,7 @@ const DIR = new URL("../public/portraits/", import.meta.url);
 mkdirSync(DIR, { recursive: true });
 const SIZE = 384, QUALITY = 0.9;
 const read = p => readFileSync(new URL(p, import.meta.url), "utf8");
-const { PEOPLE, BASKANLAR } = await import("../src/cards.js");
+const { PEOPLE, BASKANLAR } = await import("../src/cards.ts");
 const { portrait, mayorFace, RECIPES } = new Function(read("./portrait.js") + "\nreturn { portrait, mayorFace, RECIPES };")();
 
 const args = process.argv.slice(2), force = args.includes("--force"), only = args.filter(a => !a.startsWith("--"));
