@@ -960,15 +960,29 @@ const YENILIK = [
   ["Aday kaydı", "Vesikalığınızı seçin, adınızı yazın, mazbatayı alın."],
 ];
 let mnBusy = false, panelFrom = null;
-// Meydan sahnesi: tek resim (tools/meydan.js'ten çizilip SDXL'den geçti). Canlı SVG tarayıcıyı yoruyordu.
+// Meydan sahnesi: tek resim (tools/meydan.js'in karesi ChatGPT ile oyuncak diyoramaya çevrildi). Canlı SVG tarayıcıyı yoruyordu.
 // Palet yerel saate göre: 21-5 gece, 6-16 gündüz, 17-20 akşamüstü. Tek dosyalık kopyada resimler gömülü.
 const MEYDAN = /*MEYDAN*/null;
-const mdPal = (h = new Date().getHours()) => (h >= 21 || h < 6 ? "gece" : h < 17 ? "gun" : "aksam");
+// Işıkların, buharın ve yıldızların resimdeki yeri (1536×1024 piksel); üç resimde bina biraz farklı duruyor.
+// mk: makam penceresi (giriş geçişi buraya yaklaşır) · l1-l3: sokak lambaları · stm: semaver
+const MD_NOKTA = {
+  aksam: { mk: [765, 328], l1: [347, 290], l2: [1180, 297], l3: [1488, 600], stm: [1043, 480] },
+  gece: { mk: [752, 330], l1: [352, 295], l2: [1144, 297], l3: [1480, 565], stm: [1043, 492], yildiz: [[460, 72], [935, 83], [1162, 131], [1437, 91], [668, 160], [1300, 40]] },
+  gun: { mk: [771, 294], l1: [357, 252], l2: [1165, 268], l3: [1470, 565], stm: [1050, 468] },
+};
+const mdYuzde = ([x, y]) => [`${(x / 15.36).toFixed(2)}%`, `${(y / 10.24).toFixed(2)}%`];
+// ?saat=23 gibi bir adres paleti önizletir
+const mdPal = (h = +(new URLSearchParams(location.search).get("saat") ?? new Date().getHours())) => (h >= 21 || h < 6 ? "gece" : h < 17 ? "gun" : "aksam");
 function sceneOn(on) {
   if (!on) return;
   const sc = $("#mn-scene"), p = mdPal();
   sc.classList.remove("in");
-  if (sc.dataset.pal !== p) { sc.dataset.pal = p; $("#mn-img").src = MEYDAN?.[p] || `meydan/meydan-${p}.webp`; }
+  if (sc.dataset.pal === p) return;
+  sc.dataset.pal = p; $("#mn-img").src = MEYDAN?.[p] || `meydan/meydan-${p}.webp`;
+  const N = MD_NOKTA[p], pic = $("#mn-pic");
+  for (const el of pic.querySelectorAll("[data-k]")) { const [x, y] = mdYuzde(N[el.dataset.k]); el.style.setProperty("--x", x); el.style.setProperty("--y", y); }
+  const [wx, wy] = mdYuzde(N.mk); pic.style.setProperty("--wx", wx); pic.style.setProperty("--wy", wy);
+  $("#mf-stars").innerHTML = (N.yildiz || []).map(([x, y], i) => `<i style="--x:${(x / 15.36).toFixed(2)}%;--y:${(y / 10.24).toFixed(2)}%;--d:${(-i * .7).toFixed(1)}s"></i>`).join("");
 }
 async function sceneEnter() { $("#mn-scene").classList.add("in"); await wait(reduced ? 200 : 900); }
 const mnItems = () => [...document.querySelectorAll("#mn-list .mn-item")].filter(b => !b.hidden);

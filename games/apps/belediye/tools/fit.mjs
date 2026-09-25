@@ -29,7 +29,7 @@ try {
     await send("Page.navigate", { url: PAGE }); await sleep(1000);
     await ev(`localStorage.setItem("cb.save", ${JSON.stringify(JSON.stringify(S))}); localStorage.setItem("cb.introSeen","true"); location.reload()`);
     await sleep(1400);
-    await ev(`document.querySelector("#btn-resume").click()`); await sleep(900);
+    await ev(`new Promise(r => { document.querySelector("#btn-resume").click(); const t0 = Date.now(), k = () => (!document.querySelector("#scr-title").hidden && Date.now() - t0 < 4000 ? setTimeout(k, 50) : setTimeout(r, 300)); k(); })`); // menüden giriş geçişi bitene kadar
     const r = await ev(`(() => {
       const b = document.querySelector("#card .body"), texts = ${JSON.stringify(texts)}, labels = ${JSON.stringify(labels)};
       const orig = b.textContent; let over = [];

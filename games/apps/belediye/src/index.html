@@ -9,15 +9,15 @@
   <!-- Ana menü: canlı Karakavak meydanı (meydan.js) üstünde logo, menü, bilgi kartı ve ilan panosu -->
   <section id="scr-title" class="screen" aria-label="Ana menü">
     <div class="mn-scene" id="mn-scene" aria-hidden="true">
-      <!-- Karakavak meydanı: tek resim (tools/meydan.js → meydan-render → SDXL); üstünde yalnız ucuz ışıklar ve buhar -->
+      <!-- Karakavak meydanı: tek resim (ChatGPT ile oyuncak diyoramaya çevrildi); üstünde yalnız ucuz ışıklar ve buhar -->
       <div class="mn-pic" id="mn-pic">
         <img id="mn-img" alt="" decoding="async" draggable="false">
-        <i class="mf mk" style="--x:50.00%;--y:27.66%;--s:6%"></i>
-        <i class="mf lamp" style="--x:27.08%;--y:24.12%;--s:3.4%"></i>
-        <i class="mf lamp" style="--x:73.02%;--y:24.49%;--s:3.4%;--d:-1.7s"></i>
-        <i class="mf lamp" style="--x:94.90%;--y:54.28%;--s:6%;--d:-3.1s"></i>
-        <span class="mf-stm" style="--x:66.61%;--y:38.09%"><i></i><i></i><i></i></span>
-        <span class="mf-stars"><i style="--x:8%;--y:6%;--d:0.00s"></i><i style="--x:15%;--y:12%;--d:0.37s"></i><i style="--x:22%;--y:4%;--d:0.74s"></i><i style="--x:31%;--y:9%;--d:1.11s"></i><i style="--x:40%;--y:3%;--d:1.48s"></i><i style="--x:58%;--y:5%;--d:1.85s"></i><i style="--x:66%;--y:11%;--d:2.22s"></i><i style="--x:74%;--y:4%;--d:2.59s"></i><i style="--x:82%;--y:9%;--d:2.96s"></i><i style="--x:90%;--y:6%;--d:0.33s"></i><i style="--x:96%;--y:13%;--d:0.70s"></i><i style="--x:47%;--y:13%;--d:1.07s"></i></span>
+        <i class="mf mk" data-k="mk" style="--s:5%"></i>
+        <i class="mf lamp" data-k="l1" style="--s:4%"></i>
+        <i class="mf lamp" data-k="l2" style="--s:4%;--d:-1.7s"></i>
+        <i class="mf lamp" data-k="l3" style="--s:6%;--d:-3.1s"></i>
+        <span class="mf-stm" data-k="stm"><i></i><i></i><i></i></span>
+        <span class="mf-stars" id="mf-stars"></span>
       </div>
     </div>
     <div class="mn-shade" aria-hidden="true"></div>

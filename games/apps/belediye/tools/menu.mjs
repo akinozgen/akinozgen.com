@@ -52,7 +52,7 @@ try {
     const L = JSON.parse(await layout());
     check(!L.out.length && !L.hit.length, `${w}×${h}: taşma ${L.out} · çakışma ${L.hit}`);
     const pic = JSON.parse(await ev(`JSON.stringify({ w: document.querySelector("#mn-img").naturalWidth, pal: document.querySelector("#mn-scene").dataset.pal, svg: document.querySelectorAll("#scr-title svg").length })`));
-    check(pic.w >= 1344 && ["aksam", "gece", "gun"].includes(pic.pal), `${w}: meydan resmi yüklenmedi ${JSON.stringify(pic)}`);
+    check(pic.w >= 1536 && ["aksam", "gece", "gun"].includes(pic.pal), `${w}: meydan resmi yüklenmedi ${JSON.stringify(pic)}`);
     check(pic.svg <= 2, `${w}: menüde canlı SVG sahne kalmış (${pic.svg} svg)`); // yalnız logo bardağı ve ses simgesi
     await shot(`menu-${w}x${h}`);
   }

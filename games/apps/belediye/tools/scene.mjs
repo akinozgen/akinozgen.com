@@ -37,7 +37,7 @@ try {
   await send("Page.navigate", { url: page }); await sleep(1200);
   await ev(`localStorage.setItem("cb.save", ${JSON.stringify(JSON.stringify(S))}); localStorage.setItem("cb.introSeen", "true"); location.reload()`);
   await sleep(2000);
-  await ev(`document.querySelector("#btn-resume").click()`); await sleep(900);
+  await ev(`new Promise(r => { document.querySelector("#btn-resume").click(); const t0 = Date.now(), k = () => (!document.querySelector("#scr-title").hidden && Date.now() - t0 < 4000 ? setTimeout(k, 50) : setTimeout(r, 300)); k(); })`); // menüden giriş geçişi bitene kadar
   const tr = () => ev(`(() => { const t = document.querySelector(".ongo-track"); return t.className + " " + getComputedStyle(t).transform; })()`);
   console.log("şerit:", await tr()); await sleep(1000); console.log("şerit:", await tr());
   await ev(`document.querySelector("#btn-danis").click()`); await sleep(400);

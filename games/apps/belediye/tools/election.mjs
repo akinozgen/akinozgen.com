@@ -28,7 +28,7 @@ const setup = () => {
 const load = async s => {
   await send("Page.navigate", { url: PAGE }); await sleep(1200);
   await ev(`localStorage.clear(); localStorage.setItem("cb.save", ${JSON.stringify(JSON.stringify(s))}); localStorage.setItem("cb.introSeen", "true"); location.reload()`); await sleep(1400);
-  await ev(`document.querySelector("#btn-resume").click()`); await sleep(700);
+  await ev(`new Promise(r => { document.querySelector("#btn-resume").click(); const t0 = Date.now(), k = () => (!document.querySelector("#scr-title").hidden && Date.now() - t0 < 4000 ? setTimeout(k, 50) : setTimeout(r, 300)); k(); })`); // menüden giriş geçişi bitene kadar
 };
 const screenNow = () => ev(`["title","game","over","secim"].find(x => !document.querySelector("#scr-" + x).hidden)`);
 try {
@@ -84,7 +84,7 @@ try {
   await load(setup());
   await ev(`document.dispatchEvent(new KeyboardEvent("keydown",{key:"ArrowRight",bubbles:true}))`); await sleep(2500);
   await ev(`location.reload()`); await sleep(1400);
-  await ev(`document.querySelector("#btn-resume").click()`); await sleep(900);
+  await ev(`new Promise(r => { document.querySelector("#btn-resume").click(); const t0 = Date.now(), k = () => (!document.querySelector("#scr-title").hidden && Date.now() - t0 < 4000 ? setTimeout(k, 50) : setTimeout(r, 300)); k(); })`); // menüden giriş geçişi bitene kadar
   check(await screenNow() === "secim", "kaldığım yerden seçim gecesini açmadı");
   console.log("kaldığım yerden:", await screenNow());
   // Erken seçim: esnaf tavan yapınca oyun bitmez, erken seçim gecesi açılır
@@ -92,7 +92,7 @@ try {
   s.cur = { id: "t", kind: "normal", who: "bekir", konu: "Deneme", text: "Deneme.", L: { t: "a", e: [0, 0, 0, 0], rel: {} }, R: { t: "b", e: [0, 0, 0, 0], rel: {} } };
   await send("Page.navigate", { url: PAGE }); await sleep(1200);
   await ev(`localStorage.clear(); localStorage.setItem("cb.save", ${JSON.stringify(JSON.stringify(s))}); localStorage.setItem("cb.introSeen", "true"); location.reload()`); await sleep(1400);
-  await ev(`document.querySelector("#btn-resume").click()`); await sleep(700);
+  await ev(`new Promise(r => { document.querySelector("#btn-resume").click(); const t0 = Date.now(), k = () => (!document.querySelector("#scr-title").hidden && Date.now() - t0 < 4000 ? setTimeout(k, 50) : setTimeout(r, 300)); k(); })`); // menüden giriş geçişi bitene kadar
   await ev(`document.dispatchEvent(new KeyboardEvent("keydown",{key:"ArrowRight",bubbles:true}))`); await sleep(1500); // deneme kartı: erken seçim kartı gelir
   const early = await ev(`document.querySelector("#card .doc-konu")?.textContent || ""`);
   check(/Erken seçim/.test(early), `erken seçim kartı gelmedi (${early})`);

@@ -31,6 +31,8 @@ Ana projeden tek komut isterseniz `npm run build:games` aynı işi yapar. Derlen
 | `pnpm smoke` · `pnpm gesture` · `pnpm fit` | Headless Chrome testleri: uçtan uca oyun, dokunma ve fiske, telefonlarda sığma. Sessizdir; Chrome yolu farklıysa `CHROME` ortam değişkeniyle verilir. Çıktılar `.cache/` klasörüne yazılır |
 | `pnpm icons` | Uygulama ikonlarını yeniden çizer |
 | `pnpm election` | Headless Chrome'da seçim gecesi testi: 5 adaylı yarış kurar; sayım ortasında kartların oya göre dizildiğini, oyuncu kartını, KJ'yi, stüdyoyu ve kayan yazıyı, sonuçta yüzdeleri motorla karşılaştırır. Hareket azaltma, "Kaldığım yerden", erken seçim ve prova kodunu da dener |
+| `pnpm menu` | Headless Chrome'da ana menü testi: beş ekran boyunda yerleşim ve meydan resmi, ↑/↓ gezinme, bilgi kartı, ayarların kaydı, iki adımlı silme, künye, aday kaydı, ad zarı ve oyuna giriş |
+| `node tools/meydan-render.mjs` | Menü meydanının hareketsiz karelerini `tools/meydan.js`'ten çizer (`.cache/meydan-render/`): yapay zekâyla yeniden çizime verilecek referans. `node tools/meydan-demo.mjs` vektör sahneyi canlı gösterir |
 | `node tools/tv-mock.mjs` · `node tools/anchor-demo.mjs` | Seçim gecesi yayın ekranının ve spikerin oyundan bağımsız provaları; görüntüler `.cache/tv/` ve `.cache/anchor/` altına |
 | `pnpm portraits` | Eksik vesikalıkları tariften düz çizim olarak üretir; var olan resme dokunmaz. `--force` ya da ad vermek (`node tools/portraits.mjs hans`) mevcut 3D resmin üstüne düz çizim yazar |
 
@@ -43,12 +45,13 @@ Sitenin tamamını yerelde denemek için ana projede `npm run build` çalıştı
 | `src/cards.js` | 32 karakter, 16 başkan adayı: ad, lakap, kısa biyografi (`BASKANLAR`), ~210 evrak (birbirine bağlı yaylar dahil), etkileşim tablosu (`SYN`), seçim adayları (`ADAYLAR`) ve seçmen grupları, kriz kartları, 11 son. Kart şeması dosyanın başında |
 | `src/adlar.js` | Aday kaydındaki ad zarı: 299 kadın, 313 erkek adı (16'sı ortak), 488 soyadı (beşte biri çarşı esnafı), gerçek kişi yasak listeleri (`YASAK_SOYAD`, `YASAK_TAM`, `YASAK_AD`) ve `rastgeleAd(cins, rng, son)`. Cins `BASKANLAR`'dan gelir; `test/adlar.test.mjs` sınar |
 | `src/engine.js` | DOM'suz oyun motoru: ortak koşul dili (`condOK`), sayaçlar, koşullu ve aralıklı zincirler, etiket etkileşimleri, vaat defteri. Denge ayarları `TUNE` nesnesinde |
-| `src/ui.js` | Sürükleme, mühür, göstergeler, WebAudio sesleri, Fikret'in tavsiyeleri, gazete, koridor duvarı, seçim gecesi akışı |
+| `src/ui.js` | Sürükleme, mühür, göstergeler, WebAudio sesleri, Fikret'in tavsiyeleri, gazete, koridor duvarı, seçim gecesi akışı, ana menü, aday kaydı, ayarlar |
 | `src/broadcast.js` | KARAKAVAK TV'nin yazıları: duruma göre KJ (alt bant), kayan yazı (ilçe, ülke, dünya), kur kutusu, "Neden?" satırları. DOM'suz, `test/broadcast.test.mjs` sınar |
 | `src/anchor.js` | Seçim gecesi stüdyosu: bıyıklı spiker, masa, video duvarı, Tekir. Tek SVG; `studio()` konuşma, ruh hâli ve tepkileri denetler |
 | `src/style.css`, `src/index.html` | Makam masası |
 | `web-src/` | Yerel fontlar (SIL OFL), ikonlar, vesikalıklar, interact.js (MIT) |
 | `web-src/portraits/` | Vesikalıklar: her kişi için `<anahtar>.webp` (anahtar `cards.js`'teki `PEOPLE`), başkanlık vesikalıkları için `baskan-*.webp` (anahtar `BASKANLAR`) |
+| `web-src/meydan/` | Ana menünün arka planı, üç saat için (`meydan-aksam/gece/gun.webp`, 1536×1024). `tools/meydan.js`'in vektör karesi ChatGPT ile parlak plastik oyuncak diyoramaya çevrildi. Lamba, pencere, buhar ve yıldız ışıklarının yeri `ui.js`'teki `MD_NOKTA`'da |
 | `tools/portrait.js` | Vesikalıkların ilk tarifleri ve SVG çizeri; oyuna girmez. Şimdiki resimler bunlardan SDXL img2img ile üretildi (bkz. NOTES) |
 | `build.mjs` | Derleyici: CSS/JS'yi tek sayfaya gömer; manifest ve service worker üretir |
 | `tools/` | Sunucu, simülasyon, içerik denetimi (`lint.mjs`) ve tarayıcı testleri |
