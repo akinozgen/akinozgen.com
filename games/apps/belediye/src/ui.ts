@@ -1777,7 +1777,7 @@ function sceneOn(on: boolean) {
   if (!on) return;
   const sc = $("#mn-scene"),
     p = mdPal();
-  sc.classList.remove("in");
+  sc.classList.remove("in", "px"); // yumuşatma fare kıpırdayınca geri gelir
   if (sc.dataset.pal === p) return;
   sc.dataset.pal = p;
   $<HTMLImageElement>("#mn-img").src = `meydan/meydan-${p}.webp`;
@@ -1984,6 +1984,7 @@ function wire() {
     pxT = requestAnimationFrame(() => {
       pxT = 0;
       const sc = $("#mn-scene");
+      sc.classList.add("px");
       sc.style.setProperty("--px", (e.clientX / innerWidth - 0.5).toFixed(3));
       sc.style.setProperty("--py", (e.clientY / innerHeight - 0.5).toFixed(3));
     });

@@ -72,6 +72,7 @@ button {
 }
 
 #app {
+  visibility: visible; /* index.html stil gelene kadar gizler */
   position: relative;
   height: 100%;
   overflow: hidden;
@@ -132,6 +133,9 @@ button {
   aspect-ratio: 3 / 2;
   transform: translate(calc(-50% + var(--px, 0) * -1.2%), calc(-50% + var(--dy, 0px) + var(--py, 0) * -1%)) scale(1.03);
   transform-origin: var(--wx, 50%) var(--wy, 32%);
+}
+/* yumuşatma yalnız fare kıpırdayınca: açılışta, ekran değişince ya da boyut oturunca resim kaymasın */
+.mn-scene.px .mn-pic {
   transition: transform 0.9s cubic-bezier(0.2, 0.8, 0.3, 1);
 }
 .mn-pic img {
