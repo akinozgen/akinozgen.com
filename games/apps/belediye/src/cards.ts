@@ -7497,6 +7497,257 @@ export const CARDS: CardDef[] = [
       not: "Nuri Bey çıkarılan cildi kıraathanede her akşam sesli okuyor.",
     },
   },
+  // ══ Kıl payı: Nermin Hanım'ın itiraz dilekçeleri (açılışta takvime girer); ikisi kapanınca gölge biter ══
+  {
+    id: "itiraz_1",
+    who: "nermin",
+    konu: "İtiraz dilekçesi",
+    chain: true,
+    norel: true,
+    text: "Başkanım, fark bir avuç oy; seçim kuruluna itiraz ettim, iki dilekçem var. Bu birincisi: Yukarıkavak sandığı traktörle geç geldi. Avukatla savunursunuz ya da meydana çıkıp hesap sorarsınız. Kolay gelsin.",
+    L: { t: "Avukat tutalım", e: [0, -6, 0, 0], next: { id: "itiraz_2", in: [3, 5] } },
+    R: {
+      t: "Meydana çıkalım",
+      e: [0, 0, 0, 0],
+      next: { id: "itiraz_2", in: [3, 5] },
+      zar: {
+        p: 0.5,
+        iyi: { e: [5, 0, 0, 0], rel: { nermin: -1 }, msg: "Meydan sizi dinledi; itiraz sokağa yetmedi." },
+        kotu: {
+          e: [-6, 0, 0, 0],
+          kalem: { ad: "Sokakta itiraz kavgası", puan: -2 },
+          msg: "Meydan ikiye bölündü; itiraz manşete taşındı.",
+        },
+      },
+    },
+  },
+  {
+    id: "itiraz_2",
+    who: "nermin",
+    konu: "İkinci dilekçe",
+    chain: true,
+    norel: true,
+    text: "Başkanım, ikinci dilekçem: sayımda on iki pusulada kavun çizimi vardı, geçersiz sayılmalıydı. Kurul yarın karar verecek. Bunu da kapatırsanız mazbatanız tescil; ben de kabul ederim, söz.",
+    L: {
+      t: "Avukat kapatsın",
+      e: [0, -6, 0, 0],
+      cut: "golge",
+      set: "mazbata_tescil",
+      inc: { muhur: 2 },
+      anket: { ad: "Sandığı korudu", puan: 3 },
+      pol: {
+        id: "muhur",
+        ad: "Mühür hakkı",
+        ozet: "mühürle halkın kaybı silinir",
+        ay: 12,
+        msg: "Kullanılmayan mühürler söndü.",
+      },
+    },
+    R: {
+      t: "Meydanda bitirelim",
+      e: [0, 0, 0, 0],
+      cut: "golge",
+      set: "mazbata_tescil",
+      inc: { muhur: 2 },
+      pol: {
+        id: "muhur",
+        ad: "Mühür hakkı",
+        ozet: "mühürle halkın kaybı silinir",
+        ay: 12,
+        msg: "Kullanılmayan mühürler söndü.",
+      },
+      zar: {
+        p: 0.5,
+        iyi: {
+          e: [5, 0, 0, 0],
+          kalem: { ad: "Sandığı korudu", puan: 3 },
+          msg: "Kurul itirazı reddetti; meydan davul zurnayla kutladı.",
+        },
+        kotu: {
+          e: [-5, 0, 0, 0],
+          kalem: { ad: "Sandığı korudu", puan: 1 },
+          msg: "Mazbata tescil oldu ama meydandaki kavga akıllarda kaldı.",
+        },
+      },
+    },
+  },
+
+  // ══ kampanya turunun ilk dönemdeki hesabı (kmp_ bayrakları) ══
+  {
+    id: "kmps_asfalt",
+    who: "cengiz",
+    konu: "Asfalt borcu",
+    req: "kmp_asfalt_borc",
+    once: true,
+    minM: 3,
+    text: "Başkanım, hayırlı olsun! Seçimde Kavaklı'ya döktüğüm asfaltın hesabı geldi: iki kilometre, faiziyle. 'Seçilince konuşuruz' demiştik, seçildiniz. Nakit yoksa meydan ihalesini bize verin, ödeşmiş sayarız.",
+    L: {
+      t: "Kasadan ödeyelim",
+      e: [2, -6, 0, 1],
+      clr: "kmp_asfalt_borc",
+      not: "Sevim Hanım asfalt faturasını 'seçim hatırası' diye ayrı klasöre koydu.",
+    },
+    R: {
+      t: "İhale sizin olsun",
+      e: [-3, 0, -2, 3],
+      clr: "kmp_asfalt_borc",
+      anket: {
+        ad: "Asfalt borcuna ihale",
+        puan: -2,
+      },
+      not: "Cengiz Bey meydan ihalesini kazandı; kazanacağını ihaleden önce biliyordu.",
+    },
+  },
+  {
+    id: "kmps_temel",
+    who: "kemal",
+    konu: "Yalnız temel",
+    req: "kmp_temel",
+    once: true,
+    minM: 6,
+    text: "Başkanım, seçimden önceki gece 23.58'de attığımız temel yerinde duruyor. Üstünde bina yok, projesi yok, yalnız taş var. Ferhat Usta'nın taşında 'Kültür Kompleksi' yazıyor, 'ü'nün noktaları düşmüş. Ne yapalım?",
+    alt: [
+      {
+        req: "kmp_temel_tutanak",
+        text: "Başkanım, seçim gecesi 00.01'e sarkan temel yerinde duruyor; kaymakamın tutanağı da hâlâ taşın altında. Üstünde bina yok, projesi yok. Taşta 'Kültür Kompleksi' yazıyor, 'ü'nün noktaları düşmüş. Ne yapalım?",
+      },
+    ],
+    L: {
+      t: "İnşaat başlasın",
+      e: [4, -7, 2, 1],
+      clr: ["kmp_temel", "kmp_temel_tutanak"],
+      anket: {
+        ad: "Gece yarısı temelinin binası",
+        puan: 2,
+      },
+    },
+    R: {
+      t: "Taş bank olsun",
+      e: [-3, 1, 0, -3],
+      clr: ["kmp_temel", "kmp_temel_tutanak"],
+      not: "Suat Bey 'benim temelim bank oldu' diye Ankara'da anlatıyor.",
+    },
+  },
+  {
+    id: "kmps_kutuk",
+    who: "kaymakam",
+    konu: "43 seçmenli ev",
+    req: "kmp_kutuk_sus",
+    once: true,
+    minM: 4,
+    fav: "L",
+    text: "Başkanım, ilçe seçim kurulu Kavaklı'daki 43 seçmenli evi incelemeye aldı. Kaçak katlar ev sayılmıyormuş. Tekir'in 2019 doğumlu seçmen kaydı da ayrıca soruluyor. Muhtar Rıza ifadesinde 'başkan biliyordu' demiş.",
+    L: {
+      t: "Kayıtları temizletelim",
+      e: [-2, 0, 0, 5],
+      clr: "kmp_kutuk_sus",
+      rel: {
+        muhtar: -1,
+      },
+      anket: {
+        ad: "Kütük temizliği",
+        puan: 1,
+      },
+    },
+    R: {
+      t: "Muhtarı savunalım",
+      e: [3, 0, 0, -6],
+      clr: "kmp_kutuk_sus",
+      rel: {
+        muhtar: 1,
+      },
+      anket: {
+        ad: "43 seçmenli ev",
+        puan: -2,
+      },
+      not: "Kurul dosyaya 'Tekir Karakavaklı' diye ayrı bir sekme açtı.",
+    },
+  },
+  {
+    id: "kmps_anket",
+    who: "tuncay",
+    konu: "Anket faturası",
+    req: "kmp_anket_para",
+    once: true,
+    minM: 3,
+    fav: "L",
+    text: "Başkanım, Karakavak Araştırma'nın faturası geldi: 'yüzde 64'ün bedeli. Ödemezseniz ham verileri basıyorum: on bir kişi, yedisi Rahmi'nin müşterisi, biri Tekir. Öderseniz firma bir de 'memnuniyet anketi' yapacak.",
+    L: {
+      t: "Öde, anket de yapılsın",
+      e: [2, -5, 0, 0],
+      clr: "kmp_anket_para",
+      not: "Memnuniyet anketi yine on bir kişiyle yapıldı: yüzde 71 memnun.",
+    },
+    R: {
+      t: "Basarsan bas",
+      e: [-4, 0, 2, 0],
+      clr: "kmp_anket_para",
+      anket: {
+        ad: "On bir kişilik anket",
+        puan: -2,
+      },
+      not: "Rahmi'nin yedi müşterisi gazetedeki fotoğraflarını kahveye astı.",
+    },
+  },
+  {
+    id: "kmps_cay",
+    who: "sevim",
+    konu: "Miting çayı",
+    req: "kmp_miting_cay",
+    once: true,
+    minM: 2,
+    fav: "L",
+    text: "Başkanım, kapanış mitinginin çay faturası belediyeye kesilmiş: 1.240 bardak, 86 kilo şeker. Kampanya masrafı belediye kasasından ödenmez, tutanağa yazarım. Hüseyin 'çay çaydır, kimin olduğu sorulmaz' diyor.",
+    L: {
+      t: "Maaşımdan kesilsin",
+      e: [3, 0, 0, 1],
+      clr: "kmp_miting_cay",
+      rel: {
+        naciye: -1,
+      },
+      not: "Naciye Hanım bordronuzdaki 'çay' kalemini gördü.",
+    },
+    R: {
+      t: "Temsil gideri yazalım",
+      e: [-3, -4, 1, -1],
+      clr: "kmp_miting_cay",
+      rel: {
+        huseyin: 1,
+      },
+      anket: {
+        ad: "Belediyeye kesilen çay",
+        puan: -1,
+      },
+    },
+  },
+  {
+    id: "kmps_okey",
+    who: "rahmi",
+    konu: "Rövanş",
+    req: "kmp_okey",
+    once: true,
+    minM: 5,
+    fav: "L",
+    text: "Başkanım, kampanyada okeyde üç el üst üste yandığınız hâlâ konuşuluyor; kahveye 'taş bile çekemedi' diye yazı astılar. Ustalar rövanş istiyor, bu kez başkan olarak. Dedeniz olsa çoktan otururdu.",
+    alt: [
+      {
+        req: "kmp_okey_galip",
+        text: "Başkanım, kampanyada okeyi elden bitirdiğiniz hâlâ konuşuluyor; o taşı çerçeveletip duvara astım. Ustalar rövanş istiyor, bu kez başkan olarak. Kaybederseniz çerçeveyi indiririm, bilesiniz.",
+      },
+    ],
+    L: {
+      t: "Rövanşa otururum",
+      e: [4, 0, 2, -3],
+      clr: ["kmp_okey", "kmp_okey_galip"],
+      not: "Kıraathanede 'başkanın masası' yeniden kuruldu.",
+    },
+    R: {
+      t: "Makam masası yeter",
+      e: [-3, 0, -2, 2],
+      clr: ["kmp_okey", "kmp_okey_galip"],
+      not: "Rahmi rövanş masasını hâlâ boş tutuyor.",
+    },
+  },
 ];
 
 // ─── Seçimde karşınıza çıkabilecek adaylar ──────────────────────────────────
@@ -8273,6 +8524,11 @@ export const MIRAS: MirasDef[] = [
     },
     text: "Başkan, işe alım kurasını makam şefine çektiren başkan olarak anılacak. Torba bugün belediye vitrininde; içindeki kâğıtların çoğunda aynı soyadı yazıyor.",
   },
+  // ══ göreve başlayış ══
+  {
+    if: { req: "mazbata_tescil" },
+    text: "Kıl payı kazandığı seçimin iki itirazını tek tek kapatan başkan, mazbatasını makam odasına çerçeveletti; altına 'fark farktır' yazdırdı.",
+  },
 ];
 
 // ─── Seçim beyannamesi: göreve başlamadan önceki kampanyanın vaatleri ─────
@@ -8287,6 +8543,7 @@ export const VAATLER: VaatDef[] = [
     kart: "vaat_metro",
     ay: [14, 30],
     set: "metro_soz",
+    hemen: [3, 0, 1, -1],
   },
   {
     id: "cay",
@@ -8295,6 +8552,7 @@ export const VAATLER: VaatDef[] = [
     guc: 8,
     kart: "vaat_cay",
     ay: [8, 22],
+    hemen: [2, 0, 1, 0],
   },
   {
     id: "cukur",
@@ -8303,6 +8561,7 @@ export const VAATLER: VaatDef[] = [
     guc: 9,
     kart: "vaat_cukur",
     ay: [6, 14],
+    hemen: [3, 0, 0, 0],
   },
   {
     id: "halkgunu",
@@ -8311,6 +8570,7 @@ export const VAATLER: VaatDef[] = [
     guc: 6,
     kart: "vaat_halkgunu",
     ay: [6, 14],
+    hemen: [3, 0, 0, 0],
   },
   {
     id: "cezasiz",
@@ -8319,6 +8579,7 @@ export const VAATLER: VaatDef[] = [
     guc: 8,
     kart: "vaat_cezasiz",
     ay: [7, 11],
+    hemen: [0, 0, 5, -1],
   },
   {
     id: "bank",
@@ -8327,6 +8588,7 @@ export const VAATLER: VaatDef[] = [
     guc: 6,
     kart: "vaat_bank",
     ay: [8, 18],
+    hemen: [2, 0, 1, 0],
   },
   {
     id: "mesaj",
@@ -8335,6 +8597,7 @@ export const VAATLER: VaatDef[] = [
     guc: 7,
     kart: "vaat_mesaj",
     ay: [9, 20],
+    hemen: [2, 0, 0, 0],
   },
   {
     id: "kura",
@@ -8343,6 +8606,7 @@ export const VAATLER: VaatDef[] = [
     guc: 9,
     kart: "vaat_kura",
     ay: [10, 22],
+    hemen: [3, 0, -1, -1],
   },
   {
     id: "dakik",
@@ -8351,6 +8615,7 @@ export const VAATLER: VaatDef[] = [
     guc: 7,
     kart: "vaat_dakik",
     ay: [10, 22],
+    hemen: [2, 0, 1, 0],
   },
   {
     id: "bebek",
@@ -8359,6 +8624,7 @@ export const VAATLER: VaatDef[] = [
     guc: 10,
     kart: "vaat_bebek",
     ay: [11, 20],
+    hemen: [3, 0, 1, 0],
   },
   {
     id: "sinema",
@@ -8367,6 +8633,7 @@ export const VAATLER: VaatDef[] = [
     guc: 6,
     kart: "vaat_sinema",
     ay: [12, 26],
+    hemen: [2, 0, 1, 0],
   },
   {
     id: "ehliyet",
@@ -8375,6 +8642,7 @@ export const VAATLER: VaatDef[] = [
     guc: 8,
     kart: "vaat_ehliyet",
     ay: [14, 28],
+    hemen: [3, 0, 0, 0],
   },
   {
     id: "bagis",
@@ -8383,6 +8651,7 @@ export const VAATLER: VaatDef[] = [
     guc: 7,
     kart: "vaat_bagis",
     ay: [14, 30],
+    hemen: [3, 0, 0, 0],
   },
   {
     id: "tekir",
@@ -8391,6 +8660,7 @@ export const VAATLER: VaatDef[] = [
     guc: 8,
     kart: "vaat_tekir",
     ay: [16, 32],
+    hemen: [2, 0, 0, 1],
   },
   {
     id: "merdiven",
@@ -8399,6 +8669,7 @@ export const VAATLER: VaatDef[] = [
     guc: 11,
     kart: "vaat_merdiven",
     ay: [18, 34],
+    hemen: [3, 0, 0, 0],
   },
   {
     id: "yildiz",
@@ -8407,6 +8678,7 @@ export const VAATLER: VaatDef[] = [
     guc: 10,
     kart: "vaat_yildiz",
     ay: [20, 40],
+    hemen: [2, 0, 3, 0],
   },
   {
     id: "sera",
@@ -8415,6 +8687,7 @@ export const VAATLER: VaatDef[] = [
     guc: 9,
     kart: "vaat_sera",
     ay: [22, 40],
+    hemen: [1, 0, 3, 0],
   },
   {
     id: "havalimani",
@@ -8423,6 +8696,7 @@ export const VAATLER: VaatDef[] = [
     guc: 13,
     kart: "vaat_havalimani",
     ay: [26, 44],
+    hemen: [3, 0, 2, -1],
   },
   {
     id: "uzay",
@@ -8431,6 +8705,7 @@ export const VAATLER: VaatDef[] = [
     guc: 12,
     kart: "vaat_uzay",
     ay: [28, 46],
+    hemen: [2, 0, 1, -1],
   },
   {
     id: "tarih",
@@ -8439,6 +8714,651 @@ export const VAATLER: VaatDef[] = [
     guc: 5,
     kart: "vaat_tarih",
     ay: [32, 50],
+    hemen: [1, 0, 0, 2],
+  },
+];
+
+// ─── Kampanya turu: sandığa giden aday göreve başlamadan dört evrak oynar (her aşamadan biri) ─
+// Bir seçenek güvenli (oy: ankete kesin etki), öbürü zarlı (zar: p olasılıkla iyi uç, yoksa kötü uç; oran düğmede).
+// Bayraklar ilk döneme taşınır; ay geçmez, günlüğe girmez. asama: 0 açılış, 1 saha, 2 medya, 3 son hafta.
+export const KAMPANYA: CardDef[] = [
+  {
+    id: "kmp_buro",
+    asama: 0,
+    who: "huseyin",
+    konu: "Seçim bürosu",
+    text: "Adayım, büroyu kapanan kasap dükkânında açtık; tabelada hâlâ 'Kuzu Pirzola' yazıyor. Semaveri kapıya kurdum, çay içeni 'destekçi' diye deftere yazıyorum. Yarısı karşı adayın kahvesinden kaçıp gelmiş, o da sayılır.",
+    L: {
+      t: "Büro kasapta kalsın",
+      e: [0, 0, 0, 0],
+      oy: 2,
+      rel: {
+        huseyin: 1,
+      },
+      not: "Defterde 412 destekçi var; 380'i yalnız çay için gelmiş, olsun.",
+    },
+    R: {
+      t: "Meydana çadır",
+      e: [0, 0, 0, 0],
+      zar: {
+        p: 0.6,
+        iyi: {
+          oy: 6,
+          msg: "Çadır dolup taştı; karşı adayın seçim müdürü bile gelip iki çay içti.",
+        },
+        kotu: {
+          oy: -3,
+          msg: "Çadır ilk rüzgârda uçtu, semaverle birlikte Kavaklı'ya indi.",
+        },
+      },
+    },
+  },
+  {
+    id: "kmp_sarki",
+    asama: 0,
+    who: "albay",
+    konu: "Seçim şarkısı",
+    text: "Adayım, seçim şarkısının sözlerini ben yazdım: 'Kavunun tatlı, suyun berrak.' Yeğeniniz Burak dokuz sekizlik remiks yapmış, marşım göbek havası olmuş. Biz askerde marşı düz çalardık; oy da adım adım gelir.",
+    L: {
+      t: "Marş düz çalınsın",
+      e: [0, 0, 0, 0],
+      oy: 2,
+      rel: {
+        albay: 1,
+      },
+      not: "Marş bando temposunda çaldı; emekliler meydanda hazırola geçti.",
+    },
+    R: {
+      t: "Remiks çalsın",
+      e: [0, 0, 0, 0],
+      rel: {
+        albay: -1,
+        burak: 1,
+      },
+      zar: {
+        p: 0.5,
+        iyi: {
+          oy: 7,
+          msg: "Remiks düğünlerde çalmaya başladı; gelin halayı sizin şarkıyla çekildi.",
+        },
+        kotu: {
+          oy: -3,
+          msg: "Karşı aday nakaratı 'çukurun derin, yolun toprak' diye çevirdi, o tuttu.",
+        },
+      },
+    },
+  },
+  {
+    id: "kmp_ankara",
+    asama: 0,
+    who: "levent",
+    konu: "Açılış mitingi",
+    text: "Adayım, Suat Bey Ankara'dan büyük bir isim getiriyor; meydan dolsun diye fabrikanın servislerini istedi. Veririm, işçi yarım gün mitingde, yevmiyesi yine yazılır. Yalnız fotoğrafa servislerin plakası girerse ben karışmam.",
+    L: {
+      t: "Kim gelirse o kadar",
+      e: [0, 0, 0, 0],
+      oy: 3,
+      rel: {
+        vekil: -1,
+      },
+      not: "Büyük isim gelmedi, meydanı Karakavaklılar doldurdu; Suat Bey bozuldu.",
+    },
+    R: {
+      t: "Servisler gelsin",
+      e: [0, 0, 0, 0],
+      rel: {
+        vekil: 1,
+      },
+      zar: {
+        p: 0.6,
+        iyi: {
+          oy: 7,
+          msg: "Meydan doldu; konuşmacı ilçenin adını iki kez karıştırdı, kimse duymadı.",
+        },
+        kotu: {
+          oy: -4,
+          msg: "'Servisle gelen kalabalık' fotoğrafı yayıldı; plakalar okunuyor.",
+        },
+      },
+    },
+  },
+  {
+    id: "kmp_kapi",
+    asama: 0,
+    who: "hatice",
+    konu: "Kapı kapı",
+    text: "Adayım, kooperatifin kadınları kapı kapı gezecek, siz de başta. Her evde tarhana tadımı var, ikramı geri çevirmek ayıp. Akşama elinizde kırk kavanoz olur. Listede karşı adayın annesinin kapısı da var; çalalım mı?",
+    L: {
+      t: "O kapıyı atlayalım",
+      e: [0, 0, 0, 0],
+      oy: 2,
+      not: "Kırk kapı, kırk kavanoz; tarhanalar büronun rafına sığmadı.",
+    },
+    R: {
+      t: "O kapıyı da çal",
+      e: [0, 0, 0, 0],
+      zar: {
+        p: 0.45,
+        iyi: {
+          oy: 8,
+          msg: "Karşı adayın annesi çay koydu, tarhananızı beğendi; bütün mahalle konuştu.",
+        },
+        kotu: {
+          oy: -2,
+          msg: "Karşı adayın annesi kapıyı yüzünüze kapattı; video mahalle grubunda.",
+        },
+      },
+    },
+  },
+  {
+    id: "kmp_mac",
+    asama: 0,
+    who: "orhan",
+    konu: "Açılış maçı",
+    text: "Adayım, Karakavakspor'un sezon açılış maçı pazar günü. Devre arasında sizi formayla penaltıya çıkaracağız. Kalede Fen İşleri'nin kepçecisi var, karşı adayın kuzeni. Gol olursa sezon sizin, kaçarsa tezahürat onların.",
+    L: {
+      t: "Başlama vuruşu yeter",
+      e: [0, 0, 0, 0],
+      oy: 1,
+      not: "Başlama vuruşu taca çıktı ama alkış aldı; forma da yakıştı.",
+    },
+    R: {
+      t: "Penaltıya çık",
+      e: [0, 0, 0, 0],
+      zar: {
+        p: 0.4,
+        iyi: {
+          oy: 7,
+          msg: "Gol! Kepçeci öbür köşeye uçtu; saha adınızı bağırdı.",
+        },
+        kotu: {
+          oy: -2,
+          msg: "Top ağaca çıktı; ağaçtaki taraftar geri atmadı, tezahürat uydurdu.",
+        },
+      },
+    },
+  },
+  {
+    id: "kmp_esnaf",
+    asama: 1,
+    who: "bekir",
+    konu: "Çarşı turu",
+    text: "Adayım, çarşı turu hazır: kırk iki dükkân. Her dükkânda bir çay, bir lahmacun; geri çevirirseniz esnaf küser. Kasap Ramazan'ı atlamayın, geçen seçim atlanınca dört yıl selam vermedi. Mideniz kaç dükkân kaldırır?",
+    L: {
+      t: "Lahmacunları paketlet",
+      e: [0, 0, 0, 0],
+      oy: 2,
+      rel: {
+        bekir: -1,
+      },
+      not: "Kırk iki lahmacunu paketlettiniz; çarşı 'ev yemeği mi yiyor' dedi.",
+    },
+    R: {
+      t: "Kırk ikisi de",
+      e: [0, 0, 0, 0],
+      rel: {
+        bekir: 1,
+      },
+      zar: {
+        p: 0.5,
+        iyi: {
+          oy: 7,
+          msg: "Kırk iki lahmacun, kırk iki çay; çarşı 'bu mide başkan midesi' dedi.",
+        },
+        kotu: {
+          oy: -2,
+          msg: "On dördüncü dükkânda gözünüz karardı; kasap Ramazan'ın tezgâhına yığıldınız.",
+        },
+      },
+    },
+  },
+  {
+    id: "kmp_kahve",
+    asama: 1,
+    who: "rahmi",
+    konu: "Okey masası",
+    text: "Adayım, kıraathaneye buyurun; dedeniz burada okey oynardı, masası hâlâ boş. Kazanırsanız 'sandığı da alır' derler, kaybederseniz 'taş bile çekemedi'. Karşınızda yetmiş yılın ustaları oturacak, bilesiniz.",
+    L: {
+      t: "Herkese çay benden",
+      e: [0, 0, 0, 0],
+      oy: 2,
+      not: "Kırk bardak çay ısmarladınız; kıraathane sizi 'eli açık' diye yazdı.",
+    },
+    R: {
+      t: "Masaya otur",
+      e: [0, 0, 0, 0],
+      set: "kmp_okey",
+      zar: {
+        p: 0.55,
+        iyi: {
+          oy: 6,
+          msg: "Okeyi elden bitirdiniz; yetmiş yıllık ustalar ayağa kalkıp el sıktı.",
+          set: "kmp_okey_galip",
+        },
+        kotu: {
+          oy: -2,
+          msg: "Üç el üst üste yandınız; kahvede adınız 'taş bile çekemedi' oldu.",
+        },
+      },
+    },
+  },
+  {
+    id: "kmp_koy",
+    asama: 1,
+    who: "dursun",
+    konu: "Tarlada kavun",
+    text: "Adayım, traktör hazır, köy köy gezeceğiz. Tarlada size bir kavun seçtireceğim, bütün köy başında bekleyecek. Ballı çıkarsa köy sizin. Kelek çıkarsa hüküm hazır: 'Kavunu bilmeyen, Karakavak'ı hiç bilmez.'",
+    L: {
+      t: "Kavunu siz seçin",
+      e: [0, 0, 0, 0],
+      oy: 2,
+      rel: {
+        dursun: 1,
+      },
+      not: "Dursun Ağa'nın seçtiği kavun bal çıktı; alkışı da o topladı.",
+    },
+    R: {
+      t: "Kavunu ben seçerim",
+      e: [0, 0, 0, 0],
+      zar: {
+        p: 0.65,
+        iyi: {
+          oy: 6,
+          msg: "Kavun bal gibi çıktı; köy kahvesi oybirliğiyle 'bu adam bilir' dedi.",
+        },
+        kotu: {
+          oy: -4,
+          msg: "Kavun kelek çıktı; köy hükmünü verdi, itiraz yolu kapalı.",
+        },
+      },
+    },
+  },
+  {
+    id: "kmp_dugun",
+    asama: 1,
+    who: "hayri",
+    konu: "Düğün ve taziye",
+    text: "Adayım, bu akşam Kavaklı'da düğün var, çarşıda da taziye. İkisine birden yetişen aday görmedim. Taziyede broşür cepte kalır evladım; düğünde de takıyı 'belediyeden' diye anons ettirmeyin, seçim yasağına girer.",
+    L: {
+      t: "Yalnız taziyeye git",
+      e: [0, 0, 0, 0],
+      oy: 2,
+      rel: {
+        hayri: 1,
+      },
+      not: "Taziyede yalnız dua ettiniz; ev sahibi 'bu evlat terbiyeli' dedi.",
+    },
+    R: {
+      t: "İkisine birden",
+      e: [0, 0, 0, 0],
+      zar: {
+        p: 0.6,
+        iyi: {
+          oy: 7,
+          msg: "Önce taziye, sonra halay; iki ev de 'bizi unutmadı' dedi.",
+        },
+        kotu: {
+          oy: -4,
+          msg: "Taziyeye üstünüzde düğün konfetisiyle girdiniz; fotoğraf elden ele gezdi.",
+        },
+      },
+    },
+  },
+  {
+    id: "kmp_pazar",
+    asama: 1,
+    who: "fatma",
+    konu: "Domatesin kilosu",
+    text: "Dur bakalım oğlum... adayım! Tartım elimde. Domatesin kilosu kaç? Bilirsen oyum senin; bilemezsen torunum videoyu çekiyor bile. Sonra soğanı sorarım, ekmeğin gramını da. Kopya yok, Fikret'in fısıltısını duydum.",
+    L: {
+      t: "Bilmiyorum, siz söyleyin",
+      e: [0, 0, 0, 0],
+      oy: 2,
+      not: "'Bilmiyorum' dediniz; Fatma Teyze 'yalan söylemedi' deyip fiyatı yazdı.",
+    },
+    R: {
+      t: "Fiyatı söyle",
+      e: [0, 0, 0, 0],
+      zar: {
+        p: 0.5,
+        iyi: {
+          oy: 8,
+          msg: "Kuruşu kuruşuna bildiniz; Fatma Teyze tartısını size hediye etti.",
+        },
+        kotu: {
+          oy: -3,
+          msg: "Geçen haftanın fiyatını dediniz; 'domatesi bilmeyen aday' videosu yayıldı.",
+        },
+      },
+    },
+  },
+  {
+    id: "kmp_video",
+    asama: 2,
+    who: "burak",
+    konu: "Sabah rutini",
+    text: "Dayı, 'adayın sabah rutini' videosu çekiyoruz: 05.00 kalkış, soğuk duş, kahvaltıda kavun, sonra koşu. Sen yalnız kameraya bakıp 'Karakavak uyumaz' diyeceksin. Paketi karşı adaya da teklif ettim ama önce sen, aile önceliği.",
+    L: {
+      t: "Sade bir video çek",
+      e: [0, 0, 0, 0],
+      oy: 2,
+      rel: {
+        burak: -1,
+      },
+      not: "Sade video 3 bin izlendi; 2 bini Naciye Hanım'ın telefonundan.",
+    },
+    R: {
+      t: "Rutini çekelim",
+      e: [0, 0, 0, 0],
+      rel: {
+        burak: 1,
+      },
+      zar: {
+        p: 0.55,
+        iyi: {
+          oy: 7,
+          msg: "Soğuk duş videosu bir milyon izlendi; ilçede sabah beşte koşan üç kişi türedi.",
+        },
+        kotu: {
+          oy: -3,
+          msg: "'Utanç verici' yorumları yağdı; Burak aynı paketi karşı adaya sattı.",
+        },
+      },
+    },
+  },
+  {
+    id: "kmp_fenomen",
+    asama: 2,
+    who: "kaan",
+    konu: "Fenomen desteği",
+    text: "Adayım, İstanbul'dan paket fenomen desteği ayarladım: on iki hesap, dört milyon takipçi. Hepsi 'Karakavak'ın başkan adayını çok seviyorum' diyecek. İlçeyi ilk kez duyuyorlar ama metin hazır, okurlar. Fiyatı dostluk fiyatı.",
+    L: {
+      t: "Tekir'le poz verelim",
+      e: [0, 0, 0, 0],
+      oy: 2,
+      not: "Tekir'le fotoğraf tuttu; Tekir sizi bir kez tırmaladı, yara bandı yakıştı.",
+    },
+    R: {
+      t: "Paketi al",
+      e: [0, 0, 0, 0],
+      rel: {
+        kaan: 1,
+      },
+      zar: {
+        p: 0.55,
+        iyi: {
+          oy: 8,
+          msg: "Fenomenler 'Karakovak' yazdı ama izlenme patladı; gençler sizi konuşuyor.",
+        },
+        kotu: {
+          oy: -4,
+          msg: "Bir fenomen metnin sonundaki 'ücret: 40 bin' satırını da okudu.",
+        },
+      },
+    },
+  },
+  {
+    id: "kmp_acikoturum",
+    asama: 2,
+    who: "nermin",
+    konu: "Açık oturum",
+    text: "Adayım, Karakavak Postası'nın tek kamerasıyla açık oturum var; ilk soru benden. Karşı aday gelmedi, sandalyesine kavun koyduk. Sorularımı kimse görmedi, Tuncay dahil. Muhalifim ama arkadan vurmam; önden vuracağım.",
+    L: {
+      t: "Notlarımla gelirim",
+      e: [0, 0, 0, 0],
+      oy: 2,
+      not: "Notlardan okudunuz; kavunlu sandalye daha rahat göründü ama puan aldınız.",
+    },
+    R: {
+      t: "Doğaçlama çık",
+      e: [0, 0, 0, 0],
+      rel: {
+        nermin: 1,
+      },
+      zar: {
+        p: 0.5,
+        iyi: {
+          oy: 8,
+          msg: "Nermin Hanım'ın sorusunu rakamla cevapladınız; kavuna da söz hakkı verdiniz.",
+        },
+        kotu: {
+          oy: -4,
+          msg: "Açık kalan mikrofon 'bu soruları kim hazırladı' fısıltınızı yakaladı.",
+        },
+      },
+    },
+  },
+  {
+    id: "kmp_anketci",
+    asama: 2,
+    who: "tuncay",
+    konu: "Anket firması",
+    text: "Adayım, Karakavak Araştırma'nın anketi hazır; firma bizim matbaanın arka odası. Örneklem on bir kişi, yedisi Rahmi'nin müşterisi. Parası ödenirse sonuç yüzde 64 çıkar. Manşet de hazır: 'FARK AÇILIYOR!'",
+    L: {
+      t: "Deniz'in ödevi yeter",
+      e: [0, 0, 0, 0],
+      oy: 2,
+      rel: {
+        tuncay: -1,
+      },
+      not: "Deniz'in ödev anketi 'kararsız çok' dedi; hocası ödeve 90 verdi.",
+    },
+    R: {
+      t: "Manşet atılsın",
+      e: [0, 0, 0, 0],
+      rel: {
+        tuncay: 1,
+      },
+      set: "kmp_anket_para",
+      zar: {
+        p: 0.6,
+        iyi: {
+          oy: 7,
+          msg: "'FARK AÇILIYOR!' manşeti kahvelerde okundu; kararsızlar size kaydı.",
+        },
+        kotu: {
+          oy: -4,
+          msg: "Rahmi 'on bir kişi bizim masaydı' dedi; manşet alay konusu oldu.",
+        },
+      },
+    },
+  },
+  {
+    id: "kmp_dusus",
+    asama: 2,
+    who: "deniz",
+    konu: "Çukur videosu",
+    text: "Adayım, dün 'asfalt sözüm var' derken Fatma Teyze'nin kapısındaki çukura düştünüz. Burak ağır çekime almış, üstüne dram müziği koymuş; yurt grubunda elden ele geziyor. Silinmez artık. Ne yapacağız?",
+    L: {
+      t: "Fatma Teyze'yi ara",
+      e: [0, 0, 0, 0],
+      oy: 2,
+      rel: {
+        fatma: 1,
+      },
+      not: "Fatma Teyze 'ayağın nasıl oğlum' dedi; videoyu o da paylaşmış.",
+    },
+    R: {
+      t: "Çukura geri dön",
+      e: [0, 0, 0, 0],
+      zar: {
+        p: 0.7,
+        iyi: {
+          oy: 6,
+          msg: "'Çukuru ilk ben denedim' videonuz ilkinden çok izlendi; çukur meşhur oldu.",
+        },
+        kotu: {
+          oy: -5,
+          msg: "İkinci videoda da düştünüz; bu kez ağır çekime gerek kalmadı.",
+        },
+      },
+    },
+  },
+  {
+    id: "kmp_mujde",
+    asama: 3,
+    who: "vekil",
+    konu: "Son dakika müjdesi",
+    text: "Adayım, gece yarısı seçim yasağı başlıyor; ondan önce temel atmak serbest. Saat 23.58'de meydana bir temel atalım: 'Karakavak Kültür Kompleksi'. Taş Ferhat Usta'nın sanayisinden, proje sonra çizilir. Kürek sizde.",
+    L: {
+      t: "Müjdeyi söze bağla",
+      e: [0, 0, 0, 0],
+      oy: 1,
+      not: "Temel yerine söz verdiniz; meydan alkışladı ama kimse not almadı.",
+    },
+    R: {
+      t: "23.58'de temel",
+      e: [0, 0, 0, 0],
+      rel: {
+        vekil: 1,
+      },
+      set: "kmp_temel",
+      zar: {
+        p: 0.6,
+        iyi: {
+          oy: 5,
+          msg: "Kürek 23.59'da toprağa girdi; Suat Bey 'müjde' dedi, meydan alkışladı.",
+        },
+        kotu: {
+          oy: -3,
+          msg: "Tören 00.01'e sarktı; kaymakam tutanağı temel taşının üstünde imzaladı.",
+          set: "kmp_temel_tutanak",
+        },
+      },
+    },
+  },
+  {
+    id: "kmp_asfalt",
+    asama: 3,
+    who: "cengiz",
+    konu: "Seçim asfaltı",
+    text: "Adayım, Muhtar Rıza Kavaklı'ya asfalt istiyor. Makinem hazır, dökerim; parasını seçilince konuşuruz, laf aramızda. Kazanamazsanız da dert etmeyin, karşı adayla konuşuruz. Şaka şaka. Silindir sabah yolda.",
+    L: {
+      t: "Çukurları elle dolduralım",
+      e: [0, 0, 0, 0],
+      oy: 2,
+      rel: {
+        muhtar: -1,
+      },
+      not: "Gönüllüler çukurları mıcırla doldurdu; Muhtar Rıza 'bu asfalt değil' dedi.",
+    },
+    R: {
+      t: "Asfaltı dök",
+      e: [0, 0, 0, 0],
+      rel: {
+        muhtar: 1,
+      },
+      set: "kmp_asfalt_borc",
+      zar: {
+        p: 0.75,
+        iyi: {
+          oy: 5,
+          msg: "Kavaklı'ya asfalt döküldü; Muhtar Rıza yolun ortasında halay çekti.",
+        },
+        kotu: {
+          oy: -4,
+          msg: "Asfalt yalnız muhtarın kapısına yetti; komşular 'torpil yolu' dedi.",
+        },
+      },
+    },
+  },
+  {
+    id: "kmp_afis",
+    asama: 3,
+    who: "recep",
+    konu: "Afiş savaşı",
+    text: "Adayım, çarşı direğine gece astığınız afişin üstünü sabah karşı adayınki kapladı. Direk on bir kat afişle ağaç gövdesine döndü. Hepsini söktüm, en alttan 1989 seçiminin afişi çıktı. Yasak yere asana ceza yazarım, adaya da.",
+    L: {
+      t: "Yalnız izinli panoya",
+      e: [0, 0, 0, 0],
+      oy: 1,
+      rel: {
+        recep: 1,
+      },
+      not: "Yalnız izinli panoya astınız; Recep Amir ilk kez bir adaya selam verdi.",
+    },
+    R: {
+      t: "Gece ekibi çıksın",
+      e: [0, 0, 0, 0],
+      rel: {
+        recep: -1,
+      },
+      zar: {
+        p: 0.55,
+        iyi: {
+          oy: 5,
+          msg: "Sabah bütün direkler sizin; karşı adayın afiş ekibi uyuyakalmış.",
+        },
+        kotu: {
+          oy: -3,
+          msg: "İki afiş ekibi direğin dibinde kapıştı; ceza iki tarafa da yazıldı.",
+        },
+      },
+    },
+  },
+  {
+    id: "kmp_miting",
+    asama: 3,
+    who: "fikret",
+    konu: "Kapanış mitingi",
+    text: "Adayım, kapanış mitingi yarın. Meydan dolarsa iş biter, boş kalırsa Tuncay fotoğrafı basar. Kalabalığı sayacak alet yok; Hüseyin çay bardaklarını sayacak, kaç bardak o kadar kişi. Siz söyleyin, kaç semaver kuralım?",
+    L: {
+      t: "Küçük salonda yapalım",
+      e: [0, 0, 0, 0],
+      oy: 2,
+      not: "Salon tıklım tıklım; Tuncay 'salon dar' değil 'kalabalık büyük' yazdı.",
+    },
+    R: {
+      t: "Meydanı doldur",
+      e: [0, 0, 0, 0],
+      zar: {
+        p: 0.55,
+        iyi: {
+          oy: 8,
+          msg: "Hüseyin 1.240 bardak saydı; bazısı üç çay içti ama meydan doldu.",
+          set: "kmp_miting_cay",
+        },
+        kotu: {
+          oy: -4,
+          msg: "Meydan yarı boş; Tuncay fotoğrafı semaverin arkasından, geniş açıyla çekti.",
+        },
+      },
+    },
+  },
+  {
+    id: "kmp_kutuk",
+    asama: 3,
+    who: "muhtar",
+    konu: "Seçmen kütüğü",
+    text: "Adayım, askıdaki seçmen listesini görmüşsünüz. Evet, benim evde 43 seçmen kayıtlı; kaçak katlar da ev sayılır. Listedeki 'Tekir Karakavaklı, 2019 doğumlu' benden değil. Kavaklı'nın oyu sizde, itiraz etmeyin yeter.",
+    L: {
+      t: "Görmedim sayalım",
+      e: [0, 0, 0, 0],
+      oy: 2,
+      rel: {
+        muhtar: 1,
+      },
+      set: "kmp_kutuk_sus",
+      not: "İtiraz etmediniz; Muhtar Rıza kahvede 'adam gibi adam' dedi.",
+    },
+    R: {
+      t: "İtiraz et",
+      e: [0, 0, 0, 0],
+      rel: {
+        muhtar: -1,
+      },
+      zar: {
+        p: 0.55,
+        iyi: {
+          oy: 7,
+          msg: "Kurul 43 kaydı sildi, Tekir'i de; çarşıda 'temiz aday' lafı dolaştı.",
+        },
+        kotu: {
+          oy: -4,
+          msg: "İtiraz haklı çıktı ama Kavaklı küstü; muhtar 'o adaya tek oy yok' dedi.",
+        },
+      },
+    },
   },
 ];
 

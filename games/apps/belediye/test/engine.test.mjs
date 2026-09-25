@@ -47,6 +47,7 @@ test("zincirler, işler ve ilişkiler var olan kartlara ve kişilere bağlı", (
     }
   for (const x of E.SYN) if (x.card) linked.add(x.card);
   for (const v of E.VAATLER) link({ id: "VAAT " + v.id }, v.kart); // vaat verilince gelir
+  for (const [k, a] of Object.entries(E.ACILIS)) if (a.next) link({ id: "ACILIS " + k }, a.next.id); // göreve başlarken gelir
   for (const c of E.CARDS) if (c.chain) assert.ok(linked.has(c.id), `${c.id} zincir kartı ama hiçbir yerden gelmiyor`);
 });
 

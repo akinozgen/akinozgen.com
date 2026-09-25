@@ -3,7 +3,7 @@
 // test/content.test.mjs hata bırakmaz; tools/sim.mjs uyarıları da yazar.
 
 // Motorun kendisinin okuduğu sayaçlar (kartlarda kapı olarak geçmese de kullanılıyor)
-const ENGINE_CNT = new Set(["tekir", "vaat", "skandal"]);
+const ENGINE_CNT = new Set(["tekir", "vaat", "skandal", "muhur"]);
 
 // Bağlam: bir olayı "olmuş" sayan metin, o olay yaşanmadan gelmemeli. Metin bu olayı anıyorsa ya kart
 // o olayın kendi zincirindedir (ok), ya da kart/metin varyantı olayın bayrağını ister (flag).
@@ -73,6 +73,7 @@ export function lintContent(E) {
     ...E.INTRO.map(c => ({ ...c, intro: true })),
     ...Object.entries(E.CRISES).map(([k, c]) => ({ ...c, id: "kriz_" + k, crisis: true })),
     ...(E.DAVET || []),
+    ...(E.KAMPANYA || []).map(c => ({ ...c, kampanya: true })),
   ];
   const ids = new Set(),
     polIds = new Set();
@@ -140,6 +141,33 @@ export function lintContent(E) {
           err(`${sb}: defter kalemi -4..4 arası, sıfırdan farklı olmalı`);
       }
       if (o.not && o.not.length > 80) err(`${sb}: hafıza notu uzun (${o.not.length})`);
+      // zarlı seçenek: oran düğmede yazılır; iki ucun da haberi olur
+      if (o.oy != null && (!c.kampanya || !Number.isFinite(o.oy) || Math.abs(o.oy) > 4))
+        err(`${sb}: kesin anket etkisi (oy) yalnız kampanya evrakında, en çok ±4`);
+      if (o.zar) {
+        const z = o.zar;
+        if (!(z.p >= 0.3 && z.p <= 0.8)) err(`${sb}: zar olasılığı 0,3-0,8 arası olmalı (${z.p})`);
+        if (o.t.length > 20) err(`${sb}: zarlı seçeneğin düğmesi en çok 20 harf (yanına zar işareti gelir)`);
+        for (const [u, x] of [
+          ["iyi", z.iyi],
+          ["kötü", z.kotu],
+        ]) {
+          if (!x) {
+            err(`${sb}: zarın ${u} ucu yok`);
+            continue;
+          }
+          if (x.e && (x.e.length !== 4 || x.e.some(v => !Number.isFinite(v))))
+            err(`${sb}: zarın ${u} ucu etkisi hatalı`);
+          if (!x.msg || x.msg.length > 90) err(`${sb}: zarın ${u} ucunun haberi boş ya da uzun (${x.msg?.length})`);
+          if (x.oy != null && (!c.kampanya || Math.abs(x.oy) > 9))
+            err(`${sb}: zarın anket etkisi yalnız kampanyada, en çok ±9`);
+          if (x.kalem && (!x.kalem.ad || Math.abs(x.kalem.puan) > 4)) err(`${sb}: zarın defter kalemi hatalı`);
+          arr(x.set).forEach(f => flagW.add(f));
+          for (const w of Object.keys(x.rel || {})) if (!E.PEOPLE[w]) err(`${sb}: zarda bilinmeyen kişi ${w}`);
+        }
+        if (c.kampanya && !(z.iyi?.oy > 0 && z.kotu?.oy < 0))
+          err(`${sb}: kampanya zarı iyi ucta anketi artırmalı, kötüde düşürmeli`);
+      }
       arr(o.set).forEach(f => flagW.add(f));
       arr(o.clr).forEach(f => flagW.add(f));
       keysOf(o.inc).forEach(k => cntW.add(k));
@@ -187,6 +215,32 @@ export function lintContent(E) {
     if (x.msg && !x.ad) err(`SYN ${x.id}: haberin başlığı (ad) yok`);
   }
   if (new Set(E.SYN.map(x => x.id)).size !== E.SYN.length) err("SYN: çift kimlik");
+  // göreve başlayışın kararları ve evrakları (gölgeli mazbata, itiraz dilekçesi)
+  for (const [k, a] of Object.entries(E.ACILIS || {})) {
+    if (a.pol) {
+      polIds.add(a.pol.id);
+      arr(a.pol.tags).forEach(t => tagW.add(t));
+    }
+    const n = nextOf(a.next);
+    if (n && !ids.has(n.id)) err(`ACILIS ${k}: evrak yok → ${n.id}`);
+  }
+  if (E.muhurPol) polIds.add(E.muhurPol().id);
+  // kampanya turu: her aşamada evrak var; her evrakta biri kesin (oy), öbürü zarlı
+  if (E.KAMPANYA) {
+    for (const a of [0, 1, 2, 3]) if (!E.KAMPANYA.some(c => c.asama === a)) err(`KAMPANYA: ${a}. aşamada evrak yok`);
+    const kid = new Set();
+    for (const c of E.KAMPANYA) {
+      if (kid.has(c.id) || ids.has(c.id)) err(`KAMPANYA ${c.id}: çift kimlik`);
+      kid.add(c.id);
+      if (![0, 1, 2, 3].includes(c.asama)) err(`KAMPANYA ${c.id}: aşama 0-3 olmalı`);
+      const zl = ["L", "R"].filter(s => c[s]?.zar).length;
+      if (zl !== 1 || !["L", "R"].some(s => !c[s]?.zar && c[s]?.oy > 0))
+        err(`KAMPANYA ${c.id}: bir seçenek kesin (oy > 0), öbürü zarlı olmalı`);
+      for (const s of ["L", "R"])
+        if (c[s]?.next || c[s]?.pol || c[s]?.son)
+          err(`KAMPANYA ${c.id}.${s}: kampanyada zincir, karar ya da son olmaz`);
+    }
+  }
   for (const [p, by] of polRefs) if (!polIds.has(p)) err(`${by}: böyle bir karar yok → ${p}`);
   // yan etki evrakı kararı kaldırma yolu sunmalı (biri "kaldır", öbürü "üstüne git")
   for (const [id, p, by] of yanRefs) {
@@ -203,6 +257,7 @@ export function lintContent(E) {
     stack = [...all.filter(c => !c.chain)];
   for (const x of E.SYN) if (x.card && tagW.has(x.a) && tagW.has(x.b)) stack.push(E.CARD[x.card]);
   for (const v of E.VAATLER || []) if (E.CARD[v.kart]) stack.push(E.CARD[v.kart]); // vaat verilince gelir
+  for (const a of Object.values(E.ACILIS || {})) if (E.CARD[nextOf(a.next)?.id]) stack.push(E.CARD[nextOf(a.next).id]); // göreve başlarken gelir
   while (stack.length) {
     const c = stack.pop();
     if (!c || reach.has(c.id)) continue;
@@ -235,6 +290,8 @@ export function lintContent(E) {
     if (!v.ad || v.ad.length > 26) err(`${by}: başlık boş ya da uzun (${v.ad?.length})`);
     if (!v.soz || v.soz.length > 110) err(`${by}: söz boş ya da uzun (${v.soz?.length})`);
     if (!(v.guc >= 3 && v.guc <= 15)) err(`${by}: güç 3-15 arası olmalı (${v.guc})`);
+    if (v.hemen && (v.hemen.length !== 4 || v.hemen.some(x => !Number.isFinite(x) || Math.abs(x) > 5)))
+      err(`${by}: hemen etkisi dört gösterge ve en çok ±5 olmalı`);
     if (!Array.isArray(v.ay) || !(v.ay[0] >= 1 && v.ay[1] >= v.ay[0] && v.ay[1] <= 58))
       err(`${by}: ay aralığı ilk dönemin içinde olmalı`);
     const c = E.CARD[v.kart];
@@ -293,6 +350,7 @@ export function lintContent(E) {
   for (const k of cntW) if (!cntR.has(k) && !ENGINE_CNT.has(k)) warn(`sayaç "${k}" artıyor ama hiçbir yer okumuyor`);
   for (const [t, by] of tagR)
     if (!tagW.has(t)) err(`etiket "${t}" aranıyor ama hiçbir karar taşımıyor (${by.join(", ")})`);
+  for (const t of Object.keys(E.HAVA || {})) readT(t, "HAVA"); // motor havaları etiketle okur
   for (const t of tagW) if (!tagR.has(t)) warn(`etiket "${t}" taşınıyor ama hiçbir yer aramıyor`);
   return { errors, warnings };
 }

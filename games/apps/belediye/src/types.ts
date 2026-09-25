@@ -55,6 +55,8 @@ export interface PolDef {
   doneCard?: string;
   tags?: string[];
   yan?: YanDef[];
+  /** aylık etkisi olmayan kararın "Yürürlükte" şeridindeki kısa açıklaması */
+  ozet?: string;
 }
 
 /** Kart seçeneği (içerikte yazıldığı hâliyle) */
@@ -75,6 +77,10 @@ export interface SideDef {
   anket?: Kalem;
   /** kaydırınca çıkan hafıza notu ("Hacı Bekir bunu unutmayacak.") */
   not?: string;
+  /** riskli seçenek: p olasılıkla iyi, yoksa kötü uç işler (oran düğmede görünür) */
+  zar?: { p: number; iyi: ZarSonuc; kotu: ZarSonuc };
+  /** kampanya anketine kesin etki (kampanya evrakının güvenli seçeneği) */
+  oy?: number;
 }
 
 export type CardKind =
@@ -89,7 +95,8 @@ export type CardKind =
   | "erkensonuc"
   | "adaylar"
   | "davet"
-  | "acilis";
+  | "acilis"
+  | "kampanya";
 
 /** Kart (içerik ya da motorun ürettiği özel evrak) */
 export interface CardDef {
@@ -119,6 +126,8 @@ export interface CardDef {
   fav?: "L" | "R";
   norel?: boolean;
   alt?: { req?: OneOrMany; if?: Cond; text: string }[];
+  /** kampanya evrakının aşaması: 0 açılış, 1 saha, 2 medya, 3 son hafta */
+  asama?: number;
   // motorun özel evraklarında
   key?: string;
   restore?: Meters;
@@ -194,10 +203,24 @@ export interface VaatDef {
   ay: [number, number];
   /** vaat verilince konan bayrak (örn. metro_soz: mevcut evraklar bu sözü tanısın) */
   set?: string;
+  /** sandığa gidince hemen etkisi: söz meydanı ısıtır [halk, kasa, esnaf, Ankara] */
+  hemen?: Effect;
 }
 
-/** Göreve başlayış: sessiz kampanya (düşük), sandıkta rahat zafer (yüksek), kıl payı zafer (daha düşük) */
-export type Acilis = "sessiz" | "zafer" | "kilpayi";
+/** Göreve başlayış: sessiz kampanya, sandıkta ezici ya da rahat zafer, kıl payı zafer */
+export type Acilis = "sessiz" | "ezici" | "zafer" | "kilpayi";
+
+/** Zarlı seçeneğin bir ucu: tutarsa (iyi) ya da tutmazsa (kötü) ne olur */
+export interface ZarSonuc {
+  e?: Effect;
+  /** kampanya anketine etki (yalnız kampanya evrakında) */
+  oy?: number;
+  set?: OneOrMany;
+  rel?: Record<string, number>;
+  kalem?: Kalem;
+  /** kaydırınca çıkan haber, en çok 90 */
+  msg?: string;
+}
 
 /** Oyun sonu gazetesinde başkanın neyle anılacağı: koşulu tutan ilk ikisi yazılır */
 export interface MirasDef {
@@ -222,6 +245,7 @@ export interface Ongoing {
   /** henüz doğmamış yan etkiler ve kararın kaç aydır yürürlükte olduğu */
   yan?: YanDef[];
   age?: number;
+  ozet?: string;
 }
 export interface QueueItem {
   id: string;
@@ -266,6 +290,8 @@ export interface Tally {
   /** açılış seçiminde verilen vaatlerin adları ve kazanma şansı */
   vaatler?: string[];
   sans?: number;
+  /** açılış seçiminin sonucu: ezici, rahat ya da kıl payı zafer */
+  acilis?: Acilis;
 }
 
 export type Pending =
@@ -342,6 +368,8 @@ export interface State {
   earlyField?: Field | null;
   syn?: Record<string, number>;
   dropped?: string[];
+  /** kampanya turu (sandığa giden, göreve başlamadan önce): anket, sözler, evrak sırası */
+  kampanya?: { oy: number; vaatler: string[]; sira: string[]; i: number };
   /** göreve başlayış ve beyannamede verilen vaatler (VAATLER id'leri) */
   acilis?: Acilis;
   vaatler?: string[];
@@ -369,4 +397,11 @@ export interface ChooseOut {
   rel: Record<string, number>;
   over?: boolean;
   dead?: Meter;
+  /** mühür basıldıysa: hangi göstergenin ne kadarlık kaybı silindi */
+  muhur?: { k: Meter; v: number };
+  /** zarlı seçeneğin sonucu */
+  zar?: { iyi: boolean; msg?: string; oy?: number };
+  /** kampanya evrakının ankete etkisi ve turun bitişi */
+  oy?: number;
+  kampanyaBitti?: boolean;
 }

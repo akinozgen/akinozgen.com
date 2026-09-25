@@ -1,7 +1,9 @@
 // Denge simülasyonu: motoru binlerce kez farklı oyuncu tipleriyle oynatır.
-// node tools/sim.mjs [oyunSayısı] [ayar=değer ...] [acilis=karisik|sessiz|zafer|kilpayi|kumar|eski]
-// acilis: göreve başlayış. kumar: her oyun üç rastgele sözle sandığa gider. karisik (varsayılan): yarısı sessiz,
-// yarısı kumar (oyuncular gibi). eski: beyanname öncesinin 50'li başlangıcı.
+// node tools/sim.mjs [oyunSayısı] [ayar=değer ...] [acilis=karisik|sessiz|ezici|zafer|kilpayi|kumar|eski] [kampanya=karisik|cesur|temkinli]
+// acilis: göreve başlayış. kumar: her oyun rastgele sözlerle sandığa gider, kampanya turunu oynar. karisik (varsayılan):
+// yarısı sessiz, yarısı kumar (oyuncular gibi). eski: beyanname öncesinin 50'li başlangıcı.
+// kampanya: turdaki seçim. cesur hep zarlı, temkinli hep kesin seçeneği seçer; karisik yarı yarıya.
+// Mühür: oyuncu, seçtiği seçenek bir göstergeyi 6 ya da daha çok düşürecekse eldeki mühürü basar (muhur=eşik).
 import { motor } from "./lib/sayfa.mjs";
 import { lintContent } from "./lint.mjs";
 
@@ -10,10 +12,19 @@ const E = await motor(); // cards.ts + engine.ts modülleri
 for (const a of process.argv.slice(3)) {
   const [k, v] = a.split("=");
   if (k in E.TUNE) E.TUNE[k] = Number(v);
+  // ACILIS.ezici.m.h=66 gibi: motor nesnesinde bir ayarı geçici değiştir
+  else if (k.includes(".")) {
+    const yol = k.split(".");
+    let o = E;
+    for (const x of yol.slice(0, -1)) o = o[x];
+    o[yol.at(-1)] = Number(v);
+  }
 }
+const OYUNCU = process.argv.find(a => a.startsWith("oyuncu="))?.slice(7);
 console.log("TUNE", JSON.stringify(E.TUNE));
 const ACILIS = process.argv.find(a => a.startsWith("acilis="))?.slice(7) || "karisik";
-console.log("açılış:", ACILIS);
+const KMP = process.argv.find(a => a.startsWith("kampanya="))?.slice(9) || "karisik";
+console.log("açılış:", ACILIS, " kampanya:", KMP);
 const sozler = rng =>
   E.shuffle(
     E.VAATLER.map(v => v.id),
@@ -23,11 +34,7 @@ const baslat = rng => {
   if (ACILIS === "eski") return E.newGame();
   const a = ACILIS === "karisik" ? (rng() < 0.5 ? "sessiz" : "kumar") : ACILIS;
   if (a === "sessiz") return E.newGame({ acilis: "sessiz" });
-  if (a === "kumar") {
-    const vz = sozler(rng),
-      { acilis, res } = E.acilisSecimi(vz, rng);
-    return E.newGame({ acilis, vaatler: vz, secim: res, rng });
-  }
+  if (a === "kumar") return E.newGame({ kampanya: true, vaatler: sozler(rng).slice(0, Math.floor(rng() * 4)), rng });
   return E.newGame({ acilis: ACILIS, vaatler: ACILIS === "sessiz" ? [] : sozler(rng), rng });
 };
 
@@ -106,6 +113,16 @@ const policies = {
     return a === b ? (rng() < 0.5 ? "L" : "R") : a < b ? "L" : "R";
   },
 };
+// kampanya evrakı: zarlı mı kesin mi
+const kampanyaSec = (s, rng) => {
+  const zarli = s.cur.L.zar ? "L" : "R",
+    kesin = zarli === "L" ? "R" : "L";
+  const cesur = KMP === "cesur" || (KMP === "karisik" && rng() < 0.5);
+  return cesur ? zarli : kesin;
+};
+const MUHUR_ESIK = Number(process.argv.find(a => a.startsWith("muhur="))?.slice(6) || 6);
+const muhurBas = (s, side) => E.muhurOK(s) && Math.min(...s.cur[side].e) <= -MUHUR_ESIK;
+const acilisSay = {};
 const seenAll = {};
 // Oyunu bitiren seçenek (yay sonu): etkisi sıfır göründüğü için risk hesabı onu hep "güvenli" sanırdı.
 // Oyuncu "oyun biter" notunu okur; merak edenler (%30) sonu seçer, gerisi öbür tarafa gider.
@@ -131,6 +148,7 @@ const q = (arr, p) => arr[Math.floor(p * (arr.length - 1))];
 const medians = {},
   sideTally = {};
 for (const [name, pol] of Object.entries(policies)) {
+  if (OYUNCU && !OYUNCU.split(",").includes(name)) continue;
   const months = [],
     ends = {},
     seen = {},
@@ -155,7 +173,9 @@ for (const [name, pol] of Object.entries(policies)) {
     syn = 0,
     vaatAtElection = 0,
     defterAt = 0,
-    yanSeen = 0;
+    yanSeen = 0,
+    muhurN = 0;
+  const acl = {}; // göreve başlayışa göre: oyun, ilk seçimi kazanan, ay toplamı
   for (let g = 0; g < N; g++) {
     const rng = mulberry(g * 7919 + 13);
     const s = baslat(rng);
@@ -176,13 +196,15 @@ for (const [name, pol] of Object.entries(policies)) {
         defterAt += E.defterOf(s);
       }
       if (c.kind === "erkensonuc") earlyW++;
-      const side = sonMu(s, rng) || pol(s, rng);
+      const side = c.kind === "kampanya" ? kampanyaSec(s, rng) : sonMu(s, rng) || pol(s, rng);
       // kartın yazıldığı taraf (masada yarı yarıya ters çevrilir): baskın seçenek ölçümü için
       if (c.kind === "normal") {
         const t = (tally[c.id] ||= { L: 0, R: 0 });
         t[c.flip ? (side === "L" ? "R" : "L") : side]++;
       }
-      const res = E.choose(s, side, rng);
+      const res = E.choose(s, side, rng, { muhur: muhurBas(s, side) });
+      if (res.muhur) muhurN++;
+      if (res.kampanyaBitti) E.kampanyaBitir(s, rng);
       if (c.kind === "secim" && s.lastElection) {
         const r = s.lastElection,
           n = r.cands.length;
@@ -201,6 +223,11 @@ for (const [name, pol] of Object.entries(policies)) {
       pols = Math.max(pols, s.ongoing.length);
     }
     if (s.over.months >= 59) term1++;
+    const ak = s.acilis || "eski",
+      A = (acl[ak] ||= { n: 0, w1: 0, ay: 0 });
+    A.n++;
+    A.ay += s.over.months;
+    if (s.term >= 2 || (s.over.months >= 60 && s.over.key !== "sandik")) A.w1++;
     months.push(s.over.months);
     ends[s.over.key] = (ends[s.over.key] || 0) + 1;
     relHi += Object.values(s.rel).filter(v => v >= 2).length;
@@ -246,6 +273,16 @@ for (const [name, pol] of Object.entries(policies)) {
       .join(" ")}`,
   );
   medians[name] = q(months, 0.5);
+  console.log(
+    `başlayış (oyun %, ilk seçimi geçen %, ortalama ay): ${Object.entries(acl)
+      .sort((a, b) => b[1].n - a[1].n)
+      .map(
+        ([k, A]) =>
+          `${k} %${Math.round((100 * A.n) / N)} → %${Math.round((100 * A.w1) / A.n)}, ${Math.round(A.ay / A.n)} ay`,
+      )
+      .join("   ")}   mühür/oyun: ${(muhurN / N).toFixed(2)}`,
+  );
+  for (const [k, A] of Object.entries(acl)) (acilisSay[k] ||= {})[name] = A;
   if (Object.keys(davet).length)
     console.log(
       `Ankara daveti (oyun başına): ${Object.entries(davet)
