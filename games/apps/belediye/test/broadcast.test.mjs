@@ -1,4 +1,4 @@
-// Seçim gecesi yayını (broadcast.js): alt bant, son dakika bandı, döviz kutusu, kazanan sözleri
+// Seçim gecesi yayını (broadcast.ts): alt bant, son dakika bandı, döviz kutusu, kazanan sözleri
 import { test } from "vitest";
 import assert from "node:assert/strict";
 import { yukle } from "./yukle.mjs";

@@ -177,7 +177,7 @@ function portrait(p) {
   return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="100" height="100" fill="${p.bg}"/><circle cx="50" cy="46" r="35" fill="${shade(p.bg, 0.2)}"/>${back}${body}${face}${hair}${top}</svg>`;
 }
 
-// Kişilerin tarifleri (anahtarlar cards.js'teki PEOPLE ile aynı)
+// Kişilerin tarifleri (anahtarlar cards.ts'teki PEOPLE ile aynı)
 const RECIPES = {
   fikret:   { bg: "#c9a54c", skin: "#d9a27a", hair: "kisa", hc: "#77726c", must: "kalem", shirt: "#5b4636", collar: "vest", acc: "cay" },
   muhtar:   { bg: "#8fb3a3", skin: "#c68b5f", hair: "kasket", hat: "#4a4a52", hc: "#8f8a84", must: "pala", shirt: "#6b6f78", collar: "open" },

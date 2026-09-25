@@ -1,6 +1,6 @@
 // Seçim gecesi TV ekranı için tasarım provası: oyundan bağımsız bir sayfa kurar, sahte verilerle doldurur,
 // headless Chrome ile dört ekran boyunda fotoğraflar ve yerleşimi denetler (taşma, çakışma, küçük yazı).
-// Metinler (KJ, kayan yazı, kur, "Neden?") src/broadcast.js'ten gelir; KJ için en uzun satırlar seçilir.
+// Metinler (KJ, kayan yazı, kur, "Neden?") src/broadcast.ts'ten gelir; KJ için en uzun satırlar seçilir.
 //   node tools/tv-mock.mjs            → .cache/tv/mock.html ve .cache/tv/*.png
 //   node tools/tv-mock.mjs --no-shot  → yalnız sayfayı yazar (tarayıcıda elle açmak için)
 // Sayfa: fontlar src/fonts.css'ten, stil src/style.css'ten, işaretleme index.html'deki #scr-secim'den.
@@ -33,7 +33,7 @@ const base = `html { box-sizing: border-box; padding-top: env(safe-area-inset-to
 *, *::before, *::after { box-sizing: inherit; }
 img, svg { max-width: 100%; }`;
 
-// Oyunun metin motoru (cards.js + engine.js + broadcast.js) sayfaya gömülür: KJ, kayan yazı, kur kutusu ve
+// Oyunun metin motoru (cards.ts + engine.ts + broadcast.ts) sayfaya gömülür: KJ, kayan yazı, kur kutusu ve
 // "Neden?" satırları gerçek üreticiden gelir, uzunlukları gerçek olur. Oy sayıları elle.
 const ENGINE = betik("cards", "engine", "broadcast");
 const ENGINE_JS = `window.TV = (() => {\n${ENGINE}\nreturn { kj, ticker, fx, whyLines, tvName, tvShort, dateLabel, ADAYLAR };\n})();`;

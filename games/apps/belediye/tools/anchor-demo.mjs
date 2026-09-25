@@ -1,4 +1,4 @@
-// Spiker stüdyosu gösterisi: src/anchor.js'i 960×540 ve 360×203 (telefon) kutularına kurar, senaryoyu oynatır,
+// Spiker stüdyosu gösterisi: src/anchor.ts'i 960×540 ve 360×203 (telefon) kutularına kurar, senaryoyu oynatır,
 // başsız Chrome ile ekran görüntüleri alır. Çıktı: .cache/anchor/demo.html + *.png
 // node tools/anchor-demo.mjs [çıktı klasörü]
 import { spawn } from "node:child_process";
@@ -46,7 +46,7 @@ try {
   await send("Page.navigate", { url: pathToFileURL(OUT + "/demo.html").href }); await sleep(900);
   await ev(`document.fonts.ready.then(() => document.fonts.size)`);
   const info = await ev(`(() => { const s = document.querySelector("#big svg"); return { nodes: s.querySelectorAll("*").length, tick: Math.round(s.querySelector(".st-tick").getComputedTextLength()) }; })()`);
-  console.log("SVG düğüm:", info.nodes, "· kayan yazı:", info.tick, "· anchor.js:", (Buffer.byteLength(SRC) / 1024).toFixed(1), "KB");
+  console.log("SVG düğüm:", info.nodes, "· kayan yazı:", info.tick, "· anchor.ts:", (Buffer.byteLength(SRC) / 1024).toFixed(1), "KB");
   if (info.nodes >= 400) errors.push(`TEST: düğüm sayısı ${info.nodes} ≥ 400`);
   await sleep(300);
   await shot("00-bos", FULL); await shot("00-bos-yuz", FACE);

@@ -125,7 +125,7 @@ export function tick(s: State): { sum: Effect; events: TickEvent[] } {
   for (const ad of s.dropped || []) events.push({ ad, msg: "Yeni karara yer açmak için yürürlükten kalktı." });
   s.dropped = [];
   for (const o of s.ongoing) { o.e.forEach((v, i) => { sum[i] += v; }); if (o.left != null) o.left--; }
-  // Etkileşim tablosu (cards.js'teki SYN): iki etiket aynı anda yürürlükteyse her ay ek etki; ilk kez değince kart/haber
+  // Etkileşim tablosu (cards.ts'teki SYN): iki etiket aynı anda yürürlükteyse her ay ek etki; ilk kez değince kart/haber
   const tg = tagsOn(s);
   for (const x of SYN) {
     if (!tg.has(x.a) || !tg.has(x.b)) continue;

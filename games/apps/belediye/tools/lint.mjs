@@ -1,5 +1,5 @@
 // İçerik denetimi: kart grafı, bayraklar, sayaçlar, etiketler, uzunluklar.
-// lintContent(E) → { errors: [], warnings: [] }. E: cards.js + engine.js'ten dönen nesne (CARDS, CARD, CRISES, INTRO, PEOPLE, SYN; varsa DAVET, ENDINGS).
+// lintContent(E) → { errors: [], warnings: [] }. E: cards.ts + engine.ts'ten dönen nesne (CARDS, CARD, CRISES, INTRO, PEOPLE, SYN; varsa DAVET, ENDINGS).
 // test/content.test.mjs hata bırakmaz; tools/sim.mjs uyarıları da yazar.
 
 // Motorun kendisinin okuduğu sayaçlar (kartlarda kapı olarak geçmese de kullanılıyor)

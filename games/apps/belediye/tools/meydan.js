@@ -36,7 +36,7 @@ function meydanSVG() {
   const rows = rep([10, 21, 34, 50], d => `M-60 ${394 + d}L1990 ${356 + d}`), melons = rep([15, 27, 42], d => `M-60 ${394 + d}L1990 ${356 + d}`);
   const bushes = [...[20, 90, 170, 250, 330, 420, 500, 590, 660], ...[1236, 1290, 1350, 1440, 1520, 1610, 1700, 1790, 1880, 1950]].map(x => `M${x} ${rY(x) - 6}h0`).join("");
 
-  // ── Arka sıra evler (anchor.js'teki Karakavak silueti): gövdeler renk renk tek yol
+  // ── Arka sıra evler (anchor.ts'teki Karakavak silueti): gövdeler renk renk tek yol
   const B1 = 490, body = ["", "", ""];
   let roofs = "", caps = "", wins = "", lw1 = "";
   [[-40, 76, 70, 0, 1], [40, 90, 96, 1, 0], [134, 70, 78, 2, 1], [210, 96, 112, 0, 0], [312, 74, 82, 1, 1], [392, 88, 100, 2, 0], [486, 70, 76, 0, 1],
@@ -82,7 +82,7 @@ function meydanSVG() {
     }
     return `<g class="md-bn${k}">${ln(`M${x0} ${y0}Q${cx} ${cy} ${x1} ${y1}`, "#3b2a20", 1.6)}${P(fl[0], "#c8321e")}${P(fl[1], "#f3f2ec")}${P(fl[2], "#e0b64e")}</g>`;
   };
-  // kavun biçimli sokak lambası (anchor.js'teki gibi); ışığı ayrı katmanda
+  // kavun biçimli sokak lambası (anchor.ts'teki gibi); ışığı ayrı katmanda
   const lamp = (x, b, t, s) => P(`M${x - 12 * s} ${b}h${24 * s}l${-6 * s} ${-14 * s}h${-12 * s}z`, "#26302b") + `<path d="M${x} ${b - 12 * s}V${t + 10 * s}" stroke="#26302b" stroke-width="${5 * s}"/>`
     + ln(`M${x - 8 * s} ${t + 20 * s}Q${x} ${t + 12 * s} ${x + 8 * s} ${t + 20 * s}`, "#26302b", 2.2 * s)
     + P(`M${x - 6 * s} ${t - 9 * s}h${12 * s}l${-3 * s} ${-6 * s}h${-6 * s}z`, "#26302b") + `<ellipse class="md-glb" cx="${x}" cy="${t}" rx="${14 * s}" ry="${11 * s}"/>`

@@ -5,8 +5,8 @@ The small browser games served under [akinozgen.com/games](https://akinozgen.com
 - **travelle** — a clone of [travle.earth](https://travle.earth): name the
   countries that link a start country to an end country by land.
 - **Çaylar Belediyeden** (`belediye`) — a card game in Turkish: you run a
-  made-up Anatolian town by swiping memos left or right. Plain JS modules
-  built with Vite; see [apps/belediye/README.md](apps/belediye/README.md).
+  made-up Anatolian town by swiping memos left or right. TypeScript built
+  with Vite; see [apps/belediye/README.md](apps/belediye/README.md).
 
 travelle has two modes: **Daily**, one puzzle a day from a fixed calendar, and **Endless**,
 which deals puzzles from a map you set up — continents switched off, individual
@@ -19,7 +19,7 @@ countries dropped, and a route length you choose.
 | `packages/geo`   | Border graph: the Natural Earth pipeline, the solver, puzzle calendar |
 | `packages/core`  | Game-agnostic bits shared across games (daily index, storage, share)  |
 | `apps/travelle`  | The game itself — React + Vite                                        |
-| `apps/belediye`  | Çaylar Belediyeden — plain JS modules + Vite                          |
+| `apps/belediye`  | Çaylar Belediyeden — TypeScript + Vite                                |
 
 ## Commands
 

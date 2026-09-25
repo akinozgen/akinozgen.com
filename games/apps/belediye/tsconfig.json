@@ -2,12 +2,10 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
-    "allowJs": true,
-    "checkJs": false,
     "allowImportingTsExtensions": true,
     "erasableSyntaxOnly": true,
     "noUncheckedIndexedAccess": false,
     "types": ["vite/client"]
   },
-  "include": ["src", "vite.config.js"]
+  "include": ["src"]
 }

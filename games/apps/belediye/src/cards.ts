@@ -71,7 +71,7 @@ export const BASKANLAR: Record<string, Baskan> = {
 // seçenek: set/clr bayrak · inc/dec sayaç ("ad" ya da {ad: n}) · rel: {kişi: ±n} · cut: kaldırılan karar(lar)
 //          next: [kart, ay] ya da {id, in: ay | [en az, en çok], if: koşul, else: kart} (koşul teslimde yeniden sınanır)
 //          pol: {id, ad, e (her ay), ay (süre; yoksa süresiz), done (bitişte), msg, doneCard, tags: [etiket]}
-// koşul:   {req, not, cnt, pol, nopol, tag, notag, rel}; ayrıntısı engine.js'teki condOK
+// koşul:   {req, not, cnt, pol, nopol, tag, notag, rel}; ayrıntısı engine.ts'teki condOK
 // sayaç vaat: tutulmamış vaatler, sandıkta anketten düşer (dec ile tutulur)
 export const CARDS: CardDef[] = [
   // ── Muhtar Rıza

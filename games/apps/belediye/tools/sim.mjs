@@ -3,7 +3,7 @@
 import { motor } from "./lib/sayfa.mjs";
 import { lintContent } from "./lint.mjs";
 
-const E = await motor(); // cards.js + engine.js modülleri
+const E = await motor(); // cards.ts + engine.ts modülleri
 // node sim.mjs 2000 damp=0.9 scale=1.1 → ayar düğmelerini geçici değiştir
 for (const a of process.argv.slice(3)) { const [k, v] = a.split("="); if (k in E.TUNE) E.TUNE[k] = Number(v); }
 console.log("TUNE", JSON.stringify(E.TUNE));

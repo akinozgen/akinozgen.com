@@ -1,15 +1,16 @@
-// Oyundaki sentez sesleri WAV'a kaydeder: ui.js'teki snd nesnesi başsız Chrome'da OfflineAudioContext ile çalınır.
+// Oyundaki sentez sesleri WAV'a kaydeder: ui.ts'teki snd nesnesi (tipleri silinmiş hâliyle) başsız Chrome'da OfflineAudioContext ile çalınır.
 // Her ses tepe -1 dBFS'e eşitlenir, 44,1 kHz 16 bit mono. node tools/sesler.mjs [çıktı klasörü]
 import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { stripTypeScriptTypes } from "node:module";
 import { fileURLToPath } from "node:url";
 
 const OUT = process.argv[2] || fileURLToPath(new URL("../.cache/sesler/", import.meta.url));
 const TMP = fileURLToPath(new URL("../.cache/sesler-tmp/", import.meta.url)); // tarayıcı profili ve sayfa: çıktı klasörü temiz kalsın
 mkdirSync(OUT, { recursive: true }); mkdirSync(TMP, { recursive: true });
-const UI = readFileSync(new URL("../src/ui.js", import.meta.url), "utf8");
+const UI = stripTypeScriptTypes(readFileSync(new URL("../src/ui.ts", import.meta.url), "utf8"));
 const a = UI.indexOf("const snd = (() => {"), b = UI.indexOf("\n})();", a);
-if (a < 0 || b < 0) throw new Error("ui.js'te snd bulunamadı");
+if (a < 0 || b < 0) throw new Error("ui.ts'te snd bulunamadı");
 const SND = UI.slice(a, b + 6);
 // [dosya, snd işlevi, süre (sn)]
 const SESLER = [["01-muhur", "stamp", .45], ["02-evrak", "paper", .55], ["03-cay-kasik", "clink", 1], ["04-zafer", "win", 2.8],

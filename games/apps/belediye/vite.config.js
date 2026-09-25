@@ -60,7 +60,7 @@ export default defineConfig({
   build: {
     target: "es2022",
     // açılışta üç parça: kütüphane (interact.js, nadiren değişir), içerik (kart metinleri) ve oyun kodu. Biri değişince
-    // öbürleri tarayıcı önbelleğinde kalır. Seçim gecesi (secim.js) ve ad havuzu (adlar.js) ayrıca, gerektiği anda iner.
+    // öbürleri tarayıcı önbelleğinde kalır. Seçim gecesi (secim.ts) ve ad havuzu (adlar.ts) ayrıca, gerektiği anda iner.
     rollupOptions: {
       output: { manualChunks: id => (id.includes("node_modules") ? "kutuphane" : /[\\/]src[\\/]cards\.[jt]s$/.test(id) ? "icerik" : undefined) },
     },
