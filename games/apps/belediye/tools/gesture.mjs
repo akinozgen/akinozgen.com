@@ -102,7 +102,7 @@ try {
   await send("Page.navigate", { url: PAGE });
   await sleep(1500);
   await ev(
-    `localStorage.setItem("cb.introSeen","true"); document.querySelector("#btn-start").click(); document.querySelector("#btn-go").click()`,
+    `localStorage.setItem("cb.introSeen","true"); document.querySelector("#btn-start").click(); document.querySelector("#btn-go").click(); document.querySelector("#btn-sessiz").click()`,
   );
   await sleep(1200);
   console.log("interact yüklü:", await ev(`!!window.interact`));

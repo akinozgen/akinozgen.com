@@ -111,6 +111,8 @@ try {
     errors.push("TEST: aday kaydında vesikalık seçimi forma yansımadı " + JSON.stringify(av));
   console.log("vesikalık:", av.ph);
   await ev(`document.querySelector("#btn-go").click()`);
+  await sleep(200);
+  await ev(`document.querySelector("#btn-sessiz").click()`); // beyanname: sessiz kampanya (sandık yolu tools/kampanya.mjs'te)
   await sleep(900);
   await shot("2-intro-telefon");
   for (let i = 0; i < 3; i++) {

@@ -704,7 +704,7 @@ export function acilisSecimi(vaatler: string[], rng: Rng = Math.random): { acili
 
 // Göreve başlarken: kampanyanın nasıl bittiğini ve verilen sözleri anan ilk evrak
 function acilisCard(s: State): CardDef {
-  const vz = (s.vaatler || []).map(id => VAAT[id].ad),
+  const vz = (s.vaatler || []).map(id => `“${VAAT[id].ad}”`), // başlıklar tırnakla: cümle ortasında büyük harf doğal dursun
     fark = s.acilisSecim?.margin;
   const soz =
     vz.length === 1 ? `Sözünüz de ortada: ${vz[0]}.` : vz.length ? `Sözleriniz de ortada: ${joinTR(vz)}.` : "";

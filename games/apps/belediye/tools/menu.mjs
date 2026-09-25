@@ -204,6 +204,8 @@ try {
     `(() => { const i = document.querySelector("#in-name"); i.value = "Test Başkan"; i.dispatchEvent(new Event("input", { bubbles: true })); })()`,
   );
   await ev(`document.querySelector("#btn-go").click()`);
+  await sleep(200);
+  await ev(`document.querySelector("#btn-sessiz").click()`); // beyanname: sessiz kampanya
   await sleep(900);
   check(
     (await screenNow()) === "game" &&

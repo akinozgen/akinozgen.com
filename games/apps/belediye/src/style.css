@@ -2669,7 +2669,8 @@ div.ay-row {
 /* ───────── Aday kaydı (yeni dönem) ─────────
    Solda kâğıt başvuru formu: büyük vesikalık, ad, lakap, kısa hayat hikâyesi. Sağda vesikalık ızgarası.
    Telefonda alt alta; düğmeler altta yapışık. */
-#scr-pick {
+#scr-pick,
+#scr-kampanya {
   overflow-y: auto;
   align-items: center;
   padding-block: 1.25rem 0;
@@ -2991,6 +2992,196 @@ div.ay-row {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
     padding: 0.25rem 0 1.5rem;
+  }
+}
+
+/* Seçim beyannamesi: aday kaydının kâğıdı ve kaşesiyle aynı dil. Seçilen söze kırmızı tik basılır. */
+.bn-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+}
+.bn-kagit {
+  position: relative;
+  padding: 1rem 1.125rem 0.75rem;
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: 0.1875rem;
+  box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.45);
+}
+.bn-kagit::after {
+  content: "BEYANNAME";
+  position: absolute;
+  right: 0.875rem;
+  top: 0.75rem;
+  padding: 0.25rem 0.5rem 0.1875rem;
+  border: 2px solid var(--stamp-r);
+  border-radius: 0.1875rem;
+  color: var(--stamp-r);
+  font: 700 0.6875rem/1 var(--f-ui);
+  letter-spacing: 0.2em;
+  transform: rotate(6deg);
+  opacity: 0.8;
+}
+.bn-aday {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-bottom: 0.625rem;
+  border-bottom: 2px solid var(--ink);
+}
+.bn-aday img {
+  width: 3.5rem;
+  aspect-ratio: 1;
+  object-fit: cover;
+  padding: 0.1875rem 0.1875rem 0.375rem;
+  background: #fff;
+  box-shadow: 0 0.125rem 0.375rem rgba(0, 0, 0, 0.3);
+  transform: rotate(-2.5deg);
+}
+.bn-aday b {
+  display: block;
+  font: 400 1.25rem/1.1 var(--f-display);
+}
+.bn-aday span {
+  font: 700 0.75rem/1.2 var(--f-ui);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--stamp-r);
+}
+.bn-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.bn-list li + li {
+  border-top: 1px dashed rgba(35, 33, 42, 0.3);
+}
+.bn-v {
+  display: grid;
+  grid-template-columns: 1.375rem minmax(0, 1fr) auto;
+  gap: 0.125rem 0.625rem;
+  align-items: start;
+  width: 100%;
+  padding: 0.625rem 0.25rem;
+  background: none;
+  border: 0;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.bn-v:hover {
+  background: rgba(201, 165, 76, 0.12);
+}
+.bn-v:focus-visible {
+  outline: 2px solid var(--stamp-r);
+  outline-offset: -2px;
+}
+.bn-kutu {
+  grid-row: 1 / 3;
+  position: relative;
+  width: 1.125rem;
+  height: 1.125rem;
+  margin-top: 0.125rem;
+  border: 2px solid var(--ink);
+  border-radius: 0.125rem;
+}
+.bn-v[aria-checked="true"] .bn-kutu::after {
+  content: "";
+  position: absolute;
+  left: 0.1875rem;
+  top: -0.375rem;
+  width: 0.5rem;
+  height: 1rem;
+  border: solid var(--stamp-r);
+  border-width: 0 0.25rem 0.25rem 0;
+  transform: rotate(40deg);
+}
+.bn-v b {
+  font: 700 1.0625rem/1.2 var(--f-ui);
+  letter-spacing: 0.02em;
+}
+.bn-soz {
+  grid-column: 2;
+  font: 400 0.875rem/1.4 var(--f-type);
+  color: var(--ink-soft);
+}
+.bn-guc {
+  grid-row: 1;
+  grid-column: 3;
+  font: 700 0.8125rem/1.4 var(--f-ui);
+  color: #3d6b3a;
+  white-space: nowrap;
+}
+.bn-v[aria-checked="true"] {
+  background: rgba(201, 165, 76, 0.18);
+}
+.bn-v[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.bn-anket {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem 1.125rem;
+  background: rgba(6, 14, 11, 0.9);
+  border: 1px solid rgba(236, 213, 146, 0.28);
+  border-radius: 0.375rem;
+  color: rgba(243, 242, 236, 0.86);
+}
+.bn-anket-h {
+  font: 700 0.8125rem/1 var(--f-ui);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--brass-hi);
+}
+.bn-sans {
+  font: 400 2.75rem/1 var(--f-display);
+  color: var(--paper);
+}
+.bn-bar {
+  height: 0.625rem;
+  border-radius: 0.3125rem;
+  background: rgba(243, 242, 236, 0.15);
+  overflow: hidden;
+}
+.bn-bar i {
+  display: block;
+  height: 100%;
+  width: var(--w, 40%);
+  background: linear-gradient(90deg, var(--brass), var(--brass-hi));
+  transition: width 0.35s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.bn-not,
+.bn-yol {
+  margin: 0;
+  font: 400 0.875rem/1.45 var(--f-type);
+}
+.bn-yol b {
+  color: var(--brass-hi);
+  font-weight: 700;
+}
+.bn-act .btn {
+  flex: 1 1 0;
+}
+#btn-bn-back {
+  flex: 0 1 6rem;
+}
+@media (min-width: 860px) {
+  .bn-main {
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 1.5rem;
+  }
+  .bn-anket {
+    position: sticky;
+    top: 1rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bn-bar i {
+    transition: none;
   }
 }
 

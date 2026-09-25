@@ -5,6 +5,8 @@
 //   CARDS: CardDef[] · SYN: SynRule[] · ENDINGS: {anahtar: Ending} · MIRAS: MirasDef[] · FACTS: lint.mjs'teki biçimde
 //   YAN_EK: {karar id: YanDef[]} (mevcut kararlara yan etki) · ALT_EK: {kart id: alt[]} (mevcut kartlara hatırlama metni)
 //   FACTS_OK: {olayın adı (FACTS.ad): [kart id]} (mevcut bir olayı kendi zincirinde anan yeni kartlar)
+//   VAATLER: VaatDef[] (seçim beyannamesine yeni vaatler). Ek vaat getirirse simülasyondaki her oyun sandığa üç
+//   rastgele vaatle gider (açılış seçimi), yoksa oyunlar eskisi gibi 50'de başlar.
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { motor } from "./lib/sayfa.mjs";
@@ -23,6 +25,8 @@ for (const c of X.CARDS || []) E.CARD[c.id] = c;
 E.SYN.push(...(X.SYN || []));
 Object.assign(E.ENDINGS, X.ENDINGS || {});
 E.MIRAS.push(...(X.MIRAS || []));
+E.VAATLER.push(...(X.VAATLER || []));
+for (const v of X.VAATLER || []) E.VAAT[v.id] = v;
 FACTS.push(...(X.FACTS || []));
 for (const [ad, ids] of Object.entries(X.FACTS_OK || {})) {
   const f = FACTS.find(f => f.ad === ad);
@@ -93,8 +97,17 @@ let secim = 0,
   term1 = 0,
   defter = 0;
 for (let g = 0; g < N; g++) {
-  const rng = mulberry(g * 7919 + 13),
-    s = E.newGame();
+  const rng = mulberry(g * 7919 + 13);
+  let s;
+  if (X.VAATLER?.length) {
+    // her oyun sandığa gider: havuzdan üç rastgele söz (vaat evrakları sınansın)
+    const vz = E.shuffle(
+      E.VAATLER.map(v => v.id),
+      rng,
+    ).slice(0, E.VAAT_MAX);
+    const { acilis, res } = E.acilisSecimi(vz, rng);
+    s = E.newGame({ acilis, vaatler: vz, secim: res, rng });
+  } else s = E.newGame();
   for (let guard = 0; !s.over && guard < 3000; guard++) {
     const c = E.draw(s, rng);
     if (yeni.has(c.id)) gor[c.id] = (gor[c.id] || 0) + 1;

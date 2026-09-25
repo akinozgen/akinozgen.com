@@ -1042,7 +1042,7 @@ export function whyLines(res: Tally | null | undefined, playerName?: string) {
     const vz = res.vaatler || [];
     out.push(
       vz.length
-        ? `Beyannamedeki ${vz.length === 1 ? "söz" : TV_SAYI[vz.length] + " söz"} oyları taşıdı: ${joinTR(vz)}. Hesabı da sorulacak.`
+        ? `Beyannamedeki ${vz.length === 1 ? "söz" : TV_SAYI[vz.length] + " söz"} oyları taşıdı: ${joinTR(vz.map(x => `“${x}”`))}. Hesabı da sorulacak.`
         : "Hiç söz vermediniz; seçmen de pek bir şey beklemedi.",
     );
   } else if (Number.isFinite(res.p0))

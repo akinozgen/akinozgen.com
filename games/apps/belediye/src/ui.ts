@@ -1,13 +1,16 @@
 // ─── Arayüz ───────────────────────────────────────────────────────────────
 import interact from "interactjs";
-import { ADAYLAR, BASKANLAR, ENDINGS, KULIS, PEOPLE, QUOTES, REACT } from "./cards.ts";
+import { ADAYLAR, BASKANLAR, ENDINGS, KULIS, PEOPLE, QUOTES, REACT, VAATLER } from "./cards.ts";
 import {
   MAX_TERMS,
   METERS,
   METER_AD,
   REL_AD,
   TERM,
+  VAAT,
+  VAAT_MAX,
   Z,
+  acilisSecimi,
   calOf,
   choose,
   dateLabel,
@@ -15,13 +18,15 @@ import {
   durLabel,
   defterOf,
   edgeRisk,
+  kampanyaSans,
   mirasOf,
   newGame,
   pollOf,
+  shuffle,
   vaatCost,
 } from "./engine.ts";
 import type { TvCtx } from "./broadcast.ts";
-import type { ChooseOut, Cur, Effect, Meter, Meters, Rng, Side, State, Tally } from "./types.ts";
+import type { Acilis, ChooseOut, Cur, Effect, Meter, Meters, Rng, Side, State, Tally } from "./types.ts";
 
 // sayfadaki öğeler hep var: bulunamazsa hata, boş dönmez
 const $ = <T extends Element = HTMLElement>(q: string) => document.querySelector(q) as T;
@@ -492,7 +497,7 @@ const LOG_MAX = 40,
   wideLog = matchMedia("(min-width: 1100px)");
 let logUnread = 0;
 function journalAdd(card: Cur, side: "L" | "R", res: ChooseOut, m: number) {
-  if (!S || card.kind === "intro" || card.kind === "ending") return;
+  if (!S || card.kind === "intro" || card.kind === "ending" || card.kind === "acilis") return;
   (S.journal ||= []).push({ m, who: card.who, konu: card.konu, side, t: card[side].t, e: res.d, notes: [] });
   if (S.journal.length > LOG_MAX) S.journal.shift();
   renderLog(true);
@@ -984,7 +989,7 @@ function fikretAdvice(s: State) {
 function danis() {
   if (!S?.cur || busy || screen !== "game") return;
   if ($("#note")) return closeNote();
-  if (["intro", "ending", "tekir", "sonuc", "cay"].includes(S.cur.kind)) {
+  if (["intro", "ending", "tekir", "sonuc", "cay", "acilis"].includes(S.cur.kind)) {
     openNote("Bu evrakta akıl verecek bir şey yok başkanım, gönül rahatlığıyla imzalayın.");
     return;
   }
@@ -1136,7 +1141,9 @@ const MAHALLE: [string, number[], number, number?][] = [
   ["Yukarıkavak", [0.75, 0.05, 0.15, 0.05], 1, 0.12],
 ];
 const candName = (id: string) => (id === "you" ? playerName() : PEOPLE[id].ad);
-const candLabel = (id: string) => (id === "you" ? "Belediye Başkanı, yeniden aday" : ADAYLAR[id].etiket);
+// ilk: göreve başlamadan önceki seçim (açılış); oyuncu henüz başkan değil
+const candLabel = (id: string, ilk = false) =>
+  id === "you" ? (ilk ? "Belediye başkan adayı" : "Belediye Başkanı, yeniden aday") : ADAYLAR[id].etiket;
 const candPic = (id: string) => photoSrc(id === "you" ? playerAvatar() : id);
 const pctTR = (v: number) => "%" + v.toFixed(1).replace(".", ",");
 const pct2 = (v: number) => v.toFixed(2).replace(".", ",");
@@ -1249,7 +1256,7 @@ async function electionNight(res: Tally): Promise<void> {
         li.dataset.id = id;
         li.style.setProperty("--c", EC_RENK[id] || "#aaa");
         li.innerHTML =
-          `<div class="tv-pic"><img src="${candPic(id)}" alt="" draggable="false"></div><div class="tv-body"><span class="tv-lbl">${esc(candLabel(id))}</span>` +
+          `<div class="tv-pic"><img src="${candPic(id)}" alt="" draggable="false"></div><div class="tv-body"><span class="tv-lbl">${esc(candLabel(id, res.ilk))}</span>` +
           `<span class="tv-nm"><b class="tv-name">${esc(tvName(id, name))}</b></span><b class="tv-pct">%0,00</b><span class="tv-votes">0</span></div>`;
         rows[id] = {
           li,
@@ -1940,7 +1947,8 @@ function paintAyar() {
 }
 function show(name: string) {
   screen = name;
-  for (const s of ["title", "game", "over", "wall", "help", "pick", "secim"]) $("#scr-" + s).hidden = s !== name;
+  for (const s of ["title", "game", "over", "wall", "help", "pick", "kampanya", "secim"])
+    $("#scr-" + s).hidden = s !== name;
   sceneOn(name === "title");
 }
 function showTitle() {
@@ -1970,11 +1978,81 @@ function enterGame() {
   openLog(false);
   renderLog(false);
 }
-function startNew() {
+// Yeni dönem: aday kaydından sonra seçim beyannamesi. Sessiz kampanya doğrudan (düşük) başlatır;
+// sandığa giden seçim gecesini izler, sonra rahat zafer (yüksek) ya da kıl payı (daha düşük) başlar.
+function startNew(acilis: Acilis = "sessiz", vaatler: string[] = [], secim?: Tally) {
   snd.unlock();
   const intro = !LS.get("introSeen", false);
   LS.set("introSeen", true);
-  S = newGame({ intro });
+  S = newGame({ intro, acilis, vaatler, secim });
+  beyanname = [];
+  secili = [];
+  enterGame();
+  nextCard();
+}
+let beyanname: string[] = [], // bu kampanyada önerilen altı söz (geri dönüp gelince aynı kalsın)
+  secili: string[] = [];
+function openKampanya() {
+  if (!beyanname.length)
+    beyanname = shuffle(
+      VAATLER.map(v => v.id),
+      Math.random,
+    ).slice(0, 6);
+  const a = playerAvatar(),
+    list = $("#bn-list");
+  $<HTMLImageElement>("#bn-img").src = photoSrc(a);
+  $("#bn-ad").textContent = playerName();
+  $("#bn-lakap").textContent = "Belediye başkan adayı";
+  list.textContent = "";
+  for (const id of beyanname) {
+    const v = VAAT[id],
+      li = document.createElement("li"),
+      b = document.createElement("button");
+    b.type = "button";
+    b.className = "bn-v";
+    b.dataset.id = id;
+    b.setAttribute("role", "checkbox");
+    b.innerHTML = `<span class="bn-kutu" aria-hidden="true"></span><b>${esc(v.ad)}</b><span class="bn-guc">+${v.guc} puan</span><span class="bn-soz">${esc(v.soz)}</span>`;
+    b.addEventListener("click", () => toggleVaat(id));
+    li.append(b);
+    list.append(li);
+  }
+  paintKampanya();
+  show("kampanya");
+  $("#scr-kampanya").scrollTop = 0;
+  list.querySelector<HTMLElement>("button")?.focus({ preventScroll: true });
+}
+function toggleVaat(id: string) {
+  const on = secili.includes(id);
+  if (!on && secili.length >= VAAT_MAX) return; // en çok üç söz: kalanlar soluk durur
+  secili = on ? secili.filter(x => x !== id) : [...secili, id];
+  snd.tick();
+  paintKampanya();
+}
+function paintKampanya() {
+  const dolu = secili.length >= VAAT_MAX,
+    sans = kampanyaSans(secili);
+  for (const b of $("#bn-list").querySelectorAll<HTMLElement>(".bn-v")) {
+    const on = secili.includes(b.dataset.id!);
+    b.setAttribute("aria-checked", String(on));
+    b.setAttribute("aria-disabled", String(!on && dolu));
+  }
+  $("#bn-sans").textContent = `%${sans}`;
+  $("#bn-bar").style.setProperty("--w", sans + "%");
+  $("#bn-not").textContent = secili.length
+    ? `${secili.length === 1 ? "Bir söz" : secili.length === 2 ? "İki söz" : "Üç söz"}: rahat kazanma şansı %${sans}. Gerisi kıl payı.${dolu ? " Daha fazla söz verilmez, bu kadarının hesabı bile uzun." : ""}`
+    : `Söz vermeden sandığa giderseniz rahat kazanma şansı %${sans}. Gerisi kıl payı.`;
+}
+async function sandigaGit() {
+  const vz = secili.slice(),
+    { acilis, res } = acilisSecimi(vz);
+  snd.unlock();
+  const intro = !LS.get("introSeen", false);
+  LS.set("introSeen", true);
+  S = newGame({ intro, acilis, vaatler: vz, secim: res });
+  beyanname = [];
+  secili = [];
+  await electionNight(res);
   enterGame();
   nextCard();
 }
@@ -2028,7 +2106,10 @@ function wire() {
   });
   // ilk dokunuşta ses açılsın ki menü tıkları duyulsun
   for (const ev of ["pointerdown", "keydown"]) addEventListener(ev, () => snd.unlock(), { once: true, capture: true });
-  $("#btn-go").addEventListener("click", startNew);
+  $("#btn-go").addEventListener("click", () => openKampanya());
+  $("#btn-bn-back").addEventListener("click", () => show("pick"));
+  $("#btn-sessiz").addEventListener("click", () => startNew("sessiz"));
+  $("#btn-sandik").addEventListener("click", () => void sandigaGit());
   // Rastgele aday: başka bir hazır aday, adıyla birlikte (broşürdeki lakap ve biyografi o ada ait); ad zarı ayrı düğme
   $("#btn-zar").addEventListener("click", () => {
     const cur = playerAvatar(),
@@ -2048,7 +2129,7 @@ function wire() {
   $("#in-name").addEventListener("keydown", e => {
     if (e.key === "Enter") {
       e.preventDefault();
-      startNew();
+      openKampanya();
     }
   });
   $("#ay-ses").addEventListener("change", e => {
@@ -2090,7 +2171,7 @@ function wire() {
   $("#btn-help-back").addEventListener("click", showTitle);
   $("#btn-wall2").addEventListener("click", openWall);
   $("#btn-back").addEventListener("click", () => (wallFrom === "over" && lastOver ? show("over") : showTitle()));
-  $("#btn-again").addEventListener("click", startNew);
+  $("#btn-again").addEventListener("click", () => openKampanya()); // aynı adayla yeni kampanya
   $("#btn-menu").addEventListener("click", showTitle);
   $("#btn-danis").addEventListener("click", danis);
   $("#btn-log").addEventListener("click", () => openLog(!$("#log").classList.contains("open")));
@@ -2151,6 +2232,7 @@ function wire() {
     // Escape ayar paneli ve aday kaydında odak bir kutudayken de çalışır
     if (e.key === "Escape" && screen === "title" && closePanel()) return;
     if (e.key === "Escape" && screen === "pick") return $("#btn-pick-back").click();
+    if (e.key === "Escape" && screen === "kampanya") return $("#btn-bn-back").click();
     if (e.altKey || e.ctrlKey || e.metaKey || (e.target as Element | null)?.matches?.("input, textarea")) return;
     if (screen === "wall" && e.key === "Escape") return $("#btn-back").click();
     if (screen === "help" && e.key === "Escape") return showTitle();
