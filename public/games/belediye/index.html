@@ -25,11 +25,11 @@
 <link rel="manifest" href="manifest.webmanifest">
 <!-- ana stil gelene kadar koyu, boş sayfa: stilsiz ilk kare (tam ekran ikonlar, kayan meydan resmi) görünmesin; style.css açar -->
 <style>html { background: #0e1f18; } #app { visibility: hidden; }</style>
-  <script type="module" crossorigin src="./assets/index-BDtydIWs.js"></script>
+  <script type="module" crossorigin src="./assets/index-DQe_wlgy.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/rolldown-runtime-CbXtAM7H.js">
   <link rel="modulepreload" crossorigin href="./assets/kutuphane-Clj-Woyo.js">
-  <link rel="modulepreload" crossorigin href="./assets/icerik-DsSFFnsk.js">
-  <link rel="stylesheet" crossorigin href="./assets/index-DdRpRsdL.css">
+  <link rel="modulepreload" crossorigin href="./assets/icerik-DUwQ4qwQ.js">
+  <link rel="stylesheet" crossorigin href="./assets/index-D9ohsFTR.css">
 </head>
 <body>
 <div id="app" lang="tr">
@@ -146,6 +146,7 @@
         <div class="meter poll" id="poll" role="img" aria-label="Anket"></div>
       </div>
       <div class="tools">
+        <button id="btn-muhur" class="tool muhur" type="button" aria-pressed="false" hidden><span class="t">Mühür</span><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="3.2" fill="currentColor"/></svg><i id="muhur-n">0</i></button>
         <button id="btn-danis" class="tool" type="button"><span class="t">Fikret'e sor</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3h10v7H8l-3 3v-3H3z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><i id="danis-n">3</i></button>
         <button id="btn-mute" class="tool" type="button" aria-label="Ses"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6h3l4-3v10L5 10H2z" fill="currentColor"/><path id="mute-wave" d="M11 5.5c1 .8 1 4.2 0 5M12.8 4c2 1.6 2 6.4 0 8" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/></svg></button>
         <button id="btn-menu" class="tool" type="button" aria-label="Ana menü"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span class="t">Menü</span></button>
@@ -197,6 +198,8 @@
           Renkler: <span class="lg good">▲▲</span> dengeye yaklaştırır, <span class="lg warn">▲▲</span> uca götürür, <span class="lg bad">▲▲▲</span> tehlikeye sokar. Karar verilince tam sayılar göstergenin altında belirir; <b>↻</b> işaretli olanlar o ay işleyen kararlardan gelir.</li>
         <li><b>Yürürlükteki kararlar.</b> Kredi, kira, inşaat gibi bazı kararlar her ay işler. Üstteki "Yürürlükte" şeridinde ne kadar sürdüklerini ve ne getirdiklerini görürsünüz; seçenek düğmesindeki küçük not da önceden haber verir.</li>
         <li><b>İnsanlar unutmaz.</b> Her evrakta gönderenle aranızın nasıl olduğu yazar. Dostlarınız reddedilince anlayış gösterir, iyilik yapar; dargınlar daha çok kızar, köstek olur. Muhtar, Hayri Hoca, Hacı Bekir, Hatice Abla, Tuncay ve Nermin Hanım sandıkta oy getirir ya da götürür.</li>
+        <li><b>Kampanya.</b> Göreve başlamadan seçim beyannamesinde en çok üç söz verirsiniz. Sessiz kampanya seçimsiz ama düşük başlatır. Sandığa giderseniz dört kampanya evrakı oynarsınız: bir seçenek anketi kesin artırır, zarlı seçenek düğmede yazan oranla ya çok artırır ya düşürür. Anket kazanma şansıdır. Ezici zafer en yüksek başlangıcı ve beş mühürü verir; kıl payı gölgeli bir mazbata ve iki itiraz dilekçesi getirir.</li>
+        <li><b>Mühür.</b> Elinizde mühür varsa üst bardaki kırmızı düğmeye (ya da <kbd>M</kbd> tuşuna) basın: seçtiğiniz seçeneğin en ağır kaybı silinir, en çok 10 puan. Kayıp yoksa mühür harcanmaz. Kriz ve seçim evrakına basılmaz; mühürler bir buçuk yılda söner.</li>
         <li><b>Sandık.</b> Beş yılda bir, mart ayında seçim var. Anketin %50'yi geçmesi lazım; en çok halk desteği işe yarar. Her yeni dönemde yıpranma payı artar.</li>
         <li><b>Kriz.</b> Bir gösterge uca yaklaşınca Fikret bazen bir çıkış yolu getirir. Bedeli vardır.</li>
         <li><b>Fikret'e sor.</b> Her dönem üç kez makam şefinizden akıl alabilirsiniz; hangi kararın neye mal olacağını söyler.</li>
@@ -336,8 +339,7 @@
           <b class="bn-sans" id="bn-sans"></b>
           <div class="bn-bar" aria-hidden="true"><i id="bn-bar"></i></div>
           <p class="bn-not" id="bn-not"></p>
-          <p class="bn-yol"><b>Sessiz kampanya:</b> seçim gecesi yok, söz de yok. Göreve başlarsınız ama halk sizi az tanır.</p>
-          <p class="bn-yol"><b>Sandığa git:</b> rahat kazanırsanız güçlü başlarsınız; kıl payı kalırsanız sessizden de zayıf.</p>
+          <div class="bn-yollar" id="bn-yollar"></div>
         </aside>
       </div>
       <div class="ak-act bn-act">
