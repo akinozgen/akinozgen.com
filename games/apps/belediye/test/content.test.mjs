@@ -69,8 +69,8 @@ test("denetim bozuk içeriği yakalıyor", async () => {
     "t_kalem.L: defter kalemi",
     "t_sonsuz.L: böyle bir son yok",
     "son t_uzunson: manşet",
-    "MIRAS[0]: koşulsuz",
-    `MIRAS[1]: metin "dev kavun heykeli"`,
+    "koşulsuz miras her oyunda çıkar",
+    `metin "dev kavun heykeli" olayını anıyor ama koşulu`,
     `bayrak "hic_yok"`,
   ])
     assert.ok(text.includes(want), `yakalanmadı: ${want}\n--- bulunanlar ---\n${text}`);
