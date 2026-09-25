@@ -1,6 +1,6 @@
 // ─── Karakavak'ın insanları ───────────────────────────────────────────────
 // vesikalık: web-src/portraits/<anahtar>.webp · pos/neg: gönlü olunca / kırılınca tepki
-import type { Aday, Baskan, CardDef, Ending, MirasDef, Person, SynRule } from "./types.ts";
+import type { Aday, Baskan, CardDef, Ending, MirasDef, Person, SynRule, VaatDef } from "./types.ts";
 export const PEOPLE: Record<string, Person> = {
   fikret: { ad: "Fikret", unvan: "Makam Şefi" },
   muhtar: {
@@ -6791,6 +6791,55 @@ export const CARDS: CardDef[] = [
       not: "Makamda artık tabure var; Tekir koltuğun yerine kuruldu.",
     },
   },
+  // ══ Seçim beyannamesinin hesabı: vaat verildiyse ilk dönemde gelir (VAATLER.kart) ══
+  {
+    id: "vaat_metro",
+    who: "nermin",
+    konu: "Metro sözü",
+    chain: true,
+    text: "Başkanım, beyannamenizde 'Karakavak'a metro' yazıyordu. Bugün meclise sordum: tünel nerede? 'Etüt sürüyor' dediniz; etüdü yapan firma Cengiz Bey'in kuzeni. Ya ilk kazmayı vurun ya sözü geri alın.",
+    L: {
+      t: "İlk kazma vurulsun",
+      e: [5, -8, 3, -2],
+      dec: "vaat",
+      clr: "metro_soz",
+      anket: { ad: "Metronun ilk kazması", puan: 2 },
+      pol: {
+        id: "metro_etut",
+        ad: "Metro etüdü",
+        e: [0, -1, 0, 0],
+        ay: 10,
+        msg: "Metro etüdü bitti: iki durak arası yürüme mesafesi çıktı.",
+      },
+    },
+    R: {
+      t: "Söz rüzgârın malı",
+      e: [-5, 1, 0, 2],
+      anket: { ad: "Unutulan metro sözü", puan: -3 },
+      not: "Nermin Hanım metro sözünü deftere büyük harfle yazdı.",
+    },
+  },
+  {
+    id: "vaat_cay",
+    who: "huseyin",
+    konu: "Çay ocağı sözü",
+    chain: true,
+    fav: "L",
+    text: "Başkanım, beyannamede 'her mahalleye çay ocağı' yazıyormuş. Kavaklı'dan heyet geldi: ocak nerede, semaver nerede? Ben tekim başkanım; ya ocaklar açılır ya ben yedi mahalleye tepsiyle koşarım.",
+    L: {
+      t: "Yedi ocak açılsın",
+      e: [6, -8, 2, 0],
+      dec: "vaat",
+      anket: { ad: "Mahalle çay ocakları", puan: 2 },
+    },
+    R: {
+      t: "Hüseyin koşsun",
+      e: [-3, 0, 0, 0],
+      rel: { huseyin: -1 },
+      anket: { ad: "Tepsiyle tutulan söz", puan: -1 },
+      not: "Hüseyin tepsiyle Kavaklı yokuşunu üç kez çıktı.",
+    },
+  },
 ];
 
 // ─── Seçimde karşınıza çıkabilecek adaylar ──────────────────────────────────
@@ -7529,6 +7578,29 @@ export const MIRAS: MirasDef[] = [
       req: "okey_otobus",
     },
     text: "Başkan, okey masalı belediye otobüsüyle anılacak. Emekliler hâlâ son durakta inmiyor: 'El bitmeden olmaz.'",
+  },
+];
+
+// ─── Seçim beyannamesi: göreve başlamadan önceki kampanyanın vaatleri ─────
+// Her yeni oyunda havuzdan altısı gelir, oyuncu en çok üçünü seçer. guc: açılış seçiminde kazanma şansına katkı (puan).
+// Seçilen vaat vaat sayacını 1 artırır (tutulmadıkça sandıkta ödenir) ve ilk dönemde kart'ı gelir (ay: en erken, en geç).
+export const VAATLER: VaatDef[] = [
+  {
+    id: "metro",
+    ad: "Karakavak'a metro",
+    soz: "Çarşıdan kavun ovasına iki durak. Tünel mi olur köprü mü, sonra bakarız.",
+    guc: 12,
+    kart: "vaat_metro",
+    ay: [14, 30],
+    set: "metro_soz",
+  },
+  {
+    id: "cay",
+    ad: "Her mahalleye çay ocağı",
+    soz: "Yedi mahalleye yedi ocak, her ocağa bir semaver. Çaycı Hüseyin'e de yardımcı.",
+    guc: 8,
+    kart: "vaat_cay",
+    ay: [8, 22],
   },
 ];
 

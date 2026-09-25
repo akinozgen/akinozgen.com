@@ -48,6 +48,10 @@ test("denetim bozuk içeriği yakalıyor", async () => {
     spot: "x",
     kisa: "x",
   };
+  E.VAATLER.push(
+    { id: "t_v1", ad: "Deneme", soz: "Deneme.", guc: 5, kart: "yok_vaat_kart", ay: [3, 9] },
+    { id: "t_v2", ad: "Deneme 2", soz: "x".repeat(130), guc: 30, kart: "asfalt", ay: [40, 70] }, // zincir değil, uzun, güçlü, ay taşıyor
+  );
   E.MIRAS.push({ if: {}, text: "Koşulsuz." }, { if: { req: "hic_yok" }, text: "Dev kavun heykeli ile anılacak." });
   E.SYN.push({ id: "t_syn", a: "x", b: "y", card: "yok_kart" });
   E.CARD = Object.fromEntries(E.CARDS.map(c => [c.id, c]));
@@ -68,6 +72,11 @@ test("denetim bozuk içeriği yakalıyor", async () => {
     "t_ceza.L: ceza sonu",
     "t_kalem.L: defter kalemi",
     "t_sonsuz.L: böyle bir son yok",
+    "VAAT t_v1: evrak yok",
+    "VAAT t_v2: söz boş ya da uzun",
+    "VAAT t_v2: güç 3-15",
+    "VAAT t_v2: ay aralığı",
+    "VAAT t_v2: evrakı (asfalt) zincir olmalı",
     "son t_uzunson: manşet",
     "koşulsuz miras her oyunda çıkar",
     `metin "dev kavun heykeli" olayını anıyor ama koşulu`,

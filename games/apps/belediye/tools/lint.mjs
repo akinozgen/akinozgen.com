@@ -37,7 +37,7 @@ export const FACTS = [
   { ad: "AVM", re: /\bAVM/, ok: ["avm", "avmL", "towers"] },
   { ad: "sanal tarla", re: /sanal (kavun )?tarla/i, ok: ["sanal_ciftlik", "ciftlik_cikis", "ciftlik_kacti"] },
   { ad: "güneş paneli", re: /panel/i, ok: ["ges_tarla", "ges_festival", "ova_kavga", "gunes", "elektrik"] },
-  { ad: "metro sözü", re: /metro/i, flag: "metro_soz", ok: ["su_kapsul", "deepfake"] },
+  { ad: "metro sözü", re: /metro/i, flag: "metro_soz", ok: ["vaat_metro", "su_kapsul", "deepfake"] },
   { ad: "petrol müjdesi", re: /petrol/i, ok: ["petrol", "petrol_tahlil", "petrol_rezalet", "petrol_kule"] },
   {
     ad: "hizmet sarayı",
@@ -202,6 +202,7 @@ export function lintContent(E) {
   const reach = new Set(),
     stack = [...all.filter(c => !c.chain)];
   for (const x of E.SYN) if (x.card && tagW.has(x.a) && tagW.has(x.b)) stack.push(E.CARD[x.card]);
+  for (const v of E.VAATLER || []) if (E.CARD[v.kart]) stack.push(E.CARD[v.kart]); // vaat verilince gelir
   while (stack.length) {
     const c = stack.pop();
     if (!c || reach.has(c.id)) continue;
@@ -223,6 +224,28 @@ export function lintContent(E) {
       seen.add(t);
       links(E.CARD[t]).forEach(u => st.push([u, d + 1]));
     }
+  }
+
+  // Seçim beyannamesi: vaatlerin evrakı zincirdir, sözü tutan seçeneği vardır; metinler beyannameye sığar
+  const vaatIds = new Set();
+  for (const v of E.VAATLER || []) {
+    const by = "VAAT " + v.id;
+    if (vaatIds.has(v.id)) err(`${by}: çift kimlik`);
+    vaatIds.add(v.id);
+    if (!v.ad || v.ad.length > 26) err(`${by}: başlık boş ya da uzun (${v.ad?.length})`);
+    if (!v.soz || v.soz.length > 110) err(`${by}: söz boş ya da uzun (${v.soz?.length})`);
+    if (!(v.guc >= 3 && v.guc <= 15)) err(`${by}: güç 3-15 arası olmalı (${v.guc})`);
+    if (!Array.isArray(v.ay) || !(v.ay[0] >= 1 && v.ay[1] >= v.ay[0] && v.ay[1] <= 58))
+      err(`${by}: ay aralığı ilk dönemin içinde olmalı`);
+    const c = E.CARD[v.kart];
+    if (!c) err(`${by}: evrak yok → ${v.kart}`);
+    else {
+      if (!c.chain) err(`${by}: evrakı (${v.kart}) zincir olmalı; yalnız vaat verilince gelir`);
+      if (!["L", "R"].some(s => keysOf(c[s]?.dec).includes("vaat")))
+        warn(`${by}: evrakında sözü tutan (dec vaat) seçenek yok`);
+    }
+    flagW.add("vaat_" + v.id);
+    if (v.set) flagW.add(v.set);
   }
 
   // Sonlar ve miras: uzunluklar, kişiler; miras koşulları da bayrak/sayaç okur
@@ -263,7 +286,8 @@ export function lintContent(E) {
   // Durum anahtarları: okunup hiç yazılmayan hata, yazılıp hiç okunmayan uyarı
   for (const [f, by] of flagR)
     if (!flagW.has(f)) err(`bayrak "${f}" okunuyor ama hiçbir seçenek koymuyor (${by.join(", ")})`);
-  for (const f of flagW) if (!flagR.has(f)) warn(`bayrak "${f}" konuyor ama hiçbir yer okumuyor`);
+  for (const f of flagW)
+    if (!flagR.has(f) && !f.startsWith("vaat_")) warn(`bayrak "${f}" konuyor ama hiçbir yer okumuyor`);
   for (const [k, by] of cntR)
     if (!cntW.has(k)) err(`sayaç "${k}" okunuyor ama hiçbir seçenek artırmıyor (${by.join(", ")})`);
   for (const k of cntW) if (!cntR.has(k) && !ENGINE_CNT.has(k)) warn(`sayaç "${k}" artıyor ama hiçbir yer okumuyor`);

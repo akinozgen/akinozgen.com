@@ -18,7 +18,7 @@
 // {sira} {tarih} {mah} {mahs} (sandık önünde: Lojman) {mahde}; ek almak için {lider:in} (in, i, e, de, den). Değeri olmayan yer tutucu
 // satırı eler; başlıkta tam ad sığmazsa kısa ad (tvShort) denenir.
 import { PEOPLE } from "./cards.ts";
-import { dateLabel } from "./engine.ts";
+import { dateLabel, joinTR } from "./engine.ts";
 import type { Rng, Tally } from "./types.ts";
 
 /** Yayının o anki durumu (ui.ts seçim gecesi akışı doldurur) */
@@ -302,7 +302,9 @@ export const TV_SOZ: Record<string, { win: Line[]; lose: Line[] }> = {
       "Seçim bitti, evrak bekliyor. Fikret, çay!",
       "İlk iş Yukarıkavak'ın yolu; traktör yoruldu.",
       "Rakiplerime geçmiş olsun; çaylar benden, simitler onlardan.",
-      "Beş yıl daha evrak, beş yıl daha çay. Hayırlı olsun.",
+      [v => !v.ilk, "Beş yıl daha evrak, beş yıl daha çay. Hayırlı olsun."],
+      [v => v.ilk, "Beş yıl evrak, beş yıl çay. Bismillah."],
+      [v => v.ilk, "Söz verdik, sözler defterde. Fikret, çay!"],
       [v => v.early, "Erken seçim de seçimdir; kepenkler açılsın, çaylar belediyeden."],
       [v => v.res.you < 50, "Yüzde elli şart değilmiş; birinci birincidir."],
     ],
@@ -594,14 +596,17 @@ export const TV_KJ: Record<string, { title: Line[]; sub: Line[] }> = {
       [v => !v.tekirWon, "Karakavak kararını verdi"],
       [v => v.early, "Erken seçim sonuçlandı"],
       [v => v.early, "Erken seçimde sonuç belli"],
-      [v => v.win, "{you} yeniden başkan"],
-      [v => v.win, "Makam yerinde kaldı"],
-      [v => v.win, "Çaylar yine belediyeden"],
+      [v => v.win && !v.ilk, "{you} yeniden başkan"],
+      [v => v.win && !v.ilk, "Makam yerinde kaldı"],
+      [v => v.win && !v.ilk, "Çaylar yine belediyeden"],
+      [v => v.win && v.ilk, "{you} Karakavak'ın yeni başkanı"],
+      [v => v.win && v.ilk, "Karakavak yeni başkanını seçti"],
+      [v => v.win && v.ilk && v.margin < 1, "Mazbata kıl payı geldi"],
       [v => v.win && v.margin < 1, "Kıl payı zafer"],
       [v => v.win && v.margin < 1, "Foto finiş"],
       [v => v.win && v.margin >= 25, "Sandıktan fark çıktı"],
       [v => v.win && v.res.you < 50, "Birinci birincidir"],
-      [v => v.win && v.early, "Erken seçimde makam korundu"],
+      [v => v.win && v.early && !v.ilk, "Erken seçimde makam korundu"],
       [v => v.lost, "{kazanan} kazandı"],
       [v => v.lost, "Yeni başkan: {kazanan}"],
       [v => v.lost, "Makam el değiştirdi"],
@@ -612,7 +617,9 @@ export const TV_KJ: Record<string, { title: Line[]; sub: Line[] }> = {
       [v => v.tekirWon, "Mırnav Partisi iktidarda"],
     ],
     sub: [
-      [v => v.win, "{you} {youf} ile yeniden seçildi; {nY} adaylı yarışta fark {fark} puan"],
+      [v => v.win && !v.ilk, "{you} {youf} ile yeniden seçildi; {nY} adaylı yarışta fark {fark} puan"],
+      [v => v.win && v.ilk, "{you} {youf} ile seçildi; {nY} adaylı yarışta fark {fark} puan"],
+      [v => v.win && v.ilk, "Yeni başkan {you}: 'Sözlerim defterde, çaylar benden'"],
       [v => v.win && v.res.you < 50, "Oylar bölündü, {youf} yetti. Fikret: 'Birinci birincidir'"],
       [v => v.win && v.margin < 1, "Fark {fark} puan; Yukarıkavak traktörüne teşekkür plaketi hazırlanıyor"],
       [v => v.lost, "{kazanan} {kpct} ile yeni başkan; {you} {youf} ile {sira}. sırada"],
@@ -896,6 +903,8 @@ export function tvView(ctx: TvCtx | null | undefined, phase: string) {
   }
   const early = !!(c.early ?? res.early);
   return {
+    // göreve başlamadan önceki seçim: "yeniden seçildi" değil "seçildi"
+    ilk: !!res.ilk,
     ctx: c,
     res,
     ids,
@@ -1027,7 +1036,16 @@ export function whyLines(res: Tally | null | undefined, playerName?: string) {
       `Kesin sonuç: ${tvName(w.id, playerName)} %${d(w.pct)}${Number.isFinite(res.margin) ? `, fark ${d(res.margin)} puan` : ""}.`,
     );
   const ek = res.cands.length - 2;
-  if (Number.isFinite(res.p0))
+  // açılış seçimi: anket yerine kampanyanın kazanma şansı ve beyannamedeki sözler
+  if (res.ilk) {
+    if (Number.isFinite(res.sans)) out.push(`Kampanya anketi kazanma şansını %${d(res.sans)} gösteriyordu.`);
+    const vz = res.vaatler || [];
+    out.push(
+      vz.length
+        ? `Beyannamedeki ${vz.length === 1 ? "söz" : TV_SAYI[vz.length] + " söz"} oyları taşıdı: ${joinTR(vz)}. Hesabı da sorulacak.`
+        : "Hiç söz vermediniz; seçmen de pek bir şey beklemedi.",
+    );
+  } else if (Number.isFinite(res.p0))
     out.push(
       ek <= 0
         ? Math.abs(res.p0 - res.you) < 0.5

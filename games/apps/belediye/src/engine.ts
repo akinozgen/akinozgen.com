@@ -1,6 +1,20 @@
 // ─── Oyun motoru (DOM'suz; sim.mjs de bunu çalıştırır) ────────────────────
-import { ADAYLAR, BLOKLAR, CARDS, CAY_LINES, CRISES, DAVET, ENDINGS, INTRO, MIRAS, PEOPLE, SYN } from "./cards.ts";
+import {
+  ADAYLAR,
+  BLOKLAR,
+  CARDS,
+  CAY_LINES,
+  CRISES,
+  DAVET,
+  ENDINGS,
+  INTRO,
+  MIRAS,
+  PEOPLE,
+  SYN,
+  VAATLER,
+} from "./cards.ts";
 import type {
+  Acilis,
   CardDef,
   CardKind,
   ChooseOut,
@@ -19,6 +33,7 @@ import type {
   State,
   Tally,
   TickEvent,
+  VaatDef,
 } from "./types.ts";
 
 export const METERS: Meter[] = ["h", "k", "e", "a"];
@@ -86,6 +101,24 @@ export const TUNE = {
   yanAra: 3,
 };
 export const MAX_ONGOING = 7;
+
+// ─── Göreve başlayış: seçim beyannamesi ve açılış seçimi ───────────────────
+// Sessiz kampanya seçimsiz başlar ama düşük; sandığa gidip rahat kazanan yüksek başlar, kıl payı kazanan daha da düşük.
+// Kazanma şansı taban + seçilen vaatlerin gücü (en çok üç vaat). Vaatler tutulmadıkça sandıkta ödenir, hesabı ilk dönemde sorulur.
+export const VAAT: Record<string, VaatDef> = Object.fromEntries(VAATLER.map(v => [v.id, v]));
+export const VAAT_MAX = 3;
+export const KAMPANYA = { taban: 40, tavan: 80 };
+export const ACILIS: Record<Acilis, { m: State["m"]; danis?: number; rel?: Record<string, number> }> = {
+  sessiz: { m: { h: 44, k: 48, e: 48, a: 46 } },
+  zafer: { m: { h: 62, k: 50, e: 56, a: 56 }, danis: 4 },
+  kilpayi: { m: { h: 36, k: 46, e: 46, a: 44 }, rel: { nermin: -1 } },
+};
+export const kampanyaSans = (vaatler: string[]) =>
+  clamp(
+    KAMPANYA.taban + vaatler.slice(0, VAAT_MAX).reduce((a, id) => a + (VAAT[id]?.guc || 0), 0),
+    KAMPANYA.taban,
+    KAMPANYA.tavan,
+  );
 
 export const calOf = (m: number) => ({ mon: (3 + m) % 12, year: 2029 + Math.floor((3 + m) / 12) });
 export const dateLabel = (m: number) => {
@@ -173,8 +206,10 @@ export const specificity = (c: CardDef) =>
   arr(c.reqTag).length +
   Object.keys(c.relMin || {}).length;
 
-export function newGame(opts: { intro?: boolean } = {}): State {
-  return {
+export function newGame(
+  opts: { intro?: boolean; acilis?: Acilis; vaatler?: string[]; secim?: Tally; rng?: Rng } = {},
+): State {
+  const s: State = {
     v: 2,
     gid: Math.random().toString(36).slice(2, 10),
     m: { h: 50, k: 50, e: 50, a: 50 },
@@ -201,6 +236,29 @@ export function newGame(opts: { intro?: boolean } = {}): State {
     cur: null,
     over: null,
   };
+  if (!opts.acilis) return s;
+  // göreve başlayış: göstergeler, danışma hakkı, ilişkiler; ilk evrak açılış evrağı
+  const A = ACILIS[opts.acilis];
+  s.m = { ...A.m };
+  if (A.danis) s.danis = A.danis;
+  Object.assign(s.rel, A.rel);
+  s.acilis = opts.acilis;
+  s.pending = { type: "acilis" };
+  if (opts.secim) s.acilisSecim = opts.secim;
+  // sessiz kampanyada söz verilmez; sandığa gidenin sözleri deftere ve takvime girer
+  const vz = opts.acilis === "sessiz" ? [] : (opts.vaatler || []).filter(id => VAAT[id]).slice(0, VAAT_MAX);
+  if (vz.length) {
+    const rng = opts.rng || Math.random;
+    s.vaatler = vz;
+    bump(s, { vaat: vz.length }, 1);
+    for (const id of vz) {
+      const v = VAAT[id];
+      s.flags["vaat_" + id] = true;
+      if (v.set) s.flags[v.set] = true;
+      s.queue.push({ id: v.kart, at: v.ay[0] + Math.floor(rng() * (v.ay[1] - v.ay[0] + 1)) });
+    }
+  }
+  return s;
 }
 
 // ── Uygulama: yumuşak kenar, yuvarlama, sınır
@@ -590,8 +648,107 @@ export const mirasOf = (s: State, n = 2) =>
     .slice(0, n)
     .map(m => m.text);
 
+// Açılış seçimi: sandığa gidenin gecesi. Sonuç baştan belli (kazanma şansına göre rahat zafer ya da kıl payı);
+// seçim gecesi yayını bu sonucu sandık sandık açar. Rakip hep Nermin Hanım, yanına sıfır ile iki aday.
+export function acilisSecimi(vaatler: string[], rng: Rng = Math.random): { acilis: Acilis; res: Tally } {
+  const vz = vaatler.filter(id => VAAT[id]).slice(0, VAAT_MAX),
+    sans = kampanyaSans(vz),
+    zafer = rng() * 100 < sans;
+  const pool = Object.keys(ADAYLAR).filter(w => w !== "nermin" && w !== "tekir" && ADAYLAR[w].guc);
+  const extras = shuffle(pool, rng).slice(0, Math.floor(rng() * 3));
+  if (rng() < 0.06) extras.push("tekir"); // Tekir her seçime aday olur, bazen
+  const ex = extras.map(id => ({ id, v: 4 + rng() * 8 }));
+  const rest = 100 - ex.reduce((a, x) => a + x.v, 0),
+    fark = zafer ? 8 + rng() * 12 : 0.3 + rng() * 0.6;
+  const raw = [{ id: "you", v: (rest + fark) / 2 }, { id: "nermin", v: (rest - fark) / 2 }, ...ex].sort(
+    (a, b) => b.v - a.v,
+  );
+  // en büyük kalan yöntemiyle binde bire yuvarla (tally ile aynı)
+  const q = raw.map(c => c.v * 10),
+    fl = q.map(Math.floor);
+  let kalan = 1000 - fl.reduce((a, v) => a + v, 0);
+  q.map((v, i) => [v - fl[i], i] as const)
+    .sort((a, b) => b[0] - a[0])
+    .forEach(([, i]) => {
+      if (kalan-- > 0) fl[i]++;
+    });
+  const cands = raw.map((c, i) => ({ id: c.id, pct: fl[i] / 10 }));
+  const acilis: Acilis = zafer ? "zafer" : "kilpayi",
+    tmp = newGame();
+  tmp.m = { ...ACILIS[acilis].m };
+  const you = cands.find(c => c.id === "you")!.pct;
+  return {
+    acilis,
+    res: {
+      cands,
+      blocs: blocsOf(tmp, cands),
+      winner: "you",
+      win: true,
+      you,
+      margin: Math.round((cands[0].pct - cands[1].pct) * 10) / 10,
+      month: 0,
+      term: 0,
+      early: false,
+      order: ["nermin", ...extras],
+      p0: sans,
+      steal: [],
+      vaat: 0,
+      rel: 0,
+      fatigue: 0,
+      ilk: true,
+      vaatler: vz.map(id => VAAT[id].ad),
+      sans,
+    },
+  };
+}
+
+// Göreve başlarken: kampanyanın nasıl bittiğini ve verilen sözleri anan ilk evrak
+function acilisCard(s: State): CardDef {
+  const vz = (s.vaatler || []).map(id => VAAT[id].ad),
+    fark = s.acilisSecim?.margin;
+  const soz =
+    vz.length === 1 ? `Sözünüz de ortada: ${vz[0]}.` : vz.length ? `Sözleriniz de ortada: ${joinTR(vz)}.` : "";
+  const sozSigar = (t: string, kisa: string) => (t.length <= 240 ? t : kisa);
+  const T = {
+    sessiz: {
+      konu: "Sessiz zafer",
+      text: "Başkanım, seçimi sessiz sedasız kazandınız; afiş bile asmadık. Halkın yarısı adınızı bilmiyor, öbür yarısı bizi muhtarlık sanıyor. Ankara da kim olduğunuzu soruyor. Yavaş yavaş tanışırız.",
+      L: "Tanışırız elbet",
+      R: "İşe koyulalım",
+    },
+    zafer: {
+      konu: "Ezici zafer",
+      text: sozSigar(
+        `Başkanım, sandıktan ${fark != null ? trPct(fark) + " puan farkla " : ""}çıktınız! Meydan adınızla inledi, Hüseyin sabaha kadar çay dağıttı. ${soz} Halk not defterini açtı.`,
+        `Başkanım, sandıktan ${fark != null ? trPct(fark) + " puan farkla " : ""}çıktınız! Meydan adınızla inledi, Hüseyin sabaha kadar çay dağıttı. ${vz.length} sözünüz var; halk not defterini açtı.`,
+      ),
+      L: "Hayırlı olsun",
+      R: "Sözler tutulacak",
+    },
+    kilpayi: {
+      konu: "Kıl payı",
+      text: sozSigar(
+        `Başkanım, sayım bitti: fark ${fark != null ? trPct(fark) + " puan" : "bir avuç oy"}! Gece boyu gerideydik, sabaha karşı Yukarıkavak sandığı yetişti. Mazbata sizin ama meydan soğuk. ${soz}`,
+        `Başkanım, sayım bitti: fark ${fark != null ? trPct(fark) + " puan" : "bir avuç oy"}! Gece boyu gerideydik, sabaha karşı Yukarıkavak sandığı yetişti. Mazbata sizin ama meydan soğuk; ${vz.length} sözünüz de ortada.`,
+      ),
+      L: "Fark farktır",
+      R: "Kolları sıvayalım",
+    },
+  }[s.acilis || "sessiz"];
+  return {
+    id: "acilis",
+    kind: "acilis",
+    who: "fikret",
+    konu: T.konu,
+    text: T.text,
+    L: { t: T.L, e: Z },
+    R: { t: T.R, e: Z },
+  };
+}
+
 export function special(p: Pending, s: State, rng: Rng = Math.random): CardDef {
   if (p.type === "ending") return endingCard(p.key, s, p);
+  if (p.type === "acilis") return acilisCard(s);
   if (p.type === "tekir")
     return {
       id: "tekirsave",
@@ -783,6 +940,8 @@ export function choose(s: State, side: "L" | "R", rng: Rng = Math.random): Choos
   switch (c.kind) {
     case "intro":
       s.intro--;
+      return out;
+    case "acilis": // göreve başlarken: ay geçmez, günlüğe girmez
       return out;
     case "ending":
       s.over = { key: c.key!, months: s.month, term: s.term };

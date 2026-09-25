@@ -78,7 +78,18 @@ export interface SideDef {
 }
 
 export type CardKind =
-  "normal" | "intro" | "kriz" | "ending" | "tekir" | "sonuc" | "cay" | "secim" | "erkensonuc" | "adaylar" | "davet";
+  | "normal"
+  | "intro"
+  | "kriz"
+  | "ending"
+  | "tekir"
+  | "sonuc"
+  | "cay"
+  | "secim"
+  | "erkensonuc"
+  | "adaylar"
+  | "davet"
+  | "acilis";
 
 /** Kart (içerik ya da motorun ürettiği özel evrak) */
 export interface CardDef {
@@ -169,6 +180,25 @@ export interface Ending {
   tur?: "gonullu" | "ceza" | "komik";
 }
 
+/** Seçim beyannamesindeki vaat: anketi büyütür, ilk dönemde hesabı sorulur (kart) */
+export interface VaatDef {
+  id: string;
+  /** beyannamedeki başlık, en çok 26 */
+  ad: string;
+  /** beyannamedeki kısa söz, en çok 110 */
+  soz: string;
+  /** açılış seçiminde kazanma şansına katkı (yüzde puan) */
+  guc: number;
+  /** hesabın sorulduğu evrak (zincir) ve kaçıncı aylar arasında geldiği */
+  kart: string;
+  ay: [number, number];
+  /** vaat verilince konan bayrak (örn. metro_soz: mevcut evraklar bu sözü tanısın) */
+  set?: string;
+}
+
+/** Göreve başlayış: sessiz kampanya (düşük), sandıkta rahat zafer (yüksek), kıl payı zafer (daha düşük) */
+export type Acilis = "sessiz" | "zafer" | "kilpayi";
+
 /** Oyun sonu gazetesinde başkanın neyle anılacağı: koşulu tutan ilk ikisi yazılır */
 export interface MirasDef {
   if: Cond;
@@ -231,6 +261,11 @@ export interface Tally {
   /** sandık defterinin ankete net etkisi ve en ağır kalemleri */
   defter?: number;
   kalem?: Kalem[];
+  /** göreve başlamadan önceki seçim (açılış): aday etiketi ve "yeniden seçildi" satırları buna göre */
+  ilk?: boolean;
+  /** açılış seçiminde verilen vaatlerin adları ve kazanma şansı */
+  vaatler?: string[];
+  sans?: number;
 }
 
 export type Pending =
@@ -238,6 +273,7 @@ export type Pending =
   | { type: "tekir"; restore: Meters; cause: string }
   | { type: "erken" }
   | { type: "davet" }
+  | { type: "acilis" }
   | { type: "sonuc"; oy: string; win: boolean; big?: boolean; res?: Tally; early?: boolean };
 
 /** Masaya gelmiş, o ana göre somutlaşmış seçenek */
@@ -306,6 +342,11 @@ export interface State {
   earlyField?: Field | null;
   syn?: Record<string, number>;
   dropped?: string[];
+  /** göreve başlayış ve beyannamede verilen vaatler (VAATLER id'leri) */
+  acilis?: Acilis;
+  vaatler?: string[];
+  /** açılış seçiminin sonucu (açılış evrakı farkı anar) */
+  acilisSecim?: Tally;
   /** sandık defteri: m kalemin yazıldığı ay */
   defter?: (Kalem & { m: number })[];
   /** son yan etkinin doğduğu ay (ilçede 3 ayda en çok bir yan etki) */
