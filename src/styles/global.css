@@ -644,6 +644,210 @@ a {
   }
 }
 
+/* ── procrastination receipt ── */
+
+.skill-row--egg {
+  justify-self: stretch;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.skill-row--egg .skill-index {
+  color: var(--accent);
+}
+
+.skill-row--egg .skill-name {
+  font-style: italic;
+}
+
+.skill-row--egg:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.skill-row--egg[aria-expanded="true"] .skill-name {
+  text-decoration: line-through;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 2px;
+}
+
+/* the receipt slides up out of the bottom edge of the viewport */
+.receipt {
+  position: fixed;
+  right: 2.5rem;
+  bottom: 0;
+  z-index: 200;
+  width: 300px;
+  pointer-events: none;
+}
+
+.receipt-paper {
+  --paper: #f4efe6;
+  --ink: #1c1814;
+  --faint: #6a6259;
+  transform: translateY(110%) rotate(-1.2deg);
+  transform-origin: bottom center;
+  filter: drop-shadow(0 -6px 16px rgba(0, 0, 0, 0.55));
+  transition: transform 1.1s steps(22, end), visibility 0s 1.1s;
+  visibility: hidden;
+}
+
+.receipt.printed .receipt-paper {
+  transform: translateY(0) rotate(-1.2deg);
+  transition-delay: 0s, 0s;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.receipt-sheet {
+  /* extra bottom padding keeps the tilted bottom edge below the viewport */
+  padding: 1.6rem 1.2rem 2.6rem;
+  margin-bottom: -14px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.rcpt-line {
+  opacity: 0;
+}
+
+.receipt.printed .rcpt-line {
+  animation: rcpt-ink 0.15s steps(2, end) both;
+  animation-delay: calc(var(--i, 0) * 65ms + 60ms);
+}
+
+@keyframes rcpt-ink {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.rcpt-head {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-align: center;
+}
+
+.rcpt-sub {
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.rcpt-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.6rem;
+  color: var(--faint);
+}
+
+.rcpt-rule {
+  border: 0;
+  border-top: 1px dashed var(--ink);
+  opacity: 0.45;
+  margin: 0.6rem 0;
+}
+
+.rcpt-item {
+  display: block;
+  padding: 0.15rem 0;
+  color: inherit;
+}
+
+.rcpt-item-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.rcpt-item-name {
+  font-weight: 700;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.rcpt-item-dots {
+  flex: 1;
+  min-width: 1rem;
+  border-bottom: 1px dotted currentColor;
+  transform: translateY(-3px);
+}
+
+.rcpt-item-note {
+  display: block;
+  padding-left: 0.75rem;
+  font-size: 0.72rem;
+  color: var(--faint);
+}
+
+.rcpt-item:hover .rcpt-item-name,
+.rcpt-all:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.rcpt-total {
+  display: flex;
+  justify-content: space-between;
+  text-transform: uppercase;
+}
+
+.rcpt-thanks {
+  margin: 0.6rem 0;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.rcpt-all {
+  display: block;
+  text-align: center;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.rcpt-barcode {
+  height: 34px;
+  margin-top: 1rem;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--ink) 0 2px,
+    transparent 2px 4px,
+    var(--ink) 4px 5px,
+    transparent 5px 9px,
+    var(--ink) 9px 12px,
+    transparent 12px 14px,
+    var(--ink) 14px 15px,
+    transparent 15px 19px
+  );
+}
+
+@media (max-width: 640px) {
+  .receipt {
+    right: 50%;
+    transform: translateX(50%);
+    width: min(300px, calc(100vw - 2rem));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .receipt-paper {
+    transition-duration: 0.01s, 0s;
+  }
+  .receipt.printed .rcpt-line {
+    animation: none;
+    opacity: 1;
+  }
+}
+
 /* ── packages ── */
 
 .pkg-grid {

@@ -6,6 +6,7 @@ import ImageSlider from "../components/ImageSlider.astro";
 import Nav from "../components/Nav.astro";
 import { packages } from "../data/packages";
 import { skillGroups } from "../data/skills";
+import { games } from "../data/games";
 import { workHistory, education, certificates } from "../data/history";
 
 const { profile, projects } = getPortfolioData();
@@ -171,7 +172,7 @@ const displayName = profile.name ?? profile.login;
       <div class="section-heading">
         <h2>Skills</h2>
       </div>
-      {skillGroups.map((group) => (
+      {skillGroups.map((group, gi) => (
         <div class="skill-group">
           <p class="skill-category">{group.category}</p>
           {group.skills.map((skill, i) => (
@@ -180,8 +181,52 @@ const displayName = profile.name ?? profile.login;
               <span class="skill-name">{skill}</span>
             </div>
           ))}
+          {gi === skillGroups.length - 1 && (
+            <button
+              type="button"
+              class="skill-row skill-row--egg"
+              id="egg-trigger"
+              aria-expanded="false"
+              aria-controls="receipt"
+            >
+              <span class="skill-index">{String(group.skills.length + 1).padStart(2, "0")}</span>
+              <span class="skill-name">Procrastination</span>
+            </button>
+          )}
         </div>
       ))}
+
+      <div class="receipt" id="receipt" aria-hidden="true">
+        <div class="receipt-paper">
+          <div class="receipt-sheet">
+            <p class="rcpt-line rcpt-head">AKIN OZGEN</p>
+            <p class="rcpt-line rcpt-sub">time wasted — receipt</p>
+            <p class="rcpt-line rcpt-meta">
+              <span data-rcpt-date>··.··.····</span>
+              <span data-rcpt-time>··:··</span>
+              <span data-rcpt-no>#······</span>
+            </p>
+            <hr class="rcpt-line rcpt-rule" />
+            {games.map((game) => (
+              <a class="rcpt-line rcpt-item" href={`/games/${game.slug}/`}>
+                <span class="rcpt-item-row">
+                  <span class="rcpt-item-name">{game.name}</span>
+                  <span class="rcpt-item-dots" aria-hidden="true"></span>
+                  <span class="rcpt-item-year">{game.year}</span>
+                </span>
+                <span class="rcpt-item-note">{game.tagline}</span>
+              </a>
+            ))}
+            <hr class="rcpt-line rcpt-rule" />
+            <p class="rcpt-line rcpt-total"><span>items</span><span>{games.length}</span></p>
+            <p class="rcpt-line rcpt-total"><span>productivity</span><span>0.00</span></p>
+            <hr class="rcpt-line rcpt-rule" />
+            <p class="rcpt-line rcpt-thanks">thank you for<br />not working</p>
+            <a class="rcpt-line rcpt-all" href="/games">all items → /games</a>
+            <div class="rcpt-line rcpt-barcode" aria-hidden="true"></div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <section id="contact" class="section-block">
@@ -236,5 +281,51 @@ const displayName = profile.name ?? profile.login;
       document.body.style.overflow = '';
     }
   });
+</script>
+<script>
+  const trigger = document.getElementById('egg-trigger');
+  const receipt = document.getElementById('receipt');
+  const sheet = receipt?.querySelector<HTMLElement>('.receipt-sheet');
+
+  if (trigger && receipt && sheet) {
+    receipt.querySelectorAll<HTMLElement>('.rcpt-line').forEach((el, i) => {
+      el.style.setProperty('--i', String(i));
+    });
+
+    // torn top edge (where the previous receipt was ripped off): one tooth every 4% of the width
+    const teeth: string[] = ['0 100%', '100% 100%'];
+    for (let x = 100; x > 0; x -= 4) {
+      teeth.push(`${x}% 7px`, `${x - 2}% 0`);
+    }
+    teeth.push('0 7px');
+    sheet.style.clipPath = `polygon(${teeth.join(', ')})`;
+
+    const setOpen = (open: boolean) => {
+      receipt.classList.toggle('printed', open);
+      trigger.setAttribute('aria-expanded', String(open));
+      receipt.setAttribute('aria-hidden', String(!open));
+      if (!open) return;
+
+      const now = new Date();
+      const pad = (n: number) => String(n).padStart(2, '0');
+      receipt.querySelector('[data-rcpt-date]')!.textContent =
+        `${pad(now.getDate())}.${pad(now.getMonth() + 1)}.${now.getFullYear()}`;
+      receipt.querySelector('[data-rcpt-time]')!.textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+      receipt.querySelector('[data-rcpt-no]')!.textContent = '#' + String(now.getTime()).slice(-6);
+    };
+
+    trigger.addEventListener('click', () => setOpen(!receipt.classList.contains('printed')));
+
+    document.addEventListener('click', (e) => {
+      if (!receipt.classList.contains('printed')) return;
+      const t = e.target as Element;
+      if (receipt.contains(t) || trigger.contains(t)) return;
+      setOpen(false);
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && receipt.classList.contains('printed')) setOpen(false);
+    });
+  }
 </script>
 </BaseLayout>
