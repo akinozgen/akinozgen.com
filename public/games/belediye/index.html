@@ -238,7 +238,35 @@ button { font: inherit; color: inherit; }
     radial-gradient(60% 50% at 62% 58%, rgba(255, 196, 120, .35), transparent 70%),
     linear-gradient(180deg, #243b6b 0%, #6b4f86 38%, #e59a6c 64%, #3a2a2a 66%, #1b1a17 100%);
 }
-.mn-scene > svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+/* resim ekranı kaplar (object-fit: cover gibi); ışıklar aynı kutuda yüzdeyle durur. Fare parallaksı yalnız kutuyu kaydırır. */
+.mn-scene { container-type: size; }
+.mn-scene[data-pal="aksam"] { background: #7b6ca5; } .mn-scene[data-pal="gece"] { background: #081539; } .mn-scene[data-pal="gun"] { background: #8bb3df; } /* resimlerin üst kenarı */
+.mn-pic {
+  position: absolute; left: 50%; top: 50%; width: max(100cqw, calc(100cqh * 1.5)); aspect-ratio: 3 / 2;
+  transform: translate(calc(-50% + var(--px, 0) * -1.2%), calc(-50% + var(--dy, 0px) + var(--py, 0) * -1%)) scale(1.03);
+  transform-origin: var(--wx, 50%) var(--wy, 32%); transition: transform .9s cubic-bezier(.2, .8, .3, 1);
+}
+.mn-pic img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.mf { position: absolute; left: var(--x, -99%); top: var(--y, 0); width: var(--s); aspect-ratio: 1; margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2); border-radius: 50%; pointer-events: none; }
+.mf.lamp { background: radial-gradient(circle, rgba(255, 240, 170, .5), rgba(255, 222, 140, .16) 42%, rgba(255, 222, 140, 0) 70%); animation: mfNefes 5s var(--d, 0s) ease-in-out infinite; }
+.mf.mk { background: radial-gradient(circle, rgba(255, 214, 140, .42), rgba(255, 190, 110, .12) 45%, rgba(255, 190, 110, 0) 70%); animation: mfNefes 6.5s ease-in-out infinite; }
+.mn-scene[data-pal="gun"] .mf.lamp { display: none; }
+.mn-scene[data-pal="gece"] .mf { --g: 1.35; }
+@keyframes mfNefes { 0%, 100% { opacity: .75; transform: scale(var(--g, 1)); } 50% { opacity: 1; transform: scale(calc(var(--g, 1) * 1.08)); } }
+.mf-stm { position: absolute; left: var(--x, -99%); top: var(--y, 0); width: 1.6%; aspect-ratio: 1 / 2; margin-left: -.8%; transform: translateY(-100%); pointer-events: none; }
+.mf-stm i { position: absolute; left: 30%; bottom: 0; width: 40%; aspect-ratio: 1 / 3; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 255, 255, .55), rgba(255, 255, 255, 0)); opacity: 0; animation: mfBuhar 3.6s ease-out infinite; }
+.mf-stm i:nth-child(2) { left: 10%; animation-delay: -1.2s; } .mf-stm i:nth-child(3) { left: 50%; animation-delay: -2.4s; }
+@keyframes mfBuhar { 0% { opacity: 0; transform: translateY(0) scale(.7); } 30% { opacity: .9; } 100% { opacity: 0; transform: translateY(-120%) translateX(20%) scale(1.3); } }
+.mf-stars { display: none; }
+.mn-scene[data-pal="gece"] .mf-stars { display: block; }
+.mf-stars i { position: absolute; left: var(--x); top: var(--y); width: .3%; margin: -.15% 0 0 -.15%; aspect-ratio: 1; border-radius: 50%; background: #fff; box-shadow: 0 0 .35rem rgba(255, 255, 255, .8); animation: mfYildiz 3.4s var(--d) ease-in-out infinite; }
+@keyframes mfYildiz { 50% { opacity: .25; } }
+/* menüden oyuna: meydan makam penceresine yaklaşır, ekran sıcak ışıkla dolar */
+.mn-scene::after { content: ""; position: absolute; inset: 0; opacity: 0; pointer-events: none; background: radial-gradient(circle at 50% 42%, #fff1c8, #f2b667 40%, #3a2412); }
+.mn-scene.in .mn-pic { animation: mnPush .9s cubic-bezier(.55, 0, .85, .35) forwards; }
+.mn-scene.in::after { animation: mnFlash .9s ease-in forwards; }
+@keyframes mnPush { to { transform: translate(calc(0% - var(--wx, 50%)), calc(0% - var(--wy, 32%))) scale(3.4); } }
+@keyframes mnFlash { 0%, 55% { opacity: 0; } 100% { opacity: 1; } }
 .mn-shade {
   position: absolute; inset: 0; pointer-events: none;
   background: linear-gradient(180deg, rgba(4, 9, 7, .62) 0%, rgba(4, 9, 7, .12) 24%, rgba(4, 9, 7, 0) 36%, rgba(4, 9, 7, .78) 58%, rgba(4, 9, 7, .94) 100%);
@@ -256,6 +284,12 @@ button { font: inherit; color: inherit; }
   text-shadow: 0 .1875rem 0 #0b1712, 0 .5rem 1.5rem rgba(0, 0, 0, .55);
 }
 .mn-logo h1 span { display: block; margin-top: .1em; color: var(--brass); font-size: .6em; letter-spacing: .01em; }
+/* dik ekran: sahne biraz aşağı iner ki belediye binası logonun altında kalsın (üstte gök uzar) */
+@media (max-aspect-ratio: 3/4) {
+  .mn-scene { --dy: 9vh; }
+  .mn-glass { width: 2.625rem; }
+  .mn-logo h1 { font-size: clamp(2.25rem, 11vw, 5rem); }
+}
 @keyframes mnLogo { from { opacity: 0; transform: translateY(-.75rem) scale(.98); } }
 
 .mn-list { grid-row: 3; justify-self: center; align-self: end; width: min(100%, 24rem); display: flex; flex-direction: column; gap: .125rem; padding-bottom: .5rem; }
@@ -340,13 +374,13 @@ div.ay-row { cursor: default; }
   .mn-logo h1 { font-size: 5.25rem; }
   .mn-list { grid-area: 2 / 1; justify-self: start; align-self: center; width: 26rem; }
   .mn-item b { font-size: 1.875rem; }
-  .mn-foot { grid-area: 3 / 1 / 4 / 3; }
+  /* alt satır solda kalır: sağ alt köşe bilgi kartının, sahnenin sağ yanı amcaların */
+  .mn-foot { grid-area: 3 / 1; justify-content: flex-start; gap: 1.25rem; }
   .mn-foot .best { text-align: left; flex: none; }
-  .mn-foot #mn-ver { order: 2; margin-left: auto; }
-  .mn-mute { order: 3; }
+  .mn-mute { order: -1; }
 
   .mn-board {
-    display: block; position: absolute; top: 2.5rem; right: 2.5rem; width: 20rem; padding: 1.125rem 1.25rem 1.125rem;
+    display: block; position: absolute; top: 2.25rem; right: 2.5rem; width: 17.5rem; padding: 1rem 1.125rem 1rem;
     background: linear-gradient(180deg, #f6f4ea, #e9e5d6); color: var(--ink); border-radius: 1px; transform: rotate(1.4deg);
     box-shadow: 0 .75rem 1.75rem rgba(0, 0, 0, .5), 0 1px 0 rgba(255, 255, 255, .6) inset; animation: mnBoard .6s .35s cubic-bezier(.2, .9, .3, 1) both;
   }
@@ -362,9 +396,9 @@ div.ay-row { cursor: default; }
   .mn-board li b { display: block; font: 700 .9375rem/1.2 var(--f-ui); letter-spacing: .06em; text-transform: uppercase; }
 
   .mn-info {
-    display: block; position: absolute; right: 2.5rem; bottom: 4.25rem; width: 23rem; padding: 1rem 1.125rem 1.125rem;
-    background: rgba(6, 14, 11, .84); border: 1px solid rgba(236, 213, 146, .28); border-radius: .375rem;
-    box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, .5); -webkit-backdrop-filter: blur(.375rem); backdrop-filter: blur(.375rem);
+    display: block; position: absolute; right: 2.5rem; bottom: 1.25rem; width: 22rem; padding: .875rem 1.125rem 1rem;
+    background: rgba(6, 14, 11, .9); border: 1px solid rgba(236, 213, 146, .28); border-radius: .375rem;
+    box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, .5);
   }
   .mn-info:empty { display: none; }
   .mn-info h3 { margin: 0 0 .5rem; font: 700 .875rem/1 var(--f-ui); letter-spacing: .18em; text-transform: uppercase; color: var(--brass-hi); }
@@ -389,7 +423,10 @@ div.ay-row { cursor: default; }
 .mi-wall b { display: block; font: 700 .9375rem/1.2 var(--f-ui); letter-spacing: .04em; color: var(--paper); }
 .mi-wall span { font: 500 .8125rem/1.2 var(--f-ui); color: rgba(243, 242, 236, .65); }
 @media (prefers-reduced-motion: reduce) {
-  .mn-logo, .mn-item, .mn-board, .mn-panel { animation: none; }
+  .mn-logo, .mn-item, .mn-board, .mn-panel, .mf, .mf-stm i, .mf-stars i, .mn-scene.in .mn-pic { animation: none; }
+  .mf-stm { display: none; }
+  .mn-pic { transition: none; }
+  .mn-scene.in::after { animation-duration: .2s; }
   .mn-item, .mn-item::before { transition: none; }
 }
 
@@ -1189,9 +1226,10 @@ div.ay-row { cursor: default; }
   position: relative; margin: 0; display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: 1rem; align-items: start; padding: 1rem 1.125rem 1.125rem;
   background: var(--paper); color: var(--ink); border-radius: .1875rem; box-shadow: 0 .5rem 1.5rem rgba(0, 0, 0, .45);
 }
-.ak-card::after { /* kurulun kaşesi */
-  content: "ADAY"; position: absolute; top: .75rem; right: .875rem; padding: .25rem .5rem .1875rem; border: 2px solid var(--stamp-r); border-radius: .1875rem;
-  color: var(--stamp-r); font: 700 .75rem/1 var(--f-ui); letter-spacing: .2em; transform: rotate(8deg); opacity: .85;
+.ak-photo { position: relative; }
+.ak-photo::after { /* kurulun kaşesi, vesikalığın köşesine basılmış (ad satırı zara kalsın) */
+  content: "ADAY"; position: absolute; right: -.4375rem; top: -.375rem; padding: .25rem .5rem .1875rem; border: 2px solid var(--stamp-r); border-radius: .1875rem;
+  background: rgba(243, 242, 236, .3); color: var(--stamp-r); font: 700 .75rem/1 var(--f-ui); letter-spacing: .2em; transform: rotate(8deg); opacity: .88;
 }
 .ak-photo img {
   display: block; width: 100%; aspect-ratio: 1; object-fit: cover; padding: .25rem .25rem .5rem; background: #fff;
@@ -1199,11 +1237,26 @@ div.ay-row { cursor: default; }
 }
 .ak-card figcaption { display: flex; flex-direction: column; gap: .375rem; min-width: 0; padding-top: .25rem; }
 .ak-name { display: flex; flex-direction: column; gap: .25rem; }
-.ak-name span { font: 700 .75rem/1 var(--f-ui); letter-spacing: .16em; text-transform: uppercase; color: var(--ink-soft); }
+.ak-name label { font: 700 .75rem/1 var(--f-ui); letter-spacing: .16em; text-transform: uppercase; color: var(--ink-soft); }
+/* ad kutusu ve sağ ucundaki zar. Uzun adda yazı küçülür: --n harf sayısı (ui.js nameFit), Courier'de harf .6em */
+.ak-field { position: relative; container-type: inline-size; --fs: 1.375rem; }
 .ak-name input {
-  width: 100%; min-width: 0; padding: .25rem 0 .3125rem; border: 0; border-bottom: 2px dotted rgba(35, 33, 42, .45); border-radius: 0;
-  background: transparent; color: var(--ink); font: 700 1.375rem/1.1 var(--f-type);
+  width: 100%; min-width: 0; padding: .25rem 2.5rem .3125rem 0; border: 0; border-bottom: 2px dotted rgba(35, 33, 42, .45); border-radius: 0;
+  background: transparent; color: var(--ink); font: 700 clamp(.875rem, calc((100cqi - 2.5rem) / var(--n, 15) / .62), var(--fs))/1.1 var(--f-type);
 }
+.ak-adzar {
+  position: absolute; right: 0; top: 0; bottom: 2px; margin: auto 0; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; padding: 0;
+  border: 0; border-radius: .25rem; background: none; color: var(--ink-soft); cursor: pointer; transition: color .15s, background-color .15s;
+}
+.ak-adzar svg { width: 1.5rem; height: 1.5rem; overflow: visible; }
+.ak-adzar rect { fill: rgba(201, 165, 76, .2); stroke: currentColor; stroke-width: 1.6; }
+.ak-adzar circle { fill: currentColor; }
+.ak-adzar:hover { color: var(--brass-lo); background: rgba(201, 165, 76, .14); }
+.ak-adzar:active { color: var(--ink); }
+.ak-adzar:focus-visible { outline: 2px solid var(--pen); outline-offset: 0; }
+.ak-adzar.roll svg { animation: zar-at .45s cubic-bezier(.25, .8, .35, 1); }
+@keyframes zar-at { 0% { transform: rotate(0) scale(1); } 45% { transform: rotate(210deg) scale(.8); } 100% { transform: rotate(360deg) scale(1); } }
+@media (prefers-reduced-motion: reduce) { .ak-adzar.roll svg { animation: none; } }
 .ak-name input::placeholder { color: rgba(35, 33, 42, .5); }
 .ak-name input:focus { outline: none; border-bottom-color: var(--pen); border-bottom-style: solid; }
 .ak-lakap { font: 700 .8125rem/1.2 var(--f-ui); letter-spacing: .12em; text-transform: uppercase; color: var(--stamp-p); }
@@ -1238,7 +1291,7 @@ div.ay-row { cursor: default; }
   .ak { flex: none; margin-block: auto; }
   .ak-main { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); align-items: start; gap: 1.5rem; }
   .ak-card { grid-template-columns: 12rem minmax(0, 1fr); padding: 1.375rem 1.5rem 1.5rem; gap: 1.375rem; }
-  .ak-name input { font-size: 1.625rem; }
+  .ak-field { --fs: 1.625rem; }
   .ak-bio { font-size: .9688rem; }
   .ak-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .625rem; }
   .ak-act { position: static; margin: 0; background: none; border: 0; -webkit-backdrop-filter: none; backdrop-filter: none; padding: .25rem 0 1.5rem; }
@@ -1284,7 +1337,18 @@ div.ay-row { cursor: default; }
 
   <!-- Ana menü: canlı Karakavak meydanı (meydan.js) üstünde logo, menü, bilgi kartı ve ilan panosu -->
   <section id="scr-title" class="screen" aria-label="Ana menü">
-    <div class="mn-scene" id="mn-scene" aria-hidden="true"></div>
+    <div class="mn-scene" id="mn-scene" aria-hidden="true">
+      <!-- Karakavak meydanı: tek resim (ChatGPT ile oyuncak diyoramaya çevrildi); üstünde yalnız ucuz ışıklar ve buhar -->
+      <div class="mn-pic" id="mn-pic">
+        <img id="mn-img" alt="" decoding="async" draggable="false">
+        <i class="mf mk" data-k="mk" style="--s:5%"></i>
+        <i class="mf lamp" data-k="l1" style="--s:4%"></i>
+        <i class="mf lamp" data-k="l2" style="--s:4%;--d:-1.7s"></i>
+        <i class="mf lamp" data-k="l3" style="--s:6%;--d:-3.1s"></i>
+        <span class="mf-stm" data-k="stm"><i></i><i></i><i></i></span>
+        <span class="mf-stars" id="mf-stars"></span>
+      </div>
+    </div>
     <div class="mn-shade" aria-hidden="true"></div>
     <div class="mn">
       <header class="mn-logo">
@@ -1529,7 +1593,15 @@ div.ay-row { cursor: default; }
         <figure class="ak-card">
           <div class="ak-photo"><img id="avatar-img" alt="" draggable="false"></div>
           <figcaption>
-            <label class="ak-name" for="in-name"><span>Başkanın adı</span><input id="in-name" type="text" maxlength="24" autocomplete="off" spellcheck="false"></label>
+            <div class="ak-name">
+              <label for="in-name">Başkanın adı</label>
+              <div class="ak-field">
+                <input id="in-name" type="text" maxlength="24" autocomplete="off" spellcheck="false">
+                <button id="btn-ad-zar" class="ak-adzar" type="button" aria-label="Rastgele ad" title="Zar at: vesikalığa uygun rastgele bir ad">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g transform="rotate(-10 12 12)"><rect x="3.75" y="3.75" width="16.5" height="16.5" rx="3.5"/><circle cx="8.4" cy="8.4" r="1.55"/><circle cx="15.6" cy="8.4" r="1.55"/><circle cx="12" cy="12" r="1.55"/><circle cx="8.4" cy="15.6" r="1.55"/><circle cx="15.6" cy="15.6" r="1.55"/></g></svg>
+                </button>
+              </div>
+            </div>
             <b class="ak-lakap" id="ak-lakap"></b>
             <p class="ak-bio" id="ak-bio"></p>
           </figcaption>
@@ -1590,24 +1662,25 @@ const PEOPLE = {
 
 // ─── Başkanlık vesikalıkları: aday kaydında seçilir, her birinin kendi adı var ─
 // Oyuncu kendi adını yazmazsa bu ad kullanılır. Eski başkanlar duvarı da bu resimleri asar.
+// cins: k (kadın) ya da e (erkek), resme bakılarak; ad zarı buna uygun ad verir (adlar.js).
 // lakap + bio: seçim ekranındaki broşür. Gerçek kişi ya da parti yok; hepsi yerel siyasetin bilinen halleri.
 const BASKANLAR = {
-  "baskan-01": { ad: "Aslı Kavaklıoğlu", lakap: "Kurdele Aslı", bio: "Aynı çeşmenin üç ayrı açılışında da kurdeleyi o kesti. Makası çantasından çıkmaz: düğünde, sünnette, bir keresinde de dalgınlıkla bir cenazede." },
-  "baskan-02": { ad: "Mehmet Emin Yurtsever", lakap: "Müjdeci Emin", bio: "On iki yılda Karakavak'a yedi fabrika müjdeledi. Arsa hep aynı, temel üç kez atıldı. Fabrika gelmedi ama müjdeler istihdam yarattı: iki basın danışmanı." },
-  "baskan-03": { ad: "Gülten Arıkan", lakap: "Kasayı Boş Bulan", bio: "Apartman yöneticiliği, okul aile birliği, kooperatif... Nereye seçildiyse ilk iş 'kasayı boş bulduk' basın toplantısı yaptı. Kasalar sonra hep bankada çıktı." },
-  "baskan-04": { ad: "Onur Kalaycı", lakap: "Ağır Çekim Onur", bio: "Kampanyası 212 videodan oluşuyor; hepsinde dizi müziği eşliğinde ağır çekim yürüyor. Kar yağınca eline kürek alır, kamera kapanınca küreği aldığı yere bırakır." },
-  "baskan-05": { ad: "Cemal Kuzucu", lakap: "Asfalt Cemal", bio: "Seçimden önceki gece bütün mahalleyi asfaltladı, park etmiş arabaların etrafından dolanarak. Kavaklı'daki araba biçimli üç çukura muhtar 'Cemal'in eserleri' der." },
-  "baskan-06": { ad: "Nesrin Ulusoy", lakap: "Rengârenk Nesrin", bio: "Otuz yılda dört parti değiştirdi, her seferinde çöp kutularını yeni partinin rengine boyattı. Karakavak'ın çöp kutularında dokuz kat boya var. 'Hizmetin rengi olmaz.'" },
-  "baskan-07": { ad: "Saadet Kocabaş", lakap: "Ebedi Aday", bio: "1987'den beri her seçime girdi, on dokuzunu kaybetti. Bu sefer umutlu: rahmetli eşi hâlâ seçmen kütüğünde ve mezarlıktaki komşularını da ikna etmiş." },
-  "baskan-08": { ad: "Hülya Kavuncu", lakap: "Dev Kavun Hülya", bio: "Festival derneğindeyken ilçe girişine 7 metrelik kavun heykeli diktirdi. Komşu ilçe 8 metrelik karpuz dikince ikinci kavunu çevre yoluna koydurdu. 'Kent estetiğine katkı.'" },
-  "baskan-09": { ad: "Rüstem Aksakal", lakap: "Saat Kulesi Rüstem", bio: "Meydana dört yüzlü saat kulesi yaptırdı, her yüzü başka saati gösterir. Gerekçesi: 'Çoğu memlekette var, bizde de olsun.' Randevular o günden beri kuzey yüzüne göre verilir." },
-  "baskan-10": { ad: "Nilgün Sarıbaş", lakap: "Kardeş Şehir Nilgün", bio: "Karakavak'a on bir kardeş şehir buldu, her birine meclisle birlikte 'niyet anlaşması' imzalamaya gitti. Norveç'ten geriye bir ren geyiği heykeli ve bir fatura kaldı." },
-  "baskan-11": { ad: "Hikmet Çınaroğlu", lakap: "Borç Yadigârı", bio: "Otuz yıl belediye muhasebesinde çalıştı; SGK borcunu üç başkandan devraldı, dördüncüye bırakmayı planlıyor. Makam aracı haczedilince otobüse bindi, halk tevazu sandı." },
-  "baskan-12": { ad: "Leman Tuncel", lakap: "Taziye Leman", bio: "Beş yılda ilçedeki 412 taziyenin 412'sine gitti, helvayı herkesten önce karıştırdı. Seçim bitince cenazeleri bıraktı; mahallede 'Leman Hanım'ı görmek için ölmek lazım' denir." },
-  "baskan-13": { ad: "Pınar Ekinci", lakap: "Rekortmen Pınar", bio: "'Dünyanın en büyük kavun reçeli' rekor denemesini o yönetti. Kazan tartılırken ayağı kırıldı, rekor onaylanmadı. Reçel hâlâ belediye deposunda, Guinness'ten cevap bekliyor." },
-  "baskan-14": { ad: "Derya Başaran", lakap: "Liman Derya", bio: "Denize 400 kilometre uzak Karakavak'a liman sözü verdi. İki etaplı bir planı var: önce deniz, sonra liman. Birinci etabın temeli iki kez atıldı." },
-  "baskan-15": { ad: "Tolga Bıyıklı", lakap: "Soy Ağacı Tolga", bio: "Dernek başkanlığında teşkilat şemasını soy ağacıyla karıştırdı: damadı özel kalem, eniştesi basın müşaviri, halasının kedisi moral danışmanı. Tekir buna hâlâ içerliyor." },
-  "baskan-16": { ad: "Zehra Tarlacı", lakap: "Anons Zehra", bio: "Yirmi yıl mahalle hoparlöründen 'Duyduk duymadık demeyin, dört ayaklı bir köpek kaybolmuştur' diye anons yaptı. Sesini herkes tanır; yüzünü ilk kez seçim afişinde gördüler." },
+  "baskan-01": { cins: "k", ad: "Aslı Kavaklıoğlu", lakap: "Kurdele Aslı", bio: "Aynı çeşmenin üç ayrı açılışında da kurdeleyi o kesti. Makası çantasından çıkmaz: düğünde, sünnette, bir keresinde de dalgınlıkla bir cenazede." },
+  "baskan-02": { cins: "e", ad: "Mehmet Emin Yurtsever", lakap: "Müjdeci Emin", bio: "On iki yılda Karakavak'a yedi fabrika müjdeledi. Arsa hep aynı, temel üç kez atıldı. Fabrika gelmedi ama müjdeler istihdam yarattı: iki basın danışmanı." },
+  "baskan-03": { cins: "k", ad: "Gülten Arıkan", lakap: "Kasayı Boş Bulan", bio: "Apartman yöneticiliği, okul aile birliği, kooperatif... Nereye seçildiyse ilk iş 'kasayı boş bulduk' basın toplantısı yaptı. Kasalar sonra hep bankada çıktı." },
+  "baskan-04": { cins: "e", ad: "Onur Kalaycı", lakap: "Ağır Çekim Onur", bio: "Kampanyası 212 videodan oluşuyor; hepsinde dizi müziği eşliğinde ağır çekim yürüyor. Kar yağınca eline kürek alır, kamera kapanınca küreği aldığı yere bırakır." },
+  "baskan-05": { cins: "e", ad: "Cemal Kuzucu", lakap: "Asfalt Cemal", bio: "Seçimden önceki gece bütün mahalleyi asfaltladı, park etmiş arabaların etrafından dolanarak. Kavaklı'daki araba biçimli üç çukura muhtar 'Cemal'in eserleri' der." },
+  "baskan-06": { cins: "k", ad: "Nesrin Ulusoy", lakap: "Rengârenk Nesrin", bio: "Otuz yılda dört parti değiştirdi, her seferinde çöp kutularını yeni partinin rengine boyattı. Karakavak'ın çöp kutularında dokuz kat boya var. 'Hizmetin rengi olmaz.'" },
+  "baskan-07": { cins: "k", ad: "Saadet Kocabaş", lakap: "Ebedi Aday", bio: "1987'den beri her seçime girdi, on dokuzunu kaybetti. Bu sefer umutlu: rahmetli eşi hâlâ seçmen kütüğünde ve mezarlıktaki komşularını da ikna etmiş." },
+  "baskan-08": { cins: "k", ad: "Hülya Kavuncu", lakap: "Dev Kavun Hülya", bio: "Festival derneğindeyken ilçe girişine 7 metrelik kavun heykeli diktirdi. Komşu ilçe 8 metrelik karpuz dikince ikinci kavunu çevre yoluna koydurdu. 'Kent estetiğine katkı.'" },
+  "baskan-09": { cins: "e", ad: "Rüstem Aksakal", lakap: "Saat Kulesi Rüstem", bio: "Meydana dört yüzlü saat kulesi yaptırdı, her yüzü başka saati gösterir. Gerekçesi: 'Çoğu memlekette var, bizde de olsun.' Randevular o günden beri kuzey yüzüne göre verilir." },
+  "baskan-10": { cins: "k", ad: "Nilgün Sarıbaş", lakap: "Kardeş Şehir Nilgün", bio: "Karakavak'a on bir kardeş şehir buldu, her birine meclisle birlikte 'niyet anlaşması' imzalamaya gitti. Norveç'ten geriye bir ren geyiği heykeli ve bir fatura kaldı." },
+  "baskan-11": { cins: "e", ad: "Hikmet Çınaroğlu", lakap: "Borç Yadigârı", bio: "Otuz yıl belediye muhasebesinde çalıştı; SGK borcunu üç başkandan devraldı, dördüncüye bırakmayı planlıyor. Makam aracı haczedilince otobüse bindi, halk tevazu sandı." },
+  "baskan-12": { cins: "k", ad: "Leman Tuncel", lakap: "Taziye Leman", bio: "Beş yılda ilçedeki 412 taziyenin 412'sine gitti, helvayı herkesten önce karıştırdı. Seçim bitince cenazeleri bıraktı; mahallede 'Leman Hanım'ı görmek için ölmek lazım' denir." },
+  "baskan-13": { cins: "k", ad: "Pınar Ekinci", lakap: "Rekortmen Pınar", bio: "'Dünyanın en büyük kavun reçeli' rekor denemesini o yönetti. Kazan tartılırken ayağı kırıldı, rekor onaylanmadı. Reçel hâlâ belediye deposunda, Guinness'ten cevap bekliyor." },
+  "baskan-14": { cins: "k", ad: "Derya Başaran", lakap: "Liman Derya", bio: "Denize 400 kilometre uzak Karakavak'a liman sözü verdi. İki etaplı bir planı var: önce deniz, sonra liman. Birinci etabın temeli iki kez atıldı." },
+  "baskan-15": { cins: "e", ad: "Tolga Bıyıklı", lakap: "Soy Ağacı Tolga", bio: "Dernek başkanlığında teşkilat şemasını soy ağacıyla karıştırdı: damadı özel kalem, eniştesi basın müşaviri, halasının kedisi moral danışmanı. Tekir buna hâlâ içerliyor." },
+  "baskan-16": { cins: "k", ad: "Zehra Tarlacı", lakap: "Anons Zehra", bio: "Yirmi yıl mahalle hoparlöründen 'Duyduk duymadık demeyin, dört ayaklı bir köpek kaybolmuştur' diye anons yaptı. Sesini herkes tanır; yüzünü ilk kez seçim afişinde gördüler." },
 };
 
 // ─── Evraklar ─────────────────────────────────────────────────────────────
@@ -2767,6 +2840,213 @@ const QUOTES = [
   "Makam gelir geçer, çay ocağı kalır.",
   "Ben her şeyi not ettim, bir gün kitap yazacağım.",
 ];
+
+
+// ─── Ad zarı: aday kaydında rastgele "Ad Soyad" ──────────────────────────
+// k: kadın, e: erkek adları (BASKANLAR'daki cins). ADLAR_ORTAK iki cinse de konan adlar, iki havuzda da var.
+// Gerçek kişi yok: tanınmış siyasetçi ve ünlü soyadları havuza girmez (YASAK_SOYAD), soyadı sıradan olan ünlülerin
+// tam adı üretilemez (YASAK_TAM), tek bir siyasetçiyle özdeşleşmiş adlar da yok (YASAK_AD). test/adlar.test.mjs sınar.
+const ADLAR_ORTAK = ["Deniz", "Derya", "Evren", "Umut", "Ümit", "Ekin", "Bilge", "Tuna", "Toprak", "Ayhan", "Işık", "Yüksel", "Hikmet", "Nurhan", "Özgür", "Servet"];
+const ADLAR = {
+  k: [...ADLAR_ORTAK,
+    // eski usul, ninelerden
+    "Ayşe", "Fatma", "Emine", "Hatice", "Zeynep", "Meryem", "Havva", "Hanife", "Zehra", "Hacer", "Hediye", "Hafize", "Hayriye", "Saadet",
+    "Naciye", "Nazife", "Nuriye", "Şükriye", "Zekiye", "Remziye", "Bedriye", "Fahriye", "Hamiyet", "Makbule", "Mukaddes", "Münevver",
+    "Müzeyyen", "Nebahat", "Nezihe", "Pakize", "Refika", "Sabiha", "Safiye", "Semiha", "Şaziye", "Şefika", "Şerife", "Türkan", "Vesile",
+    "Zübeyde", "Fikriye", "Latife", "Cemile", "Adile", "Bahriye", "Dilber", "Fadime", "Gülizar", "Gülsüm", "Gülbahar", "Güllü", "Hatun",
+    "Sakine", "Keziban", "Kiraz", "Nazik", "Döndü", "Elmas", "Dudu", "Zöhre", "Cennet", "Hüsniye", "Lütfiye", "Munise", "Zülfiye", "Esme",
+    "Asiye", "Menekşe", "Gülendam", "Yeter", "Nazmiye", "Nadide", "Melahat", "Mualla", "Muazzez", "Mükerrem", "Mürüvvet", "Naime",
+    "Necmiye", "Sabahat", "Saniye", "Leman", "Rukiye", "Kadriye", "Zahide", "Zeliha", "Ümmühan", "Selvi", "Dürdane",
+    // annelerden, teyzelerden
+    "Aynur", "Ayten", "Aysel", "Ayfer", "Aygül", "Ayla", "Aysun", "Asuman", "Aliye", "Arzu", "Bahar", "Banu", "Berrin", "Birsen", "Birgül",
+    "Canan", "Cahide", "Demet", "Dilek", "Emel", "Esma", "Filiz", "Figen", "Fidan", "Gönül", "Gülten", "Gülay", "Gülşen", "Güler", "Gülcan",
+    "Gülnur", "Gülseren", "Gülhan", "Handan", "Hülya", "Hale", "Halide", "Hayat", "İlknur", "İnci", "Lale", "Leyla", "Melek", "Meltem",
+    "Mine", "Necla", "Nejla", "Nesrin", "Neslihan", "Nevin", "Nilgün", "Nilüfer", "Nihal", "Nazan", "Nazlı", "Nimet", "Nurten", "Nurcan",
+    "Nuray", "Nursel", "Nurdan", "Nurgül", "Nurhayat", "Oya", "Özlem", "Perihan", "Pervin", "Pınar", "Semra", "Sevgi", "Sevim", "Sevda",
+    "Sevil", "Sevinç", "Seher", "Selma", "Serpil", "Sibel", "Songül", "Suna", "Sultan", "Şenay", "Şengül", "Şermin", "Şükran", "Tülay",
+    "Tülin", "Ümran", "Ülkü", "Yıldız", "Zerrin", "Zühal", "Serap", "Sema", "Sevtap", "Süheyla", "Şahika", "Yasemin", "Yurdagül", "Müjde",
+    "Nükhet", "Sezen", "Selda", "Aydan", "Aslı",
+    // yeni kuşak
+    "Ayça", "Aylin", "Ayşegül", "Başak", "Begüm", "Berna", "Betül", "Burcu", "Büşra", "Cansu", "Ceren", "Damla", "Didem", "Duygu", "Ebru",
+    "Ece", "Eda", "Elif", "Esin", "Esra", "Ezgi", "Gamze", "Gizem", "Gökçe", "Gözde", "Hande", "Hazal", "Işıl", "İpek", "İrem", "Kübra",
+    "Melike", "Melis", "Merve", "Özge", "Pelin", "Seda", "Selin", "Sena", "Şeyma", "Şule", "Tuba", "Tuğba", "Tuğçe", "Yağmur", "Buse",
+    "Beyza", "Ecrin", "Eylül", "Defne", "Nehir", "Azra", "Zümra", "Irmak", "Ela", "Elçin", "Nisa", "Ceyda", "Derin", "Duru", "Öykü", "Rüya",
+    "Simge", "Ilgın", "Alara", "Beren", "Çağla", "Dilara", "Feyza", "İlayda", "Sude", "Yaren", "Aleyna", "Hilal", "Sümeyye", "Rabia",
+    "Kevser", "Elvan", "Cemre", "Hira",
+    // doğudan
+    "Berfin", "Rojda", "Zelal", "Dilan", "Helin", "Berivan", "Evin", "Delal", "Dicle"],
+  e: [...ADLAR_ORTAK,
+    // eski usul, dedelerden
+    "Mehmet", "Mustafa", "Ahmet", "Ali", "Hasan", "Hüseyin", "İbrahim", "İsmail", "Osman", "Yusuf", "Murat", "Ömer", "Ramazan", "Halil",
+    "Süleyman", "Abdullah", "Mahmut", "Salih", "Kemal", "Orhan", "Şükrü", "Veli", "Yakup", "Yaşar", "Zeki", "Fikri", "Fehmi", "Hilmi",
+    "Hamdi", "Hayri", "Kadir", "Kamil", "Kazım", "Lütfi", "Macit", "Muammer", "Muzaffer", "Münir", "Nazım", "Necati", "Necdet", "Nedim",
+    "Nihat", "Nurettin", "Nusret", "Rahmi", "Rasim", "Refik", "Remzi", "Rıfat", "Rüstem", "Sabri", "Sadık", "Sadettin", "Saffet", "Sami",
+    "Sedat", "Selami", "Sıtkı", "Suphi", "Şaban", "Şevket", "Şefik", "Tahsin", "Tevfik", "Vahit", "Yahya", "Yunus", "Zekeriya", "Ziya",
+    "Adem", "Adnan", "Agah", "Akif", "Alaattin", "Arif", "Asım", "Atıf", "Avni", "Aziz", "Bahri", "Bayram", "Bedri", "Burhan", "Cafer",
+    "Celal", "Cemal", "Cemil", "Cevat", "Cevdet", "Cumali", "Dursun", "Durmuş", "Emin", "Esat", "Eşref", "Faik", "Fahri", "Faruk", "Fazıl",
+    "Ferit", "Fethi", "Fevzi", "Fuat", "Galip", "Haydar", "Hayrettin", "Hamza", "Hurşit", "İhsan", "İlhan", "İlyas", "İrfan", "İsa",
+    "İzzet", "Kenan", "Kerim", "Latif", "Mahir", "Mecit", "Memduh", "Musa", "Mümtaz", "Naci", "Nafiz", "Necip", "Nevzat", "Niyazi", "Nuh",
+    "Ragıp", "Reşat", "Sait", "Sefer", "Selim", "Seyfi", "Seyit", "Sırrı", "Şakir", "Şemsettin", "Şerafettin", "Tacettin", "Tayyar",
+    "Temel", "Vasfi", "Zihni", "Zülfü", "Hıdır", "İdris", "Kadri", "Şerif", "Hayrullah", "Veysel", "Cuma", "Abdurrahman", "Seyfettin",
+    "Zeynel", "Bilal", "Nezir", "Nurullah", "Hamit", "Hakkı", "Tahir", "Talip", "Yıldırım", "İsmet", "Necmi", "Rıdvan",
+    // babalardan, amcalardan
+    "Metin", "Ergün", "Erol", "Oktay", "Tekin", "Turan", "Zafer", "Mesut", "Bülent", "Erdal", "Altan", "Ercan", "Erhan", "Erkan", "Ersin",
+    "Ertan", "Engin", "Coşkun", "Gürkan", "Hüsnü", "Levent", "Serdar", "Serkan", "Soner", "Taner", "Tamer", "Uğur", "Ufuk", "Volkan",
+    "Yavuz", "Yücel", "Aydın", "Bora", "Cem", "Cenk", "Cüneyt", "Ferhat", "Gökhan", "Halit", "Haluk", "Hakan", "Kıvanç", "Koray", "Orçun",
+    "Okan", "Oğuz", "Ozan", "Selçuk", "Semih", "Sermet", "Şenol", "Tolga", "Tanju", "Aykut", "Aytaç", "Barış", "Emrah", "Erdem",
+    "Ertuğrul", "Gültekin", "Kürşat", "Mete", "Nejat", "Onur", "Rüştü", "Şener", "Tayfun", "Turgay", "Ferdi", "Naim", "Tugay", "Sinan",
+    // yeni kuşak
+    "Oğuzhan", "Kerem", "Mert", "Alper", "Alp", "Anıl", "Arda", "Batuhan", "Berk", "Berkay", "Can", "Caner", "Cihan", "Çağatay", "Çağlar",
+    "Doruk", "Efe", "Emir", "Emre", "Enes", "Eren", "Fatih", "Furkan", "Görkem", "Güven", "Harun", "Ilgaz", "İlker", "Sercan", "Tunahan",
+    "Tuğrul", "Utku", "Yiğit", "Eymen", "Miraç", "Aras", "Atlas", "Kuzey", "Çınar", "Poyraz", "Alperen", "Doğukan", "Taha", "Yağız",
+    "Muhammet", "Mücahit", "Kutay", "Göktuğ", "Batu", "Ege", "Emirhan", "Kağan", "Mirza", "Ata",
+    // doğudan
+    "Baran", "Serhat", "Azad", "Diyar"],
+};
+
+// Soyadları: çoğu sıradan; sonda mahallenin esnafı ve lakaptan dönme olanlar (tatlı sert, abartısız).
+// BASKANLAR'ın soyadları burada yok: zar başka bir adayın adını vermesin.
+const SOYADLAR = [
+  "Acar", "Akay", "Akbaş", "Akçay", "Akdağ", "Akdemir", "Akdeniz", "Akgöz", "Akgün", "Akgül", "Akın", "Akkaya", "Akkoyun", "Akkuş",
+  "Akman", "Akpınar", "Aksoy", "Aksu", "Aktaş", "Aktürk", "Akyol", "Akyüz", "Alagöz", "Alkan", "Alp", "Altay", "Altıntaş", "Altınok",
+  "Altun", "Arıoğlu", "Arslan", "Aslan", "Aslantaş", "Aşkın", "Atalay", "Atasoy", "Ateş", "Avcı", "Ay", "Aydemir", "Aydın", "Aydınlı",
+  "Aydoğan", "Aydoğdu", "Aygün", "Ayhan", "Aykaç", "Aytaç", "Aytekin", "Ayvaz", "Ayyıldız", "Azak",
+  "Babaoğlu", "Bağcı", "Bahadır", "Bakır", "Balcı", "Balık", "Baltacı", "Baran", "Başar", "Başoğlu", "Baştürk", "Batur", "Bayır", "Bayrak",
+  "Bayram", "Baysal", "Bektaş", "Benli", "Berber", "Bilen", "Bilgili", "Bilgin", "Bilir", "Bozdoğan", "Bozkurt", "Bozoğlu", "Boztepe",
+  "Budak", "Bulut", "Büyük",
+  "Candemir", "Canpolat", "Cebeci", "Cihan", "Coşkun", "Cömert",
+  "Çakar", "Çakır", "Çakmak", "Çalışkan", "Çallı", "Çam", "Çamlı", "Çayır", "Çelebi", "Çelik", "Çetin", "Çetiner", "Çetinkaya", "Çevik",
+  "Çiçek", "Çiftçi", "Çınar", "Çırak", "Çoban", "Çolak",
+  "Dağ", "Dağlı", "Demir", "Demirci", "Demirkaya", "Demirkol", "Deniz", "Dere", "Dikmen", "Dilek", "Dinç", "Doğanay", "Doğru", "Dönmez",
+  "Duman", "Duran", "Durmaz", "Dursun", "Duru",
+  "Ekici", "Elmas", "Er", "Erden", "Erdem", "Erdinç", "Eren", "Ergin", "Ergün", "Erkal", "Erkan", "Erkmen", "Erkoç", "Erol", "Ertan",
+  "Ertekin", "Erten", "Ertürk", "Esen", "Eser",
+  "Fidan",
+  "Gedik", "Gencer", "Genç", "Gezer", "Gök", "Gökay", "Gökçe", "Gökmen", "Göksu", "Göktaş", "Gönen", "Gönül", "Güleç", "Güler", "Gültekin",
+  "Gümüş", "Günay", "Gündoğdu", "Gündüz", "Güneş", "Güney", "Güngör", "Güngören", "Gür", "Gürbüz", "Gürel", "Gürler", "Gürsoy", "Güven",
+  "Güzel", "Güçlü",
+  "Hacıoğlu", "Harman", "Hatipoğlu", "Hazar", "Hekimoğlu",
+  "Irmak", "Işık", "İlhan", "İnan", "İpek", "İşcan",
+  "Kaçar", "Kadıoğlu", "Kahraman", "Kalender", "Kalkan", "Kanat", "Kandemir", "Kaplan", "Kaptan", "Kara", "Karabacak", "Karabulut",
+  "Karaca", "Karadağ", "Karadeniz", "Karagöz", "Karahan", "Karakaya", "Karakoç", "Karakuş", "Karaman", "Karaoğlu", "Karasu", "Karataş",
+  "Karayel", "Kartal", "Kavak", "Kaya", "Kayacan", "Kayalı", "Kayhan", "Kaymaz", "Kaynak", "Keçeli", "Keleş", "Keskin", "Kılıç", "Kılınç",
+  "Kınalı", "Kıran", "Kırmızı", "Kiraz", "Kızıl", "Koca", "Kocaman", "Kocaoğlu", "Kocatürk", "Koçak", "Konuk", "Korkmaz", "Korkut",
+  "Koyuncu", "Köse", "Kozan", "Kurt", "Kurtoğlu", "Kurtuluş", "Kuş", "Kutlu", "Küçük",
+  "Laçin", "Mercan", "Mert", "Mete", "Metin", "Mutlu",
+  "Oğuz", "Okur", "Olgun", "Onat", "Oral", "Oruç", "Ozan", "Önal", "Öner", "Ökten", "Öksüz", "Özalp", "Özbek", "Özbey", "Özcan", "Özden",
+  "Özdemir", "Özdoğan", "Özer", "Özgül", "Özgür", "Özkan", "Özkaya", "Özmen", "Özsoy", "Öztekin", "Öztop", "Öztürk", "Özyurt",
+  "Pala", "Parlak", "Pehlivan", "Polat", "Poyraz", "Pınar",
+  "Sağlam", "Saraç", "Sarı", "Sarıkaya", "Sarıoğlu", "Savaş", "Sayar", "Seçkin", "Selçuk", "Serin", "Sevim", "Sevinç", "Sezgin", "Sipahi",
+  "Solmaz", "Soydan", "Sönmez", "Sucu", "Sümer", "Sungur",
+  "Şahin", "Şahinoğlu", "Şanlı", "Şeker", "Şen", "Şengül", "Şenol", "Şimşek",
+  "Taş", "Taşdemir", "Taşkın", "Tatlı", "Tekeli", "Tekin", "Tekkaya", "Temiz", "Tepe", "Terzi", "Terzioğlu", "Tezcan", "Tok", "Tokgöz",
+  "Topal", "Topaloğlu", "Topçu", "Toprak", "Tosun", "Tuğrul", "Tuna", "Tunç", "Tuncer", "Turan", "Turgut", "Turhan", "Türkmen",
+  "Türkyılmaz",
+  "Uçar", "Uğur", "Uluç", "Uludağ", "Uslu", "Uyar", "Uysal", "Uzun", "Uzunoğlu", "Ünal", "Ünlü", "Üstün",
+  "Varol", "Yalçın", "Yaman", "Yanık", "Yaşar", "Yavuz", "Yazıcı", "Yazgan", "Yeşil", "Yetkin", "Yiğit", "Yıldırım", "Yıldız", "Yılmaz",
+  "Yoldaş", "Yolcu", "Yurdakul", "Yurt", "Yurttaş", "Yücel", "Yüksel", "Zengin", "Zeybek",
+  // çarşının, mahallenin soyadları
+  "Semaverci", "Tespihçi", "Kavunoğlu", "Pekmezci", "Helvacı", "Simitçi", "Leblebici", "Turşucu", "Yoğurtçu", "Çaycıoğlu", "Demlikçi",
+  "Cezveci", "Fincancı", "Kazancı", "Hamurcu", "Börekçi", "Çorbacı", "Lokumcu", "Kaymakçı", "Peynirci", "Sütçü", "Pastırmacı", "Sucukçu",
+  "Zeytinci", "Üzümcü", "İncirci", "Cevizci", "Fındıkçı", "Karpuzcu", "Pancarcı", "Harmancı", "Değirmenci", "Orakçı", "Kağnıcı",
+  "Nalbant", "Semerci", "Palancı", "Kalburcu", "Hasırcı", "Kilimci", "Yorgancı", "Keçeci", "Düğmeci", "Şemsiyeci", "Basmacı", "Saatçi",
+  "Kantarcı", "Mühürcü", "Arzuhalci", "Fenerci", "Lambacı", "Kandilci", "Sobacı", "Oduncu", "Kömürcü", "Kibritçi", "Soğancı", "Biberci",
+  "Tuzcu", "Ihlamurcu", "Tütüncü", "Kehribarcı", "Aynacı", "Tarakçı", "Horozoğlu", "Arıcı", "Çeşmeci", "Söğütlü", "Karakavaklı",
+  "Uzunkavak", "Pişmaniyeci", "Bozacı", "Salepçi", "Şerbetçi", "Gazozcu", "Macuncu", "Kestaneci", "Baklavacı", "Sepetçi", "Çömlekçi",
+  "Bakırcı", "Tenekeci", "Boyacıoğlu", "Kiremitçi", "Kerpiççi", "Sakallı", "Kıvırcık", "Dertsiz", "Gamsız", "Çokbilir", "Hepgüler",
+  "Bilgiç", "Söylemez", "Duymaz", "Unutmaz", "Yorulmaz", "Yağcı", "Uyanık", "Üçüncü", "Birinci", "Demirbaş", "Okumuş", "Ekşi",
+  "Kabadayı", "Karabıyık", "Hamamcı",
+];
+
+// Tanınmış siyasetçilerin (cumhurbaşkanı, başbakan, parti lideri, bakan, büyükşehir başkanı) ve ünlülerin
+// gönderme gibi okunacak soyadları. Hiçbiri havuza girmez; girse bile üretici eler.
+const YASAK_SOYAD = [
+  // cumhurbaşkanları, başbakanlar, erken cumhuriyet
+  "Atatürk", "İnönü", "Bayar", "Menderes", "Gürsel", "Sunay", "Korutürk", "Evren", "Özal", "Demirel", "Sezer", "Gül", "Erdoğan",
+  "Ecevit", "Erbakan", "Çiller", "Akbulut", "Davutoğlu", "Erim", "Ürgüplü", "Melen", "Talu", "Ulusu", "Saka", "Günaltay",
+  "Peker", "Saracoğlu", "Saydam", "Okyar", "Karabekir", "Orbay", "Cebesoy", "Polatkan", "Zorlu", "Denktaş", "Tatar",
+  // parti liderleri ve bakanlar
+  "Kılıçdaroğlu", "Bahçeli", "Akşener", "Babacan", "Demirtaş", "İnce", "Özel", "Baykal", "Türkeş", "Yazıcıoğlu", "Destici", "Perinçek",
+  "Kurtulmuş", "Karamollaoğlu", "Arınç", "Özdağ", "Oğan", "Karayalçın", "Cindoruk", "Ağar", "Öymen", "Kutan", "Asiltürk", "Buldan",
+  "Sancar", "Hatimoğulları", "Bakırhan", "Yüksekdağ", "Türk", "Zana", "Önder", "Paylan", "Baş", "Okuyan", "Derviş", "Şener",
+  "Soylu", "Çavuşoğlu", "Akar", "Albayrak", "Nebati", "Yerlikaya", "Bozdağ", "Varank", "Kacır", "Kasapoğlu", "Şentop", "Unakıtan",
+  "Bağış", "Ala", "Elvan", "Özhaseki", "Ağbal", "Kalın", "Keçeciler", "Tüzmen", "Bayraktar", "Altaylı", "Kaftancıoğlu", "Türkkan",
+  "Dervişoğlu", "Hamzaçebi", "Kavakçı", "Uzan", "Öcalan", "Gülen", "Oktar",
+  // büyükşehir başkanları
+  "İmamoğlu", "Yavaş", "Gökçek", "Topbaş", "Soyer", "Sarıgül", "Dalan", "Sözen", "Böcek", "Seçer", "Karalar", "Altepe",
+  // tarih, fikir, basın
+  "Gökalp", "Gezmiş", "Çayan", "Kaypakkaya", "Mumcu", "Dink", "Nesin", "Kanık", "Pamuk", "Şafak", "Dündar", "Birand", "Özkök", "Özdil",
+  "Portakal", "Kırca", "Ilıcalı", "Bayülgen", "Anlı", "Sayan", "Tümer", "Erken", "Muhtar", "Ağca", "Çakıcı", "Bardakçı", "Kaşıkçı",
+  // iş dünyası, bilim
+  "Koç", "Sabancı", "Ülker", "Eczacıbaşı", "Doğan", "Şahenk", "Ağaoğlu", "Çalık", "Cengiz", "Sancak", "Arf", "Dağdeviren", "Gökçen",
+  "Atadan", "Uşaklıgil",
+  // müzik
+  "Tatlıses", "Gencebay", "Gürses", "Müren", "Pekkan", "Manço", "Tevetoğlu", "Tayfur", "Ersoy", "Sayın", "Ertaş", "Erener", "Sandal",
+  "Ortaç", "Doğulu", "Akalın", "Tilbe", "Gündeş", "Erçetin", "Akbayram", "Bağcan", "Kırmızıgül", "Ceceli", "Alanson", "Kızılok",
+  "Evgin", "Besen", "Özbeğen", "Kekilli", "Öncel", "Alpman", "Ergen", "Koray",
+  // sinema, dizi, sahne
+  "Sunal", "Şoray", "Girik", "Arkın", "İnanır", "Avşar", "Ar", "Naşit", "Özkul", "Akçatepe", "Gruda", "Gökbakar", "Demirer", "Tatlıtuğ",
+  "İmirzalıoğlu", "Bilginer", "Büyüküstün", "Ergenç", "Özçivit", "Uzerli", "Akbağ", "Alasya", "Uygur", "Şensoy", "Yeşilçay", "Evcen",
+  "Öden", "Erçel", "Akyürek", "Kentmen", "Poyrazoğlu", "Kenter", "Soygazi", "Hun", "Tibet", "Kaynarca", "Gezen", "Salman", "Kutman",
+  "Aslantuğ", "Koçyiğit", "Günaydın",
+  // spor
+  "Terim", "Şükür", "Reçber", "Süleymanoğlu", "Altıntop", "Kahveci", "Belözoğlu", "Kerimoğlu", "Özalan", "Şaş", "Davala", "Dilmen",
+  "Özil", "Çalhanoğlu", "Gündoğan", "Demiral", "Ataman", "Buruk", "Yanal", "Kayaalp", "Aktürkoğlu", "Türkoğlu", "Şentürk",
+];
+
+// Soyadı sıradan ama tam adı tanınmış kişiler: bu birleşimler hiç üretilmez
+const YASAK_TAM = [
+  // siyaset
+  "Mesut Yılmaz", "Cevdet Yılmaz", "Binali Yıldırım", "Aziz Yıldırım", "Hikmet Çetin", "Ömer Çelik", "Hüseyin Çelik", "Faruk Çelik",
+  "Mehmet Şimşek", "Hakan Fidan", "Yılmaz Tunç", "Fahrettin Koca", "Ziya Selçuk", "Mahmut Özer", "Yusuf Tekin", "Fuat Oktay",
+  "Veysel Eroğlu", "Derviş Eroğlu", "Taner Yıldız", "Nabi Avcı", "Ömer Dinçer", "Beşir Atalay", "Cemil Çiçek", "Zafer Çağlayan",
+  "Nihat Ergün", "Sadullah Ergin", "Ertuğrul Günay", "İsmail Kahraman", "İbrahim Kalın", "Mahir Ünal", "Aziz Kocaoğlu", "Tanju Özcan",
+  "Engin Altay", "Gültekin Uysal", "Ahmet Arslan", "Hilmi Güler", "İsmet Sezgin", "Sadi Irmak", "Fevzi Çakmak", "Burhan Kuzu",
+  "Ali Erbaş", "Merve Kavakçı", "Nurettin Sözen", "Afet İnan", "Sabiha Gökçen", "Fahrettin Altun", "Ali Şahin", "Mehmet Aydın",
+  // basın, iş dünyası
+  "Aydın Doğan", "Cüneyt Özdemir", "Nihat Özdemir", "Uğur Dündar", "Orhan Pamuk", "Elif Şafak", "Mehmet Cengiz", "Attila İlhan",
+  // müzik
+  "Sezen Aksu", "Ahmet Kaya", "Cem Karaca", "Işın Karaca", "Levent Yüksel", "Hande Yener", "Sibel Can", "Zerrin Özer", "Ebru Yaşar",
+  "Ebru Şahin", "Selami Şahin", "Hakkı Bulut", "Cengiz Kurtoğlu", "Emre Aydın", "Özcan Deniz", "Murat Boz", "Hüseyin Turan", "Cem Özer",
+  // sinema, dizi, ekran
+  "Cem Yılmaz", "Şener Şen", "Tarık Akan", "Filiz Akın", "Yılmaz Güney", "Metin Akpınar", "Uğur Yücel", "Tolga Çevik", "Engin Günaydın",
+  "Erol Günaydın", "Hazal Kaya", "Demet Özdemir", "Tuba Ünsal", "Esra Erol", "Rasim Öztekin", "Kenan Işık", "Ercan Yazgan",
+  "Hülya Koçyiğit", "Yılmaz Erdoğan", "Halit Akçatepe",
+  // spor
+  "Arda Turan", "Arda Güler", "Bülent Korkmaz", "Tanju Çolak", "Metin Oktay", "Şenol Güneş", "Aykut Kocaman", "Abdullah Avcı",
+  "Oğuz Çetin", "Servet Çetin", "Selçuk İnan", "Mehmet Topal", "Mehmet Okur", "Halil Mutlu", "Taha Akgül", "Eda Erdem", "Zehra Güneş",
+  "Cenk Tosun", "Zeki Çelik", "Yusuf Yazıcı", "Enes Ünal", "Ferdi Kadıoğlu", "Salih Özcan", "Kenan Yıldız", "Burak Yılmaz",
+  "Rıdvan Yılmaz", "Hakan Ünsal", "Oğuz Aydın", "Süreyya Ayhan", "Hatice Akbaş",
+];
+
+// Tek bir siyasetçiyle özdeşleşmiş adlar ve seçimde rakip çıkan oyun kişilerinin adları (seçim gecesi karışmasın)
+const YASAK_AD = [
+  "Tayyip", "Devlet", "Binali", "Tansu", "Meral", "Necmettin", "Alparslan", "Selahattin", "Muharrem", "Ekrem", "Mansur", "Numan",
+  "Berat", "Muhsin", "Hulusi", "Mevlüt", "Egemen", "Turgut", "Enver", "Talat", "Mithat", "Doğu", "Fahrettin", "Recep", "Recai",
+  "Hüsamettin", "Ajda", "Tarkan", "Müslüm", "Hadise", "Kibariye", "Sertab", "Acun", "Serenay",
+  "Nermin", "Suat", "Cengiz", "Kaan", "Bekir", "Rıza", "Tuncay", "Burak", "Nuri", "Fikret",
+];
+
+// cins: "k" | "e" · rng: 0-1 arası sayı veren işlev · son: daha önce atılan adlar (en yenisi sonda)
+// Art arda aynı ad gelmez; son 8 atıştaki adlar ve soyadlar da mümkünse tekrar etmez. Ad + soyad isim kutusuna (24) sığar.
+const rastgeleAd = (() => {
+  const kucuk = s => s.toLocaleLowerCase("tr");
+  const tam = new Set(YASAK_TAM.map(kucuk)), soy = new Set(YASAK_SOYAD.map(kucuk)), yad = new Set(YASAK_AD.map(kucuk));
+  const havuz = { k: ADLAR.k.filter(a => !yad.has(kucuk(a))), e: ADLAR.e.filter(a => !yad.has(kucuk(a))) };
+  const soyadlar = SOYADLAR.filter(s => !soy.has(kucuk(s)));
+  const uygun = (a, s, onceki) => a !== s && a.length + s.length < 24 && !tam.has(kucuk(a + " " + s)) && a + " " + s !== onceki;
+  return (cins, rng = Math.random, son = []) => {
+    const adlar = havuz[cins === "e" ? "e" : "k"], onceki = son[son.length - 1];
+    const yakin = new Set(son.slice(-8).flatMap(t => String(t).split(" ")));
+    const sec = l => l[Math.min(l.length - 1, Math.floor(rng() * l.length))];
+    for (let i = 0; i < 60; i++) {
+      const a = sec(adlar), s = sec(soyadlar);
+      if (!yakin.has(a) && !yakin.has(s) && uygun(a, s, onceki)) return a + " " + s;
+    }
+    // zar hep aynı yüze düşüyorsa (bozuk rng): sıradaki ilk uygun ad
+    for (const a of adlar) for (const s of soyadlar) if (uygun(a, s, onceki)) return a + " " + s;
+  };
+})();
 
 
 // ─── Oyun motoru (DOM'suz; sim.mjs de bunu çalıştırır) ────────────────────
@@ -5155,14 +5435,28 @@ function openPick() {
 function pickAvatar(id, sound = true) {
   LS.set("avatar", id);
   for (const b of $("#picks").children) { const on = b.dataset.id === id; b.setAttribute("aria-checked", String(on)); b.tabIndex = on ? 0 : -1; }
-  const B = BASKANLAR[id], own = customName(), note = $("#pick-note"), sv = savedGame();
-  paintAvatar();
+  const B = BASKANLAR[id], z = LS.get("nameZar", "");
+  // zarın verdiği ad yeni vesikalığa uymuyorsa (kadına erkek adı ya da tersi) zar yeniden atılır; oyuncunun yazdığı ada dokunulmaz
+  if (z && z === customName() && !ADLAR[B.cins].includes(z.split(" ")[0])) adZar();
+  const own = customName(), note = $("#pick-note"), sv = savedGame();
+  paintAvatar(); nameFit();
   $("#ak-lakap").textContent = `“${B.lakap}”`; $("#ak-bio").textContent = B.bio;
   note.classList.toggle("warn", !!sv);
   note.textContent = sv ? "Kayıtlı bir döneminiz var; mazbatayı alırsanız o dönem kapanır."
     : own ? `Mazbataya “${own}” yazılacak; vesikalık ${B.ad}'ın.` : "Ad kutusu boş kalırsa vesikalığın adıyla aday olursunuz.";
   if (sound) snd.tick();
 }
+// Ad zarı: vesikalığın cinsine uygun ad soyad (adlar.js). Yazılan ad gibi saklanır; "nameZar" adın zardan geldiğini hatırlar.
+let zarSon = []; // son atılan adlar: art arda aynısı, yakın atışlarda aynı ad ya da soyad gelmesin
+function adZar() {
+  // kutudaki ad da son atış sayılır: sayfa yenilense de zar aynı adı geri vermez
+  const ad = rastgeleAd(BASKANLAR[playerAvatar()].cins, Math.random, [...zarSon, $("#in-name").value.trim()].filter(Boolean)), b = $("#btn-ad-zar");
+  zarSon = [...zarSon, ad].slice(-8);
+  $("#in-name").value = ad; LS.set("name", ad); LS.set("nameZar", ad); nameFit();
+  b.classList.remove("roll"); void b.offsetWidth; b.classList.add("roll");
+}
+// uzun ad kutuya sığsın: yazı boyu harf sayısıyla küçülür (CSS --n)
+function nameFit() { const i = $("#in-name"); i.style.setProperty("--n", Math.max(15, (i.value || i.placeholder).length)); }
 // ızgarada ok tuşları seçimi taşır (radyo düğmesi gibi); satır boyu ekrandaki sütun sayısından
 function pickMove(e) {
   const list = [...$("#picks").children], i = list.indexOf(document.activeElement);
@@ -5177,18 +5471,38 @@ function pickMove(e) {
 }
 
 // ─── Ana menü: canlı meydan üstünde logo, menü, ilan panosu ve bilgi kartı ──
-const SURUM = "2026.09.25 · 03d551a"; // derlemede tarih ve içerik özetiyle dolar
+const SURUM = "2026.09.25 · bb6d4d9"; // derlemede tarih ve içerik özetiyle dolar
 const YENILIK = [
-  ["Seçim gecesi canlı yayında", "KARAKAVAK TV sandıkları mahalle mahalle açıyor: bıyıklı spiker, alt bant, absürt kayan yazı."],
-  ["Ankara'dan davet", "Ankara tavan yapınca sizi yukarı çağırır. İsterseniz gidersiniz, isterseniz “Karakavak'ı bırakmam” dersiniz."],
-  ["Erken seçim", "Esnaf odası belediyeyi ele geçirirse sandık erken kurulur; Hacı Bekir güçlü girer."],
+  ["Seçim gecesi canlı yayında", "KARAKAVAK TV sandıkları mahalle mahalle açıyor."],
+  ["Ankara'dan davet", "Ankara tavan yapınca sizi yukarı çağırır; hayır diyebilirsiniz."],
+  ["Aday kaydı", "Vesikalığınızı seçin, adınızı yazın, mazbatayı alın."],
 ];
-let md = null, mnBusy = false, panelFrom = null; // md: meydan sahnesinin denetimi (meydan.js yoksa sahne gradyan kalır)
+let mnBusy = false, panelFrom = null;
+// Meydan sahnesi: tek resim (tools/meydan.js'in karesi ChatGPT ile oyuncak diyoramaya çevrildi). Canlı SVG tarayıcıyı yoruyordu.
+// Palet yerel saate göre: 21-5 gece, 6-16 gündüz, 17-20 akşamüstü. Tek dosyalık kopyada resimler gömülü.
+const MEYDAN = null;
+// Işıkların, buharın ve yıldızların resimdeki yeri (1536×1024 piksel); üç resimde bina biraz farklı duruyor.
+// mk: makam penceresi (giriş geçişi buraya yaklaşır) · l1-l3: sokak lambaları · stm: semaver
+const MD_NOKTA = {
+  aksam: { mk: [765, 328], l1: [347, 290], l2: [1180, 297], l3: [1488, 600], stm: [1043, 480] },
+  gece: { mk: [752, 330], l1: [352, 295], l2: [1144, 297], l3: [1480, 565], stm: [1043, 492], yildiz: [[460, 72], [935, 83], [1162, 131], [1437, 91], [668, 160], [1300, 40]] },
+  gun: { mk: [771, 294], l1: [357, 252], l2: [1165, 268], l3: [1470, 565], stm: [1050, 468] },
+};
+const mdYuzde = ([x, y]) => [`${(x / 15.36).toFixed(2)}%`, `${(y / 10.24).toFixed(2)}%`];
+// ?saat=23 gibi bir adres paleti önizletir
+const mdPal = (h = +(new URLSearchParams(location.search).get("saat") ?? new Date().getHours())) => (h >= 21 || h < 6 ? "gece" : h < 17 ? "gun" : "aksam");
 function sceneOn(on) {
-  if (typeof meydan !== "function") return;
-  if (on && !md) { $("#mn-scene").innerHTML = meydanSVG(); md = meydan($("#mn-scene")); return; }
-  if (md) { if (on) md.resume(); else md.pause(); }
+  if (!on) return;
+  const sc = $("#mn-scene"), p = mdPal();
+  sc.classList.remove("in");
+  if (sc.dataset.pal === p) return;
+  sc.dataset.pal = p; $("#mn-img").src = MEYDAN?.[p] || `meydan/meydan-${p}.webp`;
+  const N = MD_NOKTA[p], pic = $("#mn-pic");
+  for (const el of pic.querySelectorAll("[data-k]")) { const [x, y] = mdYuzde(N[el.dataset.k]); el.style.setProperty("--x", x); el.style.setProperty("--y", y); }
+  const [wx, wy] = mdYuzde(N.mk); pic.style.setProperty("--wx", wx); pic.style.setProperty("--wy", wy);
+  $("#mf-stars").innerHTML = (N.yildiz || []).map(([x, y], i) => `<i style="--x:${(x / 15.36).toFixed(2)}%;--y:${(y / 10.24).toFixed(2)}%;--d:${(-i * .7).toFixed(1)}s"></i>`).join("");
 }
+async function sceneEnter() { $("#mn-scene").classList.add("in"); await wait(reduced ? 200 : 900); }
 const mnItems = () => [...document.querySelectorAll("#mn-list .mn-item")].filter(b => !b.hidden);
 function mnOn(b, sound = true) {
   if (!b || b.classList.contains("on")) return;
@@ -5272,7 +5586,7 @@ function showTitle() {
 async function menuEnter(go) {
   if (mnBusy) return;
   mnBusy = true;
-  try { if (md && screen === "title") await md.enter(); } catch { /* sahne yoksa doğrudan */ }
+  if (screen === "title") await sceneEnter();
   mnBusy = false; go();
 }
 function enterGame() {
@@ -5308,12 +5622,19 @@ function wire() {
     b.addEventListener("pointerenter", e => { if (e.pointerType === "mouse" && !mnBusy) { b.focus({ preventScroll: true }); mnOn(b); } });
     b.addEventListener("focus", () => mnOn(b));
   }
-  // sekme arkadayken meydan sahnesi durur
-  document.addEventListener("visibilitychange", () => sceneOn(screen === "title" && !document.hidden));
+  // fareyle hafif parallaks: yalnız resmin kutusu kayar (tek katman, yeniden boyama yok)
+  const fine = matchMedia("(pointer: fine)");
+  let pxT = 0;
+  addEventListener("pointermove", e => {
+    if (screen !== "title" || reduced || !fine.matches || pxT) return;
+    pxT = requestAnimationFrame(() => { pxT = 0; const sc = $("#mn-scene"); sc.style.setProperty("--px", (e.clientX / innerWidth - .5).toFixed(3)); sc.style.setProperty("--py", (e.clientY / innerHeight - .5).toFixed(3)); });
+  });
   // ilk dokunuşta ses açılsın ki menü tıkları duyulsun
   for (const ev of ["pointerdown", "keydown"]) addEventListener(ev, () => snd.unlock(), { once: true, capture: true });
   $("#btn-go").addEventListener("click", startNew);
   $("#btn-zar").addEventListener("click", () => { const cur = playerAvatar(), rest = MAYORS.filter(id => id !== cur); const id = pickOne(rest); pickAvatar(id); $(`#picks [data-id="${id}"]`).focus({ preventScroll: true }); });
+  $("#btn-ad-zar").addEventListener("click", () => { adZar(); pickAvatar(playerAvatar(), false); snd.tick(); });
+  $("#btn-ad-zar").addEventListener("animationend", e => e.currentTarget.classList.remove("roll"));
   $("#in-name").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); startNew(); } });
   $("#ay-ses").addEventListener("change", e => { if (e.target.checked !== snd.on) snd.toggle(); paintMute(); });
   $("#ay-vol").addEventListener("input", e => { snd.volume(+e.target.value); $("#ay-vol-o").textContent = snd.vol; });
@@ -5339,7 +5660,7 @@ function wire() {
   $("#btn-log-x").addEventListener("click", () => openLog(false));
   $("#log-scrim").addEventListener("click", () => openLog(false));
   wideLog.addEventListener("change", () => { openLog(false); logUnread = 0; if (S) renderLog(false); });
-  $("#in-name").addEventListener("input", e => { LS.set("name", e.target.value.slice(0, 24)); pickAvatar(playerAvatar(), false); });
+  $("#in-name").addEventListener("input", e => { LS.set("name", e.target.value.slice(0, 24)); LS.del("nameZar"); pickAvatar(playerAvatar(), false); });
   $("#btn-pick-back").addEventListener("click", showTitle);
   const mute = $("#btn-mute"), mute2 = $("#btn-mute2");
   function paintMute() {
