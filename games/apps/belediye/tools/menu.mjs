@@ -230,7 +230,8 @@ try {
     "telefonda Mazbatayı al görünmüyor",
   );
   // ad zarı: vesikalığın cinsine uygun ad, art arda tekrar yok, klavyeyle de atılır.
-  // Zarın adı karşı cinsten vesikalığa geçince yenilenir; oyuncunun yazdığı ad kalır. Zar kutunun sağında, yazının üstüne binmez.
+  // Ad kendiliğinden değişmez: vesikalık değişince zarın adı da yazılan ad da kalır; zara basınca yeni vesikalığın cinsine
+  // uygun ad gelir. Zar kutunun sağında, yazının üstüne binmez.
   const nm = () => ev(`document.querySelector("#in-name").value`);
   const lsName = () => ev(`JSON.parse(localStorage.getItem("cb.name") || '""')`);
   const cinsNow = async () => E.BASKANLAR[await ev(`JSON.parse(localStorage.getItem("cb.avatar"))`)].cins;
@@ -297,10 +298,15 @@ try {
     check(g.inside && g.clear, `${w}: zar ad kutusunun sağında değil ya da yazıya biniyor ${JSON.stringify(g)}`);
     await pick(portrait[other[c]]);
     await sleep(150);
+    check(
+      (await nm()) === before && (await lsName()) === before,
+      `${w}: vesikalık değişince zarın adı kendiliğinden değişti (${before} → ${await nm()})`,
+    );
+    await zar();
     const after = await nm();
     check(
       after !== before && ADLAR[other[c]].includes(first(after)) && (await lsName()) === after,
-      `${w}: karşı cins vesikalığa geçince zarın adı yenilenmedi (${before} → ${after})`,
+      `${w}: zar yeni vesikalığın cinsine uygun ad vermedi (${before} → ${after})`,
     );
     // oyuncunun yazdığı ad vesikalık değişince de kalır
     await typeName("Ahmet Deneme");

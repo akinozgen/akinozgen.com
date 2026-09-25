@@ -254,3 +254,4 @@ Başkanın isteği: "Birkaç yeni başkan daha üretelim, kadın erkek sayısın
   - Kulağa tutulan kavun, saplı küçük şekil yüzünden her tohumda armuda döndü. Göğüste büyük, fileli bir kavun olunca düzeldi.
   - Mikrofon ve rulo proje için birkaç tohum denendi.
 - **Arayüz:** aday kaydı ızgarası geniş ekranda 4 yerine 6 sütun oldu; 24 vesikalık 6×4 halinde ekrana sığıyor.
+- Başkanın şikâyeti: "aday kaydında isim kafasına göre değişiyor." Sebep yukarıdaki kendiliğinden atıştı: zarın verdiği ad karşı cinsten vesikalığa geçince yeniden atılıyordu. Vesikalıklara tıklayıp gezerken ad her seferinde değişiyordu; ekran açılıp ad havuzu inince de bir kez atılabiliyordu. Artık ad kendiliğinden hiç değişmiyor. Zarın verdiği ad da yazılan ad gibi oyuncunun; zar yalnız basınca, o anki vesikalığın cinsine uygun atılıyor. `nameZar` kalktı. Ad kutusu boşsa görünen silik ad seçili vesikalığın kendi adı; o vesikalıkla değişir.

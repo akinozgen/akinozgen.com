@@ -1705,7 +1705,7 @@ function openPick() {
     box.appendChild(b);
   });
   $<HTMLInputElement>("#in-name").value = customName();
-  adYukle().then(() => pickAvatar(playerAvatar(), false)); // zarla gelmiş ad yeni cinse uymuyorsa havuz inince düzelir
+  adYukle(); // ad havuzu arkadan insin: zar ilk basışta beklemesin
   pickAvatar(cur, false);
   show("pick");
   $("#scr-pick").scrollTop = 0;
@@ -1718,10 +1718,8 @@ function pickAvatar(id: string, sound = true) {
     b.setAttribute("aria-checked", String(on));
     b.tabIndex = on ? 0 : -1;
   }
-  const B = BASKANLAR[id],
-    z = LS.get<string>("nameZar", "");
-  // zarın verdiği ad yeni vesikalığa uymuyorsa (kadına erkek adı ya da tersi) zar yeniden atılır; oyuncunun yazdığı ada dokunulmaz
-  if (AD && z && z === customName() && !AD.ADLAR[B.cins].includes(z.split(" ")[0])) adZar();
+  // ad kendiliğinden değişmez: zarın verdiği ad da yazılan ad gibi oyuncunundur, zar yalnız basınca atılır
+  const B = BASKANLAR[id];
   const own = customName(),
     note = $("#pick-note"),
     sv = savedGame();
@@ -1737,7 +1735,7 @@ function pickAvatar(id: string, sound = true) {
       : "Ad kutusu boş kalırsa vesikalığın adıyla aday olursunuz.";
   if (sound) snd.tick();
 }
-// Ad zarı: vesikalığın cinsine uygun ad soyad (adlar.ts). Yazılan ad gibi saklanır; "nameZar" adın zardan geldiğini hatırlar.
+// Ad zarı: seçili vesikalığın cinsine uygun ad soyad (adlar.ts). Yazılan ad gibi saklanır, vesikalık değişince de kalır.
 let zarSon: string[] = []; // son atılan adlar: art arda aynısı, yakın atışlarda aynı ad ya da soyad gelmesin
 let AD: typeof import("./adlar.ts") | null = null; // ad havuzu ayrı parçada (adlar.ts), aday kaydı açılınca yüklenir
 const adYukle = () => import("./adlar.ts").then(m => (AD = m));
@@ -1753,7 +1751,6 @@ function adZar() {
   zarSon = [...zarSon, ad].slice(-8);
   inp.value = ad;
   LS.set("name", ad);
-  LS.set("nameZar", ad);
   nameFit();
   b.classList.remove("roll");
   void b.offsetWidth;
@@ -2103,7 +2100,6 @@ function wire() {
   });
   $("#in-name").addEventListener("input", e => {
     LS.set("name", (e.target as HTMLInputElement).value.slice(0, 24));
-    LS.del("nameZar");
     pickAvatar(playerAvatar(), false);
   });
   $("#btn-pick-back").addEventListener("click", showTitle);
