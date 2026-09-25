@@ -48,6 +48,7 @@ Sitenin tamamını yerelde denemek için ana projede `npm run build` çalıştı
 | `src/engine.js` | DOM'suz oyun motoru: ortak koşul dili (`condOK`), sayaçlar, koşullu ve aralıklı zincirler, etiket etkileşimleri, vaat defteri. Denge ayarları `TUNE` nesnesinde |
 | `src/ui.js` | Sürükleme, mühür, göstergeler, WebAudio sesleri, Fikret'in tavsiyeleri, gazete, koridor duvarı, seçim gecesi akışı, ana menü, aday kaydı, ayarlar |
 | `src/broadcast.js` | KARAKAVAK TV'nin yazıları: duruma göre KJ (alt bant), kayan yazı (ilçe, ülke, dünya), kur kutusu, "Neden?" satırları. DOM'suz, `test/broadcast.test.mjs` sınar |
+| `src/secim.js`, `src/secim.css` | Seçim gecesi parçası: `broadcast.js` ve `anchor.js`'i TV ekranının stiliyle birlikte dışa verir. Derlemede ayrı dosyadır; seçim yaklaşınca (son 10 ay, erken seçim evrakı) arkadan, en geç yayın açılırken iner |
 | `src/anchor.js` | Seçim gecesi stüdyosu: bıyıklı spiker, masa, video duvarı, Tekir. Tek SVG; `studio()` konuşma, ruh hâli ve tepkileri denetler |
 | `index.html`, `src/main.js` | Sayfa ve giriş: `main.js` yazı karakterlerini, stili ve `ui.js`'i yükler |
 | `src/style.css`, `src/fonts.css`, `src/fonts/` | Makam masası; yerel fontlar (SIL OFL), derlemede özetli adlarla |
@@ -55,7 +56,7 @@ Sitenin tamamını yerelde denemek için ana projede `npm run build` çalıştı
 | `public/portraits/` | Vesikalıklar: her kişi için `<anahtar>.webp` (anahtar `cards.js`'teki `PEOPLE`), başkanlık vesikalıkları için `baskan-*.webp` (anahtar `BASKANLAR`) |
 | `public/meydan/` | Ana menünün arka planı, üç saat için (`meydan-aksam/gece/gun.webp`, 1536×1024). `tools/meydan.js`'in vektör karesi ChatGPT ile parlak plastik oyuncak diyoramaya çevrildi. Lamba, pencere, buhar ve yıldız ışıklarının yeri `ui.js`'teki `MD_NOKTA`'da |
 | `tools/portrait.js` | Vesikalıkların ilk tarifleri ve SVG çizeri; oyuna girmez. Şimdiki resimler bunlardan SDXL img2img ile üretildi (bkz. NOTES) |
-| `vite.config.js` | Derleme: göreli yollar, menüdeki sürüm (`__SURUM__`), derlemenin bütün dosyalarını önbelleğe alan service worker eklentisi |
+| `vite.config.js` | Derleme: açılışta üç JS parçası (oyun, `kutuphane` = interact.js, `icerik` = cards.js) ve bir CSS; seçim gecesi ve ad havuzu (`adlar.js`, aday kaydı açılınca) ayrı parça. Göreli yollar, menüdeki sürüm (`__SURUM__`), derlemenin bütün dosyalarını önbelleğe alan service worker eklentisi |
 | `tools/` | Sunucu, simülasyon, içerik denetimi (`lint.mjs`) ve tarayıcı testleri; ortak yardımcılar `tools/lib/sayfa.mjs`'te |
 | `NOTES.md` | Geliştirme günlüğü: kararlar, denge ölçümleri, geri bildirimler |
 

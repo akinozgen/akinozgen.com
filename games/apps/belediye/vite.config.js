@@ -57,7 +57,14 @@ export default defineConfig({
   base: "./",
   define: { __SURUM__: JSON.stringify(SURUM) },
   plugins: [serviceWorker()],
-  build: { target: "es2022" },
+  build: {
+    target: "es2022",
+    // açılışta üç parça: kütüphane (interact.js, nadiren değişir), içerik (kart metinleri) ve oyun kodu. Biri değişince
+    // öbürleri tarayıcı önbelleğinde kalır. Seçim gecesi (secim.js) ve ad havuzu (adlar.js) ayrıca, gerektiği anda iner.
+    rollupOptions: {
+      output: { manualChunks: id => (id.includes("node_modules") ? "kutuphane" : /[\\/]src[\\/]cards\.js$/.test(id) ? "icerik" : undefined) },
+    },
+  },
   server: { host: true, port: 8765 },
   preview: { host: true, port: 8765 },
   test: { include: ["test/**/*.test.mjs"] }, // .cache/ altındaki tarayıcı profilleri taranmasın

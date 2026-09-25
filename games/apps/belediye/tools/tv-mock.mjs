@@ -138,6 +138,7 @@ ${base}
 </style>
 <style>
 ${read("src/style.css")}
+${read("src/secim.css")}
 </style>
 </head>
 <body>

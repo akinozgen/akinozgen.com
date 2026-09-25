@@ -1,10 +1,7 @@
 // ─── Arayüz ───────────────────────────────────────────────────────────────
 import interact from "interactjs";
 import { ADAYLAR, BASKANLAR, ENDINGS, KULIS, PEOPLE, QUOTES, REACT } from "./cards.js";
-import { ADLAR, rastgeleAd } from "./adlar.js";
 import { MAX_TERMS, METERS, METER_AD, REL_AD, TERM, Z, calOf, choose, dateLabel, draw, durLabel, edgeRisk, newGame, pollOf, vaatCost } from "./engine.js";
-import { studio, studioSVG } from "./anchor.js";
-import { fx, kj, ticker, tvName, tvNumEk, tvShort, whyLines } from "./broadcast.js";
 
 const $ = s => document.querySelector(s);
 const wait = ms => new Promise(r => setTimeout(r, ms));
@@ -405,6 +402,7 @@ async function commit(side, dragged) {
 }
 function nextCard() {
   renderCard(draw(S));
+  if (S.cur.kind === "secim" || S.month % TERM >= TERM - 10) tvYukle();
   updateHud(); snd.paper();
   LS.set("save", S);
 }
@@ -602,7 +600,11 @@ function ballotBoxes(res, rng) {
   return boxes;
 }
 let tvStop = null; // açık yayının zamanlayıcılarını ve spikeri durdurur
-function electionNight(res) {
+// Seçim gecesi ayrı parçada (secim.js): seçim yaklaşınca önceden, en geç yayın açılırken yüklenir
+let tvP = null;
+const tvYukle = () => (tvP ||= import("./secim.js"));
+async function electionNight(res) {
+  const tv = await tvYukle(), { fx, kj, ticker, tvName, tvNumEk, tvShort, studio, studioSVG } = tv;
   tvStop?.();
   return new Promise(done => {
     const r = rngOf(res.month * 131 + res.term * 7 + 3), boxes = ballotBoxes(res, r), N = boxes.length;
@@ -766,7 +768,7 @@ function electionNight(res) {
         : `${candName(w.id)} ${pctTR(w.pct)} ile Karakavak'ın yeni belediye başkanı. Siz ${pctTR(res.you)} aldınız.`;
       say(line);
       if (res.win) snd.win(); else snd.paper();
-      renderElectionAfter(res);
+      renderElectionAfter(res, tv);
       $("#btn-ec-skip").hidden = true; const go = $("#btn-ec-go"); go.hidden = false; go.focus({ preventScroll: true });
       LS.set("ecSeen", true);
       journalNote(`<b>Seçim</b>${esc(line)}`, res.win ? "ev" : "warn");
@@ -800,7 +802,7 @@ function electionNight(res) {
 }
 
 // Sonuçtan sonra: seçmen grubu dökümü (kazanandan başlayarak) ve "Neden?" satırları
-function renderElectionAfter(res) {
+function renderElectionAfter(res, { tvName, tvNumEk, whyLines }) {
   const name = playerName(), yi = res.cands.findIndex(c => c.id === "you"), sayi = v => String(v).replace(".", ",");
   $("#tv-blocs").innerHTML = res.blocs.map(b => {
     const w = Math.round(b.w * 100);
@@ -873,6 +875,7 @@ function openPick() {
     box.appendChild(b);
   });
   $("#in-name").value = customName();
+  adYukle().then(() => pickAvatar(playerAvatar(), false)); // zarla gelmiş ad yeni cinse uymuyorsa havuz inince düzelir
   pickAvatar(cur, false);
   show("pick"); $("#scr-pick").scrollTop = 0;
   box.querySelector('[aria-checked="true"]')?.focus({ preventScroll: true });
@@ -882,7 +885,7 @@ function pickAvatar(id, sound = true) {
   for (const b of $("#picks").children) { const on = b.dataset.id === id; b.setAttribute("aria-checked", String(on)); b.tabIndex = on ? 0 : -1; }
   const B = BASKANLAR[id], z = LS.get("nameZar", "");
   // zarın verdiği ad yeni vesikalığa uymuyorsa (kadına erkek adı ya da tersi) zar yeniden atılır; oyuncunun yazdığı ada dokunulmaz
-  if (z && z === customName() && !ADLAR[B.cins].includes(z.split(" ")[0])) adZar();
+  if (AD && z && z === customName() && !AD.ADLAR[B.cins].includes(z.split(" ")[0])) adZar();
   const own = customName(), note = $("#pick-note"), sv = savedGame();
   paintAvatar(); nameFit();
   $("#ak-lakap").textContent = `“${B.lakap}”`; $("#ak-bio").textContent = B.bio;
@@ -893,9 +896,12 @@ function pickAvatar(id, sound = true) {
 }
 // Ad zarı: vesikalığın cinsine uygun ad soyad (adlar.js). Yazılan ad gibi saklanır; "nameZar" adın zardan geldiğini hatırlar.
 let zarSon = []; // son atılan adlar: art arda aynısı, yakın atışlarda aynı ad ya da soyad gelmesin
+let AD = null; // ad havuzu ayrı parçada (adlar.js), aday kaydı açılınca yüklenir
+const adYukle = () => import("./adlar.js").then(m => (AD = m));
 function adZar() {
+  if (!AD) { adYukle().then(adZar); return; }
   // kutudaki ad da son atış sayılır: sayfa yenilense de zar aynı adı geri vermez
-  const ad = rastgeleAd(BASKANLAR[playerAvatar()].cins, Math.random, [...zarSon, $("#in-name").value.trim()].filter(Boolean)), b = $("#btn-ad-zar");
+  const ad = AD.rastgeleAd(BASKANLAR[playerAvatar()].cins, Math.random, [...zarSon, $("#in-name").value.trim()].filter(Boolean)), b = $("#btn-ad-zar");
   zarSon = [...zarSon, ad].slice(-8);
   $("#in-name").value = ad; LS.set("name", ad); LS.set("nameZar", ad); nameFit();
   b.classList.remove("roll"); void b.offsetWidth; b.classList.add("roll");
