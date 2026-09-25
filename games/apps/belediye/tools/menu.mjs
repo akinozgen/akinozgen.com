@@ -324,6 +324,16 @@ try {
     check(L.fits && L.inside && L.clear && L.font >= 11, `${w}: 24 harflik ad kutuya sığmadı ${JSON.stringify(L)}`);
     await shot(`aday-${w}-uzun`);
     await zar();
+    // rastgele aday: başka bir hazır aday gelir, ad da onun adı olur (kutu boşalır, silik yazı adayın adı)
+    const av0 = await ev(`JSON.parse(localStorage.getItem("cb.avatar"))`);
+    await ev(`document.querySelector("#btn-zar").click()`);
+    await sleep(150);
+    const av1 = await ev(`JSON.parse(localStorage.getItem("cb.avatar"))`);
+    const ph = await ev(`document.querySelector("#in-name").placeholder`);
+    check(
+      av1 !== av0 && (await nm()) === "" && (await lsName()) === "" && ph === E.BASKANLAR[av1].ad,
+      `${w}: rastgele aday adı da değiştirmedi (${av0} → ${av1}, kutu "${await nm()}", silik "${ph}")`,
+    );
   }
   console.log("menü: gezinme, paneller, ayarlar, aday kaydı, ad zarı ve oyuna giriş denendi");
 } catch (e) {

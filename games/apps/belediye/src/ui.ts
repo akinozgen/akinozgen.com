@@ -2029,10 +2029,13 @@ function wire() {
   // ilk dokunuşta ses açılsın ki menü tıkları duyulsun
   for (const ev of ["pointerdown", "keydown"]) addEventListener(ev, () => snd.unlock(), { once: true, capture: true });
   $("#btn-go").addEventListener("click", startNew);
+  // Rastgele aday: başka bir hazır aday, adıyla birlikte (broşürdeki lakap ve biyografi o ada ait); ad zarı ayrı düğme
   $("#btn-zar").addEventListener("click", () => {
     const cur = playerAvatar(),
       rest = MAYORS.filter(id => id !== cur);
     const id = pickOne(rest);
+    LS.set("name", "");
+    $<HTMLInputElement>("#in-name").value = "";
     pickAvatar(id);
     $(`#picks [data-id="${id}"]`).focus({ preventScroll: true });
   });
