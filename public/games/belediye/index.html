@@ -227,20 +227,173 @@ button { font: inherit; color: inherit; }
 }
 .screen { position: absolute; inset: 0; display: flex; flex-direction: column; padding-inline: var(--gutter); }
 
-/* ───────── Başlık ekranı ───────── */
-#scr-title { overflow-y: auto; align-items: center; justify-content: center; }
-.poster {
-  position: relative; width: 100%; max-width: 58.75rem; padding: 2.125rem 1.375rem;
-  display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; gap: .875rem;
+/* ───────── Ana menü ─────────
+   Arka planda canlı Karakavak meydanı (meydan.js), üstünde okunurluk için karartma.
+   Telefonda logo üstte, menü altta. Geniş ekranda logo ve menü solda, ilan panosu sağ üstte,
+   seçili maddenin bilgi kartı sağ altta. Menü klavyeyle (↑ ↓ Enter), fareyle ve dokunarak kullanılır. */
+#scr-title { padding: 0; overflow: hidden; }
+.mn-scene {
+  position: absolute; inset: 0; overflow: hidden;
+  background: /* sahne yüklenene kadar akşamüstü göğü */
+    radial-gradient(60% 50% at 62% 58%, rgba(255, 196, 120, .35), transparent 70%),
+    linear-gradient(180deg, #243b6b 0%, #6b4f86 38%, #e59a6c 64%, #3a2a2a 66%, #1b1a17 100%);
 }
-.stitch { position: absolute; inset: .625rem 0; border: 1.5px dashed rgba(236, 213, 146, .22); border-radius: .875rem; pointer-events: none; }
-.glass { width: min(52vw, 13.125rem); height: auto; overflow: visible; }
-.eyebrow { font: 600 .875rem/1 var(--f-ui); letter-spacing: .3em; color: var(--brass-hi); text-transform: uppercase; }
-.poster h1 { margin: 0; font: 400 clamp(2.875rem, 11vw, 6rem)/.9 var(--f-display); color: var(--paper); text-wrap: balance; letter-spacing: -.01em; }
-.poster h1 span { display: block; color: var(--brass); font-size: .62em; letter-spacing: .01em; margin-top: .12em; }
-.lede { margin: 0; max-width: 44ch; font: 400 1.0938rem/1.55 var(--f-type); color: rgba(243, 242, 236, .84); text-wrap: pretty; }
-.lede b { color: var(--paper); font-weight: 700; }
-.actions { display: flex; flex-wrap: wrap; gap: .625rem; justify-content: center; }
+.mn-scene > svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.mn-shade {
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(4, 9, 7, .62) 0%, rgba(4, 9, 7, .12) 24%, rgba(4, 9, 7, 0) 36%, rgba(4, 9, 7, .78) 58%, rgba(4, 9, 7, .94) 100%);
+}
+.mn {
+  position: relative; height: 100%; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto auto;
+  padding: max(1.25rem, env(safe-area-inset-top)) var(--gutter) max(.75rem, env(safe-area-inset-bottom));
+}
+.mn-logo { display: flex; flex-direction: column; align-items: center; text-align: center; gap: .375rem; animation: mnLogo .7s cubic-bezier(.2, .9, .3, 1) both; }
+.mn-glass { width: 3.25rem; height: auto; overflow: visible; filter: drop-shadow(0 .25rem .5rem rgba(0, 0, 0, .5)); }
+.mn-word { display: flex; flex-direction: column; align-items: inherit; gap: .375rem; }
+.mn-eyebrow { font: 600 .8125rem/1 var(--f-ui); letter-spacing: .3em; color: var(--brass-hi); text-transform: uppercase; text-shadow: 0 1px .1875rem rgba(0, 0, 0, .8); }
+.mn-logo h1 {
+  margin: 0; font: 400 clamp(2.625rem, 12.5vw, 6.25rem)/.88 var(--f-display); color: var(--paper); letter-spacing: -.01em;
+  text-shadow: 0 .1875rem 0 #0b1712, 0 .5rem 1.5rem rgba(0, 0, 0, .55);
+}
+.mn-logo h1 span { display: block; margin-top: .1em; color: var(--brass); font-size: .6em; letter-spacing: .01em; }
+@keyframes mnLogo { from { opacity: 0; transform: translateY(-.75rem) scale(.98); } }
+
+.mn-list { grid-row: 3; justify-self: center; align-self: end; width: min(100%, 24rem); display: flex; flex-direction: column; gap: .125rem; padding-bottom: .5rem; }
+.mn-item {
+  position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: .1875rem; width: 100%;
+  padding: .625rem 1rem .5625rem 2.375rem; border: 0; border-radius: .25rem; background: transparent; color: var(--paper); text-align: left; cursor: pointer;
+  transition: background .2s, transform .2s cubic-bezier(.3, 1.4, .5, 1); animation: mnIn .45s cubic-bezier(.2, .9, .3, 1) both;
+}
+.mn-item:nth-child(2) { animation-delay: .06s; } .mn-item:nth-child(3) { animation-delay: .12s; } .mn-item:nth-child(4) { animation-delay: .18s; }
+.mn-item:nth-child(5) { animation-delay: .24s; } .mn-item:nth-child(6) { animation-delay: .3s; }
+@keyframes mnIn { from { opacity: 0; transform: translateX(-1.25rem); } }
+.mn-item b { font: 700 1.5rem/1 var(--f-ui); letter-spacing: .12em; text-transform: uppercase; text-shadow: 0 .125rem .375rem rgba(0, 0, 0, .75); transition: color .2s; }
+.mn-item small { font: 600 .8125rem/1.2 var(--f-ui); letter-spacing: .06em; color: rgba(243, 242, 236, .72); text-shadow: 0 1px .25rem rgba(0, 0, 0, .8); }
+.mn-item small:empty { display: none; }
+.mn-item::before { /* seçim işareti: pirinç düğme */
+  content: ""; position: absolute; left: .875rem; top: 1.125rem; width: .75rem; height: .75rem; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fff4cc, var(--brass-hi) 30%, var(--brass) 60%, var(--brass-lo));
+  box-shadow: 0 0 .625rem rgba(236, 213, 146, .7); transform: scale(0); transition: transform .22s cubic-bezier(.3, 1.8, .5, 1);
+}
+.mn-item.on { background: linear-gradient(90deg, rgba(201, 165, 76, .3), rgba(201, 165, 76, .08) 65%, rgba(201, 165, 76, 0)); transform: translateX(.3125rem); }
+.mn-item.on b { color: var(--brass-hi); }
+.mn-item.on::before { transform: scale(1); }
+.mn-item:focus-visible { outline: none; box-shadow: inset .1875rem 0 0 var(--brass-hi); }
+.mn-item:active { transform: translateX(.3125rem) scale(.99); }
+
+/* ilan panosu (yenilikler) ve bilgi kartı: yalnız geniş ekranda */
+.mn-board, .mn-info { display: none; }
+.mn-foot {
+  grid-row: 4; display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding-top: .375rem;
+  font: 500 .75rem/1.2 var(--f-ui); letter-spacing: .08em; color: rgba(243, 242, 236, .5);
+}
+.mn-foot .best { margin: 0; flex: 1; text-align: center; font: 600 .75rem/1.2 var(--f-ui); letter-spacing: .12em; text-transform: uppercase; color: rgba(236, 213, 146, .75); }
+.mn-mute { flex: none; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; padding: 0; border: 1px solid rgba(236, 213, 146, .3); border-radius: 50%; background: rgba(0, 0, 0, .3); color: var(--brass-hi); cursor: pointer; }
+.mn-mute svg { width: 1.125rem; height: 1.125rem; }
+.mn-mute[aria-pressed="true"] .wave { opacity: .15; }
+
+/* Ayarlar ve künye paneli */
+.mn-panel {
+  position: absolute; z-index: 5; left: 50%; top: 50%; width: min(calc(100% - 2 * var(--gutter)), 34rem); max-height: calc(100% - 2.5rem); overflow-y: auto;
+  padding: 1.375rem 1.5rem 1.25rem; transform: translate(-50%, -50%); border-radius: .5rem;
+  background: linear-gradient(180deg, rgba(20, 40, 32, .97), rgba(8, 18, 14, .98)); border: 1px solid rgba(236, 213, 146, .35);
+  box-shadow: 0 1.5rem 3.5rem rgba(0, 0, 0, .65), inset 0 1px 0 rgba(255, 255, 255, .06); animation: mnPanel .3s cubic-bezier(.2, .9, .3, 1) both;
+}
+@keyframes mnPanel { from { opacity: 0; transform: translate(-50%, calc(-50% + 1rem)); } }
+.mn.panel-open .mn-list, .mn.panel-open .mn-info, .mn.panel-open .mn-board { opacity: 0; pointer-events: none; transition: opacity .2s; }
+.mn-panel h2 { margin: 0 0 .75rem; font: 400 1.75rem/1 var(--f-display); color: var(--brass-hi); }
+.ay-rows { display: flex; flex-direction: column; }
+.ay-row {
+  position: relative; display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 3.25rem; padding: .5rem 0;
+  border-bottom: 1px solid rgba(236, 213, 146, .12); font: 600 1.0625rem/1.15 var(--f-ui); letter-spacing: .05em; cursor: pointer;
+}
+div.ay-row { cursor: default; }
+.ay-row small { display: block; margin-top: .1875rem; font: 500 .8125rem/1.25 var(--f-ui); letter-spacing: .02em; color: rgba(243, 242, 236, .55); }
+.ay-row input[type="checkbox"] { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+.ay-row i { flex: none; position: relative; width: 2.75rem; height: 1.5rem; border-radius: 1rem; background: rgba(255, 255, 255, .12); box-shadow: inset 0 0 0 1px rgba(236, 213, 146, .3); transition: background .2s; }
+.ay-row i::after { content: ""; position: absolute; top: .1875rem; left: .1875rem; width: 1.125rem; height: 1.125rem; border-radius: 50%; background: var(--paper); transition: transform .2s cubic-bezier(.3, 1.4, .5, 1), background .2s; }
+.ay-row input:checked + i { background: linear-gradient(180deg, var(--brass-hi), var(--brass)); }
+.ay-row input:checked + i::after { transform: translateX(1.25rem); background: #2a1d08; }
+.ay-row input:focus-visible + i { outline: 2px solid var(--brass-hi); outline-offset: 2px; }
+.ay-row input[type="range"] { flex: 1; max-width: 11rem; accent-color: var(--brass); }
+.ay-row output { flex: none; width: 2.5rem; text-align: right; font-variant-numeric: tabular-nums; color: var(--brass-hi); }
+.btn.sm { flex: none; padding: .5rem .875rem .4375rem; font-size: .875rem; }
+.ay-row.danger .btn { border-color: rgba(242, 165, 143, .55); color: var(--bad); }
+.ay-row.danger .btn.armed { background: var(--stamp-r); border-color: var(--stamp-r); color: #fff; }
+.kn { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .5rem 1rem; margin: 0; }
+.kn dt { font: 700 .8125rem/1.5 var(--f-ui); letter-spacing: .14em; text-transform: uppercase; color: var(--brass-hi); }
+.kn dd { margin: 0; font: 400 .9688rem/1.45 var(--f-type); color: rgba(243, 242, 236, .88); }
+.kn-note { margin: 1rem 0 0; font: 400 .875rem/1.5 var(--f-type); font-style: italic; color: rgba(243, 242, 236, .6); text-wrap: pretty; }
+.mn-back { margin-top: 1.125rem; }
+
+/* Geniş ekran: solda logo ve menü, sağda pano ve kart */
+@media (min-width: 860px) and (min-aspect-ratio: 5/4) {
+  .mn-shade {
+    background:
+      linear-gradient(90deg, rgba(4, 9, 7, .9) 0%, rgba(4, 9, 7, .72) 24%, rgba(4, 9, 7, .2) 42%, rgba(4, 9, 7, 0) 56%),
+      linear-gradient(0deg, rgba(4, 9, 7, .7) 0%, rgba(4, 9, 7, 0) 22%);
+  }
+  .mn { grid-template-columns: minmax(0, 34rem) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; column-gap: 2rem; padding: 3.25rem 2.5rem 1.25rem 4rem; }
+  .mn-logo { grid-area: 1 / 1; flex-direction: row; align-items: center; text-align: left; gap: 1.125rem; }
+  .mn-word { align-items: flex-start; }
+  .mn-glass { width: 4.5rem; }
+  .mn-logo h1 { font-size: 5.25rem; }
+  .mn-list { grid-area: 2 / 1; justify-self: start; align-self: center; width: 26rem; }
+  .mn-item b { font-size: 1.875rem; }
+  .mn-foot { grid-area: 3 / 1 / 4 / 3; }
+  .mn-foot .best { text-align: left; flex: none; }
+  .mn-foot #mn-ver { order: 2; margin-left: auto; }
+  .mn-mute { order: 3; }
+
+  .mn-board {
+    display: block; position: absolute; top: 2.5rem; right: 2.5rem; width: 20rem; padding: 1.125rem 1.25rem 1.125rem;
+    background: linear-gradient(180deg, #f6f4ea, #e9e5d6); color: var(--ink); border-radius: 1px; transform: rotate(1.4deg);
+    box-shadow: 0 .75rem 1.75rem rgba(0, 0, 0, .5), 0 1px 0 rgba(255, 255, 255, .6) inset; animation: mnBoard .6s .35s cubic-bezier(.2, .9, .3, 1) both;
+  }
+  .mn-board::before { /* raptiye */
+    content: ""; position: absolute; top: -.4375rem; left: 50%; width: 1rem; height: 1rem; margin-left: -.5rem; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ff9a86, var(--stamp-r) 55%, #6d1a0e); box-shadow: 0 .1875rem .25rem rgba(0, 0, 0, .45);
+  }
+  @keyframes mnBoard { from { opacity: 0; transform: rotate(4deg) translateY(-1rem); } }
+  .mn-board h3 { margin: 0 0 .125rem; font: 700 .8125rem/1 var(--f-ui); letter-spacing: .2em; text-transform: uppercase; color: var(--stamp-r); }
+  .mn-board .bd-sub { margin: 0 0 .625rem; padding-bottom: .5rem; border-bottom: 1px dashed rgba(35, 33, 42, .25); font: 400 .75rem/1.2 var(--f-type); color: var(--ink-soft); }
+  .mn-board ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: .5rem; }
+  .mn-board li { font: 400 .8438rem/1.4 var(--f-type); }
+  .mn-board li b { display: block; font: 700 .9375rem/1.2 var(--f-ui); letter-spacing: .06em; text-transform: uppercase; }
+
+  .mn-info {
+    display: block; position: absolute; right: 2.5rem; bottom: 4.25rem; width: 23rem; padding: 1rem 1.125rem 1.125rem;
+    background: rgba(6, 14, 11, .84); border: 1px solid rgba(236, 213, 146, .28); border-radius: .375rem;
+    box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, .5); -webkit-backdrop-filter: blur(.375rem); backdrop-filter: blur(.375rem);
+  }
+  .mn-info:empty { display: none; }
+  .mn-info h3 { margin: 0 0 .5rem; font: 700 .875rem/1 var(--f-ui); letter-spacing: .18em; text-transform: uppercase; color: var(--brass-hi); }
+  .mn-info p { margin: 0; font: 400 .9375rem/1.5 var(--f-type); color: rgba(243, 242, 236, .86); text-wrap: pretty; }
+  .mn-info p + p { margin-top: .5rem; }
+  .mn-info .warn { color: var(--bad); }
+}
+/* bilgi kartının içerikleri: kayıt özeti ve duvar listesi */
+.mi-save { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr); gap: .25rem .875rem; align-items: center; }
+.mi-save img { grid-row: 1 / 3; width: 4.5rem; aspect-ratio: 1; object-fit: cover; padding: .1875rem .1875rem .375rem; background: #fff; transform: rotate(-3deg); box-shadow: 0 .25rem .5rem rgba(0, 0, 0, .4); }
+.mi-save b { font: 400 1.25rem/1.1 var(--f-display); color: var(--paper); }
+.mi-save span { font: 600 .8125rem/1.3 var(--f-ui); letter-spacing: .06em; color: rgba(243, 242, 236, .7); }
+.mi-meters { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .375rem; margin-top: .625rem; }
+.mi-meters div { display: flex; flex-direction: column; gap: .25rem; font: 700 .6875rem/1 var(--f-ui); letter-spacing: .1em; text-transform: uppercase; color: rgba(243, 242, 236, .6); }
+.mi-meters b { font: 700 1.125rem/1 var(--f-ui); letter-spacing: 0; color: var(--paper); }
+.mi-meters i { display: block; height: .25rem; border-radius: 1px; background: rgba(255, 255, 255, .12); overflow: hidden; }
+.mi-meters i::before { content: ""; display: block; width: var(--v); height: 100%; background: var(--c, var(--brass)); }
+.mi-meters .risk b { color: var(--bad); }
+.mi-wall { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: .5rem; }
+.mi-wall li { display: grid; grid-template-columns: 2.5rem minmax(0, 1fr); gap: .625rem; align-items: center; }
+.mi-wall img { width: 2.5rem; aspect-ratio: 1; object-fit: cover; padding: .125rem .125rem .25rem; background: #fff; }
+.mi-wall b { display: block; font: 700 .9375rem/1.2 var(--f-ui); letter-spacing: .04em; color: var(--paper); }
+.mi-wall span { font: 500 .8125rem/1.2 var(--f-ui); color: rgba(243, 242, 236, .65); }
+@media (prefers-reduced-motion: reduce) {
+  .mn-logo, .mn-item, .mn-board, .mn-panel { animation: none; }
+  .mn-item, .mn-item::before { transition: none; }
+}
+
+/* Düğmeler (bütün ekranlar) */
 .btn {
   font: 700 1.0313rem/1 var(--f-ui); letter-spacing: .14em; text-transform: uppercase; cursor: pointer;
   padding: .875rem 1.25rem .8125rem; border-radius: .25rem; border: 1px solid rgba(236, 213, 146, .55); background: rgba(0, 0, 0, .18); color: var(--brass-hi);
@@ -253,35 +406,6 @@ button { font: inherit; color: inherit; }
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .55), 0 .1875rem .625rem rgba(0, 0, 0, .35); text-shadow: 0 1px 0 rgba(255, 255, 255, .35);
 }
 .btn.primary:hover { background: linear-gradient(180deg, #f5e3a8, #d4b25a 48%, #b18e36); }
-.namefield { display: flex; align-items: center; gap: .625rem; flex-wrap: wrap; justify-content: center; }
-.namefield span { font: 700 .8125rem/1 var(--f-ui); letter-spacing: .16em; text-transform: uppercase; color: var(--brass-hi); }
-.namefield input {
-  width: min(100%, 15.625rem); padding: .5625rem .75rem .5rem; border-radius: .25rem; border: 1px solid rgba(236, 213, 146, .4);
-  background: rgba(0, 0, 0, .25); color: var(--paper); font: 400 1.0313rem/1 var(--f-type);
-}
-.namefield input::placeholder { color: rgba(243, 242, 236, .4); }
-.namefield input:focus { outline: 2px solid var(--brass-hi); outline-offset: 2px; }
-@media (min-width: 820px) { .namefield { justify-content: flex-start; } }
-.whoami { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; justify-content: center; }
-@media (min-width: 820px) { .whoami { justify-content: flex-start; } }
-.avatar {
-  flex: none; position: relative; width: 3.75rem; padding: .1875rem .1875rem .4375rem; border: 0; border-radius: 1px; background: #fff; cursor: pointer;
-  box-shadow: 0 1px .3125rem rgba(0, 0, 0, .45); transform: rotate(-3deg); transition: transform .15s;
-}
-.avatar:hover { transform: rotate(0) scale(1.05); }
-.avatar img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; }
-.avatar span {
-  position: absolute; left: 50%; bottom: -.5625rem; transform: translateX(-50%) rotate(3deg); white-space: nowrap; border-radius: .125rem;
-  padding: .1875rem .3125rem .125rem; background: var(--brass); color: #2a1d08; font: 700 .6875rem/1 var(--f-ui); letter-spacing: .14em; text-transform: uppercase;
-}
-.best { margin: 0; font: 600 .875rem var(--f-ui); letter-spacing: .12em; text-transform: uppercase; color: rgba(236, 213, 146, .75); min-height: 1em; }
-.keys { margin: 0; font: 500 .875rem var(--f-ui); letter-spacing: .08em; color: rgba(243, 242, 236, .5); }
-.keys kbd { font: 700 .8125rem var(--f-ui); border: 1px solid rgba(243, 242, 236, .3); border-radius: .1875rem; padding: 1px .375rem; }
-@media (min-width: 820px) {
-  .poster { grid-template-columns: 15.625rem 1fr; justify-items: start; text-align: left; column-gap: 3.5rem; align-items: center; }
-  .poster .glass { grid-row: 1 / span 6; width: 15.625rem; }
-  .actions { justify-content: flex-start; }
-}
 .steam path { stroke: rgba(243, 242, 236, .5); stroke-width: 3; fill: none; stroke-linecap: round; animation: steam 4.5s ease-in-out infinite; }
 .steam path:nth-child(2) { animation-delay: -1.5s; }
 .steam path:nth-child(3) { animation-delay: -3s; }
@@ -1052,31 +1176,73 @@ button { font: inherit; color: inherit; }
   .tv-prog i, .tv-body::after, .tv-cand { transition: none; }
 }
 
-/* ───────── Vesikalık seçimi ───────── */
-#scr-pick { overflow-y: auto; align-items: center; padding-block: 1.375rem 1.75rem; }
-.pick-in { width: 100%; max-width: 56.25rem; display: flex; flex-direction: column; align-items: center; gap: 1.25rem; }
-/* her aday bir seçim broşürü: solda vesikalık, sağda ad, lakap, kısa hayat hikâyesi */
-.picks { width: 100%; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr)); gap: .875rem; }
-.pick {
-  position: relative; display: flex; align-items: flex-start; gap: .75rem; padding: .625rem .75rem .6875rem .625rem; cursor: pointer; text-align: left;
-  border: 0; border-radius: .1875rem; background: var(--paper); color: var(--ink); box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .4);
-  transition: transform .15s, box-shadow .15s;
+/* ───────── Aday kaydı (yeni dönem) ─────────
+   Solda kâğıt başvuru formu: büyük vesikalık, ad, lakap, kısa hayat hikâyesi. Sağda vesikalık ızgarası.
+   Telefonda alt alta; düğmeler altta yapışık. */
+#scr-pick { overflow-y: auto; align-items: center; padding-block: 1.25rem 0; }
+.ak { flex: 1 0 auto; width: 100%; max-width: 70rem; display: flex; flex-direction: column; gap: 1rem; }
+.ak-head { display: flex; flex-direction: column; align-items: center; gap: .375rem; text-align: center; }
+.ak-head h2 { margin: 0; font: 400 clamp(1.875rem, 8vw, 3rem)/1 var(--f-display); color: var(--paper); text-shadow: 0 .1875rem 0 #0b1712; }
+.ak-head p { margin: 0; font: 400 .9375rem/1.4 var(--f-type); color: rgba(243, 242, 236, .75); }
+.ak-main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+.ak-card {
+  position: relative; margin: 0; display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: 1rem; align-items: start; padding: 1rem 1.125rem 1.125rem;
+  background: var(--paper); color: var(--ink); border-radius: .1875rem; box-shadow: 0 .5rem 1.5rem rgba(0, 0, 0, .45);
 }
-.pick:hover { transform: translateY(-2px) rotate(-.4deg); box-shadow: 0 .5rem 1.125rem rgba(0, 0, 0, .45); }
-.pick img {
-  flex: none; display: block; width: 5.25rem; aspect-ratio: 1; object-fit: cover; background: #fff; padding: .1875rem .1875rem .375rem;
-  box-shadow: 0 1px .25rem rgba(0, 0, 0, .3); transform: rotate(-2deg);
+.ak-card::after { /* kurulun kaşesi */
+  content: "ADAY"; position: absolute; top: .75rem; right: .875rem; padding: .25rem .5rem .1875rem; border: 2px solid var(--stamp-r); border-radius: .1875rem;
+  color: var(--stamp-r); font: 700 .75rem/1 var(--f-ui); letter-spacing: .2em; transform: rotate(8deg); opacity: .85;
 }
-.pk { display: flex; flex-direction: column; gap: .1875rem; min-width: 0; }
-.pk b { font: 400 1.0625rem/1.1 var(--f-display); }
-.pk i { font: 700 .75rem/1.2 var(--f-ui); font-style: normal; letter-spacing: .12em; text-transform: uppercase; color: var(--stamp-p); }
-.pk small { font: 400 .8438rem/1.42 var(--f-type); color: #3a3844; text-wrap: pretty; }
-.pick[aria-pressed="true"] { outline: .1875rem solid var(--brass-hi); outline-offset: .1875rem; }
-.pick[aria-pressed="true"]::after {
-  content: "SİZSİNİZ"; position: absolute; top: 4.25rem; left: 1.375rem; padding: .25rem .375rem .1875rem; border: 2px solid var(--stamp-r); border-radius: .1875rem;
-  background: rgba(243, 242, 236, .8); color: var(--stamp-r); font: 700 .6875rem/1 var(--f-ui); letter-spacing: .14em; transform: rotate(-8deg);
+.ak-photo img {
+  display: block; width: 100%; aspect-ratio: 1; object-fit: cover; padding: .25rem .25rem .5rem; background: #fff;
+  box-shadow: 0 .1875rem .5rem rgba(0, 0, 0, .35); transform: rotate(-2.5deg);
 }
-.pick-note { margin: 0; max-width: 46ch; font: 400 .9375rem/1.5 var(--f-type); color: rgba(243, 242, 236, .75); text-align: center; }
+.ak-card figcaption { display: flex; flex-direction: column; gap: .375rem; min-width: 0; padding-top: .25rem; }
+.ak-name { display: flex; flex-direction: column; gap: .25rem; }
+.ak-name span { font: 700 .75rem/1 var(--f-ui); letter-spacing: .16em; text-transform: uppercase; color: var(--ink-soft); }
+.ak-name input {
+  width: 100%; min-width: 0; padding: .25rem 0 .3125rem; border: 0; border-bottom: 2px dotted rgba(35, 33, 42, .45); border-radius: 0;
+  background: transparent; color: var(--ink); font: 700 1.375rem/1.1 var(--f-type);
+}
+.ak-name input::placeholder { color: rgba(35, 33, 42, .5); }
+.ak-name input:focus { outline: none; border-bottom-color: var(--pen); border-bottom-style: solid; }
+.ak-lakap { font: 700 .8125rem/1.2 var(--f-ui); letter-spacing: .12em; text-transform: uppercase; color: var(--stamp-p); }
+.ak-bio { margin: 0; font: 400 .9063rem/1.45 var(--f-type); color: #3a3844; text-wrap: pretty; }
+.ak-side { display: flex; flex-direction: column; gap: .625rem; }
+.ak-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(4.25rem, 1fr)); gap: .5rem; }
+.ak-grid button {
+  position: relative; padding: .1875rem .1875rem .375rem; border: 0; border-radius: 1px; background: #fff; cursor: pointer;
+  box-shadow: 0 .1875rem .5rem rgba(0, 0, 0, .4); transform: rotate(var(--r, 0deg)); transition: transform .15s, box-shadow .15s;
+}
+.ak-grid button:hover { transform: rotate(0) translateY(-2px); box-shadow: 0 .375rem .875rem rgba(0, 0, 0, .45); }
+.ak-grid img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; }
+.ak-grid button[aria-checked="true"] {
+  transform: rotate(0) scale(1.07); z-index: 1;
+  box-shadow: 0 0 0 .1875rem var(--brass-hi), 0 0 0 .3125rem rgba(0, 0, 0, .5), 0 0 1.25rem .25rem rgba(236, 213, 146, .55);
+}
+.ak-grid button[aria-checked="true"]::after { /* seçildi işareti */
+  content: "✓"; position: absolute; right: -.375rem; top: -.375rem; display: grid; place-items: center; width: 1.25rem; height: 1.25rem; border-radius: 50%;
+  background: var(--brass-hi); color: #2a1d08; font: 700 .8125rem/1 var(--f-ui); box-shadow: 0 1px .25rem rgba(0, 0, 0, .5);
+}
+.ak-grid button:focus-visible { outline: 2px dashed var(--paper); outline-offset: .25rem; }
+.ak-zar { align-self: center; }
+.pick-note { margin: 0; font: 400 .875rem/1.45 var(--f-type); color: rgba(243, 242, 236, .72); text-align: center; text-wrap: pretty; }
+.pick-note.warn { color: var(--bad); }
+.ak-act {
+  position: sticky; bottom: 0; z-index: 2; display: flex; justify-content: center; gap: .75rem; margin: auto calc(-1 * var(--gutter)) 0;
+  padding: .75rem var(--gutter) calc(.75rem + env(safe-area-inset-bottom, 0px)); background: rgba(8, 18, 14, .92); border-top: 1px solid rgba(236, 213, 146, .18);
+  -webkit-backdrop-filter: blur(.375rem); backdrop-filter: blur(.375rem);
+}
+.ak-act .btn { flex: 1; max-width: 16rem; }
+@media (min-width: 860px) {
+  .ak { flex: none; margin-block: auto; }
+  .ak-main { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); align-items: start; gap: 1.5rem; }
+  .ak-card { grid-template-columns: 12rem minmax(0, 1fr); padding: 1.375rem 1.5rem 1.5rem; gap: 1.375rem; }
+  .ak-name input { font-size: 1.625rem; }
+  .ak-bio { font-size: .9688rem; }
+  .ak-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .625rem; }
+  .ak-act { position: static; margin: 0; background: none; border: 0; -webkit-backdrop-filter: none; backdrop-filter: none; padding: .25rem 0 1.5rem; }
+}
 
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
@@ -1116,11 +1282,13 @@ button { font: inherit; color: inherit; }
 <body>
 <div id="app" lang="tr">
 
-  <!-- Başlık -->
-  <section id="scr-title" class="screen" aria-label="Ana ekran">
-    <div class="poster">
-      <div class="stitch" aria-hidden="true"></div>
-      <svg class="glass" viewBox="0 -30 200 290" aria-hidden="true">
+  <!-- Ana menü: canlı Karakavak meydanı (meydan.js) üstünde logo, menü, bilgi kartı ve ilan panosu -->
+  <section id="scr-title" class="screen" aria-label="Ana menü">
+    <div class="mn-scene" id="mn-scene" aria-hidden="true"></div>
+    <div class="mn-shade" aria-hidden="true"></div>
+    <div class="mn">
+      <header class="mn-logo">
+        <svg class="mn-glass" viewBox="0 -30 200 290" aria-hidden="true">
         <defs>
           <linearGradient id="tea" x1="0" x2="1" y1="0" y2="0">
             <stop offset="0" stop-color="#5a1208"/><stop offset=".3" stop-color="#a0301a"/><stop offset=".52" stop-color="#c9482a"/><stop offset=".78" stop-color="#8e2412"/><stop offset="1" stop-color="#4e0f06"/>
@@ -1151,21 +1319,55 @@ button { font: inherit; color: inherit; }
         <path d="M150 226 L186 212" stroke="#cfd3d8" stroke-width="3.2" stroke-linecap="round"/>
         <ellipse cx="189" cy="210.5" rx="5.5" ry="3.2" fill="#cfd3d8" transform="rotate(-22 189 210.5)"/>
       </svg>
-      <div class="eyebrow">T.C. Karakavak Belediyesi</div>
-      <h1>Çaylar <span>Belediyeden</span></h1>
-      <p class="lede">Karakavak'ın yeni belediye başkanı sizsiniz. Evrak gelir; siz <b>sağa</b> ya da <b>sola</b> kaydırırsınız. Halkı, kasayı, esnafı ve Ankara'yı dengede tutun. Beş yılda bir de sandık var.</p>
-      <div class="actions">
-        <button id="btn-start" class="btn primary" type="button">Göreve başla</button>
-        <button id="btn-resume" class="btn" type="button" hidden>Kaldığım yerden</button>
-        <button id="btn-wall" class="btn" type="button">Eski başkanlarımız</button>
-        <button id="btn-help" class="btn" type="button">Nasıl oynanır</button>
+        <div class="mn-word">
+          <span class="mn-eyebrow">T.C. Karakavak Belediyesi</span>
+          <h1>Çaylar <span>Belediyeden</span></h1>
+        </div>
+      </header>
+      <nav class="mn-list" id="mn-list" aria-label="Ana menü">
+        <button id="btn-resume" class="mn-item" type="button" data-info="devam" hidden><b>Devam et</b><small id="mn-resume-sub"></small></button>
+        <button id="btn-start" class="mn-item" type="button" data-info="yeni"><b>Yeni dönem</b></button>
+        <button id="btn-wall" class="mn-item" type="button" data-info="duvar"><b>Eski başkanlarımız</b></button>
+        <button id="btn-help" class="mn-item" type="button" data-info="nasil"><b>Nasıl oynanır</b></button>
+        <button id="btn-ayar" class="mn-item" type="button" data-info="ayar"><b>Ayarlar</b></button>
+        <button id="btn-kunye" class="mn-item" type="button" data-info="kunye"><b>Künye</b></button>
+      </nav>
+      <aside class="mn-board" id="mn-board" aria-label="İlan panosu"></aside>
+      <aside class="mn-info" id="mn-info" aria-live="polite"></aside>
+
+      <!-- Ayarlar ve künye: meydanın üstünde açılan paneller -->
+      <div class="mn-panel" id="mn-ayar" role="dialog" aria-modal="true" aria-labelledby="ayar-h" hidden>
+        <h2 id="ayar-h">Ayarlar</h2>
+        <div class="ay-rows">
+          <label class="ay-row"><span>Ses</span><input type="checkbox" id="ay-ses" role="switch"><i aria-hidden="true"></i></label>
+          <label class="ay-row"><span>Ses düzeyi</span><input type="range" id="ay-vol" min="0" max="100" step="5"><output id="ay-vol-o"></output></label>
+          <label class="ay-row"><span>Titreşim <small>telefonda mühür basınca</small></span><input type="checkbox" id="ay-tit" role="switch"><i aria-hidden="true"></i></label>
+          <label class="ay-row"><span>Hızlı seçim gecesi <small>sayım kısa sürer</small></span><input type="checkbox" id="ay-hizli" role="switch"><i aria-hidden="true"></i></label>
+          <div class="ay-row"><span>Tanıtım <small>Fikret göstergeleri yeniden anlatsın</small></span><button id="ay-intro" class="btn sm" type="button">Yeniden göster</button></div>
+          <div class="ay-row danger"><span>Kayıtlar <small>kayıtlı dönem, rekor ve eski başkanlar duvarı</small></span><button id="ay-sil" class="btn sm" type="button">Hepsini sil</button></div>
+        </div>
+        <button class="btn mn-back" type="button" data-close>Geri</button>
       </div>
-      <div class="whoami">
-        <button id="btn-avatar" class="avatar" type="button" aria-label="Vesikalığı değiştir"><img id="avatar-img" alt="" draggable="false"><span>Değiştir</span></button>
-        <label class="namefield" for="in-name"><span>Başkanın adı</span><input id="in-name" type="text" maxlength="24" autocomplete="off" spellcheck="false"></label>
+      <div class="mn-panel" id="mn-kunye" role="dialog" aria-modal="true" aria-labelledby="kunye-h" hidden>
+        <h2 id="kunye-h">Künye</h2>
+        <dl class="kn">
+          <dt>Yapım</dt><dd>akinozgen.com</dd>
+          <dt>Makam şefi</dt><dd>Fikret</dd>
+          <dt>Belediye kedisi</dt><dd>Tekir (kadrolu)</dd>
+          <dt>Çay</dt><dd>Çaycı Hüseyin, belediye çay ocağı</dd>
+          <dt>Yazı karakterleri</dt><dd>Alfa Slab One, Barlow Condensed, Courier Prime, Old Standard TT (SIL Open Font License)</dd>
+          <dt>Sürükleme</dt><dd>interact.js (MIT)</dd>
+          <dt>Sürüm</dt><dd id="kn-ver"></dd>
+        </dl>
+        <p class="kn-note">Bu oyun kurgudur. Kişi, kurum ve olayların gerçekle ilgisi yoktur; benzerlik tesadüfse tesadüftür, değilse de tesadüftür.</p>
+        <button class="btn mn-back" type="button" data-close>Geri</button>
       </div>
-      <p class="best" id="best"></p>
-      <p class="keys">Sürükleyin ya da <kbd>←</kbd> <kbd>→</kbd> tuşlarını kullanın</p>
+
+      <footer class="mn-foot">
+        <span id="mn-ver"></span>
+        <span class="best" id="best"></span>
+        <button id="btn-mute2" class="mn-mute" type="button" aria-label="Ses"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6h3l4-3v10L5 10H2z" fill="currentColor"/><path class="wave" d="M11 5.5c1 .8 1 4.2 0 5M12.8 4c2 1.6 2 6.4 0 8" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/></svg></button>
+      </footer>
     </div>
   </section>
 
@@ -1320,12 +1522,28 @@ button { font: inherit; color: inherit; }
   </section>
 
   <!-- Vesikalık seçimi -->
-  <section id="scr-pick" class="screen" aria-label="Vesikalık seçimi" hidden>
-    <div class="pick-in">
-      <div class="plaque"><h2>Başkanlık Vesikalığı</h2><p>Hangisi sizsiniz?</p></div>
-      <div class="picks" id="picks"></div>
+  <section id="scr-pick" class="screen" aria-label="Aday kaydı" hidden>
+    <div class="ak">
+      <header class="ak-head"><span class="mn-eyebrow">Yeni dönem</span><h2>Aday kaydı</h2><p>Seçim kurulu vesikalığınızı ve adınızı bekliyor.</p></header>
+      <div class="ak-main">
+        <figure class="ak-card">
+          <div class="ak-photo"><img id="avatar-img" alt="" draggable="false"></div>
+          <figcaption>
+            <label class="ak-name" for="in-name"><span>Başkanın adı</span><input id="in-name" type="text" maxlength="24" autocomplete="off" spellcheck="false"></label>
+            <b class="ak-lakap" id="ak-lakap"></b>
+            <p class="ak-bio" id="ak-bio"></p>
+          </figcaption>
+        </figure>
+        <div class="ak-side">
+          <div class="ak-grid" id="picks" role="radiogroup" aria-label="Vesikalıklar"></div>
+          <button id="btn-zar" class="btn sm ak-zar" type="button">Rastgele aday</button>
+        </div>
+      </div>
       <p class="pick-note" id="pick-note"></p>
-      <button id="btn-pick-back" class="btn" type="button">Vazgeç</button>
+      <div class="ak-act">
+        <button id="btn-pick-back" class="btn" type="button">Vazgeç</button>
+        <button id="btn-go" class="btn primary" type="button">Mazbatayı al</button>
+      </div>
     </div>
   </section>
 </div>
@@ -1370,7 +1588,7 @@ const PEOPLE = {
   ingrid:   { ad: "Ingrid Hanım", unvan: "Kardeş Şehir Heyeti, Norveç" },
 };
 
-// ─── Başkanlık vesikalıkları: başlıkta seçilir, her birinin kendi adı var ────
+// ─── Başkanlık vesikalıkları: aday kaydında seçilir, her birinin kendi adı var ─
 // Oyuncu kendi adını yazmazsa bu ad kullanılır. Eski başkanlar duvarı da bu resimleri asar.
 // lakap + bio: seçim ekranındaki broşür. Gerçek kişi ya da parti yok; hepsi yerel siyasetin bilinen halleri.
 const BASKANLAR = {
@@ -4031,7 +4249,7 @@ const LS = {
 };
 const rngOf = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 // dokunmadan (klavyeyle) oynayanda tarayıcı titreşimi engeller ve konsola hata yazar; hiç çağırmayalım
-const vibrate = ms => { try { if (navigator.userActivation?.hasBeenActive !== false) navigator.vibrate?.(ms); } catch { } };
+const vibrate = ms => { try { if (LS.get("vibrate", true) && navigator.userActivation?.hasBeenActive !== false) navigator.vibrate?.(ms); } catch { } };
 
 let S = null, busy = false, screen = "title", lastOver = null, wallFrom = "title";
 // Derlemede web sürümü için true yapılır (service worker kaydı)
@@ -4044,11 +4262,11 @@ const photo = id => `<img src="${photoSrc(id)}" alt="" decoding="async" draggabl
 
 // ─── Ses: hepsi WebAudio ile üretiliyor ───────────────────────────────────
 const snd = (() => {
-  let ctx = null, master = null, on = LS.get("sound", true);
+  let ctx = null, master = null, on = LS.get("sound", true), vol = LS.get("volume", 50);
   const ks = {};
   const init = () => {
     if (ctx) return;
-    try { ctx = new (window.AudioContext || window.webkitAudioContext)(); master = ctx.createGain(); master.gain.value = .5; master.connect(ctx.destination); } catch { ctx = null; }
+    try { ctx = new (window.AudioContext || window.webkitAudioContext)(); master = ctx.createGain(); master.gain.value = vol / 100; master.connect(ctx.destination); } catch { ctx = null; }
   };
   const ready = () => on && ctx && ctx.state !== "closed";
   const env = (g, t, a, peak, d) => { g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(.0001, t + a + d); };
@@ -4065,6 +4283,14 @@ const snd = (() => {
     get on() { return on; },
     unlock() { if (on) { init(); ctx?.resume?.(); } },
     toggle() { on = !on; LS.set("sound", on); if (on) { init(); ctx?.resume?.(); } return on; },
+    get vol() { return vol; },
+    volume(v) { vol = Math.max(0, Math.min(100, Math.round(v))); LS.set("volume", vol); if (master) master.gain.value = vol / 100; },
+    // menüde madde değişince kısa, yumuşak bir tık
+    tick() {
+      if (!ready()) return; const t = ctx.currentTime;
+      const o = ctx.createOscillator(), g = ctx.createGain(); o.type = "triangle"; o.frequency.setValueAtTime(1500, t); o.frequency.exponentialRampToValueAtTime(950, t + .035);
+      env(g, t, .002, .07, .045); o.connect(g).connect(master); o.start(t); o.stop(t + .09);
+    },
     stamp() {
       if (!ready()) return; const t = ctx.currentTime;
       const o = ctx.createOscillator(), g = ctx.createGain(); o.type = "sine"; o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(46, t + .14); env(g, t, .004, .9, .2); o.connect(g).connect(master); o.start(t); o.stop(t + .3);
@@ -4894,7 +5120,7 @@ function renderWall() {
 function openWall() { wallFrom = screen === "wall" ? wallFrom : screen; show("wall"); $("#scr-wall").scrollTop = 0; renderWall(); }
 
 // ─── Akış ─────────────────────────────────────────────────────────────────
-// Başkanın vesikalığı başlıkta seçilir; ad kutusu boşsa vesikalığın adı kullanılır
+// Başkanın vesikalığı aday kaydında seçilir; ad kutusu boşsa vesikalığın adı kullanılır
 function customName() { return (LS.get("name", "") || "").trim().slice(0, 24); }
 function playerAvatar() {
   let a = LS.get("avatar", null);
@@ -4908,34 +5134,146 @@ function paintAvatar() {
   $("#in-name").placeholder = BASKANLAR[a].ad;
   $("#leader-name").textContent = playerName();
 }
+// ─── Aday kaydı: yeni dönemden önce vesikalık ve ad ───────────────────────
+function savedGame() { const sv = LS.get("save", null); return sv && sv.v === 2 && !sv.over && sv.cur ? sv : null; }
 function openPick() {
-  const box = $("#picks"), cur = playerAvatar(), own = customName();
+  const box = $("#picks"), cur = playerAvatar();
   box.textContent = "";
-  for (const id of MAYORS) {
-    const B = BASKANLAR[id], mk = (tag, txt) => { const e = document.createElement(tag); if (txt != null) e.textContent = txt; return e; };
-    const b = mk("button"), im = mk("img"), tx = mk("span");
-    b.type = "button"; b.className = "pick"; b.setAttribute("aria-pressed", String(id === cur));
-    im.src = photoSrc(id); im.alt = ""; im.draggable = false;
-    tx.className = "pk"; tx.append(mk("b", B.ad), mk("i", B.lakap), mk("small", B.bio));
-    b.append(im, tx);
-    b.addEventListener("click", () => { LS.set("avatar", id); showTitle(); $("#btn-avatar").focus(); });
+  MAYORS.forEach((id, i) => {
+    const b = document.createElement("button"), im = document.createElement("img");
+    b.type = "button"; b.className = "pick"; b.dataset.id = id; b.setAttribute("role", "radio"); b.setAttribute("aria-label", BASKANLAR[id].ad);
+    b.style.setProperty("--r", `${((i * 37) % 7) - 3}deg`);
+    im.src = photoSrc(id); im.alt = ""; im.draggable = false; b.append(im);
+    b.addEventListener("click", () => pickAvatar(id));
     box.appendChild(b);
-  }
-  $("#pick-note").textContent = own ? `Adınız “${own}” olarak kalır, yalnız vesikalık değişir.` : "Adını beğenmezseniz başlıktaki kutuya kendi adınızı yazın.";
+  });
+  $("#in-name").value = customName();
+  pickAvatar(cur, false);
   show("pick"); $("#scr-pick").scrollTop = 0;
+  box.querySelector('[aria-checked="true"]')?.focus({ preventScroll: true });
+}
+function pickAvatar(id, sound = true) {
+  LS.set("avatar", id);
+  for (const b of $("#picks").children) { const on = b.dataset.id === id; b.setAttribute("aria-checked", String(on)); b.tabIndex = on ? 0 : -1; }
+  const B = BASKANLAR[id], own = customName(), note = $("#pick-note"), sv = savedGame();
+  paintAvatar();
+  $("#ak-lakap").textContent = `“${B.lakap}”`; $("#ak-bio").textContent = B.bio;
+  note.classList.toggle("warn", !!sv);
+  note.textContent = sv ? "Kayıtlı bir döneminiz var; mazbatayı alırsanız o dönem kapanır."
+    : own ? `Mazbataya “${own}” yazılacak; vesikalık ${B.ad}'ın.` : "Ad kutusu boş kalırsa vesikalığın adıyla aday olursunuz.";
+  if (sound) snd.tick();
+}
+// ızgarada ok tuşları seçimi taşır (radyo düğmesi gibi); satır boyu ekrandaki sütun sayısından
+function pickMove(e) {
+  const list = [...$("#picks").children], i = list.indexOf(document.activeElement);
+  if (i < 0) return false;
+  const cols = list.filter(b => b.offsetTop === list[0].offsetTop).length || 1;
+  const d = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: cols, ArrowUp: -cols }[e.key];
+  if (!d) return false;
+  e.preventDefault();
+  const n = list[Math.max(0, Math.min(list.length - 1, i + d))];
+  pickAvatar(n.dataset.id); n.focus();
+  return true;
+}
+
+// ─── Ana menü: canlı meydan üstünde logo, menü, ilan panosu ve bilgi kartı ──
+const SURUM = "2026.09.25 · 03d551a"; // derlemede tarih ve içerik özetiyle dolar
+const YENILIK = [
+  ["Seçim gecesi canlı yayında", "KARAKAVAK TV sandıkları mahalle mahalle açıyor: bıyıklı spiker, alt bant, absürt kayan yazı."],
+  ["Ankara'dan davet", "Ankara tavan yapınca sizi yukarı çağırır. İsterseniz gidersiniz, isterseniz “Karakavak'ı bırakmam” dersiniz."],
+  ["Erken seçim", "Esnaf odası belediyeyi ele geçirirse sandık erken kurulur; Hacı Bekir güçlü girer."],
+];
+let md = null, mnBusy = false, panelFrom = null; // md: meydan sahnesinin denetimi (meydan.js yoksa sahne gradyan kalır)
+function sceneOn(on) {
+  if (typeof meydan !== "function") return;
+  if (on && !md) { $("#mn-scene").innerHTML = meydanSVG(); md = meydan($("#mn-scene")); return; }
+  if (md) { if (on) md.resume(); else md.pause(); }
+}
+const mnItems = () => [...document.querySelectorAll("#mn-list .mn-item")].filter(b => !b.hidden);
+function mnOn(b, sound = true) {
+  if (!b || b.classList.contains("on")) return;
+  for (const x of mnItems()) x.classList.toggle("on", x === b);
+  renderInfo(b.dataset.info);
+  if (sound) snd.tick();
+}
+function renderInfo(kind) {
+  const H = (h, body) => `<h3>${esc(h)}</h3>${body}`, sv = savedGame();
+  let html = "";
+  if (kind === "devam" && sv) {
+    const left = TERM - 1 - (sv.month % TERM), poll = Math.round(pollOf(sv));
+    const risk = (k, v) => v <= 15 || (k !== "h" && v >= 85);
+    const cells = METERS.map(k => `<div class="${risk(k, sv.m[k]) ? "risk" : ""}">${METER_AD[k]}<b>${sv.m[k]}</b><i style="--v:${sv.m[k]}%"></i></div>`).join("")
+      + `<div>Anket<b>%${poll}</b><i style="--v:${poll}%;--c:var(--good)"></i></div>`;
+    html = H("Kaldığınız yer", `<div class="mi-save"><img src="${photoSrc(playerAvatar())}" alt=""><b>${esc(playerName())}</b>
+      <span>${esc(dateLabel(sv.month))} · ${sv.term}. dönem${sv.term >= MAX_TERMS ? " · son dönem" : ` · seçime ${left} ay`}</span><div class="mi-meters">${cells}</div></div>`);
+  } else if (kind === "yeni") {
+    html = H("Yeni dönem", `<p>Koltuk boş başkanım. Vesikalığınızı seçin, adınızı yazın, mazbatayı alın.</p>${sv ? `<p class="warn">Kayıtlı döneminiz kapanır.</p>` : ""}`);
+  } else if (kind === "duvar") {
+    const rows = LS.get("hall", []).filter(r => r && ENDINGS[r.key] && Number.isFinite(r.months)).slice(0, 3);
+    html = H("Eski başkanlarımız", rows.length
+      ? `<ul class="mi-wall">${rows.map(r => `<li><img src="${photoSrc(BASKANLAR[r.avatar] ? r.avatar : MAYORS[0])}" alt=""><div><b>${esc(r.name || "Başkan")}</b><span>${esc(durLabel(r.months))} · ${esc(ENDINGS[r.key].kisa)}</span></div></li>`).join("")}</ul>`
+      : "<p>Duvar henüz boş. İlk portre sizinki olsun.</p>");
+  } else if (kind === "nasil") {
+    html = H("Nasıl oynanır", "<p>Evrak gelir; sağa ya da sola kaydırırsınız. Halk, kasa, esnaf ve Ankara dengede dursun. Beş yılda bir sandık kurulur.</p>");
+  } else if (kind === "ayar") {
+    html = H("Ayarlar", "<p>Ses, titreşim, seçim gecesinin hızı ve kayıtlar.</p>");
+  } else if (kind === "kunye") {
+    html = H("Künye", "<p>Emeği geçenler, yazı karakterleri, lisanslar. Bir de kurgu uyarısı.</p>");
+  }
+  $("#mn-info").innerHTML = html;
+}
+// keep: alt ekrandan (genelge, duvar, aday kaydı) dönülünce o madde seçili kalır; oyundan dönülünce ilk madde
+function refreshMenu(keep = false) {
+  const best = LS.get("best", null), sv = savedGame();
+  $("#best").textContent = best && ENDINGS[best.key] ? `Rekor: ${durLabel(best.months)} · ${ENDINGS[best.key].kisa}` : "";
+  $("#btn-resume").hidden = !sv;
+  $("#mn-resume-sub").textContent = sv ? `${dateLabel(sv.month)} · ${sv.term}. dönem · ${playerName()}` : "";
+  $("#mn-ver").textContent = `Sürüm ${SURUM}`; $("#kn-ver").textContent = SURUM;
+  $("#mn-board").innerHTML = `<h3>İlan panosu</h3><p class="bd-sub">Belediyeden duyurular</p><ul>${YENILIK.map(([h, t]) => `<li><b>${esc(h)}</b>${esc(t)}</li>`).join("")}</ul>`;
+  const cur = keep && document.querySelector("#mn-list .mn-item.on"), first = cur && !cur.hidden ? cur : mnItems()[0];
+  for (const x of mnItems()) x.classList.remove("on");
+  mnOn(first, false);
+  return first;
+}
+function openPanel(id) {
+  panelFrom = document.activeElement;
+  $(".mn").classList.add("panel-open");
+  for (const q of ["#mn-list", "#mn-info", "#mn-board"]) $(q).inert = true;
+  const p = $("#mn-" + id); p.hidden = false;
+  if (id === "ayar") paintAyar();
+  p.querySelector("input, button")?.focus({ preventScroll: true });
+}
+function closePanel() {
+  const p = document.querySelector(".mn-panel:not([hidden])");
+  if (!p) return false;
+  p.hidden = true; $(".mn").classList.remove("panel-open");
+  for (const q of ["#mn-list", "#mn-info", "#mn-board"]) $(q).inert = false;
+  panelFrom?.focus({ preventScroll: true });
+  return true;
+}
+function paintAyar() {
+  $("#ay-ses").checked = snd.on; $("#ay-vol").value = snd.vol; $("#ay-vol-o").textContent = snd.vol;
+  $("#ay-tit").checked = LS.get("vibrate", true); $("#ay-hizli").checked = LS.get("ecSeen", false);
+  $("#ay-intro").textContent = LS.get("introSeen", false) ? "Yeniden göster" : "Gösterilecek";
+  const sil = $("#ay-sil"); sil.classList.remove("armed"); sil.textContent = "Hepsini sil";
 }
 function show(name) {
   screen = name;
   for (const s of ["title", "game", "over", "wall", "help", "pick", "secim"]) $("#scr-" + s).hidden = s !== name;
+  sceneOn(name === "title");
 }
 function showTitle() {
-  closeNote();
-  const best = LS.get("best", null), sv = LS.get("save", null);
-  $("#best").textContent = best && ENDINGS[best.key] ? `Rekorunuz: ${durLabel(best.months)} · ${ENDINGS[best.key].kisa}` : "";
-  $("#btn-resume").hidden = !(sv && sv.v === 2 && !sv.over && sv.cur);
-  $("#in-name").value = customName();
-  paintAvatar();
+  closeNote(); closePanel(); paintAvatar();
+  const first = refreshMenu(["help", "wall", "pick"].includes(screen));
   show("title");
+  first?.focus({ preventScroll: true });
+}
+// menüden oyuna: meydan sahnesi makam penceresine yaklaşır, sonra masa açılır
+async function menuEnter(go) {
+  if (mnBusy) return;
+  mnBusy = true;
+  try { if (md && screen === "title") await md.enter(); } catch { /* sahne yoksa doğrudan */ }
+  mnBusy = false; go();
 }
 function enterGame() {
   show("game"); $("#toasts").textContent = ""; paintAvatar(); setMeters(); renderOngoing();
@@ -4960,9 +5298,36 @@ function resume() {
 
 function wire() {
   buildMeters();
-  $("#btn-start").addEventListener("click", startNew);
-  $("#btn-resume").addEventListener("click", resume);
+  $("#btn-start").addEventListener("click", openPick);
+  $("#btn-resume").addEventListener("click", () => menuEnter(resume));
   $("#btn-wall").addEventListener("click", openWall);
+  $("#btn-ayar").addEventListener("click", () => openPanel("ayar"));
+  $("#btn-kunye").addEventListener("click", () => openPanel("kunye"));
+  for (const b of document.querySelectorAll("[data-close]")) b.addEventListener("click", closePanel);
+  for (const b of document.querySelectorAll("#mn-list .mn-item")) {
+    b.addEventListener("pointerenter", e => { if (e.pointerType === "mouse" && !mnBusy) { b.focus({ preventScroll: true }); mnOn(b); } });
+    b.addEventListener("focus", () => mnOn(b));
+  }
+  // sekme arkadayken meydan sahnesi durur
+  document.addEventListener("visibilitychange", () => sceneOn(screen === "title" && !document.hidden));
+  // ilk dokunuşta ses açılsın ki menü tıkları duyulsun
+  for (const ev of ["pointerdown", "keydown"]) addEventListener(ev, () => snd.unlock(), { once: true, capture: true });
+  $("#btn-go").addEventListener("click", startNew);
+  $("#btn-zar").addEventListener("click", () => { const cur = playerAvatar(), rest = MAYORS.filter(id => id !== cur); const id = pickOne(rest); pickAvatar(id); $(`#picks [data-id="${id}"]`).focus({ preventScroll: true }); });
+  $("#in-name").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); startNew(); } });
+  $("#ay-ses").addEventListener("change", e => { if (e.target.checked !== snd.on) snd.toggle(); paintMute(); });
+  $("#ay-vol").addEventListener("input", e => { snd.volume(+e.target.value); $("#ay-vol-o").textContent = snd.vol; });
+  $("#ay-vol").addEventListener("change", () => snd.tick());
+  $("#ay-tit").addEventListener("change", e => LS.set("vibrate", e.target.checked));
+  $("#ay-hizli").addEventListener("change", e => LS.set("ecSeen", e.target.checked));
+  $("#ay-intro").addEventListener("click", () => { LS.set("introSeen", false); paintAyar(); });
+  let silT = 0;
+  $("#ay-sil").addEventListener("click", e => { // iki adımlı: önce "Emin misiniz?", 3,5 sn içinde ikinci basış siler
+    const b = e.currentTarget;
+    if (!b.classList.contains("armed")) { b.classList.add("armed"); b.textContent = "Emin misiniz?"; clearTimeout(silT); silT = setTimeout(paintAyar, 3500); return; }
+    clearTimeout(silT); for (const k of ["save", "best", "hall"]) LS.del(k);
+    b.classList.remove("armed"); b.textContent = "Silindi"; refreshMenu(true);
+  });
   $("#btn-help").addEventListener("click", () => { show("help"); $("#scr-help").scrollTop = 0; });
   $("#btn-help-back").addEventListener("click", showTitle);
   $("#btn-wall2").addEventListener("click", openWall);
@@ -4974,12 +5339,14 @@ function wire() {
   $("#btn-log-x").addEventListener("click", () => openLog(false));
   $("#log-scrim").addEventListener("click", () => openLog(false));
   wideLog.addEventListener("change", () => { openLog(false); logUnread = 0; if (S) renderLog(false); });
-  $("#in-name").addEventListener("input", e => LS.set("name", e.target.value.slice(0, 24)));
-  $("#btn-avatar").addEventListener("click", openPick);
-  $("#btn-pick-back").addEventListener("click", () => { showTitle(); $("#btn-avatar").focus(); });
-  const mute = $("#btn-mute");
-  const paintMute = () => { mute.setAttribute("aria-pressed", String(!snd.on)); mute.setAttribute("aria-label", snd.on ? "Sesi kapat" : "Sesi aç"); $("#mute-wave").style.opacity = snd.on ? 1 : .15; };
-  mute.addEventListener("click", () => { snd.toggle(); paintMute(); });
+  $("#in-name").addEventListener("input", e => { LS.set("name", e.target.value.slice(0, 24)); pickAvatar(playerAvatar(), false); });
+  $("#btn-pick-back").addEventListener("click", showTitle);
+  const mute = $("#btn-mute"), mute2 = $("#btn-mute2");
+  function paintMute() {
+    for (const b of [mute, mute2]) { b.setAttribute("aria-pressed", String(!snd.on)); b.setAttribute("aria-label", snd.on ? "Sesi kapat" : "Sesi aç"); }
+    $("#mute-wave").style.opacity = snd.on ? 1 : .15;
+  }
+  for (const b of [mute, mute2]) b.addEventListener("click", () => { snd.toggle(); paintMute(); });
   paintMute();
   for (const side of ["L", "R"]) {
     const b = $("#ch-" + side), dir = side === "L" ? -1 : 1;
@@ -4992,10 +5359,23 @@ function wire() {
     b.addEventListener("blur", unpeek);
   }
   addEventListener("keydown", e => {
+    // Escape ayar paneli ve aday kaydında odak bir kutudayken de çalışır
+    if (e.key === "Escape" && screen === "title" && closePanel()) return;
+    if (e.key === "Escape" && screen === "pick") return $("#btn-pick-back").click();
     if (e.altKey || e.ctrlKey || e.metaKey || e.target.matches?.("input, textarea")) return;
     if (screen === "wall" && e.key === "Escape") return $("#btn-back").click();
     if (screen === "help" && e.key === "Escape") return showTitle();
-    if (screen === "pick" && e.key === "Escape") return $("#btn-pick-back").click();
+    if (screen === "pick") { pickMove(e); return; }
+    if (screen === "title") {
+      if ($(".mn").classList.contains("panel-open") || mnBusy) return;
+      const list = mnItems(), d = { ArrowDown: 1, ArrowUp: -1, s: 1, w: -1 }[e.key];
+      if (!d || !list.length) return;
+      e.preventDefault();
+      const i = Math.max(list.indexOf(document.activeElement), list.findIndex(x => x.classList.contains("on")));
+      const n = list[(i + d + list.length) % list.length];
+      n.focus({ preventScroll: true }); mnOn(n);
+      return;
+    }
     if (screen === "secim" && ["Enter", " ", "Escape"].includes(e.key)) { e.preventDefault(); return ($("#btn-ec-go").hidden ? $("#btn-ec-skip") : $("#btn-ec-go")).click(); }
     if (screen !== "game") return;
     const k = e.key.toLocaleLowerCase("tr");
