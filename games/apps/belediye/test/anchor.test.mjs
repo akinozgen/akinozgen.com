@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import { yukle } from "./yukle.mjs";
 
 const load = () => yukle("anchor");
-const src = readFileSync(new URL("../src/anchor.js", import.meta.url), "utf8"); // boyut sınırı için
+const src = readFileSync(new URL("../src/anchor.ts", import.meta.url), "utf8"); // boyut sınırı için
 const LIMIT = 30 * 1024;
 
 test("studioSVG: 1600×900, harici kaynak yok, bütün sınıflar st- önekli, 30 KB altı", async () => {
@@ -26,7 +26,7 @@ test("studioSVG: 1600×900, harici kaynak yok, bütün sınıflar st- önekli, 3
   assert.deepEqual([...css.matchAll(/@keyframes\s+([\w-]+)/g)].map(m => m[1]).filter(n => !n.startsWith("st-")), []);
   assert.match(svg, /KARAKAVAK <tspan[^>]*>SEÇİM <tspan id="st-year">2034<\/tspan>/);
   assert.ok(Buffer.byteLength(svg) < LIMIT, `SVG ${Buffer.byteLength(svg)} bayt`);
-  assert.ok(Buffer.byteLength(src) < LIMIT, `anchor.js ${Buffer.byteLength(src)} bayt`);
+  assert.ok(Buffer.byteLength(src) < LIMIT, `anchor.ts ${Buffer.byteLength(src)} bayt`);
 });
 
 test("iki kopya aynı sayfada: gradyan kimlikleri çakışmaz", async () => {

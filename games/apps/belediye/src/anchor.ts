@@ -2,19 +2,19 @@
 // studioSVG(): 1600×900 SVG metni. Harici dosya yok; sınıflar, kimlikler ve animasyonlar "st-" önekli.
 // studio(kök): spiker denetimi → { talk, say, mood, react, setWall, year, stop }
 export let ST_N = 0;
-export const ST_REST = { neutral: "n", excited: "x", shocked: "s", happy: "h", sad: "d", smug: "m" };
+export const ST_REST: Record<string, string> = { neutral: "n", excited: "x", shocked: "s", happy: "h", sad: "d", smug: "m" };
 
-export function studioSVG() {
-  const p = "st" + ++ST_N + "-", u = n => `url(#${p}${n})`; // gradyan kimlikleri her kopyada ayrı
-  const S = (o, c, a) => `<stop offset="${o}" stop-color="${c}"${a != null ? ` stop-opacity="${a}"` : ""}/>`;
-  const L = (n, ...s) => `<linearGradient id="${p}${n}" x2="0" y2="1">${s.join("")}</linearGradient>`;
-  const RG = (n, ...s) => `<radialGradient id="${p}${n}">${s.join("")}</radialGradient>`;
+export function studioSVG(): string {
+  const p = "st" + ++ST_N + "-", u = (n: string) => `url(#${p}${n})`; // gradyan kimlikleri her kopyada ayrı
+  const S = (o: number, c: string, a?: number) => `<stop offset="${o}" stop-color="${c}"${a != null ? ` stop-opacity="${a}"` : ""}/>`;
+  const L = (n: string, ...s: string[]) => `<linearGradient id="${p}${n}" x2="0" y2="1">${s.join("")}</linearGradient>`;
+  const RG = (n: string, ...s: string[]) => `<radialGradient id="${p}${n}">${s.join("")}</radialGradient>`;
   const SK = "#f7cba6", SKD = "#e8a883", HAIR = "#2e1d17", INK = "#2b1a17", LIP = "#6e2629", TONG = "#ea7a80";
-  const rep = (xs, f) => xs.map(f).join("");
-  const ln = (d, c, w, k = "") => `<path class="st-r${k}" d="${d}" stroke="${c}" stroke-width="${w}"/>`; // yuvarlak uçlu çizgi
+  const rep = <T,>(xs: T[], f: (x: T, i: number) => string) => xs.map(f).join("");
+  const ln = (d: string, c: string, w: number, k = "") => `<path class="st-r${k}" d="${d}" stroke="${c}" stroke-width="${w}"/>`; // yuvarlak uçlu çizgi
 
   // Karakavak silueti: ev gövdeleri renk renk tek yol, damlar ve pencereler tek yol
-  const HOUSES = [[700, 84, 80, 0, 1], [784, 82, 104, 1, 0], [934, 84, 70, 2, 1], [1018, 86, 96, 0, 0], [1104, 88, 76, 1, 1],
+  const HOUSES: [number, number, number, number, number][] = [[700, 84, 80, 0, 1], [784, 82, 104, 1, 0], [934, 84, 70, 2, 1], [1018, 86, 96, 0, 0], [1104, 88, 76, 1, 1],
     [1192, 78, 112, 2, 0], [1270, 60, 64, 0, 1], [1486, 50, 72, 2, 1]];
   const B = 492, body = ["", "", ""];
   let roofs = "", caps = "", wins = "";
@@ -23,23 +23,23 @@ export function studioSVG() {
     body[c] += `M${x} ${t}h${w}V${B}H${x}z`;
     if (pitched) roofs += `M${x - 6} ${t}L${x + w / 2} ${t - 26}L${x + w + 6} ${t}z`;
     else caps += `M${x - 3} ${t - 7}h${w + 6}v8h${-w - 6}z`;
-    for (let r = 0; r < (h > 80 ? 2 : 1); r++) for (const fx of [.28, .72]) if ((i + r + (fx > .5)) % 3) wins += `M${Math.round(x + w * fx - 6)} ${t + 16 + r * 30}h12v16h-12z`;
+    for (let r = 0; r < (h > 80 ? 2 : 1); r++) for (const fx of [.28, .72]) if ((i + r + Number(fx > .5)) % 3) wins += `M${Math.round(x + w * fx - 6)} ${t + 16 + r * 30}h12v16h-12z`;
   });
   // kavun biçimli sokak lambası
-  const lamp = x => `<circle cx="${x}" cy="404" r="38" fill="${u("gy")}"/><path d="M${x} 492V414" stroke="#1d2757" stroke-width="6"/><ellipse cx="${x}" cy="404" rx="14" ry="11" fill="#eee37c"/>`
+  const lamp = (x: number) => `<circle cx="${x}" cy="404" r="38" fill="${u("gy")}"/><path d="M${x} 492V414" stroke="#1d2757" stroke-width="6"/><ellipse cx="${x}" cy="404" rx="14" ry="11" fill="#eee37c"/>`
     + ln(`M${x - 13} 404Q${x} 394 ${x + 13} 404M${x - 13} 404Q${x} 414 ${x + 13} 404M${x} 394V414`, "#8fae45", 2.2);
-  const star = (x, y, r) => `M${x} ${y - r}Q${x + r * .2} ${y - r * .2} ${x + r} ${y}Q${x + r * .2} ${y + r * .2} ${x} ${y + r}Q${x - r * .2} ${y + r * .2} ${x - r} ${y}Q${x - r * .2} ${y - r * .2} ${x} ${y - r}z`;
-  const drop = (x, y, s) => `M${x} ${y}q${-9 * s} ${14 * s} 0 ${19 * s}q${9 * s} ${-5 * s} 0 ${-19 * s}z`;
+  const star = (x: number, y: number, r: number) => `M${x} ${y - r}Q${x + r * .2} ${y - r * .2} ${x + r} ${y}Q${x + r * .2} ${y + r * .2} ${x} ${y + r}Q${x - r * .2} ${y + r * .2} ${x - r} ${y}Q${x - r * .2} ${y - r * .2} ${x} ${y - r}z`;
+  const drop = (x: number, y: number, s: number) => `M${x} ${y}q${-9 * s} ${14 * s} 0 ${19 * s}q${9 * s} ${-5 * s} 0 ${-19 * s}z`;
   // göz: beyaz (şaşkın), bebek + parıltı, mutlu yay, kırpılmış kapak
-  const eye = (x, s) => `<g class="st-eye"><ellipse class="st-scl" cx="${x}" cy="338" rx="21" ry="24" fill="#fff"/>
+  const eye = (x: number, s: string) => `<g class="st-eye"><ellipse class="st-scl" cx="${x}" cy="338" rx="21" ry="24" fill="#fff"/>
 <g class="st-pup"><ellipse cx="${x}" cy="338" rx="14.5" ry="18.5" fill="${INK}"/><circle cx="${x - 5}" cy="330" r="5.5" fill="#fff"/><circle cx="${x + 5}" cy="347" r="2.6" fill="#fff"/><path class="st-spk" d="${star(x + 5, 327, 6)}" fill="#fff"/></g>
 ${ln(`M${x - 15} 345Q${x} 322 ${x + 15} 345`, INK, 7, " st-hap")}<g clip-path="${u("e" + s)}"><rect class="st-lid${s}" x="${x - 22}" y="294" width="44" height="26" fill="${SK}"/></g></g>`;
   // kol: omuzdan +x yönüne uzanır, CSS dönüşüyle masaya ya da duvara
-  const arm = f => `${ln("M0 0H112", "#5c1826", 62)}${ln("M132 0H140", "#f6f4ee", 40)}${ln("M0 0H112", "#8a2c3c", 54)}${f ? `<rect class="st-fing" x="172" y="-7.5" width="40" height="15" rx="7.5" fill="${SK}"/>` : ""}<circle cx="164" r="22" fill="${SK}"/>`;
-  const mouth = (k, s) => `<g class="st-mo st-q${k}">${s}</g>`;
-  const D = (w, t, c, b) => `<path d="M${470 - w} ${t}Q470 ${c} ${470 + w} ${t}Q${467 + w} ${b - 2} 470 ${b}Q${473 - w} ${b - 2} ${470 - w} ${t}z" fill="${LIP}"/>`;
-  const TE = (w, t, c) => `<path d="M${474 - w} ${t + 1}Q470 ${c + 1} ${466 + w} ${t + 1}V${t + 9}Q470 ${c + 9} ${474 - w} ${t + 9}z" fill="#fff"/>`;
-  const TG = (y, w) => `<path d="M${470 - w} ${y}Q470 ${y - 11} ${470 + w} ${y}Q${463 + w} ${y + 9} 470 ${y + 9}Q${477 - w} ${y + 9} ${470 - w} ${y}z" fill="${TONG}"/>`;
+  const arm = (f: number) => `${ln("M0 0H112", "#5c1826", 62)}${ln("M132 0H140", "#f6f4ee", 40)}${ln("M0 0H112", "#8a2c3c", 54)}${f ? `<rect class="st-fing" x="172" y="-7.5" width="40" height="15" rx="7.5" fill="${SK}"/>` : ""}<circle cx="164" r="22" fill="${SK}"/>`;
+  const mouth = (k: string, s: string) => `<g class="st-mo st-q${k}">${s}</g>`;
+  const D = (w: number, t: number, c: number, b: number) => `<path d="M${470 - w} ${t}Q470 ${c} ${470 + w} ${t}Q${467 + w} ${b - 2} 470 ${b}Q${473 - w} ${b - 2} ${470 - w} ${t}z" fill="${LIP}"/>`;
+  const TE = (w: number, t: number, c: number) => `<path d="M${474 - w} ${t + 1}Q470 ${c + 1} ${466 + w} ${t + 1}V${t + 9}Q470 ${c + 9} ${474 - w} ${t + 9}z" fill="#fff"/>`;
+  const TG = (y: number, w: number) => `<path d="M${470 - w} ${y}Q470 ${y - 11} ${470 + w} ${y}Q${463 + w} ${y + 9} 470 ${y + 9}Q${477 - w} ${y + 9} ${470 - w} ${y}z" fill="${TONG}"/>`;
   const LAMPS = [270, 540, 810, 1080, 1350];
   const PX = [46, 150, 254, 1558];
   const TICK = ["Kavun fiyatları sabit, pazarcılar sandık başında", "Sandık görevlilerine çay servisi başladı", "Yukarıkavak sandığı traktörle yolda",
@@ -159,10 +159,10 @@ ${ln("M-18 -63q5 10 0 18M2 -65q5 10 0 18M22 -63q5 10 0 18", "#6b5642", 5)}${ln("
 }
 
 // Bütün dönüşümler ve animasyonlar yalnız transform ve opacity kullanır
-export function studioCSS() {
-  const Y = v => `translateY(${v}px) `, R = v => `rotate(${v}deg) `, t = (s, v) => `${s}{transform:${v}}`, K = (n, b) => `@keyframes st-${n}{${b}}`;
+export function studioCSS(): string {
+  const Y = (v: number) => `translateY(${v}px) `, R = (v: number) => `rotate(${v}deg) `, t = (s: string, v: string) => `${s}{transform:${v}}`, K = (n: string, b: string) => `@keyframes st-${n}{${b}}`;
   const E = "cubic-bezier(.3,1.5,.5,1)", I = " infinite", N = "none";
-  const T = { // ruh hâli → gövde, baş, kaş L, kaş R, bebek, kapak L, kapak R, perçem, yanak, görünenler
+  const T: Record<string, (string | number)[]> = { // ruh hâli → gövde, baş, kaş L, kaş R, bebek, kapak L, kapak R, perçem, yanak, görünenler
     excited: [Y(-8) + "scale(1.02)", R(-3), Y(-12), Y(-12), "scale(1.12)", "", "", "", .8, "spk,fxx"],
     shocked: [Y(-14), Y(-6), Y(-16) + "scale(1.05)", Y(-16) + "scale(1.05)", "scale(.48)", "", "", "scale(1.03,1.1)", .1, "scl,fxs"],
     happy: [R(-1), R(-5), Y(-6), Y(-6), "", "", "", "", .85, "hap"],
@@ -173,8 +173,8 @@ export function studioCSS() {
   let m = ".st-m-happy .st-pup{opacity:0}";
   for (const [k, v] of Object.entries(T)) {
     const r = `.st-m-${k} .st-`;
-    sel.forEach((s, i) => { if (v[i]) m += t(r + s, v[i]); });
-    m += `${r}chk{opacity:${v[8]}}` + v[9].split(",").map(s => r + s).join() + "{opacity:1}";
+    sel.forEach((s, i) => { if (v[i]) m += t(r + s, String(v[i])); });
+    m += `${r}chk{opacity:${v[8]}}` + String(v[9]).split(",").map(x => r + x).join() + "{opacity:1}";
   }
   m += [..."nxshdmaeo"].map(k => `.st-v-${k} .st-q${k}`).join() + "{opacity:1}";
   return `.st-f1{font-family:"Alfa Slab One",Rockwell,Georgia,serif}.st-f2{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:700;letter-spacing:1.5px}.st-c{text-anchor:middle}
@@ -223,18 +223,28 @@ ${K("tick", t("from", "translateX(1420px)") + t("to", "translateX(-2850px)"))}
 }
 
 // Denetim: studio(kök) → { talk, say, mood, react, setWall, year, stop }
-export function studio(rootEl) {
-  const svg = rootEl?.matches?.("svg.st-root") ? rootEl : rootEl?.querySelector("svg.st-root");
+/** Stüdyo denetimi */
+export interface Studio {
+  talk(v: boolean): void;
+  say(ms?: number): Promise<void>;
+  mood(n: string): void;
+  react(kind: string): void;
+  setWall(text: unknown): void;
+  year(y: number | string): void;
+  stop(): void;
+}
+export function studio(rootEl: Element | null): Studio {
+  const svg = (rootEl?.matches?.("svg.st-root") ? rootEl : rootEl?.querySelector("svg.st-root")) as SVGSVGElement | null;
   if (!svg) throw new Error("studio: stüdyo SVG'si bulunamadı");
   const mq = typeof matchMedia === "function" ? matchMedia("(prefers-reduced-motion: reduce)") : null;
-  const rm = () => !!mq?.matches, T = new Set(), rnd = (a, b) => a + Math.random() * (b - a);
-  const on = (c, v = true) => svg.classList.toggle(c, v);
-  const later = (f, ms) => { const t = setTimeout(() => { T.delete(t); f(); }, ms); T.add(t); return t; };
-  const cancel = t => { clearTimeout(t); T.delete(t); };
-  const restart = c => { on(c, false); void svg.getBoundingClientRect(); on(c); };
-  const REACT = { point: 1800, papers: 1000, lean: 2200, lights: 1500 }, rt = {};
+  const rm = () => !!mq?.matches, T = new Set<number>(), rnd = (a: number, b: number) => a + Math.random() * (b - a);
+  const on = (c: string, v = true) => svg.classList.toggle(c, v);
+  const later = (f: () => void, ms: number) => { const t = window.setTimeout(() => { T.delete(t); f(); }, ms); T.add(t); return t; };
+  const cancel = (t: number | undefined) => { window.clearTimeout(t); if (t != null) T.delete(t); };
+  const restart = (c: string) => { on(c, false); void svg.getBoundingClientRect(); on(c); };
+  const REACT: Record<string, number> = { point: 1800, papers: 1000, lean: 2200, lights: 1500 }, rt: Record<string, number> = {};
   const BUSY = ["st-point", "st-papers", "st-lean", "st-lights", "st-cat1", "st-cat2", "st-cat3"];
-  let mood = [...svg.classList].find(c => c.startsWith("st-m-"))?.slice(5) || "neutral", shape = "", talking = false, talkT = 0, sayT = 0, sayDone = null, catOn = false;
+  let mood = [...svg.classList].find(c => c.startsWith("st-m-"))?.slice(5) || "neutral", shape = "", talking = false, talkT = 0, sayT = 0, sayDone: (() => void) | null = null, catOn = false;
   const paint = () => {
     for (const c of [...svg.classList]) if (c.startsWith("st-v-")) svg.classList.remove(c);
     on("st-v-" + (shape || ST_REST[mood]));
@@ -251,7 +261,7 @@ export function studio(rootEl) {
     if (Math.random() < .05) { on("st-emph"); later(() => on("st-emph", false), 320); }
     paint(); talkT = later(syll, d);
   };
-  const talk = v => {
+  const talk = (v: boolean) => {
     v = !!v;
     if (v === talking) return;
     talking = v; on("st-talk", v); cancel(talkT);
@@ -260,7 +270,7 @@ export function studio(rootEl) {
   };
   const say = (ms = 1500) => {
     cancel(sayT); sayDone?.(); talk(true);
-    return new Promise(res => { sayDone = res; sayT = later(() => { sayDone = null; talk(false); res(); }, ms); });
+    return new Promise<void>(res => { sayDone = res; sayT = later(() => { sayDone = null; talk(false); res(); }, ms); });
   };
 
   // Boşta: 2-6 sn arayla göz kırpma, ara sıra kartlara göz atma. Nefes, yayın parıltısı ve kayan yazı CSS'te.
@@ -282,23 +292,23 @@ export function studio(rootEl) {
     later(() => { on("st-cat2", false); on("st-cat3"); }, 4000);
     later(() => { end(); on("st-penin"); later(() => on("st-penin", false), 800); }, 6500);
   };
-  const react = kind => {
+  const react = (kind: string) => {
     if (kind === "cat") return cat();
     const ms = REACT[kind], c = "st-" + kind;
     if (!ms) return;
     cancel(rt[kind]); restart(c);
     rt[kind] = later(() => on(c, false), ms);
   };
-  const setWall = text => {
-    const t = svg.querySelector(".st-cap"), W = 700;
+  const setWall = (text: unknown) => {
+    const t = svg.querySelector<SVGTextElement>(".st-cap"), W = 700;
     if (!t) return;
     t.textContent = String(text ?? "").toLocaleUpperCase("tr-TR");
     t.removeAttribute("textLength"); t.removeAttribute("lengthAdjust");
-    try { if (t.getComputedTextLength() > W) { t.setAttribute("textLength", W); t.setAttribute("lengthAdjust", "spacingAndGlyphs"); } } catch { /* görünmüyorsa ölçülemez */ }
+    try { if (t.getComputedTextLength() > W) { t.setAttribute("textLength", String(W)); t.setAttribute("lengthAdjust", "spacingAndGlyphs"); } } catch { /* görünmüyorsa ölçülemez */ }
     if (!rm()) { restart("st-capin"); later(() => on("st-capin", false), 500); }
   };
-  const year = y => { const t = svg.querySelector("#st-year"); if (t) t.textContent = String(y); };
-  const setMood = n => { if (!ST_REST[n]) n = "neutral"; on("st-m-" + mood, false); mood = n; on("st-m-" + n); paint(); };
+  const year = (y: number | string) => { const t = svg.querySelector("#st-year"); if (t) t.textContent = String(y); };
+  const setMood = (n: string) => { if (!ST_REST[n]) n = "neutral"; on("st-m-" + mood, false); mood = n; on("st-m-" + n); paint(); };
   const stop = () => {
     for (const t of T) clearTimeout(t);
     T.clear(); sayDone?.(); sayDone = null; talking = false; shape = ""; catOn = false;

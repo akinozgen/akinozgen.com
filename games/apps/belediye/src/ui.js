@@ -600,9 +600,9 @@ function ballotBoxes(res, rng) {
   return boxes;
 }
 let tvStop = null; // açık yayının zamanlayıcılarını ve spikeri durdurur
-// Seçim gecesi ayrı parçada (secim.js): seçim yaklaşınca önceden, en geç yayın açılırken yüklenir
+// Seçim gecesi ayrı parçada (secim.ts): seçim yaklaşınca önceden, en geç yayın açılırken yüklenir
 let tvP = null;
-const tvYukle = () => (tvP ||= import("./secim.js"));
+const tvYukle = () => (tvP ||= import("./secim.ts"));
 async function electionNight(res) {
   const tv = await tvYukle(), { fx, kj, ticker, tvName, tvNumEk, tvShort, studio, studioSVG } = tv;
   tvStop?.();

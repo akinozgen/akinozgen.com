@@ -19,54 +19,76 @@
 // satırı eler; başlıkta tam ad sığmazsa kısa ad (tvShort) denenir.
 import { PEOPLE } from "./cards.ts";
 import { dateLabel } from "./engine.ts";
+import type { Rng, Tally } from "./types.ts";
+
+/** Yayının o anki durumu (ui.ts seçim gecesi akışı doldurur) */
+export interface TvCtx {
+  res?: Partial<Tally>;
+  playerName?: string;
+  pct?: Record<string, number>;
+  leader?: string | null;
+  prev?: string | null;
+  opened?: number;
+  mahalle?: string | null;
+  early?: boolean;
+  flags?: Record<string, boolean>;
+  seen?: Set<string>;
+}
+/** Satırların koşullarına verilen görünüm (tvView) */
+export type TvView = ReturnType<typeof tvView>;
+type Pred = (v: TvView) => unknown;
+/** Havuz satırı: düz metin ya da [koşul, metin, ağırlık?] */
+export type Line = string | [Pred, string] | [Pred, string, number];
+type Mode = "title" | "sub" | "tick" | "raw";
+type Vars = Record<string, string | number | null | undefined>;
 
 export const KANAL = { ad: "KARAKAVAK TV", kisa: "KTV" };
 export const TV_MAX = { title: 34, sub: 90, tick: 110, quote: 70 };
 export const TV_W = 2.5; // duruma özgü satırın ağırlığı (genel satır 1)
 
 // ── Yardımcılar
-export const tvUp = s => String(s).toLocaleUpperCase("tr");
-export const tvCap = s => (s ? s[0].toLocaleUpperCase("tr") + s.slice(1) : s);
-export function tvNum(v, d = 1) {
+export const tvUp = (s: unknown) => String(s).toLocaleUpperCase("tr");
+export const tvCap = (s: string) => (s ? s[0].toLocaleUpperCase("tr") + s.slice(1) : s);
+export function tvNum(v: number, d = 1) {
   const [i, f] = Math.abs(v).toFixed(d).split(".");
   return (v < 0 ? "−" : "") + i.replace(/\B(?=(\d{3})+(?!\d))/g, ".") + (f ? "," + f : "");
 }
-export const tvDec = v => tvNum(v, 1).replace(/,0$/, ""); // 41,0 → 41
+export const tvDec = (v: number) => tvNum(v, 1).replace(/,0$/, ""); // 41,0 → 41
 export const TV_SAYI = ["sıfır", "bir", "iki", "üç", "dört", "beş", "altı", "yedi"];
 // Sayıya iyelik eki: %37'si, %40'ı, %99,8'i, %100'ü (son okunan sözcüğe göre)
 export const TV_EK1 = ["", "i", "si", "ü", "ü", "i", "sı", "si", "i", "u"];   // bir iki üç dört beş altı yedi sekiz dokuz
 export const TV_EK10 = ["", "u", "si", "u", "ı", "si", "ı", "i", "i", "ı"];  // on yirmi otuz kırk elli altmış yetmiş seksen doksan
-export function tvNumEk(s) {
+export function tvNumEk(s: string | number) {
   const d = String(s).replace(/\D/g, "");
   if (!/[1-9]/.test(d)) return "'ı";
   const t = d.replace(/0+$/, ""), z = d.length - t.length, last = +t[t.length - 1];
   return "'" + (z === 0 ? TV_EK1[last] : z === 1 ? TV_EK10[last] : z === 2 ? "ü" : z < 6 ? "i" : "u");
 }
 // Özel ada ek (ünlü uyumu, kaynaştırma, sertleşme): Nermin Hanım'ın, Rıza'ya, Burak'ta
-export function tvEk(w, k) {
+export function tvEk(w: string | number, k: string) {
   const s = String(w).trim(), low = s.toLocaleLowerCase("tr");
   const vs = low.match(/[aıoueiöü]/g), last = vs ? vs[vs.length - 1] : "e";
   const endV = /[aıoueiöü]$/.test(low), hard = "çfhkpsşt".includes(low.slice(-1));
   const back = "aıou".includes(last), round = "ouöü".includes(last);
   const i4 = back ? (round ? "u" : "ı") : (round ? "ü" : "i"), a2 = back ? "a" : "e";
-  const ek = { in: (endV ? "n" : "") + i4 + "n", i: (endV ? "y" : "") + i4, e: (endV ? "y" : "") + a2,
-    de: (hard ? "t" : "d") + a2, den: (hard ? "t" : "d") + a2 + "n" }[k];
+  const ek = ({ in: (endV ? "n" : "") + i4 + "n", i: (endV ? "y" : "") + i4, e: (endV ? "y" : "") + a2,
+    de: (hard ? "t" : "d") + a2, den: (hard ? "t" : "d") + a2 + "n" } as Record<string, string>)[k];
   return ek == null ? s : s + "'" + ek;
 }
-export function tvFill(t, vars, short) {
-  return t.replace(/\{(\w+)(?::(\w+))?\}/g, (m, k, ek) => {
+export function tvFill(t: string, vars: Vars, short: boolean) {
+  return t.replace(/\{(\w+)(?::(\w+))?\}/g, (m, k: string, ek: string | undefined) => {
     const x = short && vars["_" + k] != null ? vars["_" + k] : vars[k];
     if (x == null || x === "") return m; // eksik değer: satır elenir
     return ek ? tvEk(x, ek) : String(x);
   });
 }
-export const tvOk = (s, max) => !!s && s.length <= max && !/[{}]|undefined|null|NaN/.test(s);
+export const tvOk = (s: string, max: number) => !!s && s.length <= max && !/[{}]|undefined|null|NaN/.test(s);
 export const tvYes = () => true;
 // Havuzdan ağırlıklı seçim. mode: "title" (büyük harf, sığmazsa kısa ad), "sub" (cümle başı büyük), "tick", "raw"
-export function tvPool(list, v, max, mode) {
-  const pool = [];
+export function tvPool(list: Line[], v: TvView, max: number, mode: Mode) {
+  const pool: { s: string; w: number }[] = [];
   for (const e of list) {
-    const [p, t, w] = typeof e === "string" ? [null, e] : e;
+    const [p, t, w]: [Pred | null, string, number?] = typeof e === "string" ? [null, e] : e;
     if (p && !p(v)) continue;
     let s = tvFill(t, v.vars, false);
     if (mode === "title") { s = tvUp(s); if (s.length > max) s = tvUp(tvFill(t, v.vars, true)); }
@@ -75,7 +97,7 @@ export function tvPool(list, v, max, mode) {
   }
   return pool;
 }
-export function tvDraw(pool, rng, seen) {
+export function tvDraw(pool: { s: string; w: number }[], rng: Rng, seen?: Set<string>) {
   const fresh = seen ? pool.filter(x => !seen.has(x.s)) : pool, from = fresh.length ? fresh : pool;
   if (!from.length) return null;
   let r = rng() * from.reduce((a, x) => a + x.w, 0), pick = from[from.length - 1];
@@ -83,16 +105,16 @@ export function tvDraw(pool, rng, seen) {
   seen?.add?.(pick.s);
   return pick.s;
 }
-export const tvChoose = (list, v, rng, max, mode, fallback) => tvDraw(tvPool(list, v, max, mode), rng, v.seen) ?? fallback;
+export const tvChoose = (list: Line[], v: TvView, rng: Rng, max: number, mode: Mode, fallback: string): string => tvDraw(tvPool(list, v, max, mode), rng, v.seen) ?? fallback;
 
 // ── Adlar
 // Mahalle şeridi için kısa ad. Bey'ler adıyla anılır (S. BEY ile N. BEY karışmasın).
-export const TV_KISA = { vekil: "SUAT BEY", cengiz: "CENGİZ BEY", kaan: "KAAN BEY", albay: "NURİ BEY", burak: "BURAK", tekir: "TEKİR", tuncay: "TUNCAY" };
-export function tvName(id, playerName) {
+export const TV_KISA: Record<string, string> = { vekil: "SUAT BEY", cengiz: "CENGİZ BEY", kaan: "KAAN BEY", albay: "NURİ BEY", burak: "BURAK", tekir: "TEKİR", tuncay: "TUNCAY" };
+export function tvName(id: string, playerName?: string) {
   if (id === "you") return String(playerName || "").trim() || "Başkan";
   return PEOPLE[id]?.ad || String(id);
 }
-export function tvShort(id, playerName) {
+export function tvShort(id: string, playerName?: string) {
   if (TV_KISA[id]) return TV_KISA[id];
   const w = tvName(id, playerName).split(/\s+/).filter(Boolean);
   if (w.length <= 1) return tvUp(w[0] || "BAŞKAN").slice(0, 16);
@@ -101,7 +123,7 @@ export function tvShort(id, playerName) {
 }
 
 // ── Mahalleler: ek almış hâlleri ve kendi satırları
-export const TV_MAH = {
+export const TV_MAH: Record<string, { s?: string; de?: string; sub: Line[] }> = {
   "Kavun Ovası": { de: "Kavun Ovası'nda", sub: [
     "Köylerden ilk tutanaklar geldi; kavun kasasında taşındı, hâlâ kavun kokuyor",
     "Ovada katılım yüksek; seçmen hasat molasında sandığa uğramış",
@@ -154,7 +176,7 @@ export const TV_MAH = {
 };
 
 // ── Öndeki adaya özgü satırlar (sayım ve liderlik evrelerinde)
-export const TV_ONDE = {
+export const TV_ONDE: Record<string, string[]> = {
   you: ["{you} önde; makam odasında semaver ikinci kez kaynadı",
     "{you} önde; Fikret yine de 'Yukarıkavak gelmeden konuşmayalım' diyor",
     "{you} önde; kayınvalide Naciye Hanım dolmaları ocağa koydu"],
@@ -191,7 +213,7 @@ export const TV_ONDE = {
 };
 
 // ── Kazanan sözleri ve yenilgi açıklamaları (≤ 70)
-export const TV_SOZ = {
+export const TV_SOZ: Record<string, { win: Line[]; lose: Line[] }> = {
   you: {
     win: ["Bu zafer Karakavak'ın; çaylar benden.", "Oy vermeyenlerin de başkanıyım, çay vermeyenlerin de.",
       "Seçim bitti, evrak bekliyor. Fikret, çay!", "İlk iş Yukarıkavak'ın yolu; traktör yoruldu.",
@@ -259,7 +281,7 @@ export const TV_SOZ = {
 };
 
 // ── Alt bant (KJ) satırları
-export const TV_KJ = {
+export const TV_KJ: Record<string, { title: Line[]; sub: Line[] }> = {
   acilis: {
     title: ["Yayın yasağı kalktı", "Yayın yasağı kalktı", "Karakavak sandık başında", "Seçim gecesi başladı",
       "İlk sandıklar geliyor", "KTV seçim özel",
@@ -389,7 +411,7 @@ export const TV_KJ = {
 };
 
 // ── Son dakika bandı. Kategori: secim + yerel (≈%40), ulusal (≈%30), dunya (≈%30)
-export const TV_TICK = {
+export const TV_TICK: Record<string, Line[]> = {
   secim: [
     "Yukarıkavak sandığını getiren traktör çamura saplandı; muhtar 'sandık bende, traktör sizde' dedi",
     "Sanayi sandığında itiraz: zarftan bakkal fişi çıktı. Fiş de sayıldı: 3 simit, 1 ayran",
@@ -532,53 +554,55 @@ export const TV_TICK = {
     "Kutuplardan kopan buzdağı bir ülkenin yüzölçümünü geçti; bağımsızlık ilan etmedi, şimdilik",
   ],
 };
-export const TV_GRUP = { secim: "karakavak", yerel: "karakavak", ulusal: "ulusal", dunya: "dunya" };
+export const TV_GRUP: Record<string, string> = { secim: "karakavak", yerel: "karakavak", ulusal: "ulusal", dunya: "dunya" };
 
 // ── Döviz ve fiyat kutusu: [ad, taban, oynaklık, yön (yoksa rastgele), yuvarlama adımı]
 // Dolar hep çıkar, sabır hep iner; simit ve çay esnaf fiyatıyla (yuvarlak) yazılır.
-export const TV_FX = [
+export const TV_FX: [string, number, number, ("▲" | "▼" | null)?, number?][] = [
   ["KAVUN/TL", 14.9, 0.12, null, 0.1], ["ÇAY/BARDAK", 17.5, 0.06, "▲", 0.5], ["DOLAR", 74.35, 0.02, "▲"], ["EURO", 81.9, 0.03],
   ["ALTIN/GR", 7412, 0.03], ["SİMİT", 45, 0.08, "▲", 2.5], ["TEKİR MAMASI/KG", 389.9, 0.06, null, 0.1], ["MAZOT/LT", 88.4, 0.04],
   ["SABIR/GÜN", 0.04, 0.5, "▼"], ["OKEY TAŞI", 12.75, 0.1, null, 0.25], ["MÜJDE/HAFTA", 4, 0.4, "▲", 1], ["KİRA/ODA", 18500, 0.05, "▲", 250],
 ];
 
 // ── Durum görünümü: satırların koşulları ve yer tutucuları buradan beslenir
-export function tvView(ctx, phase) {
-  ctx = ctx || {};
-  const res = ctx.res || {}, cands = Array.isArray(res.cands) ? res.cands : [];
-  const ids = cands.map(c => c.id), fin = Object.fromEntries(cands.map(c => [c.id, c.pct]));
-  const opened = Math.max(0, Math.min(1, Number(ctx.opened) || 0));
+export function tvView(ctx: TvCtx | null | undefined, phase: string) {
+  const c: TvCtx = ctx || {};
+  // yarım bağlamda (sayım başı, testler) sonucun bazı alanları olmayabilir; koşullar yalnız anlamlı evrede okur
+  const res = (c.res || {}) as Tally, cands = Array.isArray(res.cands) ? res.cands : [];
+  const ids = cands.map(x => x.id), fin: Record<string, number> = Object.fromEntries(cands.map(x => [x.id, x.pct]));
+  const opened = Math.max(0, Math.min(1, Number(c.opened) || 0));
   const done = phase === "sonuc" || opened >= 1;
-  const given = ctx.pct && typeof ctx.pct === "object" && Object.keys(ctx.pct).length ? ctx.pct : null;
+  const given = c.pct && typeof c.pct === "object" && Object.keys(c.pct).length ? c.pct : null;
   const pct = phase === "sonuc" ? fin : given || (done ? fin : null);
-  const run = pct ? ids.filter(id => Number.isFinite(pct[id])).sort((a, b) => pct[b] - pct[a]) : [];
-  const winner = res.winner || ids[0] || null;
-  const leader = phase === "sonuc" ? winner : ids.includes(ctx.leader) ? ctx.leader : run[0] || null;
+  const run = pct ? ids.filter(id => Number.isFinite(pct[id])).sort((x, y) => pct[y] - pct[x]) : [];
+  const winner: string | null = res.winner || ids[0] || null;
+  const leader: string | null = phase === "sonuc" ? winner : c.leader && ids.includes(c.leader) ? c.leader : run[0] || null;
   const second = pct ? run.find(id => id !== leader) || null : null;
+  // bilinmeyen fark NaN: "fark 10'dan büyük", "fark 1,5'ten küçük" gibi koşullar yanlış çıkar
   const gap = phase === "sonuc" && Number.isFinite(res.margin) ? res.margin
-    : leader && second && pct ? Math.max(0, pct[leader] - pct[second]) : null;
-  const nm = id => tvName(id, ctx.playerName), sh = id => tvShort(id, ctx.playerName);
+    : leader && second && pct ? Math.max(0, pct[leader] - pct[second]) : NaN;
+  const nm = (id: string) => tvName(id, c.playerName), sh = (id: string) => tvShort(id, c.playerName);
   const oranV = opened >= 1 ? 100 : opened * 100 >= 99.5 ? Math.floor(opened * 1000) / 10 : Math.max(1, Math.round(opened * 100));
   const oranS = tvDec(oranV), rank = ids.indexOf("you") + 1;
-  const vars = { you: nm("you"), _you: sh("you"), n: ids.length || null, nY: TV_SAYI[ids.length], nY1: TV_SAYI[ids.length + 1] };
-  const put = (k, id) => { if (id) { vars[k] = nm(id); vars["_" + k] = sh(id); } };
+  const vars: Vars = { you: nm("you"), _you: sh("you"), n: ids.length || null, nY: TV_SAYI[ids.length], nY1: TV_SAYI[ids.length + 1] };
+  const put = (k: string, id: string | null | undefined) => { if (id) { vars[k] = nm(id); vars["_" + k] = sh(id); } };
   put("lider", leader); put("ikinci", second); put("kazanan", done ? winner : null);
-  put("prev", ids.includes(ctx.prev) ? ctx.prev : null);
+  put("prev", c.prev && ids.includes(c.prev) ? c.prev : null);
   if (run.length >= 2) { put("a", run[0]); put("b", run[1]); }
-  if (gap != null) vars.fark = tvDec(gap);
+  if (!Number.isNaN(gap)) vars.fark = tvDec(gap);
   if (opened > 0) { vars.oran = "%" + oranS; vars.oranEk = "%" + oranS + tvNumEk(oranS); }
   if (done && Number.isFinite(res.you)) vars.youf = "%" + tvDec(res.you);
   if (done && winner && Number.isFinite(fin[winner])) vars.kpct = "%" + tvDec(fin[winner]);
   if (done && rank) vars.sira = rank;
-  if (Number.isFinite(res.month) && typeof dateLabel === "function") vars.tarih = dateLabel(res.month);
-  const mah = ctx.mahalle || null;
+  if (Number.isFinite(res.month)) vars.tarih = dateLabel(res.month);
+  const mah = c.mahalle || null;
   if (mah) { vars.mah = mah; vars.mahs = TV_MAH[mah]?.s || mah; vars.mahde = TV_MAH[mah]?.de || tvEk(mah, "de"); }
-  const early = !!(ctx.early ?? res.early);
+  const early = !!(c.early ?? res.early);
   return {
-    ctx, res, ids, has: id => ids.includes(id), n: ids.length, leader, second, gap, opened, mah, early,
-    flags: ctx.flags || {}, prev: ctx.prev || null, seen: ctx.seen,
+    ctx: c, res, ids, has: (id: string) => ids.includes(id), n: ids.length, leader, second, gap, opened, mah, early,
+    flags: c.flags || {}, prev: c.prev || null, seen: c.seen,
     youLead: leader === "you", youBehind: !!leader && leader !== "you",
-    close: gap != null && gap < 1.5, mid: opened > 0 && opened < 1,
+    close: gap < 1.5, mid: opened > 0 && opened < 1,
     win: done && !!res.win, lost: done && !res.win && winner !== "tekir", tekirWon: done && winner === "tekir",
     winner, margin: Number.isFinite(res.margin) ? res.margin : 0,
     a: vars.a, b: vars.b, vars,
@@ -586,16 +610,17 @@ export function tvView(ctx, phase) {
 }
 
 // ── Alt bant
-export function kj(phase, ctx, rng) {
+export function kj(phase: string, ctx: TvCtx, rng: Rng) {
   const v = tvView(ctx, phase), P = TV_KJ[phase] || TV_KJ.sayim;
-  let titles = P.title, subs = P.sub;
-  if (phase === "sayim" || phase === "lider") subs = [...subs, ...(TV_ONDE[v.leader] || []).map(t => [tvYes, t])];
-  if (phase === "mahalle") subs = [...subs, ...(TV_MAH[v.mah]?.sub || [])];
+  const titles: Line[] = P.title;
+  let subs: Line[] = P.sub;
+  if (phase === "sayim" || phase === "lider") subs = [...subs, ...((v.leader && TV_ONDE[v.leader]) || []).map((t): Line => [tvYes, t])];
+  if (phase === "mahalle") subs = [...subs, ...((v.mah && TV_MAH[v.mah]?.sub) || [])];
   if (phase === "sonuc") {
-    const q = id => (TV_SOZ[id] || TV_SOZ._)[id === v.winner ? "win" : "lose"];
+    const q = (id: string) => (TV_SOZ[id] || TV_SOZ._)[id === v.winner ? "win" : "lose"];
     // gerçek yayınlardaki gibi "KAZANAN: '…'" ağır basar; kaybeden oyuncunun açıklaması arada bir gelir
-    const said = (who, list, w) => list.map(e => (typeof e === "string" ? [tvYes, `{${who}}: '${e}'`, w] : [e[0], `{${who}}: '${e[1]}'`, w]));
-    subs = [...subs, ...said("kazanan", q(v.winner), 4), ...(v.win ? [] : said("you", q("you"), 0.8))];
+    const said = (who: string, list: Line[], w: number) => list.map((e): Line => (typeof e === "string" ? [tvYes, `{${who}}: '${e}'`, w] : [e[0], `{${who}}: '${e[1]}'`, w]));
+    subs = [...subs, ...said("kazanan", q(v.winner ?? ""), 4), ...(v.win ? [] : said("you", q("you"), 0.8))];
   }
   const title = tvChoose(titles, v, rng, TV_MAX.title, "title", tvUp(KANAL.ad + " SEÇİM GECESİ"));
   const sub = tvChoose(subs, v, rng, TV_MAX.sub, "sub", "Karakavak seçim gecesi sürüyor");
@@ -603,33 +628,33 @@ export function kj(phase, ctx, rng) {
 }
 
 // ── Son dakika bandı: [{ t, cat }]; ticker() yalnız metinleri döndürür
-export function tickerTagged(ctx, rng) {
+export function tickerTagged(ctx: TvCtx, rng: Rng) {
   const v = tvView(ctx, "ticker");
   const n = 8 + Math.floor(rng() * 5);
   const nK = Math.round(n * 0.4), nU = Math.round(n * 0.3), nD = n - nK - nU;
-  const nS = Math.max(2, Math.ceil(nK * 0.6)), want = { secim: nS, yerel: nK - nS, ulusal: nU, dunya: nD };
+  const nS = Math.max(2, Math.ceil(nK * 0.6)), want: Record<string, number> = { secim: nS, yerel: nK - nS, ulusal: nU, dunya: nD };
   // ağırlıklı, yerine koymadan seçim (Efraimidis-Spirakis): duruma özgü satır öne çıkar
-  const take = (cat, k) => tvPool(TV_TICK[cat], v, TV_MAX.tick, "tick")
+  const take = (cat: string, k: number) => tvPool(TV_TICK[cat], v, TV_MAX.tick, "tick")
     .filter(x => !v.seen?.has?.(x.s))
     .map(x => ({ t: x.s, cat, key: Math.pow(rng(), 1 / x.w) })).sort((a, b) => b.key - a.key).slice(0, k);
-  const bag = Object.fromEntries(Object.keys(want).map(c => [c, take(c, want[c])]));
+  const bag: Record<string, { t: string; cat: string; key: number }[]> = Object.fromEntries(Object.keys(want).map(c => [c, take(c, want[c])]));
   // sıralama: ilk haber seçimden; sonra aynı kümeden iki haber art arda gelmesin
-  const out = [];
-  let last = null;
+  const out: { t: string; cat: string }[] = [];
+  let last: string | null = null;
   while (Object.values(bag).some(a => a.length)) {
     const cats = Object.keys(bag).filter(c => bag[c].length);
-    let opts = out.length ? cats.filter(c => TV_GRUP[c] !== last) : cats.filter(c => c === "secim");
+    let opts: string[] = out.length ? cats.filter(c => TV_GRUP[c] !== last) : cats.filter(c => c === "secim");
     if (!opts.length) opts = cats;
     const most = Math.max(...opts.map(c => bag[c].length)), top = opts.filter(c => bag[c].length >= most - 1);
-    const c = top[Math.floor(rng() * top.length)], item = bag[c].shift();
+    const c = top[Math.floor(rng() * top.length)], item = bag[c].shift()!;
     out.push({ t: item.t, cat: c }); last = TV_GRUP[c]; v.seen?.add?.(item.t);
   }
   return out;
 }
-export const ticker = (ctx, rng) => tickerTagged(ctx, rng).map(x => x.t);
+export const ticker = (ctx: TvCtx, rng: Rng) => tickerTagged(ctx, rng).map(x => x.t);
 
 // ── Döviz kutusu (i ile döner)
-export function fx(i, rng) {
+export function fx(i: number, rng: Rng) {
   const N = TV_FX.length, [ad, base, vol, dir, step] = TV_FX[((Math.floor(i) || 0) % N + N) % N];
   let val = base * (1 + (rng() * 2 - 1) * vol);
   if (step) val = Math.round(val / step) * step;
@@ -638,14 +663,14 @@ export function fx(i, rng) {
 }
 
 // ── Kazanan sözü ya da yenilgi açıklaması (≤ 70)
-export function winnerQuote(id, ctx, rng) {
+export function winnerQuote(id: string, ctx: TvCtx, rng: Rng) {
   const v = tvView(ctx, "sonuc"), q = TV_SOZ[id] || TV_SOZ._;
   const won = !v.res.cands ? true : v.winner === id;
-  return tvChoose(won ? q.win : q.lose, v, rng, TV_MAX.quote, "raw", won ? TV_SOZ._.win[0] : TV_SOZ._.lose[0]);
+  return tvChoose(won ? q.win : q.lose, v, rng, TV_MAX.quote, "raw", String(won ? TV_SOZ._.win[0] : TV_SOZ._.lose[0]));
 }
 
 // ── "Neden?" paneli: TV diliyle sonuç okuması
-export const TV_CALDI = {
+export const TV_CALDI: Record<string, string> = {
   nermin: "Nermin Hanım sizden {v} puan aldı; muhalefetin oyu bu kez sandığa geldi.",
   vekil: "Suat Bey sizden {v} puan aldı; Ankara'nın selamı sandığa kadar ulaştı.",
   cengiz: "Cengiz Bey sizden {v} puan aldı; beton her mahallede biraz oy döktü.",
@@ -657,9 +682,9 @@ export const TV_CALDI = {
   albay: "Nuri Bey sizden {v} puan aldı; nizam intizam sevenler hazır ola geçti.",
   tekir: "Tekir sizden {v} puan aldı; kediye kızamayan seçmen oyunu ona verdi.",
 };
-export function whyLines(res, playerName) {
+export function whyLines(res: Tally | null | undefined, playerName?: string) {
   if (!res || !Array.isArray(res.cands)) return [];
-  const out = [], d = x => tvDec(Number(x) || 0), w = res.cands[0];
+  const out: string[] = [], d = (x: unknown) => tvDec(Number(x) || 0), w = res.cands[0];
   if (w && Number.isFinite(w.pct)) out.push(`Kesin sonuç: ${tvName(w.id, playerName)} %${d(w.pct)}${Number.isFinite(res.margin) ? `, fark ${d(res.margin)} puan` : ""}.`);
   const ek = res.cands.length - 2;
   if (Number.isFinite(res.p0)) out.push(ek <= 0 ? (Math.abs(res.p0 - res.you) < 0.5
@@ -669,7 +694,7 @@ export function whyLines(res, playerName) {
     : res.win ? `Teke tek ankette %${d(res.p0)} idiniz; oyların bölünmesi işinize yaradı.`
     : `Teke tek ankette %${d(res.p0)} idiniz; yokuş yukarı bir seçimdi.`);
   for (const x of res.steal || []) if (x.v >= 1)
-    out.push(tvFill(TV_CALDI[x.id] || `${tvName(x.id)} sizden yaklaşık {v} puan aldı.`, { v: d(x.v) }));
+    out.push(tvFill(TV_CALDI[x.id] || `${tvName(x.id)} sizden yaklaşık {v} puan aldı.`, { v: d(x.v) }, false));
   if (res.win && res.you < 50) out.push(`Oylar bölündü; %${d(res.you)} ile birinci çıktınız. Birinci birincidir.`);
   if (!res.win && w && w.id !== "you") out.push(`Siz %${d(res.you)} ile ${res.cands.findIndex(c => c.id === "you") + 1}. sıradasınız; makam el değiştirdi.`);
   if (Number.isFinite(res.margin) && res.margin < 1) out.push(`Fark ${d(res.margin)} puan: bir sandık kurulunun çay molası kadar.`);
