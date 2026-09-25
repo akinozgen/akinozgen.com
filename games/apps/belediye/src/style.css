@@ -2611,6 +2611,44 @@ div.ay-row {
   letter-spacing: 0.16em;
   color: #5a5040;
 }
+/* sonlar defteri: görülen sonlar adıyla, görülmeyenler soru işaretiyle */
+.sonlar {
+  width: min(100%, 46rem);
+  padding: 0.75rem 1rem 0.875rem;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 0.25rem;
+  color: #2a2620;
+}
+.sonlar h3 {
+  margin: 0 0 0.5rem;
+  font: 700 0.8125rem/1 var(--f-ui);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-align: center;
+}
+.sonlar ul {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.375rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sonlar li {
+  padding: 0.25rem 0.5rem;
+  font: 400 0.8125rem/1.2 var(--f-type);
+  border: 1px solid rgba(42, 38, 32, 0.35);
+  border-radius: 0.1875rem;
+}
+.sonlar li.win {
+  border-color: #9a7a2a;
+  background: rgba(226, 189, 90, 0.25);
+}
+.sonlar li.yok {
+  opacity: 0.45;
+  letter-spacing: 0.2em;
+}
 .wall-msg {
   font: 400 1.0313rem/1.5 var(--f-type);
   text-align: center;

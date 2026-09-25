@@ -240,7 +240,7 @@ export const BASKANLAR: Record<string, Baskan> = {
     cins: "e",
     ad: "Hikmet Çınaroğlu",
     lakap: "Borç Yadigârı",
-    bio: "Otuz yıl belediye muhasebesinde çalıştı; SGK borcunu üç başkandan devraldı, dördüncüye bırakmayı planlıyor. Makam aracı haczedilince otobüse bindi, halk tevazu sandı.",
+    bio: "Otuz yıl belediye muhasebesinde çalıştı; prim borcunu üç başkandan devraldı, dördüncüye bırakmayı planlıyor. Makam aracı haczedilince otobüse bindi, halk tevazu sandı.",
   },
   "baskan-12": {
     cins: "k",
@@ -252,7 +252,7 @@ export const BASKANLAR: Record<string, Baskan> = {
     cins: "k",
     ad: "Pınar Ekinci",
     lakap: "Rekortmen Pınar",
-    bio: "'Dünyanın en büyük kavun reçeli' rekor denemesini o yönetti. Kazan tartılırken ayağı kırıldı, rekor onaylanmadı. Reçel hâlâ belediye deposunda, Guinness'ten cevap bekliyor.",
+    bio: "'Dünyanın en büyük kavun reçeli' rekor denemesini o yönetti. Kazan tartılırken ayağı kırıldı, rekor onaylanmadı. Reçel hâlâ belediye deposunda, rekor kurulundan cevap bekliyor.",
   },
   "baskan-14": {
     cins: "k",
@@ -409,20 +409,20 @@ export const CARDS: CardDef[] = [
   {
     id: "halkekmek",
     who: "bekir",
-    konu: "Halk Ekmek büfesi",
+    konu: "Ucuz ekmek büfesi",
     fav: "L",
-    text: "Halk Ekmek büfesi açacakmışsınız. Fırıncılar ayakta başkanım, 'belediye bize rakip mi oldu' diyorlar.",
+    text: "Ucuz ekmek büfesi açacakmışsınız. Fırıncılar ayakta başkanım, 'belediye bize rakip mi oldu' diyorlar.",
     alt: [
       {
         req: "kucuk_ekmek",
-        text: "Ekmek simit boyuna inince Halk Ekmek büfesi açacakmışsınız. Fırıncılar ayakta başkanım: 'Gramajı biz düşürdük, şimdi belediye bize rakip mi oldu?' diyorlar.",
+        text: "Ekmek simit boyuna inince ucuz ekmek büfesi açacakmışsınız. Fırıncılar ayakta başkanım: 'Gramajı biz düşürdük, şimdi belediye bize rakip mi oldu?' diyorlar.",
       },
     ],
     L: { t: "Vazgeçtik", e: [-6, 0, 10, 0] },
     R: {
       t: "Ekmek ucuzlasın",
       e: [12, -3, -12, 0],
-      pol: { id: "halkekmek", ad: "Halk Ekmek büfesi", e: [0, -1, 0, 0], ay: 18 },
+      pol: { id: "halkekmek", ad: "Ucuz ekmek büfesi", e: [0, -1, 0, 0], ay: 18 },
     },
   },
   {
@@ -537,7 +537,7 @@ export const CARDS: CardDef[] = [
     id: "tatbikat",
     who: "kaymakam",
     konu: "Deprem tatbikatı",
-    text: "AFAD ile deprem tatbikatı yapacağız başkanım. Belediye binası da boşaltılacak, meclis dâhil.",
+    text: "Afet ekibiyle deprem tatbikatı yapacağız başkanım. Belediye binası da boşaltılacak, meclis dâhil.",
     L: { t: "İşimiz başımızdan aşkın", e: [-5, 0, 0, -10] },
     R: { t: "Tatbikat şart", e: [5, -3, 0, 8] },
   },
@@ -762,7 +762,7 @@ export const CARDS: CardDef[] = [
     cd: 30,
     w: 2,
     fav: "R",
-    text: "Hakkınızda Sayıştay'a şikâyet dilekçesi verdim başkanım. İmza atan meclis üyesi sayısı: dokuz.",
+    text: "Hakkınızda denetim kuruluna şikâyet dilekçesi verdim başkanım. İmza atan meclis üyesi sayısı: dokuz.",
     L: { t: "Mahkemede görüşürüz", e: [-6, -6, 0, -3] },
     R: { t: "Oturup konuşalım", e: [0, 0, 0, 0], rel: { nermin: 1 } },
   },
@@ -909,9 +909,9 @@ export const CARDS: CardDef[] = [
     konu: "Cadde adı",
     once: true,
     fav: "L",
-    text: "Yeni caddeye isim lazım başkanım. Ben ilçemizin ilk öğretmeni Şükrü Hoca diyorum. Yeğeniniz Burak ise 'TikTok Bulvarı' diyor.",
+    text: "Yeni caddeye isim lazım başkanım. Ben ilçemizin ilk öğretmeni Şükrü Hoca diyorum. Yeğeniniz Burak ise 'Trend Bulvarı' diyor.",
     L: { t: "Şükrü Hoca Caddesi", e: [6, 0, 0, 3], rel: { burak: -1 } },
-    R: { t: "TikTok Bulvarı", e: [-6, 0, 4, -5], rel: { burak: 1 } },
+    R: { t: "Trend Bulvarı", e: [-6, 0, 4, -5], rel: { burak: 1 } },
   },
 
   // ── Fen İşleri Kemal Bey
@@ -965,7 +965,7 @@ export const CARDS: CardDef[] = [
     who: "kemal",
     konu: "Tarihî köprü",
     once: true,
-    text: "Derenin üstündeki tarihî taş köprü çatladı. Restorasyon için Vakıflar'dan izin lazım, o da iki yıl sürer.",
+    text: "Derenin üstündeki tarihî taş köprü çatladı. Restorasyon için vakıf idaresinden izin lazım, o da iki yıl sürer.",
     L: { t: "İzni bekleyin", e: [-6, 0, 0, 6] },
     R: { t: "Biz yaparız", e: [8, -10, 0, -10] },
   },
@@ -1087,11 +1087,11 @@ export const CARDS: CardDef[] = [
   {
     id: "sgk",
     who: "sevim",
-    konu: "SGK borcu",
+    konu: "Prim borcu",
     once: true,
     norel: true,
-    text: "SGK borcu kapıda başkanım. Ya yapılandıracağız ya da makam aracını satacağız.",
-    L: { t: "Yapılandırın", e: [0, 0, 0, 5], pol: { id: "sgk", ad: "SGK taksiti", e: [0, -1, 0, 0], ay: 10 } },
+    text: "Sigorta prim borcu kapıda başkanım. Ya yapılandıracağız ya da makam aracını satacağız.",
+    L: { t: "Yapılandırın", e: [0, 0, 0, 5], pol: { id: "sgk", ad: "Prim taksiti", e: [0, -1, 0, 0], ay: 10 } },
     R: { t: "Makam aracı gitsin", e: [8, 12, 0, -5], set: "bisiklet", next: ["bisiklet", 2] },
   },
   {
@@ -1403,8 +1403,8 @@ export const CARDS: CardDef[] = [
     konu: "Okul ısınması",
     months: [10, 11, 0, 1],
     cd: 24,
-    text: "Okulun kalorifer kazanı bozuldu, çocuklar montla ders işliyor. Millî Eğitim 'bütçe yok' diyor.",
-    L: { t: "Millî Eğitim'in işi", e: [-10, 0, 0, 5] },
+    text: "Okulun kalorifer kazanı bozuldu, çocuklar montla ders işliyor. İlçe eğitim müdürlüğü 'bütçe yok' diyor.",
+    L: { t: "Eğitim müdürlüğünün işi", e: [-10, 0, 0, 5] },
     R: { t: "Belediye tamir etsin", e: [10, -10, 0, -3] },
   },
   {
@@ -1423,7 +1423,7 @@ export const CARDS: CardDef[] = [
     who: "dursun",
     konu: "Sulama kanalı",
     text: "Köylerin sulama kanalı çöktü başkanım. Tarlalar kurursa bu sene pazarda domates değil, dert satarız.",
-    L: { t: "DSİ'ye yazın", e: [-10, 0, -3, 5] },
+    L: { t: "Su işlerine yazın", e: [-10, 0, -3, 5] },
     R: { t: "Belediye yapsın", e: [10, -12, 5, 0] },
   },
   {
@@ -3049,7 +3049,7 @@ export const CRISES: Record<string, Omit<CardDef, "id">> = {
   k100: {
     who: "sevim",
     konu: "Müfettiş uyarısı",
-    text: "Kasa fazla dolu başkanım; Sayıştay 'bu para neden harcanmıyor' diye yazı gönderdi. Bir yatırım lazım.",
+    text: "Kasa fazla dolu başkanım; denetim kurulu 'bu para neden harcanmıyor' diye yazı gönderdi. Bir yatırım lazım.",
     L: { t: "Mahallelere dağıtın", e: [10, -18, 3, 0] },
     R: { t: "Esnafa destek paketi", e: [0, -18, 10, 0] },
   },
@@ -3177,10 +3177,10 @@ export const ENDINGS: Record<string, Ending> = {
   k100: {
     who: "sevim",
     konu: "Müfettiş raporu",
-    text: "Kasada o kadar para birikti ki Sayıştay müfettişleri geldi. 'Bu kadar parayı nasıl harcamadınız?' diye üç ay sorguladılar. Görevden uzaklaştırıldınız.",
+    text: "Kasada o kadar para birikti ki denetim kurulunun müfettişleri geldi. 'Bu kadar parayı nasıl harcamadınız?' diye üç ay sorguladılar. Görevden uzaklaştırıldınız.",
     manset: "KASA DOLU, MAKAM BOŞ",
     spot: "Hiç harcama yapmayan belediye, müfettişlerin radarına takıldı.",
-    kisa: "Sayıştay'a takıldı",
+    kisa: "Müfettişlere takıldı",
   },
   e0: {
     who: "bekir",

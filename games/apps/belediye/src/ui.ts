@@ -1098,6 +1098,7 @@ function gameOver() {
   const best = LS.get<HallRec | null>("best", null);
   if (!best || o.months > best.months) LS.set("best", rec);
   hallAdd(rec);
+  sonlarAdd(o.key);
   lastOver = { s, rec, art };
   renderPaper(lastOver);
   show("over");
@@ -1616,7 +1617,29 @@ function frameEl(r: HallRec & { face?: number }, rank: number, fresh: boolean) {
   f.appendChild(cap);
   return f;
 }
+// Sonlar defteri: bu tarayıcıda görülen sonlar (eski kayıtlar duvardaki portrelerden tamamlanır)
+function sonlarSeen() {
+  const hall = LS.get<HallRec[]>("hall", []).map(r => r?.key);
+  return [...new Set([...LS.get<string[]>("sonlar", []), ...hall])].filter(k => k && ENDINGS[k]);
+}
+function sonlarAdd(key: string) {
+  const s = sonlarSeen();
+  if (!s.includes(key)) LS.set("sonlar", [...s, key]);
+}
+function renderSonlar() {
+  const seen = new Set(sonlarSeen()),
+    keys = Object.keys(ENDINGS);
+  $("#sonlar-n").textContent = `${seen.size}/${keys.length}`;
+  $("#sonlar-list").innerHTML = keys
+    .map(k =>
+      seen.has(k)
+        ? `<li class="${ENDINGS[k].win ? "win" : ""}">${esc(ENDINGS[k].kisa)}</li>`
+        : `<li class="yok" aria-label="Henüz görülmedi">? ? ?</li>`,
+    )
+    .join("");
+}
 function renderWall() {
+  renderSonlar();
   const box = $("#frames"),
     msg = $("#wall-msg");
   const rows = LS.get<HallRec[]>("hall", []).filter(r => r && ENDINGS[r.key] && Number.isFinite(r.months));
