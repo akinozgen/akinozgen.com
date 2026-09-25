@@ -25,11 +25,11 @@
 <link rel="manifest" href="manifest.webmanifest">
 <!-- ana stil gelene kadar koyu, boş sayfa: stilsiz ilk kare (tam ekran ikonlar, kayan meydan resmi) görünmesin; style.css açar -->
 <style>html { background: #0e1f18; } #app { visibility: hidden; }</style>
-  <script type="module" crossorigin src="./assets/index-B7vFLP5B.js"></script>
+  <script type="module" crossorigin src="./assets/index-BDtydIWs.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/rolldown-runtime-CbXtAM7H.js">
   <link rel="modulepreload" crossorigin href="./assets/kutuphane-Clj-Woyo.js">
-  <link rel="modulepreload" crossorigin href="./assets/icerik-CVVgEXsk.js">
-  <link rel="stylesheet" crossorigin href="./assets/index-CqZSrftj.css">
+  <link rel="modulepreload" crossorigin href="./assets/icerik-DsSFFnsk.js">
+  <link rel="stylesheet" crossorigin href="./assets/index-DdRpRsdL.css">
 </head>
 <body>
 <div id="app" lang="tr">
@@ -317,11 +317,37 @@
       <p class="pick-note" id="pick-note"></p>
       <div class="ak-act">
         <button id="btn-pick-back" class="btn" type="button">Vazgeç</button>
-        <button id="btn-go" class="btn primary" type="button">Mazbatayı al</button>
+        <button id="btn-go" class="btn primary" type="button">Kampanyaya başla</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Seçim beyannamesi: aday kaydından sonra. En çok üç söz; sessiz kampanya (seçimsiz, düşük başlar) ya da sandık -->
+  <section id="scr-kampanya" class="screen" aria-label="Seçim beyannamesi" hidden>
+    <div class="ak bn">
+      <header class="ak-head"><span class="mn-eyebrow">Kampanya</span><h2>Seçim beyannamesi</h2><p>Karakavak sizi dinliyor. En çok üç söz verin; her söz oy getirir, hesabı da sorulur.</p></header>
+      <div class="bn-main">
+        <div class="bn-kagit">
+          <div class="bn-aday"><img id="bn-img" alt="" draggable="false"><div><b id="bn-ad"></b><span id="bn-lakap"></span></div></div>
+          <ol class="bn-list" id="bn-list" aria-label="Vaatler"></ol>
+        </div>
+        <aside class="bn-anket" aria-live="polite">
+          <span class="bn-anket-h">Kampanya anketi</span>
+          <b class="bn-sans" id="bn-sans"></b>
+          <div class="bn-bar" aria-hidden="true"><i id="bn-bar"></i></div>
+          <p class="bn-not" id="bn-not"></p>
+          <p class="bn-yol"><b>Sessiz kampanya:</b> seçim gecesi yok, söz de yok. Göreve başlarsınız ama halk sizi az tanır.</p>
+          <p class="bn-yol"><b>Sandığa git:</b> rahat kazanırsanız güçlü başlarsınız; kıl payı kalırsanız sessizden de zayıf.</p>
+        </aside>
+      </div>
+      <div class="ak-act bn-act">
+        <button id="btn-bn-back" class="btn" type="button">Geri</button>
+        <button id="btn-sessiz" class="btn" type="button">Sessiz kampanya</button>
+        <button id="btn-sandik" class="btn primary" type="button">Sandığa git</button>
       </div>
     </div>
   </section>
 </div>
-
+
 </body>
 </html>
