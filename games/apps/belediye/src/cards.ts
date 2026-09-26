@@ -7748,7 +7748,7 @@ export const CARDS: CardDef[] = [
       not: "Rahmi rövanş masasını hâlâ boş tutuyor.",
     },
   },
-  // ══ Çarşı sultası: üç kez boyun eğen başkana kıyak dosyası ══
+  // ══ Esnafın başkanı: üç kez boyun eğen başkana kıyak dosyası ══
   {
     id: "kayirma_1",
     who: "kaymakam",
@@ -8131,9 +8131,9 @@ export const DAVET: CardDef[] = [
 // Esnafta üç kez boyun eğen başkana kıyak dosyası açılır (kayirma_1); son orada, iki bilinçli karardan sonra.
 export const TAVAN: Record<"e" | "a" | "k", { pol: PolDef; giris: string; cikis: string }> = {
   e: {
-    pol: { id: "sulta_e", ad: "Çarşı sultası", e: [-1, 0, 0, 0] },
-    giris: "Çarşı belediyeyi kendi evi sayıyor; kahvede 'esnafın başkanı' diyorlar. Talepler gelecek.",
-    cikis: "Çarşıyla aranıza bir kaldırım boyu mesafe girdi; sulta bitti.",
+    pol: { id: "sulta_e", ad: "Esnafın başkanı", e: [-1, 0, 0, 0] },
+    giris: "Kahvede size 'esnafın başkanı' diyorlar; çarşı belediyeyi kendi evi sayıyor. Talepler gelecek.",
+    cikis: "Çarşıyla aranıza bir kaldırım boyu mesafe girdi; yine herkesin başkanısınız.",
   },
   a: {
     pol: { id: "gozde_a", ad: "Ankara'nın gözdesi", e: [-1, 0, 0, 0] },
@@ -8351,7 +8351,7 @@ export const ENDINGS: Record<string, Ending> = {
     spot: "Ankara'nın 'bakan yardımcılığı' teklifini sonunda kabul eden başkan, ilçeden semaveriyle uğurlandı.",
     kisa: "Bakan yardımcısı oldu",
   },
-  // çarşı sultasında üç kez boyun eğip kıyak dosyasına da sahip çıkan başkan (kazanılmış ceza sonu)
+  // "esnafın başkanı" dönemindeyken üç kez boyun eğip kıyak dosyasına da sahip çıkan başkan (kazanılmış ceza sonu)
   kayirma: {
     who: "kaymakam",
     konu: "Kıyak dosyası",
@@ -9592,7 +9592,7 @@ export const INTRO: CardDef[] = [
     id: "intro2",
     who: "fikret",
     konu: "Göstergeler",
-    text: "Evrakı sürükleyince oklar çıkar: yukarı ok artar, aşağı ok azalır; üç ok büyük etki. Bir gösterge dibe vurursa makam gider. Tavan da bedelsiz değil: çarşı sultası, Ankara'nın gözdesi, kasa fazlası; talepleri gelir. Halk dibe inmesin yeter.",
+    text: "Evrakı sürükleyince oklar çıkar: yukarı ok artar, aşağı ok azalır; üç ok büyük etki. Bir gösterge dibe vurursa makam gider. Tavanın da bedeli var: esnafın başkanı, Ankara'nın gözdesi, kasa fazlası; talepler gelir. Halk dibe inmesin yeter.",
     L: { t: "Zor iş", e: [0, 0, 0, 0] },
     R: { t: "Devam", e: [0, 0, 0, 0] },
   },

@@ -186,7 +186,7 @@ try {
   ); // menüden giriş geçişi bitene kadar
   check((await screenNow()) === "secim", "kaldığım yerden seçim gecesini açmadı");
   console.log("kaldığım yerden:", await screenNow());
-  // Tavan hâli: esnaf 85'i geçince oyun bitmez, "Çarşı sultası" şeritte görünür
+  // Tavan hâli: esnaf 85'i geçince oyun bitmez, "Esnafın başkanı" şeritte görünür
   const s = E.newGame();
   Object.assign(s.m, { h: 55, k: 50, e: 84, a: 50 });
   s.month = 22;
@@ -216,10 +216,10 @@ try {
     (await screenNow()) === "game" &&
       !sv.over &&
       sv.ongoing.some(o => o.id === "sulta_e") &&
-      /Çarşı sultası/.test(serit),
-    `çarşı sultası başlamadı (esnaf ${sv.m.e}, şerit "${serit.slice(0, 80)}")`,
+      /Esnafın başkanı/.test(serit),
+    `"esnafın başkanı" dönemi başlamadı (esnaf ${sv.m.e}, şerit "${serit.slice(0, 80)}")`,
   );
-  await shot("carsi-sultasi");
+  await shot("esnafin-baskani");
   console.log("tavan hâli: esnaf", sv.m.e, "·", serit.slice(0, 60));
   // "a" kısayolu sol seçeneği hemen imzalar
   const mid = E.newGame();

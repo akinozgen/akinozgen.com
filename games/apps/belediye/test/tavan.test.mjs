@@ -77,19 +77,19 @@ test("hâl: 85'i geçince yürürlüğe girer, haberi çıkar, yer sınırına s
   assert.ok(s.m.e >= 85, `esnaf ${s.m.e}`);
   assert.ok(
     s.ongoing.some(o => o.id === "sulta_e" && o.hal),
-    "çarşı sultası yürürlükte",
+    "esnafın başkanı dönemi yürürlükte",
   );
   assert.equal(s.ongoing.filter(o => !o.hal).length, X.MAX_ONGOING, "hâl başka kararı kaldırmadı");
-  assert.ok(out.events.some(e => e.ad === "Çarşı sultası"));
+  assert.ok(out.events.some(e => e.ad === "Esnafın başkanı"));
   const h0 = s.m.h;
   evrak(X, s, Z());
   X.choose(s, "L", r);
-  assert.equal(s.m.h, h0 - 1, "sultada halk her ay küser");
+  assert.equal(s.m.h, h0 - 1, "bu dönemde halk her ay küser");
   s.m.e = 70;
   evrak(X, s, Z());
   const out2 = X.choose(s, "L", r);
-  assert.ok(!s.ongoing.some(o => o.id === "sulta_e"), "sulta bitti");
-  assert.ok(out2.events.some(e => e.ad === "Çarşı sultası"));
+  assert.ok(!s.ongoing.some(o => o.id === "sulta_e"), "dönem bitti");
+  assert.ok(out2.events.some(e => e.ad === "Esnafın başkanı"));
 });
 
 test("talep: yalnız hâldeyken, bekleme süresiyle ve her biri bir kez gelir", async () => {

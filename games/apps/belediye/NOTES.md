@@ -356,3 +356,4 @@ Başkan: "Damgalar ekranda çok kısa kalıyor, okunmuyor. Zarlı seçimde yeşi
   - Gazete başlığında İ noktası üst satıra binmiyor. Yatay telefonda "telefonu dik tutun" perdesi var.
 - **Tarayıcı testleri:** yeni beklemeye göre güncellendi. Kampanya testi zar sonucunu bekliyor, "Devam"ın etkinleşmesini bekliyor, yeni evraktan sonra 400 ms bekliyor. Jest testi evrakı sayı ve konuyla tanıyor (açılış evrağı imza sayısını artırmıyordu). Menü testi sessiz kampanya onayını deniyor.
 - Sonraki tur: "Yürürlükte" bandı yerine sabit özet satırı; renklerin anlamı (kırmızı yalnız tehlike); kısayolların yardımda anlatılması; ekran okuyucuya karar sonucu.
+- Başkan "sulta" kelimesini bilmiyordu, aramada da bir şey çıkmadı. Esnafın tavan dönemi "Esnafın başkanı" oldu, Ankara'daki "Ankara'nın gözdesi" ile aynı kalıpta. Kod kimlikleri (`sulta_e`, `sulta_*`) kayıtlar bozulmasın diye aynı kaldı; eski kayıttaki şerit adı ay başında yenisine döner.

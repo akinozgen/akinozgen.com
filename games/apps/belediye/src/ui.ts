@@ -625,7 +625,7 @@ function dangerToast(before: Meters) {
     window.setTimeout(
       () =>
         toast(
-          `<b>Dikkat</b>${METER_AD[k]} ${m[k] <= 15 ? "dibe yaklaşıyor" : k === "e" ? "tavana dayanıyor, çarşı sultası kapıda" : k === "a" ? "tavana dayanıyor, Ankara'nın gözdesi olacaksınız" : "tavana dayanıyor, herkes pay isteyecek"}<span class="tr n">${m[k]}</span>`,
+          `<b>Dikkat</b>${METER_AD[k]} ${m[k] <= 15 ? "dibe yaklaşıyor" : k === "e" ? "tavana dayanıyor, 'esnafın başkanı' olacaksınız" : k === "a" ? "tavana dayanıyor, Ankara'nın gözdesi olacaksınız" : "tavana dayanıyor, herkes pay isteyecek"}<span class="tr n">${m[k]}</span>`,
           "warn",
           2,
         ),
@@ -1100,7 +1100,7 @@ const SOZ: Record<Meter, string[]> = {
 const ASIRI: Record<Meter, string> = {
   h: "halk fazla şımarır",
   k: "kasa şişer, herkes pay ister",
-  e: "çarşı fazla güçlenir, sultası başlar",
+  e: "çarşı fazla güçlenir, 'esnafın başkanı' olursunuz",
   a: "Ankara'nın gözdesi olursunuz, ilçe kıskanır",
 };
 const miktar = (a: number) => (a >= 15 ? "çok " : a >= 8 ? "epey " : "biraz ");
@@ -2042,7 +2042,7 @@ function pickMove(e: KeyboardEvent) {
 const SURUM = __SURUM__; // vite.config.js: derleme günü ve kaynağın kısa özeti
 const YENILIK: [string, string][] = [
   ["Kampanya ve mühür", "Sandığa giden dört kampanya evrakı oynar; kazanan mühürle başlar."],
-  ["Tavanın bedeli", "Çok sevilmek oyunu bitirmez: çarşı sultası, Ankara'nın gözdesi, kasa fazlası."],
+  ["Tavanın bedeli", "Çok sevilmek oyunu bitirmez: esnafın başkanı, Ankara'nın gözdesi, kasa fazlası."],
   ["Seçim gecesi canlı yayında", "KARAKAVAK TV sandıkları mahalle mahalle açıyor."],
 ];
 let mnBusy = false,

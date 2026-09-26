@@ -442,7 +442,9 @@ export function addPol(s: State, p: PolDef) {
 export function tavanHal(s: State, events: TickEvent[]) {
   for (const k of ["e", "a", "k"] as const) {
     const T = TAVAN[k],
-      on = s.ongoing.some(o => o.id === T.pol.id);
+      var_ = s.ongoing.find(o => o.id === T.pol.id),
+      on = !!var_;
+    if (var_) var_.ad = T.pol.ad; // eski kayıtlarda eski adıyla duruyor olabilir
     if (!on && s.m[k] >= TUNE.halGir) {
       addPol(s, { ...T.pol, hal: true });
       events.push({ ad: T.pol.ad, msg: T.giris, e: T.pol.e });
