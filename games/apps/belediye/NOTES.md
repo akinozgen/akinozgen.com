@@ -276,3 +276,15 @@ Başkanın şikâyeti: "Çok da bir fark göremedim. Sessiz gir, vaatsiz gir kaz
 - **Kıl payı artık bir görev:** Kıl payında gölgeli mazbata gelir, Nermin'in iki itiraz dilekçesi takvime girer. Dilekçeler avukatla (kasa) ya da meydanda zarla kapanır. İkisi de kapanınca gölge kalkar, iki mühür ve "Sandığı korudu" gelir. Oyun sonu gazetesinde "mazbatasını çerçeveletti" satırı çıkar.
 - **Denge** ("insan" oyuncu, 3000 oyun, ilk seçimi geçen): sessiz %79. Kumarda ezici %88, rahat %83, kıl payı %73; kumarın ortalaması %81. Ortalama süre ezicide 155 ay, sessizde 141, kıl payında 129. Başlangıç göstergeleri tek başına az şey değiştiriyor; beş yıllık dönemde ortalamaya dönüyorlar. Farkı mühürler ve sandık defteri taşıyor. Sessiz halk 44'e indi, taban %42'ye çıktı.
 - Beyanname yolları artık `ACILIS` ayarından yazılıyor; önceki elle yazılmış metin ayarla çelişmişti.
+
+## Esnaf denetimi (2026-09-26)
+Başkanın şikâyeti: "Esnafa aşırı artı gidiyor, sürekli erken seçim tetikleniyor. 'Kaldırım yayanındır' diyorum, halk −10 esnaf +12 oluyor; esnafın masa işgalini durdurmuyor muyuz?"
+- **Ölçüm:** İçerik esnafa kart başına ortalama +0,56 yazıyordu. Esnafa eksi yazan seçenek azdı; iki seçeneği de esnafa eksi olan kart neredeyse yoktu. Göstergeye bakmadan seçen oyuncu (`rastgele`) oyun başına 0,45 erken seçim görüyordu. Okları okuyan simülasyon oyuncuları bunu yakalamıyordu, çünkü metne göre değil oka göre seçiyorlardı.
+- **Denetim:** Esnaf etkisi olan 257 kart iki denetim ajanına bölündü. Ajanlar önce mantık hatalarını düzeltti:
+  - kaldırıma kural koymak yayayı sevindirir;
+  - AVM'li proje, belediye çay ocağı, bedava iftar ve belediye düğün salonu çarşıya rakiptir;
+  - çevre yolu trafiği çarşıdan uzaklaştırır.
+  Ardından hikâyenin izin verdiği yerde esnafın büyük artılarını küçülttüler. 101 değişiklik `esnaf-uygula.mjs` ile işlendi, motordan okunarak doğrulandı. Aylık esnaf artısı yazan beş karar da (jeton, seyir terası, göçebe ofisi...) kısıldı.
+- **Sonuç:** esnaf kayması kart başına +0,14. Erken seçim `rastgele`de 0,12/oyuna indi. Baskın seçenekli kart 8'den 5'e, usta/insan oranı 1,42'den 1,50'ye çıktı.
+- Esnafın iki ucu da tehlikeli ve içerik yukarı kaydığı için, zaferdeki esnaf 58 aslında dezavantajdı. Ezici ve rahat zaferde esnaf 52'den başlıyor.
+- Seyyar evrakının metni, kaldırılmak istenenin dükkân esnafı değil seyyar satıcı olduğunu açıkça söylüyor.
