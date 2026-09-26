@@ -345,7 +345,7 @@ export const CARDS: CardDef[] = [
     once: true,
     text: "Başkanım, Kavaklı'nın yolları köstebek yuvasına döndü. Seçimde asfalt sözü vermiştiniz, mahalle unutmadı.",
     L: { t: "Bütçe yok, sabır", e: [-10, 0, 0, 0], next: ["asfaltL", 4] },
-    R: { t: "Asfaltı dökün", e: [10, -12, 5, 0], next: ["asfalt2", 3] },
+    R: { t: "Asfaltı dökün", e: [10, -12, 2, 0], next: ["asfalt2", 3] },
   },
   {
     id: "asfaltL",
@@ -422,7 +422,7 @@ export const CARDS: CardDef[] = [
     w: 2,
     text: "Başkanım, mahalle sizin için imece yaptı; caminin avlu duvarını kendimiz ördük, badanasını da çektik. Bir çay ocağı açsak yeter bize.",
     L: { t: "Madalya takalım", e: [5, 0, 0, 2] },
-    R: { t: "Ocak açılsın", e: [8, -3, 2, 0] },
+    R: { t: "Ocak açılsın", e: [8, -3, -2, 0] },
   },
   {
     id: "muhtar_kus",
@@ -444,7 +444,7 @@ export const CARDS: CardDef[] = [
     konu: "Bayram hazırlığı",
     text: "Bayram öncesi çarşıyı süsleyelim başkanım. Belediye ışıklandırsın, biz de indirim yapalım; bereket gelsin.",
     L: { t: "Süsü esnaf yapsın", e: [0, 3, -8, 0] },
-    R: { t: "Çarşı ışıl ışıl", e: [4, -8, 10, 0] },
+    R: { t: "Çarşı ışıl ışıl", e: [4, -8, 7, 0] },
   },
   {
     id: "otopark",
@@ -523,8 +523,8 @@ export const CARDS: CardDef[] = [
     cd: 30,
     w: 2,
     text: "Esnaf kendi arasında para topladı başkanım; belediyeye bağış yapmak istiyoruz. Tek ricamız çarşıya bir çeşme.",
-    L: { t: "Bağış kasaya", e: [0, 12, 3, 0] },
-    R: { t: "Çeşmeyi biz yapalım", e: [5, -3, 8, 0] },
+    L: { t: "Bağış kasaya", e: [0, 12, -4, 0] },
+    R: { t: "Çeşmeyi biz yapalım", e: [5, -3, 6, 0] },
   },
   {
     id: "bekir_kus",
@@ -571,7 +571,7 @@ export const CARDS: CardDef[] = [
     w: 2,
     text: "Başkanım, size özel bir harman yaptım: 'Başkanın Harmanı'. Paketleyip satsak çarşıda kapışılır.",
     L: { t: "Meclise ikram", e: [4, 0, 0, 3] },
-    R: { t: "Satışa çıkaralım", e: [3, 8, 4, 0] },
+    R: { t: "Satışa çıkaralım", e: [3, 8, -4, 0] },
   },
   {
     id: "huseyin_kus",
@@ -902,7 +902,7 @@ export const CARDS: CardDef[] = [
     cd: 12,
     text: "Ramazan geliyor başkanım. Meydana herkese açık bir iftar çadırı kuralım; yolcu, garip, öğrenci...",
     L: { t: "Kasa elvermez", e: [-10, 6, 0, 0] },
-    R: { t: "Çadır kurulsun", e: [10, -10, 5, 3] },
+    R: { t: "Çadır kurulsun", e: [10, -10, -3, 3] },
   },
   {
     id: "yagmur",
@@ -1006,7 +1006,7 @@ export const CARDS: CardDef[] = [
     cd: 12,
     text: "Yılbaşında meydana ışık gösterisi yapalım başkanım! Drone'larla gökyüzüne dev bir kavun çizeriz.",
     L: { t: "Sade kutlayalım", e: [-4, 5, -3, 0] },
-    R: { t: "Işıklar yansın", e: [8, -10, 8, 0] },
+    R: { t: "Işıklar yansın", e: [8, -10, 4, 0] },
   },
 
   // ── Emekli Albay Nuri Bey
@@ -1114,7 +1114,7 @@ export const CARDS: CardDef[] = [
     fav: "L",
     text: "Başkanım, Karakavak Towers'ın temelinden su çıktı. Bina bir tarafa yatıyor gibi. Ben 'yatmıyor' demem.",
     L: { t: "Yıkın", e: [10, -15, -5, 0], clr: "towers", rel: { cengiz: -2 } },
-    R: { t: "Pisa gibi turistik olur", e: [-10, 5, 10, -6] },
+    R: { t: "Pisa gibi turistik olur", e: [-10, 5, 6, -8] },
   },
   {
     id: "itfaiye",
@@ -1146,7 +1146,7 @@ export const CARDS: CardDef[] = [
     w: 2,
     text: "Seçime az kaldı başkanım. Gece gündüz asfalt dökelim mi? Vatandaş taze asfaltın kokusunu sever.",
     L: { t: "Plan neyse o", e: [-6, 0, 0, 0] },
-    R: { t: "Gece gündüz!", e: [15, -18, 5, 0] },
+    R: { t: "Gece gündüz!", e: [15, -15, -2, 0] },
   },
   {
     id: "kemal_dost",
@@ -1156,8 +1156,8 @@ export const CARDS: CardDef[] = [
     cd: 30,
     w: 2,
     text: "Başkanım, hurda malzemeyle sanayi yolunu yaptık. Kasaya kuruş maliyeti yok; ekip gönüllü çalıştı.",
-    L: { t: "Aferin Kemal", e: [3, 6, 6, 0] },
-    R: { t: "Ekibe ikramiye", e: [2, -3, 6, 0], rel: { kemal: 1 } },
+    L: { t: "Aferin Kemal", e: [3, 6, 3, 0] },
+    R: { t: "Ekibe ikramiye", e: [4, -3, 3, 0], rel: { kemal: 1 } },
   },
   {
     id: "kemal_kus",
@@ -1427,9 +1427,9 @@ export const CARDS: CardDef[] = [
     id: "seyyar",
     who: "recep",
     konu: "Seyyar satıcılar",
-    text: "Pazar kaldırımlarını seyyar satıcılar kapattı, bebek arabası geçmiyor. Kaldıralım mı başkanım?",
+    text: "Pazar kaldırımlarını seyyar satıcılar kapattı, bebek arabası geçmiyor. Dükkân esnafı da 'kirayı biz ödüyoruz, müşteriyi onlar kapıyor' diye kızgın. Kaldıralım mı başkanım?",
     L: { t: "Ekmek parası, kalsın", e: [5, 0, -10, 0], rel: { bekir: -1 } },
-    R: { t: "Kaldırım yayanındır", e: [-8, 0, 10, 0], rel: { bekir: 1 } },
+    R: { t: "Kaldırım yayanındır", e: [3, -1, 6, 2], rel: { bekir: 1 } },
   },
   {
     id: "kurban",
@@ -1458,8 +1458,8 @@ export const CARDS: CardDef[] = [
     who: "rahmi",
     konu: "Kaldırım işgali",
     text: "Zabıta kaldırıma masa attık diye ceza yazıyor. Bu kıraathane yetmiş yıllık başkanım; dedeniz burada okey oynardı!",
-    L: { t: "Kural kuraldır", e: [-5, 5, -10, 0], rel: { recep: 1 } },
-    R: { t: "Masalar kalsın", e: [5, 0, 10, -4], rel: { recep: -1 } },
+    L: { t: "Kural kuraldır", e: [4, 5, -10, 0], rel: { recep: 1 } },
+    R: { t: "Masalar kalsın", e: [-4, 0, 7, -4], rel: { recep: -1 } },
   },
   {
     id: "okey",
@@ -1525,8 +1525,8 @@ export const CARDS: CardDef[] = [
     konu: "Gündem",
     chain: true,
     text: "'Karakavak Belediye Başkanı işe bisikletle gidiyor!' haberimiz ulusal basına düştü. Kamera ekibi kapıda.",
-    L: { t: "Kamerasız olmaz mı?", e: [3, 0, 0, 0] },
-    R: { t: "Pedallara!", e: [10, 0, 3, 5] },
+    L: { t: "Kamerasız olmaz mı?", e: [3, 0, 0, 2] },
+    R: { t: "Pedallara!", e: [10, 0, 0, -2] },
   },
   {
     id: "dizi2",
@@ -1535,8 +1535,8 @@ export const CARDS: CardDef[] = [
     chain: true,
     norel: true,
     text: "Dizi yayında başkanım! Ama ilçeyi mafya yuvası, başkanı da 'kavun baronu' diye göstermişler.",
-    L: { t: "Dava açalım", e: [5, -5, 0, 0], set: ["dizi_yayinda", "dizi_dava"] },
-    R: { t: "Reklamın kötüsü olmaz", e: [-6, 0, 12, 0], set: "dizi_yayinda" },
+    L: { t: "Dava açalım", e: [5, -5, -3, 0], set: ["dizi_yayinda", "dizi_dava"] },
+    R: { t: "Reklamın kötüsü olmaz", e: [-6, 0, 6, -4], set: "dizi_yayinda" },
   },
   {
     id: "devkavun2",
@@ -1545,8 +1545,8 @@ export const CARDS: CardDef[] = [
     chain: true,
     norel: true,
     text: "Dev kavun heykelimiz 'dünyanın en tuhaf heykelleri' listesine girdi başkanım! Turist akını başladı.",
-    L: { t: "Utanç verici, kaldırın", e: [-5, -5, 0, 5] },
-    R: { t: "Selfie noktası yapın", e: [8, 5, 10, 0] },
+    L: { t: "Utanç verici, kaldırın", e: [-5, -5, -4, 5] },
+    R: { t: "Selfie noktası yapın", e: [6, 4, 6, -4] },
   },
   {
     id: "sahtehaber",
@@ -1608,7 +1608,7 @@ export const CARDS: CardDef[] = [
     chain: true,
     text: "İlk kararım: her mahalleye lunapark, cuma günleri okullar tatil, ıspanak yasak. İmzalayacak mısınız?",
     L: { t: "Veto!", e: [-5, 0, 0, 0] },
-    R: { t: "Lunapark hakkımız!", e: [12, -12, 5, -5], rel: { elif: -1 } },
+    R: { t: "Lunapark hakkımız!", e: [12, -12, 0, -7], rel: { elif: -1 } },
   },
   {
     id: "kalorifer",
@@ -1626,7 +1626,7 @@ export const CARDS: CardDef[] = [
     konu: "Hava kirliliği",
     chain: true,
     text: "Çocuklar teneffüste öksürmekten top oynayamıyor başkanım. Çimento fabrikasının filtresi çalışmıyor.",
-    L: { t: "Biraz toz kuvvettir", e: [-18, 0, 5, 5], rel: { levent: 1 } },
+    L: { t: "Biraz toz kuvvettir", e: [-15, 3, 0, 5], rel: { levent: 1 } },
     R: { t: "Filtre takılsın", e: [10, -3, 0, -8], rel: { levent: -1 } },
   },
 
@@ -1654,7 +1654,7 @@ export const CARDS: CardDef[] = [
     konu: "Düğün salonu",
     text: "Köyde düğün salonu yok, düğünler tarlada oluyor. Geçen hafta davul çalınca inekler kaçtı.",
     L: { t: "Tarla romantiktir", e: [-6, 0, 0, 0] },
-    R: { t: "Salon yapılsın", e: [10, -10, 5, 0] },
+    R: { t: "Salon yapılsın", e: [10, -10, -2, 0] },
   },
   {
     id: "aracisiz",
@@ -1671,7 +1671,7 @@ export const CARDS: CardDef[] = [
     fav: "L",
     text: "Kavunlarımıza Körfez'den alıcı çıktı başkanım! Belediye aracılık ederse ufak bir komisyon da kasaya kalır.",
     L: { t: "Kazanç köylünün", e: [6, 0, 3, 0] },
-    R: { t: "Komisyon alalım", e: [-4, 10, 4, 0] },
+    R: { t: "Komisyon alalım", e: [-4, 10, -3, 0] },
   },
 
   // ── Müteahhit Cengiz Bey
@@ -1681,8 +1681,8 @@ export const CARDS: CardDef[] = [
     konu: "İmar talebi",
     once: true,
     text: "Başkanım, dere kenarına 20 katlı 'Karakavak Towers'. Havuzlu, AVM'li. Size de bir daire, laf aramızda.",
-    L: { t: "Kapı orada", e: [5, 0, -5, -4], next: ["towersL", 6] },
-    R: { t: "Projeyi görelim", e: [-3, 20, 8, 0], set: "towers", next: ["skandal", 4] },
+    L: { t: "Kapı orada", e: [5, 0, 3, -4], next: ["towersL", 6] },
+    R: { t: "Projeyi görelim", e: [-3, 15, -6, 3], set: "towers", next: ["skandal", 4] },
   },
   {
     id: "towersL",
@@ -1691,7 +1691,7 @@ export const CARDS: CardDef[] = [
     chain: true,
     text: "Projeyi komşu ilçeye yaptık başkanım. Sizin halk manzarasını seyrediyor, vergisini onlar alıyor. İkinci etap sizde olsun mu?",
     L: { t: "Dere bizim", e: [4, 0, 0, 0] },
-    R: { t: "Bu sefer olsun", e: [-3, 14, 5, 0], set: "towers", next: ["skandal", 4] },
+    R: { t: "Bu sefer olsun", e: [-3, 14, -3, 0], set: "towers", next: ["skandal", 4] },
   },
   {
     id: "ihale",
@@ -1867,8 +1867,8 @@ export const CARDS: CardDef[] = [
     konu: "Teşekkür",
     chain: true,
     text: "AVM komşu ilçeye açıldı başkanım; ama çarşı size minnettar. İndirim haftası yapıyoruz, belediye de bir afiş assa?",
-    L: { t: "Afiş sizden", e: [0, 0, 3, 0] },
-    R: { t: "Belediye destek versin", e: [4, -5, 8, 0] },
+    L: { t: "Afiş sizden", e: [0, 2, -3, 0] },
+    R: { t: "Belediye destek versin", e: [4, -5, 6, 0] },
   },
   {
     id: "dizi",
@@ -1877,7 +1877,7 @@ export const CARDS: CardDef[] = [
     once: true,
     text: "Bir yapım şirketi Karakavak'ta dizi çekmek istiyor: 'Kavunlar da Ağlar'. Ana karakter bir belediye başkanı!",
     L: { t: "Bize set lazım değil", e: [0, 0, -6, 0] },
-    R: { t: "Kamera, motor!", e: [8, 8, 8, 0], next: ["dizi2", 4] },
+    R: { t: "Kamera, motor!", e: [8, 8, 2, -4], next: ["dizi2", 4] },
   },
   {
     id: "ruzgar",
@@ -1973,7 +1973,7 @@ export const CARDS: CardDef[] = [
     konu: "Sanayi yolu",
     text: "Sanayi sitesinin yolu çamur deryası usta... pardon başkanım. Müşteri arabasını tamire getirirken bozuyor.",
     L: { t: "Önce mahalleler", e: [5, 0, -10, 0] },
-    R: { t: "Yol yapılsın", e: [-5, -10, 15, 0] },
+    R: { t: "Yol yapılsın", e: [-6, -10, 9, 0] },
   },
   {
     id: "balata",
@@ -1992,7 +1992,7 @@ export const CARDS: CardDef[] = [
     not: ["bisiklet"],
     norel: true,
     text: "Makam aracınızın balataları bitmiş başkanım. Orijinal parça üç hafta; çıkma parça yarın, komşu ilçenin eski makam aracından.",
-    L: { t: "Orijinal olsun", e: [0, -8, 5, 0] },
+    L: { t: "Orijinal olsun", e: [0, -8, 0, 4] },
     R: { t: "Çıkma olsun", e: [-3, -2, 3, -5] },
   },
 
@@ -2078,10 +2078,10 @@ export const CARDS: CardDef[] = [
     konu: "Kapasite artışı",
     once: true,
     text: "Çimento fabrikasına kapasite artışı izni verin başkanım. İki yüz kişiye iş, ilçeye vergi!",
-    L: { t: "Toz duman istemeyiz", e: [5, 0, -5, -10], next: ["fabrikaL", 5] },
+    L: { t: "Toz duman istemeyiz", e: [6, 0, -5, -10], next: ["fabrikaL", 5] },
     R: {
       t: "Bacalar tütsün",
-      e: [5, 4, 5, 5],
+      e: [2, 4, 5, 5],
       next: ["fabrikatoz", 4],
       pol: { id: "baca", ad: "Fabrika vergisi", e: [0, 1, 0, 0], ay: 16 },
     },
@@ -2103,8 +2103,8 @@ export const CARDS: CardDef[] = [
     konu: "Heyet ziyareti",
     chain: true,
     text: "Karakavak'a bayıldık! En çok da kokoreçe. Norveç'e kokoreç ithal etmek istiyoruz. Tarifi paylaşır mısınız?",
-    L: { t: "Tarif ata yadigârı", e: [5, 0, 5, 0], set: "kardes_sehir" },
-    R: { t: "İhracat başlasın", e: [0, 10, 8, 5], set: "kardes_sehir" },
+    L: { t: "Tarif ata yadigârı", e: [6, 0, -2, 0], set: "kardes_sehir" },
+    R: { t: "İhracat başlasın", e: [-3, 10, 6, 5], set: "kardes_sehir" },
   },
 
   // ── Tekir
@@ -2139,8 +2139,8 @@ export const CARDS: CardDef[] = [
     w: 6,
     cd: 10,
     text: "Başkanım, geleneksel Karakavak Kavun Festivali geldi çattı. Konsere kimi çağıralım?",
-    L: { t: "Yerel saz ekibi", e: [3, 2, 5, 0] },
-    R: { t: "Ünlü arabeskçi", e: [12, -15, 8, 0] },
+    L: { t: "Yerel saz ekibi", e: [3, 4, 1, 0] },
+    R: { t: "Ünlü arabeskçi", e: [12, -15, 5, 0] },
   },
   {
     id: "devkavun",
@@ -2167,8 +2167,8 @@ export const CARDS: CardDef[] = [
     once: true,
     minM: 12,
     text: "Başkanım, ben evleniyorum! Bütün ilçe davetli. Bir de... halayın başını siz çeker misiniz?",
-    L: { t: "İşim çok Fikret", e: [-6, 0, 0, 0] },
-    R: { t: "Mendil bende!", e: [10, 0, 5, 0] },
+    L: { t: "İşim çok Fikret", e: [-6, 0, 0, 2] },
+    R: { t: "Mendil bende!", e: [10, 0, 2, -2] },
   },
   {
     id: "cesme",
@@ -2250,8 +2250,8 @@ export const CARDS: CardDef[] = [
     L: { t: "Kuleyi söktürün", e: [3, -5, 0, -3], dec: { vaat: 1 } },
     R: {
       t: "Seyir terası olsun",
-      e: [-2, -4, 7, 0],
-      pol: { id: "kule_teras", ad: "Kule seyir terası", e: [0, 1, 1, 0], ay: 12 },
+      e: [-3, -4, 4, 0],
+      pol: { id: "kule_teras", ad: "Kule seyir terası", e: [0, 1, 0, 0], ay: 12 },
     },
   },
 
@@ -2344,7 +2344,7 @@ export const CARDS: CardDef[] = [
     R: {
       t: "Belediye jetonu basın",
       e: [3, -4, 5, -3],
-      pol: { id: "jeton", ad: "Karakavak jetonu", e: [0, 0, 1, -1], ay: 24, tags: ["kur"] },
+      pol: { id: "jeton", ad: "Karakavak jetonu", e: [0, 0, 0, -1], ay: 24, tags: ["kur"] },
     },
   },
   {
@@ -2498,11 +2498,11 @@ export const CARDS: CardDef[] = [
     L: { t: "Yerliye kira önceliği", e: [5, 0, -5, -2] },
     R: {
       t: "Ortak çalışma ofisi",
-      e: [-3, -6, 8, 0],
+      e: [-5, -6, 3, 0],
       pol: {
         id: "ofis",
         ad: "Ortak çalışma ofisi",
-        e: [0, 0, 2, 0],
+        e: [0, 0, 1, 0],
         ay: 6,
         doneCard: "gocebe_donus",
         tags: ["dijital"],
@@ -2636,10 +2636,10 @@ export const CARDS: CardDef[] = [
     once: true,
     minM: 14,
     text: "Başkanım, ilçeye çevre yolu yapayım. Tek şartım günde beş bin araç garantisi; geçmeyen aracın parasını belediye öder. İlçede toplam 800 araç var ama olsun, gelişen Karakavak!",
-    L: { t: "Garanti olmaz", e: [2, 0, -4, -4] },
+    L: { t: "Garanti olmaz", e: [2, 0, 0, -4] },
     R: {
       t: "İmzalayalım",
-      e: [7, 0, 6, 6],
+      e: [7, 0, -3, 6],
       pol: { id: "garanti", ad: "Araç geçiş garantisi", e: [0, -1, 0, 0], ay: 36, tags: ["garanti", "insaat"] },
       next: { id: "garanti_tur", in: [3, 5] },
     },
@@ -2694,7 +2694,7 @@ export const CARDS: CardDef[] = [
     text: "Başkanım, kavun kamyonları sınırdan geri döndü. Komşu ülke 'siyasi sebeplerle' meyve sebze almayı kesmiş. Kırk kamyon kavun meydanda bekliyor, sinekler çoktan festival başlattı.",
     L: {
       t: "Belediye satın alsın",
-      e: [6, -8, 5, 0],
+      e: [6, -8, 2, 0],
       set: "alim_garanti",
       pol: { id: "alim", ad: "Kavun alım garantisi", e: [0, -1, 1, 0], ay: 6, tags: ["tarim"] },
       next: { id: "ambargo_kalkti", in: [10, 14] },
@@ -2714,7 +2714,7 @@ export const CARDS: CardDef[] = [
       },
     ],
     L: { t: "Köylü kendisi satsın", e: [4, 0, 4, -2], clr: "alim_garanti" },
-    R: { t: "Belediye aracı olsun", e: [-2, 8, 2, 0], clr: "alim_garanti" },
+    R: { t: "Belediye aracı olsun", e: [-2, 8, -3, 0], clr: "alim_garanti" },
   },
   {
     id: "cografi_isaret",
@@ -2756,7 +2756,7 @@ export const CARDS: CardDef[] = [
           },
         ],
         ad: "Coğrafi işaret",
-        e: [0, 0, 2, 0],
+        e: [0, 0, 1, 0],
         tags: ["tarim", "marka"],
       },
     },
@@ -2800,7 +2800,7 @@ export const CARDS: CardDef[] = [
     chain: true,
     text: "Başkanım, festivale sayılı gün kaldı ama ovada kavun yok, panel var. Kavun yerine panel temizleme yarışması yapalım diyorum. Bir de 'en güzel panel' seçeriz, jüriye Hans Bey'i koyarız.",
     L: { t: "Kavun dışarıdan gelsin", e: [3, -8, 2, 0] },
-    R: { t: "Panel Festivali!", e: [-6, 0, 4, 3] },
+    R: { t: "Panel Festivali!", e: [-6, 0, -2, 5] },
   },
 
   // ── Birbirine değen kararlar: etiketleri SYN tablosunda buluşur
@@ -2856,8 +2856,8 @@ export const CARDS: CardDef[] = [
     konu: "Meclis ikramı",
     chain: true,
     text: "Başkanım, genelge yüzünden meclisteki kokteyl iptal; ben de simit ve ayran koydum. Meclis hiç bu kadar verimli çalışmamıştı, toplantı yarım saatte bitti. Nermin Hanım bile 'simit taze' dedi.",
-    L: { t: "Simit kalıcı olsun", e: [4, 2, 2, 0], rel: { nermin: 1 } },
-    R: { t: "Bir kereye mahsus", e: [0, -2, 0, 0] },
+    L: { t: "Simit kalıcı olsun", e: [4, 2, -1, 0], rel: { nermin: 1 } },
+    R: { t: "Bir kereye mahsus", e: [0, -2, 3, 0] },
   },
   {
     id: "kemer_soru",
@@ -2985,11 +2985,11 @@ export const CARDS: CardDef[] = [
     once: true,
     minM: 8,
     text: "Başkanım, ilçeye elli kiralık elektrikli scooter getireyim. Gençler bayılır, trafik azalır, belediye de kira alır. Kaldırımlar biraz dolar ama gelişmiş ülkeler de böyle başladı.",
-    L: { t: "Kaldırım yayanındır", e: [2, 0, -4, 0] },
+    L: { t: "Kaldırım yayanındır", e: [3, 0, 2, 0] },
     R: {
       t: "Scooterlar gelsin",
-      e: [-2, 3, 5, 0],
-      pol: { id: "scooter", ad: "Kiralık scooter", e: [-1, 1, 1, 0], ay: 10, tags: ["ulasim"] },
+      e: [-2, 5, -2, 0],
+      pol: { id: "scooter", ad: "Kiralık scooter", e: [-1, 1, 0, 0], ay: 10, tags: ["ulasim"] },
       next: { id: "scooter_dere", in: [3, 4], if: { pol: "scooter" } },
     },
   },
@@ -3078,7 +3078,7 @@ export const CARDS: CardDef[] = [
     minM: 14,
     text: "Başkanım, bir videonuz dolaşıyor: 'Karakavak'a metro getireceğim' diyorsunuz. Yapay zekâyla yapılmış ama çok inandırıcı, bıyığınız bile oynuyor. İnsanlar metro durağının yerini soruyor.",
     L: { t: "Sahte olduğunu açıklayın", e: [-4, 0, 0, 2] },
-    R: { t: "Metro da gelir elbet", e: [7, 0, 2, 0], inc: { vaat: 2 }, set: "metro_soz" },
+    R: { t: "Metro da gelir elbet", e: [7, 0, 0, -2], inc: { vaat: 2 }, set: "metro_soz" },
   },
   {
     id: "vaat_defteri",
@@ -3292,7 +3292,7 @@ export const CARDS: CardDef[] = [
     text: "Başkanım, baraj çekildi, Eski Karakavak'ın minaresi sudan çıktı. Rahmetli dedem orada ezan okurdu. Gurbetçiler 'dedemin evi' diye bilet almış, Kaan Bey tekne turu satmak istiyor. Ben sessiz bir ziyaret yeri isterim.",
     L: {
       t: "Batık köy turu başlasın",
-      e: [-4, 4, 5, -1],
+      e: [-5, 4, 2, -3],
       rel: {
         kaan: 1,
       },
@@ -3320,7 +3320,7 @@ export const CARDS: CardDef[] = [
     text: "Asıl Karakavak orası başkanım! Makam eski köye taşınsın; çadır, masa, bayrak direği minarenin yanına. Kemal Bey 'yağmurlar başlayınca su geri gelir' diyor. Gelsin! Biz askerde sudan korkmazdık.",
     L: {
       t: "Makam eski köye taşınsın",
-      e: [6, -4, 2, -4],
+      e: [6, -4, -2, -4],
       set: "su_makam",
       next: ["su_tapu", [1, 2]],
       not: "Kemal Bey baraj kotunu artık makam çadırının direğinden ölçüyor.",
@@ -3441,7 +3441,7 @@ export const CARDS: CardDef[] = [
     },
     R: {
       t: "Son güne kadar kalalım",
-      e: [4, -3, 4, -4],
+      e: [5, -3, 1, -6],
       cut: ["su_kesinti", "su_tur"],
       set: "su_bitti",
       next: {
@@ -3488,7 +3488,7 @@ export const CARDS: CardDef[] = [
     ],
     L: {
       t: "Kesinti bitsin artık",
-      e: [5, -4, -2, -3],
+      e: [5, -4, -4, -1],
       cut: "su_kesinti",
     },
     R: {
@@ -3571,7 +3571,7 @@ export const CARDS: CardDef[] = [
     },
     R: {
       t: "Okul Otel açılsın",
-      e: [-5, 6, 3, 0],
+      e: [-6, 6, 0, 2],
       set: "okul_otelde",
       next: ["okul_kar", [0, 1]],
       not: "Ayşe eski sınıfında kahvaltı fiyatını sordu: iki bin lira.",
@@ -3769,7 +3769,7 @@ export const CARDS: CardDef[] = [
     },
     R: {
       t: "Lastik yakmak yasak",
-      e: [-4, 0, 3, 4],
+      e: [-5, 1, 0, 5],
     },
   },
   {
@@ -3902,13 +3902,13 @@ export const CARDS: CardDef[] = [
     },
     R: {
       t: "On iki kat olsun",
-      e: [2, -4, 6, 3],
+      e: [3, -4, 2, 6],
       set: "bina_saray",
       clr: "bina_riskli",
       pol: {
         id: "bina_saray",
         ad: "Hizmet sarayı taksiti",
-        e: [0, -1, 1, 0],
+        e: [0, -1, 0, 0],
         ay: 24,
         done: [3, 4, 0, 2],
         msg: "Hizmet sarayının son taksiti ödendi; Sevim Hanım ilk kez asansöre bindi.",
@@ -3947,7 +3947,7 @@ export const CARDS: CardDef[] = [
     },
     R: {
       t: "Davul zurna, Suat Bey",
-      e: [-2, -4, 4, 6],
+      e: [-3, -4, 2, 7],
       set: "bina_temel",
       rel: {
         vekil: 1,
@@ -3987,7 +3987,7 @@ export const CARDS: CardDef[] = [
     },
     R: {
       t: "Ek blok da yapılsın",
-      e: [3, -3, 5, 3],
+      e: [3, -3, 3, 5],
       set: "bina_genis",
       rel: {
         cengiz: 1,
@@ -3995,7 +3995,7 @@ export const CARDS: CardDef[] = [
       pol: {
         id: "bina_saray",
         ad: "Saray ve ek blok taksiti",
-        e: [0, -2, 1, 0],
+        e: [0, -2, 0, 0],
         ay: 18,
         done: [4, 4, 2, 2],
         msg: "Sarayın ve ek bloğun son taksiti ödendi; icra memuru eli boş döndü.",
@@ -4030,7 +4030,7 @@ export const CARDS: CardDef[] = [
     },
     R: {
       t: "Burak'a stüdyo",
-      e: [-3, 0, 3, 1],
+      e: [-4, 0, 1, 2],
       set: "bina_bitti",
       rel: {
         burak: 1,
@@ -4126,7 +4126,7 @@ export const CARDS: CardDef[] = [
     },
     R: {
       t: "Vinçle kaldırın",
-      e: [-3, 0, 2, 4],
+      e: [-3, -2, 0, 4],
       rel: {
         selin: -1,
       },
@@ -4286,7 +4286,7 @@ export const CARDS: CardDef[] = [
     },
     R: {
       t: "Fikret yeniden yazsın",
-      e: [-4, 0, 2, 4],
+      e: [-5, 0, 0, 5],
       next: {
         id: "meclis_hilmi",
         in: [2, 3],
@@ -4425,7 +4425,7 @@ export const CARDS: CardDef[] = [
     },
     R: {
       t: "Pencereye GİRİŞ yazın",
-      e: [-5, 3, 2, -1],
+      e: [-5, 3, 0, -3],
       not: "Pencerenin fotoğrafı bütün ülkeyi dolaştı.",
     },
   },
@@ -4438,7 +4438,7 @@ export const CARDS: CardDef[] = [
     text: "Dayı, ajans yeni logoyu yolladı: yatay bir çizgi, üstünde bir nokta. Açıklaması 'kavunun ufukta doğuşu'. Fiyatı 400 bin. Cumhuriyet İlkokulu'ndan Ayşe aynısını teneffüste çizmiş. Ama dayı, sektör böyle çalışmaz.",
     L: {
       t: "Ajansın logosu",
-      e: [-4, -5, 2, 5],
+      e: [-5, -5, 0, 6],
       not: "Tuncay'ın manşeti hazır: 'Çizgi 400 bin, nokta bedava.'",
     },
     R: {
@@ -4604,7 +4604,7 @@ export const CARDS: CardDef[] = [
     },
     R: {
       t: "Kavun da taşır, kalsın",
-      e: [-4, 0, 4, -3],
+      e: [-5, 0, 1, -5],
       set: "as_makam",
       anket: {
         ad: "Kavun AŞ'nin makam aracı",
@@ -4642,7 +4642,7 @@ export const CARDS: CardDef[] = [
     },
     R: {
       t: "Sermayeyi artıralım",
-      e: [-2, -8, 0, 3],
+      e: [-2, -8, -3, 0],
       inc: "as_buyume",
       set: "as_sermaye",
       next: {
@@ -5140,7 +5140,7 @@ export const CARDS: CardDef[] = [
     ],
     L: {
       t: "Rekoru deneyelim",
-      e: [3, -6, 5, 0],
+      e: [4, -6, 3, -1],
       set: "kral_rekor",
       next: {
         id: "kral_dilim",
@@ -5200,7 +5200,7 @@ export const CARDS: CardDef[] = [
     ],
     L: {
       t: "Kavunlandia açılsın",
-      e: [2, -6, 6, -2],
+      e: [3, -6, 3, -4],
       set: "kral_park",
       pol: {
         id: "kral_park",
@@ -5591,7 +5591,7 @@ export const CARDS: CardDef[] = [
     },
     R: {
       t: "Altı parmak bereket",
-      e: [-4, 0, 4, -1],
+      e: [-5, 0, 1, -3],
       rel: {
         hayri: -1,
       },
@@ -5629,7 +5629,7 @@ export const CARDS: CardDef[] = [
     },
     R: {
       t: "Çekici gelsin",
-      e: [-4, 1, 2, 0],
+      e: [2, 2, -3, 0],
       not: "Tuncay'ın manşeti hazır: 'Kebap intikamı.'",
     },
   },
@@ -5672,7 +5672,7 @@ export const CARDS: CardDef[] = [
     },
     R: {
       t: "Dernek listesi gelsin",
-      e: [-3, 5, 2, 0],
+      e: [-3, 5, 0, -2],
       set: "sandik_hayalet",
       pol: {
         id: "sandik_pay",
@@ -5981,7 +5981,7 @@ export const CARDS: CardDef[] = [
     },
     R: {
       t: "Ocak açılsın",
-      e: [-3, 5, 4, 2],
+      e: [-4, 5, 1, 4],
       rel: {
         levent: 1,
       },
@@ -6085,7 +6085,7 @@ export const CARDS: CardDef[] = [
     },
     R: {
       t: "Kavunlar yıkansın",
-      e: [-5, -2, 2, 3],
+      e: [-5, -2, -3, 2],
       rel: {
         levent: 1,
       },
@@ -6112,7 +6112,7 @@ export const CARDS: CardDef[] = [
     },
     R: {
       t: "Patlamalı nikâh paketi",
-      e: [-3, 4, 3, -2],
+      e: [-4, 4, 1, -3],
     },
   },
   {
@@ -6131,7 +6131,7 @@ export const CARDS: CardDef[] = [
     },
     R: {
       t: "İskele ve kafe",
-      e: [-2, 4, 5, 0],
+      e: [-3, 4, 2, -2],
       set: "ocak_gol",
     },
   },
@@ -6259,7 +6259,7 @@ export const CARDS: CardDef[] = [
     },
     R: {
       t: "Kupayı belediye koysun",
-      e: [4, -2, 5, -2],
+      e: [4, -2, 3, -4],
       rel: {
         hayri: -1,
       },
@@ -6323,7 +6323,7 @@ export const CARDS: CardDef[] = [
     text: "Başkanım, askıda fatura 'askıda ceza'ya döndü: esnaf birbirinin zabıta cezasını ödüyor. Tahsilatım rekor kırdı ama kural dinleyen yok. Hacı Bekir kaldırıma masa attı, cezasını da peşin askıya astı.",
     L: {
       t: "Askılar kaldırılsın",
-      e: [-3, 0, -3, 2],
+      e: [2, 0, -4, 2],
       cut: "askida",
       rel: {
         bekir: -1,
@@ -6331,7 +6331,7 @@ export const CARDS: CardDef[] = [
     },
     R: {
       t: "Tahsilat tahsilattır",
-      e: [0, 5, 4, -2],
+      e: [-3, 5, 2, -1],
     },
   },
   {
@@ -6388,7 +6388,7 @@ export const CARDS: CardDef[] = [
     },
     R: {
       t: "Asansörlü mezarlık",
-      e: [-5, -2, 4, 2],
+      e: [-6, -2, 2, 3],
       rel: {
         hayri: -1,
       },
@@ -6474,7 +6474,7 @@ export const CARDS: CardDef[] = [
     text: "Başkanım, emekliler sabah ilk otobüse binip akşam son seferle iniyor; otobüs klimalı, bilet bedava. Kıraathane boşaldı, dün okeyi dört elden kendimle oynadım. Madem öyle, otobüse bir okey masası koyun!",
     L: {
       t: "Otobüse okey masası",
-      e: [4, -3, 2, -4],
+      e: [4, -3, -4, -2],
       set: "okey_otobus",
     },
     R: {
@@ -6501,7 +6501,7 @@ export const CARDS: CardDef[] = [
     },
     R: {
       t: "Horoza plaket",
-      e: [-4, -1, 5, 0],
+      e: [-5, -1, 3, -1],
       set: ["pano_horoz", "horoz_plaket"],
     },
   },
@@ -6513,7 +6513,7 @@ export const CARDS: CardDef[] = [
     text: "Başkanım, kreş dolunca dedeler torunları kıraathaneye getirmeye başladı. Çocuklar üç haftada okey öğrendi; dün beş yaşındaki Zeynep beni yendi! Otuz yıl orduda yenilmedim. Rahmi'nin dükkânı hiç bu kadar dolmamıştı.",
     L: {
       t: "Kıraathane dede kreşi",
-      e: [-4, 5, 4, -3],
+      e: [-4, 5, 2, -5],
       cut: "kres",
       rel: {
         rahmi: 1,
@@ -6539,7 +6539,7 @@ export const CARDS: CardDef[] = [
     },
     R: {
       t: "Gölge Disko Gecesi",
-      e: [-2, -2, 6, 0],
+      e: [-3, -2, 4, -1],
       rel: {
         albay: -1,
         rahmi: 1,
@@ -6582,7 +6582,7 @@ export const CARDS: CardDef[] = [
     },
     R: {
       t: "'Yaşıyorum' kermesi",
-      e: [-2, 0, 6, -2],
+      e: [-3, 0, 3, -4],
       rel: {
         rahmi: 1,
       },
@@ -6717,7 +6717,7 @@ export const CARDS: CardDef[] = [
     },
     R: {
       t: "Kahve festivali yapalım",
-      e: [-2, -3, 6, 0],
+      e: [-4, -3, 4, 0],
     },
   },
   {
@@ -6825,7 +6825,7 @@ export const CARDS: CardDef[] = [
     text: "Başkanım, beyannamenizde 'Karakavak'a metro' yazıyordu. Bugün meclise sordum: tünel nerede? 'Etüt sürüyor' dediniz; etüdü yapan firma Cengiz Bey'in kuzeni. Ya ilk kazmayı vurun ya sözü geri alın.",
     L: {
       t: "İlk kazma vurulsun",
-      e: [5, -8, 3, -2],
+      e: [5, -8, -2, -3],
       dec: "vaat",
       clr: "metro_soz",
       anket: { ad: "Metronun ilk kazması", puan: 2 },
@@ -6853,7 +6853,7 @@ export const CARDS: CardDef[] = [
     text: "Başkanım, beyannamede 'her mahalleye çay ocağı' yazıyormuş. Kavaklı'dan heyet geldi: ocak nerede, semaver nerede? Ben tekim başkanım; ya ocaklar açılır ya ben yedi mahalleye tepsiyle koşarım.",
     L: {
       t: "Yedi ocak açılsın",
-      e: [6, -8, 2, 0],
+      e: [4, -8, -4, 0],
       dec: "vaat",
       anket: { ad: "Mahalle çay ocakları", puan: 2 },
     },
@@ -6963,7 +6963,7 @@ export const CARDS: CardDef[] = [
     },
     R: {
       t: "Yıl dolsun, defter kapalı",
-      e: [-3, -2, 6, 0],
+      e: [-6, -2, 3, 0],
       dec: "vaat",
       rel: {
         bekir: 1,
@@ -7349,7 +7349,7 @@ export const CARDS: CardDef[] = [
     },
     R: {
       t: "Güvercinler de gelsin",
-      e: [7, -9, 5, 0],
+      e: [7, -9, 3, -2],
       dec: "vaat",
       set: "vaat_yildiz_tutuldu",
       anket: {
@@ -7375,7 +7375,7 @@ export const CARDS: CardDef[] = [
     ],
     L: {
       t: "Belediye serası kurulsun",
-      e: [3, -4, 3, 0],
+      e: [3, -4, 0, 3],
       dec: "vaat",
       anket: {
         ad: "Kışın yetişen kavun",
@@ -7420,7 +7420,7 @@ export const CARDS: CardDef[] = [
     ],
     L: {
       t: "Tarla piste, uçak gelsin",
-      e: [5, -8, 3, -2],
+      e: [5, -8, 1, -4],
       dec: "vaat",
       set: "vaat_havalimani_tutuldu",
       anket: {
@@ -7458,7 +7458,7 @@ export const CARDS: CardDef[] = [
     },
     R: {
       t: "Balon kalksın",
-      e: [5, -4, 2, -3],
+      e: [5, -4, 0, -5],
       dec: "vaat",
       set: "vaat_uzay_tutuldu",
       anket: {
@@ -7680,7 +7680,7 @@ export const CARDS: CardDef[] = [
     },
     R: {
       t: "Basarsan bas",
-      e: [-4, 0, 2, 0],
+      e: [-4, 0, 0, -2],
       clr: "kmp_anket_para",
       anket: {
         ad: "On bir kişilik anket",

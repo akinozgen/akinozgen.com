@@ -144,13 +144,13 @@ export const ACILIS: Record<
 > = {
   sessiz: { m: { h: 44, k: 48, e: 48, a: 46 }, muhur: 1, kalem: { ad: TEMIZ, puan: 3 } },
   ezici: {
-    m: { h: 66, k: 62, e: 58, a: 58 }, // kasa: Ankara'nın zafer ödeneği
+    m: { h: 66, k: 62, e: 52, a: 56 }, // kasa: Ankara'nın zafer ödeneği; esnaf 50 yakınında (iki ucu da tehlike)
     danis: 4,
     muhur: 5,
     kalem: { ad: "Sandıktan ezici çıkış", puan: 5 },
   },
   zafer: {
-    m: { h: 60, k: 58, e: 56, a: 55 },
+    m: { h: 60, k: 58, e: 52, a: 54 },
     danis: 4,
     muhur: 3,
     kalem: { ad: "Sandıktan güçlü çıkış", puan: 3 },
