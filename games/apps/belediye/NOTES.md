@@ -288,3 +288,10 @@ Başkanın şikâyeti: "Esnafa aşırı artı gidiyor, sürekli erken seçim tet
 - **Sonuç:** esnaf kayması kart başına +0,14. Erken seçim `rastgele`de 0,12/oyuna indi. Baskın seçenekli kart 8'den 5'e, usta/insan oranı 1,42'den 1,50'ye çıktı.
 - Esnafın iki ucu da tehlikeli ve içerik yukarı kaydığı için, zaferdeki esnaf 58 aslında dezavantajdı. Ezici ve rahat zaferde esnaf 52'den başlıyor.
 - Seyyar evrakının metni, kaldırılmak istenenin dükkân esnafı değil seyyar satıcı olduğunu açıkça söylüyor.
+
+## Erken seçim kalktı, yerine esnaftan teklif (2026-09-26)
+Başkan: "Esnaf niye erken seçim tetikliyor, hâlâ anlamadım; zaten örneği yok, saçma bir yay o." Haklıydı: esnaf memnun diye seçim yenilenmez. Seçenekler soruldu (kayırma soruşturması, esnaf 100'ün zararsız olması, oda başkanlığı teklifi); başkan teklifi seçti.
+- Esnaf 100, Ankara 100 gibi işliyor: `ODA` teklif evrakları `DAVET` ile aynı türde (`davet`). Taraflar çevrilmez, kabul sağda. Sıra `oda_ret` sayacına göre: oda başkanlığı, Kavun Ovası Esnaf Birliği, sonra hep Kavun Borsası. Kavun Borsası seçim gecesinin kayan yazısında zaten vardı.
+- Ret: halk artı, esnaf −30/−34/−40, Bekir ya da Rahmi kırgın. Peşine küslük evrakları gelir: yarım kepenk, boş koltuk, tebeşirle fiyat. Kabul üç ayrı sonla biter (`e100_oda`, `e100_birlik`, `e100_borsa`); `win` sayılır, düğmesi "Çarşıya selam". Miras satırı: "hayır diyen başkan" tişörtü.
+- Söküldü: `earlyCard`, `EARLY_BEKIR`, `erkensonuc`, `earlyField`, tally'nin `early`'si, yayındaki 15 erken seçim satırı, erken seçim testleri. Eski kayıttaki `{type: "erken"}` teklife döner. Eski son `e100` `legacy`, duvardaki oyunlar için duruyor. Uyarı krizi ("Esnaf sultası") artık teklifi haber veriyor.
+- Simülasyon: rastgele oyuncu oyun başına 0,10 teklif alıyor; okları okuyan 0,01.
