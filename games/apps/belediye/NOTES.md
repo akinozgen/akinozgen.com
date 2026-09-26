@@ -325,3 +325,34 @@ Başkan: "Son değil abi, sevilince oyun bu kadar kolay bitmemeli; mantıken man
   - `insan`da kasa sonu %27'den %14'e indi; sebebi kesin gelen dip krizi.
   - Baskın seçenekli kart 0.
 - Sırada (Faz 3-4): kasa kayması, kıl payının sessizden belirgin kötü olması, kesirli aylık etkiler; anlatı raporundaki 33 metin-etki tutarsızlığı, süreklilik hataları, başkanı erkek varsayan dört metin, Ankara 0 sonunun dili.
+
+## Karar anı ve telefon (2026-09-26)
+Başkan: "Damgalar ekranda çok kısa kalıyor, okunmuyor. Zarlı seçimde yeşil bir şey geliyor, okuyamadım." Üç tasarımcı ajan inceledi: hareket, etkileşim, mobil. Raporlar çalışma klasöründe (`ux/`).
+- **Teşhis:**
+  - "Yeşil şey" aslında üç öğeydi: TUTTU damgası, anketin "+7" fişi ve "Tuttu" bildirimi. TUTTU damgası karar damgasının %56-95'ini örtüyor, 0,87 sn sonra evrakla uçuyordu.
+  - Karar damgası 467 ms görünüyordu. Hareket azaltmada bu süre 158 ms'ye iniyordu, yani hareketi azaltan oyuncunun okuma süresi de kısalıyordu.
+  - "MÜHÜRLÜ" rozeti karar anında siliniyordu. Bildirimlerin en çok ikisi tutuluyor, fazlası siliniyordu; mühür bildirimi hiç görünmüyordu.
+- **Karar anı:** önce karar damgası (tam opak, 0,2 sn). Zarlıda 0,3 sn sonra, evrağın alt yarısına dolgulu "TUTTU · ANKET +6" basılıyor; sonuç cümlesi altında, evrağın üstünde duruyor (günlüğe de yazılıyor). Evrak okunana kadar bekliyor: normal 650 ms, mühürde 1100, yeni tehlikede 1200, zarda 1,4-4 sn. Dokunmak ya da tuşa basmak beklemeyi atlıyor, yeni karar vermiyor. Hareket azaltmada süre aynı, yalnız hareket kalkıyor.
+- **Mühür:** rozet uçuşa kadar kalıyor ve yeniden basılıyor. Silinen kayıp göstergede üstü çizili fişle görünüyor ("−10 ◉").
+- **Bildirimler:**
+  - Artık silinmiyor, sıraya giriyor. Zar, mühür ve tehlike öncelikli; bunlar masaüstünde de görünüyor.
+  - Süre metnin uzunluğuna göre. Birden çok kişinin tepkisi tek bildirimde toplanıyor.
+  - "Dikkat" uyarısı evrak masadayken geliyor. Ayın işleyenlerinin fişi (↻) karar fişi söndükten sonra aynı yere düşüyor.
+- **Yanlışlıkla karar:**
+  - Basılı tutulan tuş art arda karar vermiyor. Yeni evrak geldikten sonraki 250 ms'de tuş ya da düğme imzalamıyor.
+  - Oyunu bitiren seçim kırmızı kenarla gösteriliyor; ilk basışta "Emin misiniz? Oyun biter" diye soruyor, ikinci basışta karar veriyor. Sürüklenirse evrak geri yaylanıp onay bekliyor.
+  - Seçim gecesinde Escape artık ilerletmiyor; "Devam", döküm ve "Neden?" gelince etkinleşiyor. Telefonda "Neden?" dökümden önce geliyor ve görünür yere kayıyor.
+  - Kayıtlı dönem varken "Sessiz kampanya" onay istiyor.
+- **Hatalar:**
+  - "Yeniden aday ol" → "Geri" bozuk aday ekranı açıyordu.
+  - İlk seçimde "yeniden seçildi" yazıyordu.
+  - Duvardaki "Makama dön" menüye götürüyordu; şimdi "Menüye dön" ya da "Gazeteye dön" yazıyor.
+  - Ekran değişince odak boşa düşüyordu; şimdi ekrana gidiyor.
+- **Telefon:**
+  - Seçenek düğmeleri etiketi ve notu kesmiyor.
+  - Üst bar yazılarının alt sınırı 10,5-11 px, araç düğmeleri en az 40 px, günlük kapatma 44 px.
+  - Dip kırmızı ▼, tavan amber ▲.
+  - Boş haber şeridi gizli. Damga sürüklenirken ekranda kalıyor: sola kayan evrakta damga sağ kenarda.
+  - Gazete başlığında İ noktası üst satıra binmiyor. Yatay telefonda "telefonu dik tutun" perdesi var.
+- **Tarayıcı testleri:** yeni beklemeye göre güncellendi. Kampanya testi zar sonucunu bekliyor, "Devam"ın etkinleşmesini bekliyor, yeni evraktan sonra 400 ms bekliyor. Jest testi evrakı sayı ve konuyla tanıyor (açılış evrağı imza sayısını artırmıyordu). Menü testi sessiz kampanya onayını deniyor.
+- Sonraki tur: "Yürürlükte" bandı yerine sabit özet satırı; renklerin anlamı (kırmızı yalnız tehlike); kısayolların yardımda anlatılması; ekran okuyucuya karar sonucu.
