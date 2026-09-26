@@ -113,7 +113,11 @@ try {
   await ev(`document.querySelector("#btn-go").click()`);
   await sleep(200);
   await ev(`document.querySelector("#btn-sessiz").click()`); // beyanname: sessiz kampanya (sandık yolu tools/kampanya.mjs'te)
-  await sleep(900);
+  await sleep(200);
+  // profilde yarım kalmış bir dönem varsa ilk basış onay ister, ikincisi başlatır
+  if (await ev(`document.querySelector("#btn-sessiz").classList.contains("armed")`))
+    await ev(`document.querySelector("#btn-sessiz").click()`);
+  await sleep(700);
   await shot("2-intro-telefon");
   for (let i = 0; i < 3; i++) {
     await key("ArrowRight");
@@ -166,8 +170,12 @@ try {
       if (await ev(`document.querySelector("#log").classList.contains("open")`))
         errors.push("TEST: günlük Escape ile kapanmadı");
     }
-    await key(n % 3 ? "ArrowRight" : "ArrowLeft");
-    await sleep(950);
+    const tus = n % 3 ? "ArrowRight" : "ArrowLeft";
+    await key(tus);
+    await sleep(250);
+    // oyunu bitiren seçim ilk basışta onay ister: aynı tuş ikinci kez karar verir
+    if (await ev(`!!document.querySelector(".choice.onay")`)) await key(tus);
+    await sleep(700);
   }
   console.log("kart sayısı:", n);
   await sleep(900);
