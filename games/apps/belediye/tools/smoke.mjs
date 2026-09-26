@@ -133,9 +133,9 @@ try {
   await sleep(620);
   await shot("3b-karar-ani-telefon");
   await sleep(900);
-  // oyun bitene kadar hep sağa
+  // oyun bitene kadar sağ-sol (tavan oyunu bitirmediği için oyunlar uzun sürebilir: emekliliğe kadar ~270 evrak)
   let n = 0;
-  while (n++ < 160) {
+  while (n++ < 320) {
     const scr = await ev(
       `["title","game","over","wall","secim"].find(s => !document.querySelector("#scr-" + s).hidden)`,
     );
