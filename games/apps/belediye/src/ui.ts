@@ -601,7 +601,7 @@ function dangerToast(before: Meters) {
     window.setTimeout(
       () =>
         toast(
-          `<b>Dikkat</b>${METER_AD[k]} ${m[k] <= 15 ? "dibe yaklaşıyor" : k === "e" ? "tavana dayanıyor, erken seçim kapıda" : k === "a" ? "tavana dayanıyor, sizi yukarı çağıracaklar" : "tavana dayanıyor"}<span class="tr n">${m[k]}</span>`,
+          `<b>Dikkat</b>${METER_AD[k]} ${m[k] <= 15 ? "dibe yaklaşıyor" : k === "e" ? "tavana dayanıyor, oda sizi başkanlığa çağıracak" : k === "a" ? "tavana dayanıyor, sizi yukarı çağıracaklar" : "tavana dayanıyor"}<span class="tr n">${m[k]}</span>`,
           "warn",
         ),
       900 + i * 250,
@@ -1009,14 +1009,23 @@ const DAVET_OGUT = [
   "Milletvekilliği büyük iş başkanım. Yalnız Suat Bey'in yüzüne bir bakın; reddederseniz ömür boyu size borçlu kalır, o borç da bir gün ödenek olur.",
   "Başkanım, bu sefer bakan yardımcılığı. Bir daha hayır derseniz Ankara denetçi gönderir, bilesiniz. Ama gönlünüz Karakavak'taysa ben de buradayım.",
 ];
+// Esnaftan teklif: Fikret çarşıyı iyi tanır
+const ODA_OGUT = [
+  "Başkanım, oda başkanlığı makam aracı değil ama tespihçinin kamyoneti de yol alır. Reddederseniz çarşı biraz küser, halk sizi sever. Kalırsanız çayınızı ben demlerim.",
+  "Sekiz ilçenin esnafı başkanım; pencere kenarındaki koltuk rahattır. Yalnız Rahmi reddi kişisel alır, kıraathanede bir akşam oturmanız gerekir.",
+  "Kavun Borsası son kapı başkanım; tokmak altın kaplama. Bir daha hayır derseniz çarşı sizi 'hayır diyen başkan' diye tişörte basar, ona göre.",
+];
 function fikretAdvice(s: State) {
   const c = s.cur!,
     left = TERM - 1 - (s.month % TERM),
     nearE = left <= 12 && s.term < MAX_TERMS;
-  if (c.kind === "davet") return DAVET_OGUT[Math.min(s.cnt.ankara_ret || 0, DAVET_OGUT.length - 1)];
+  if (c.kind === "davet")
+    return c.id.startsWith("oda_")
+      ? ODA_OGUT[Math.min(s.cnt.oda_ret || 0, ODA_OGUT.length - 1)]
+      : DAVET_OGUT[Math.min(s.cnt.ankara_ret || 0, DAVET_OGUT.length - 1)];
   if (c.kind === "secim") {
     const p = pollOf(s),
-      f = c.early ? s.earlyField : s.field,
+      f = s.field,
       n = f ? f.extras.length + 2 : 2;
     const split =
       n > 2 ? ` ${n} aday var, oylar bölünecek; birinci çıkmak yeter.` : " Teke tek yarış; yüzde elliyi geçen kazanır.";
@@ -1492,7 +1501,6 @@ async function electionNight(res: Tally): Promise<void> {
         leader,
         opened: finished ? 1 : tot / all,
         mahalle: MAHALLE[mahNow][0],
-        early: !!res.early,
         flags: S?.flags || {},
         seen,
         ...extra,
@@ -1657,8 +1665,8 @@ async function electionNight(res: Tally): Promise<void> {
       later(next, (520 + 760 * Math.pow(opened / (N - 1), 1.6)) * speed);
     };
 
-    $("#scr-secim").setAttribute("aria-label", res.early ? "Erken seçim gecesi" : "Seçim gecesi");
-    $("#tv-date").textContent = `${res.early ? "Erken seçim · " : ""}${dateLabel(res.month)} · ${ids.length} aday`;
+    $("#scr-secim").setAttribute("aria-label", "Seçim gecesi");
+    $("#tv-date").textContent = `${dateLabel(res.month)} · ${ids.length} aday`;
     $("#tv-live").textContent = "Canlı";
     $(".tv-kj-tab").textContent = "Son dakika";
     $("#tv-info").hidden = true;
@@ -1670,7 +1678,7 @@ async function electionNight(res: Tally): Promise<void> {
     $("#scr-secim").scrollTop = 0;
     spk.year(calOf(res.month).year);
     spk.mood("excited");
-    spk.setWall(res.early ? "Erken seçim gecesi" : "Sandıklar açılıyor");
+    spk.setWall("Sandıklar açılıyor");
     showKJ("acilis");
     setTicker();
     fxShow();
@@ -1909,9 +1917,9 @@ function pickMove(e: KeyboardEvent) {
 // ─── Ana menü: canlı meydan üstünde logo, menü, ilan panosu ve bilgi kartı ──
 const SURUM = __SURUM__; // vite.config.js: derleme günü ve kaynağın kısa özeti
 const YENILIK: [string, string][] = [
+  ["Kampanya ve mühür", "Sandığa giden dört kampanya evrakı oynar; kazanan mühürle başlar."],
+  ["Esnaftan teklif", "Esnaf tavan yapınca oda sizi başkanlığa çağırır; hayır diyebilirsiniz."],
   ["Seçim gecesi canlı yayında", "KARAKAVAK TV sandıkları mahalle mahalle açıyor."],
-  ["Ankara'dan davet", "Ankara tavan yapınca sizi yukarı çağırır; hayır diyebilirsiniz."],
-  ["Aday kaydı", "Vesikalığınızı seçin, adınızı yazın, mazbatayı alın."],
 ];
 let mnBusy = false,
   panelFrom: HTMLElement | null = null;

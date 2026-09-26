@@ -1,5 +1,5 @@
 // İçerik denetimi: kart grafı, bayraklar, sayaçlar, etiketler, uzunluklar.
-// lintContent(E) → { errors: [], warnings: [] }. E: cards.ts + engine.ts'ten dönen nesne (CARDS, CARD, CRISES, INTRO, PEOPLE, SYN; varsa DAVET, ENDINGS, MIRAS).
+// lintContent(E) → { errors: [], warnings: [] }. E: cards.ts + engine.ts'ten dönen nesne (CARDS, CARD, CRISES, INTRO, PEOPLE, SYN; varsa DAVET, ODA, ENDINGS, MIRAS).
 // test/content.test.mjs hata bırakmaz; tools/sim.mjs uyarıları da yazar.
 
 // Motorun kendisinin okuduğu sayaçlar (kartlarda kapı olarak geçmese de kullanılıyor)
@@ -73,6 +73,7 @@ export function lintContent(E) {
     ...E.INTRO.map(c => ({ ...c, intro: true })),
     ...Object.entries(E.CRISES).map(([k, c]) => ({ ...c, id: "kriz_" + k, crisis: true })),
     ...(E.DAVET || []),
+    ...(E.ODA || []),
     ...(E.KAMPANYA || []).map(c => ({ ...c, kampanya: true })),
   ];
   const ids = new Set(),
@@ -250,7 +251,8 @@ export function lintContent(E) {
   }
   // aynı evrakın iki tarafı birden oyunu bitirmesin
   for (const c of all)
-    if (c.L?.son && c.R?.son && !c.id?.startsWith("davet")) err(`${c.id}: iki taraf da oyunu bitiriyor`);
+    if (c.L?.son && c.R?.son && !c.id?.startsWith("davet") && !c.id?.startsWith("oda_"))
+      err(`${c.id}: iki taraf da oyunu bitiriyor`);
 
   // Ulaşılabilirlik: zincir kartları yalnız bağlantıyla gelir; hiçbir yerden bağlanmayan zincir ölü içeriktir
   const reach = new Set(),

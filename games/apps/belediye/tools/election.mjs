@@ -186,11 +186,11 @@ try {
   ); // menüden giriş geçişi bitene kadar
   check((await screenNow()) === "secim", "kaldığım yerden seçim gecesini açmadı");
   console.log("kaldığım yerden:", await screenNow());
-  // Erken seçim: esnaf tavan yapınca oyun bitmez, erken seçim gecesi açılır
+  // Esnaftan teklif: esnaf tavan yapınca oyun bitmez, oda sizi başkanlığa çağırır
   const s = E.newGame();
   Object.assign(s.m, { h: 55, k: 50, e: 100, a: 50 });
   s.month = 22;
-  s.pending = { type: "erken" };
+  s.pending = { type: "oda" };
   s.cur = {
     id: "t",
     kind: "normal",
@@ -210,15 +210,19 @@ try {
     `new Promise(r => { document.querySelector("#btn-resume").click(); const t0 = Date.now(), k = () => (!document.querySelector("#scr-title").hidden && Date.now() - t0 < 4000 ? setTimeout(k, 50) : setTimeout(r, 300)); k(); })`,
   ); // menüden giriş geçişi bitene kadar
   await ev(`document.dispatchEvent(new KeyboardEvent("keydown",{key:"ArrowRight",bubbles:true}))`);
-  await sleep(1500); // deneme kartı: erken seçim kartı gelir
-  const early = await ev(`document.querySelector("#card .doc-konu")?.textContent || ""`);
-  check(/Erken seçim/.test(early), `erken seçim kartı gelmedi (${early})`);
-  await ev(`document.dispatchEvent(new KeyboardEvent("keydown",{key:"ArrowRight",bubbles:true}))`);
-  await sleep(1800);
-  const title = await ev(`document.querySelector("#tv-date").textContent`);
-  check((await screenNow()) === "secim" && /Erken/.test(title), `erken seçim gecesi açılmadı (${title})`);
-  await shot("erken-secim");
-  console.log("erken seçim:", title);
+  await sleep(1500); // deneme kartı: esnaf teklifi gelir
+  const oda = await ev(`document.querySelector("#card .doc-konu")?.textContent || ""`);
+  check(/Esnaftan teklif/.test(oda), `esnaf teklifi gelmedi (${oda})`);
+  await shot("esnaf-teklif");
+  // ret: oyun sürer, esnaf iner
+  await ev(`document.dispatchEvent(new KeyboardEvent("keydown",{key:"ArrowLeft",bubbles:true}))`);
+  await sleep(1600);
+  const sv = JSON.parse(await ev(`localStorage.getItem("cb.save")`));
+  check(
+    (await screenNow()) === "game" && !sv.over && sv.m.e <= 75 && sv.cnt.oda_ret === 1,
+    `ret işlemedi (esnaf ${sv.m.e})`,
+  );
+  console.log("esnaf teklifi:", oda, "· ret sonrası esnaf", sv.m.e);
   // "a" kısayolu sol seçeneği hemen imzalar
   const mid = E.newGame();
   mid.month = 10;

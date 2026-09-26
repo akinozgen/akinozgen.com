@@ -10,6 +10,7 @@ import {
   INTRO,
   KAMPANYA,
   MIRAS,
+  ODA,
   PEOPLE,
   SYN,
   VAATLER,
@@ -602,14 +603,14 @@ export function blocsOf(s: State, cands: { id: string; pct: number }[]) {
   }
   return BLOKLAR.map(([ad, w], b) => ({ ad, w, pay: norm(m[b]).map(v => Math.round(1000 * v) / 10) })); // pay[i] ↔ cands[i]
 }
-export function tally(s: State, rng: Rng, early = false): Tally {
-  const f = early && s.earlyField ? s.earlyField : fieldOf(s, rng);
+export function tally(s: State, rng: Rng): Tally {
+  const f = fieldOf(s, rng);
   const p0 = clamp(pollOf(s) + (rng() * 8 - 4), 5, 95);
   let you = p0,
     main = 100 - p0;
   const ex = f.extras.map(id => {
     const a = ADAYLAR[id],
-      v = clamp(a.guc!(s) + (early && id === "bekir" ? EARLY_BEKIR : 0) + rng() * 4 - 2, 2, 30);
+      v = clamp(a.guc!(s) + rng() * 4 - 2, 2, 30);
     you -= a.beta! * v;
     main -= (1 - a.beta!) * v;
     return { id, v };
@@ -638,7 +639,6 @@ export function tally(s: State, rng: Rng, early = false): Tally {
     margin: Math.round((cands[0].pct - cands[1].pct) * 10) / 10,
     month: s.month,
     term: s.term,
-    early,
     order: [f.main, ...f.extras],
     p0: Math.round(p0 * 10) / 10,
     steal: ex.map(x => ({ id: x.id, v: Math.round(ADAYLAR[x.id].beta! * x.v * 10) / 10 })),
@@ -670,27 +670,6 @@ export function fieldCard(s: State, rng: Rng): CardDef {
     text,
     L: { t: "Kampanya başlasın", e: [3, -4, 0, 0] },
     R: { t: "İşimize bakalım", e: Z },
-  };
-}
-
-// Esnaf tavan yapınca oyun bitmez: esnaf odası belediyeyi fiilen ele geçirir, meclis erken seçim kararı alır.
-// Hacı Bekir esnafın adayı olarak (dost olsa bile, oda onu gösterir) güçlü girer. Normal seçim takvimi bozulmaz.
-export const EARLY_BEKIR = 22; // esnaf odası belediyeyi ele geçirmişken adayı güçlü girer
-export function earlyCard(s: State, rng: Rng): CardDef {
-  const tmp: State = { ...s, field: null },
-    f = drawField(tmp, rng);
-  if (f.main !== "bekir" && !f.extras.includes("bekir")) f.extras = ["bekir", ...f.extras].slice(0, ADAY_MAX - 2);
-  s.earlyField = { ...f, term: s.term };
-  const rivals = [f.main, ...f.extras];
-  return {
-    id: "erkensecim",
-    kind: "secim",
-    early: true,
-    who: "fikret",
-    konu: "Erken seçim",
-    text: `Başkanım, esnaf odası belediyeyi fiilen ele geçirdi; meclis kıraathanede toplanıyor, kararlar okey masasında. Meclis erken seçim kararı aldı. Karşınızda ${joinTR(rivals.map(id => PEOPLE[id].ad))} var. Son ankette %${Math.round(pollOf(s))}.`,
-    L: { t: "Sessiz kalalım", e: Z },
-    R: { t: "Meydana çıkalım", e: [6, -10, 3, 0] },
   };
 }
 
@@ -785,7 +764,6 @@ export function acilisSecimi(vaatler: string[], rng: Rng = Math.random, oy?: num
       margin: Math.round((cands[0].pct - cands[1].pct) * 10) / 10,
       month: -1, // göreve başlamadan önceki mart
       term: 0,
-      early: false,
       order: ["nermin", ...extras],
       p0: sans,
       steal: [],
@@ -855,7 +833,7 @@ function acilisCard(s: State): CardDef {
   };
 }
 
-export function special(p: Pending, s: State, rng: Rng = Math.random): CardDef {
+export function special(p: Pending, s: State): CardDef {
   if (p.type === "ending") return endingCard(p.key, s, p);
   if (p.type === "acilis") return acilisCard(s);
   if (p.type === "tekir")
@@ -869,14 +847,15 @@ export function special(p: Pending, s: State, rng: Rng = Math.random): CardDef {
       L: { t: "Aferin Tekir", e: Z },
       R: { t: "Mamayı iki kat yapın", e: Z },
     };
-  if (p.type === "erken") return earlyCard(s, rng);
   if (p.type === "davet") return { ...DAVET[Math.min(s.cnt.ankara_ret || 0, DAVET.length - 1)], kind: "davet" };
+  // esnaf tavan yapınca oda sizi başkanlığa çağırır (eski kayıtlardaki erken seçim de buraya döner)
+  if (p.type === "oda" || p.type === "erken")
+    return { ...ODA[Math.min(s.cnt.oda_ret || 0, ODA.length - 1)], kind: "davet" };
   {
     const r = p.res,
       n = r ? r.cands.length : 2;
     if (!p.win) {
       if (r?.winner === "tekir") return endingCard("tekir", s);
-      if (p.early && r?.winner === "bekir") return endingCard("e100", s);
       const w = r?.cands[0];
       return endingCard("sandik", s, {
         oy: p.oy,
@@ -884,17 +863,6 @@ export function special(p: Pending, s: State, rng: Rng = Math.random): CardDef {
       });
     }
     const alti = r && r.you < 50 ? " Yüzde elli olmadı ama birinci birincidir." : "";
-    if (p.early)
-      return {
-        id: "erkensonuc",
-        kind: "erkensonuc",
-        who: "huseyin",
-        konu: "Erken seçim sonucu",
-        oy: p.oy,
-        text: `Erken seçimden %${p.oy} ile birinci çıktınız başkanım!${alti} Esnaf odası kıraathaneye çekildi, meclis belediyeye döndü. Döneminiz kaldığı yerden sürüyor.`,
-        L: { t: "Çalışmaya devam", e: Z },
-        R: { t: "Esnafa bir çay", e: Z },
-      };
     return {
       id: "sonuc",
       kind: "sonuc",
@@ -971,7 +939,6 @@ export function materialize(c: CardDef, s: State, rng: Rng): Cur {
     oy: c.oy,
     who: c.who,
     konu: c.konu,
-    early: c.early,
     text: alt ? alt.text : c.text,
     L,
     R,
@@ -998,7 +965,7 @@ export function draw(s: State, rng: Rng = Math.random): Cur {
   let c: CardDef;
   if (s.kampanya) c = { ...KAMPANYA_KART[s.kampanya.sira[s.kampanya.i]], kind: "kampanya" };
   else if (s.pending) {
-    c = special(s.pending, s, rng);
+    c = special(s.pending, s);
     s.pending = null;
   } else if (s.intro > 0) c = INTRO[INTRO.length - s.intro];
   else if (s.month % TERM === TERM - 1 && s.electionTerm !== s.term) c = electionCard(s, rng);
@@ -1147,18 +1114,13 @@ export function choose(s: State, side: "L" | "R", rng: Rng = Math.random, opt: {
       passMonth();
       break;
     case "secim":
-      if (!c.early) s.electionTerm = s.term;
+      s.electionTerm = s.term;
       break;
-    case "erkensonuc":
-      s.m.e = Math.min(s.m.e, 70);
-      s.earlyField = null;
-      passMonth();
-      break; // oda kıraathaneye çekildi
     case "adaylar":
       s.fieldTerm = s.term;
       passMonth();
       break;
-    case "davet": // kabul: terfi finali gelir · ret: normal evrak gibi işlenir (günlüğe ve gazeteye girer)
+    case "davet": // Ankara'dan ya da esnaftan: kabul finali getirir · ret normal evrak gibi işlenir (günlüğe ve gazeteye girer)
       if (o.son) {
         s.pending = { type: "ending", key: o.son };
         return out;
@@ -1174,22 +1136,23 @@ export function choose(s: State, side: "L" | "R", rng: Rng = Math.random, opt: {
     s.pending = { type: "ending", key: o.son };
     return out;
   }
-  // seçim evrakında esnaf ya da Ankara tavanı sandığı bekletmez: önce seçim, davet ya da erken seçim sonra
+  // seçim evrakında esnaf ya da Ankara tavanı sandığı bekletmez: önce seçim, teklif sonra
   const dead = METERS.find(
     k => s.m[k] <= 0 || (k !== "h" && s.m[k] >= 100 && !((k === "e" || k === "a") && c.kind === "secim")),
   );
   if (dead) {
     const key = dead + (s.m[dead] <= 0 ? "0" : "100");
-    if (key === "e100") s.pending = { type: "erken" };
+    if (key === "e100")
+      s.pending = { type: "oda" }; // esnaf tavan yapınca oda sizi başkanlığa çağırır; reddedebilirsiniz
     else if (key === "a100")
       s.pending = { type: "davet" }; // Ankara tavan yapınca sizi yukarı çağırır; reddedebilirsiniz
     else if ((s.cnt.tekir || 0) >= 3 && !s.tekirUsed) s.pending = { type: "tekir", restore: before, cause: key };
     else s.pending = { type: "ending", key };
     out.dead = dead;
   } else if (c.kind === "secim") {
-    const r = tally(s, rng, !!c.early);
+    const r = tally(s, rng);
     s.lastElection = r; // seçim gecesi ekranı ve gazete için
-    s.pending = { type: "sonuc", oy: trPct(r.you), win: r.win, big: r.win && r.margin >= 25, res: r, early: !!c.early };
+    s.pending = { type: "sonuc", oy: trPct(r.you), win: r.win, big: r.win && r.margin >= 25, res: r };
   }
   return out;
 }

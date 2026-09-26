@@ -35,23 +35,22 @@ const FLAGS = [
   { karaca: true, towers: true, devkavun: true, bisiklet: true, itfaiye_muze: true },
   { itfaiye_satildi: true },
 ];
-// Gerçek tally() sonuçları + Tekir'in ve erken seçimin kazandığı elle kurulmuş sonuçlar
+// Gerçek tally() sonuçları + Tekir'in kazandığı elle kurulmuş sonuçlar
 const RESULTS = (() => {
   const out = [];
   for (let g = 0; g < 300; g++) {
     const r = rng(g + 500),
       s = randomState(r);
-    out.push(E.tally(s, r, g % 7 === 0));
+    out.push(E.tally(s, r));
   }
   const base = out[0];
-  const mk = (cands, early = false) => ({
+  const mk = cands => ({
     ...base,
     cands,
     winner: cands[0].id,
     win: cands[0].id === "you",
     you: cands.find(c => c.id === "you").pct,
     margin: Math.round((cands[0].pct - cands[1].pct) * 10) / 10,
-    early,
     order: cands.map(c => c.id).filter(id => id !== "you"),
   });
   out.push(
@@ -107,7 +106,6 @@ const ctxOf = (res, i, r, extra = {}) => {
     prev,
     opened,
     mahalle: MAHALLE[i % MAHALLE.length],
-    early: res.early,
     flags: FLAGS[i % FLAGS.length],
     ...extra,
   };
@@ -186,7 +184,7 @@ test("alt bant: sayım başlığı açılan oranı Türkçe ekiyle yazar", () =>
   assert.ok(at(1).includes("SANDIKLARIN TAMAMI AÇILDI"));
 });
 
-test("alt bant: sonuç evresinde kazanma, kaybetme, Tekir ve erken seçim ayrı ayrı anlatılır", () => {
+test("alt bant: sonuç evresinde kazanma, kaybetme ve Tekir ayrı ayrı anlatılır", () => {
   const titles = (res, extra = {}) => {
     const t = new Set(),
       s = new Set();
@@ -197,14 +195,12 @@ test("alt bant: sonuç evresinde kazanma, kaybetme, Tekir ve erken seçim ayrı 
     }
     return { t: [...t], s: [...s] };
   };
-  const win = RESULTS.find(r => r.win && !r.early && r.cands.length > 2),
-    loss = RESULTS.find(r => !r.win && r.winner !== "tekir" && !r.early);
-  const tek = RESULTS.find(r => r.winner === "tekir"),
-    erken = RESULTS.find(r => r.early && r.winner === "bekir");
+  const win = RESULTS.find(r => r.win && r.cands.length > 2),
+    loss = RESULTS.find(r => !r.win && r.winner !== "tekir");
+  const tek = RESULTS.find(r => r.winner === "tekir");
   const w = titles(win),
     l = titles(loss),
-    k = titles(tek),
-    e = titles(erken);
+    k = titles(tek);
   assert.ok(
     w.t.some(t => /YENİDEN BAŞKAN|MAKAM YERİNDE|ÇAYLAR YİNE/.test(t)),
     w.t.join(" | "),
@@ -229,11 +225,6 @@ test("alt bant: sonuç evresinde kazanma, kaybetme, Tekir ve erken seçim ayrı 
     k.t.join(" | "),
   );
   assert.ok(k.s.some(s => s.startsWith("Tekir: '")));
-  assert.ok(
-    e.t.some(t => t.includes("ERKEN SEÇİM")),
-    e.t.join(" | "),
-  );
-  assert.ok(e.t.includes("BELEDİYE ÇARŞIYA TAŞINDI"));
 });
 
 test("alt bant: adaya özgü şakalar ve oyuncunun önde/geride olduğu satırlar gelir", () => {
@@ -348,7 +339,7 @@ test("son dakika: havuzlar geniş, bazı dünya ve ülke haberleri Karakavak'a b
   }
 });
 
-test("son dakika: adaylara, erken seçime, bayraklara ve sonuca göre değişir", () => {
+test("son dakika: adaylara, bayraklara ve sonuca göre değişir", () => {
   const texts = (pred, ctxFn, N = 60) => {
     const out = [];
     for (let g = 0; g < N; g++) {
@@ -367,13 +358,6 @@ test("son dakika: adaylara, erken seçime, bayraklara ve sonuca göre değişir"
     res => ({ res, opened: 0.3 }),
   );
   assert.doesNotMatch(noTek, /Mırnav/);
-  assert.match(
-    texts(
-      r => r.early,
-      res => ({ res, early: true }),
-    ),
-    /Erken seçim kararı|veresiye oy yok/,
-  );
   assert.doesNotMatch(
     texts(tvAll, res => ({ res })),
     /Karaca|itfaiye|Towers|dev kavun heykeline|bisikleti/,

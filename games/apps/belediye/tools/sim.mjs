@@ -155,9 +155,7 @@ for (const [name, pol] of Object.entries(policies)) {
     tally = (sideTally[name] = {});
   const field = {},
     davet = {};
-  let earlyE = 0,
-    earlyW = 0,
-    under50 = 0,
+  let under50 = 0,
     tekirRan = 0,
     tekirWon = 0,
     rivalWins = {};
@@ -189,13 +187,11 @@ for (const [name, pol] of Object.entries(policies)) {
       if (c.kind === "kriz") crises++;
       if (c.kind === "tekir") tekirSave++;
       if (c.kind === "sonuc") wins++;
-      if (c.kind === "secim" && c.early) earlyE++;
-      else if (c.kind === "secim") {
+      if (c.kind === "secim") {
         elections++;
         vaatAtElection += s.cnt.vaat || 0;
         defterAt += E.defterOf(s);
       }
-      if (c.kind === "erkensonuc") earlyW++;
       const side = c.kind === "kampanya" ? kampanyaSec(s, rng) : sonMu(s, rng) || pol(s, rng);
       // kartın yazıldığı taraf (masada yarı yarıya ters çevrilir): baskın seçenek ölçümü için
       if (c.kind === "normal") {
@@ -264,7 +260,7 @@ for (const [name, pol] of Object.entries(policies)) {
       .map(([k, v]) => `${k}:%${Math.round((100 * v) / fn)}`)
       .join(
         " ",
-      )}   %50 altı zafer: %${wins ? Math.round((100 * under50) / wins) : 0}   Tekir aday: %${((100 * tekirRan) / fn).toFixed(1)} (kazandı ${tekirWon})   erken seçim: ${(earlyE / N).toFixed(2)}/oyun (kazanma %${earlyE ? Math.round((100 * earlyW) / earlyE) : "-"})   kaybettiren: ${Object.entries(
+      )}   %50 altı zafer: %${wins ? Math.round((100 * under50) / wins) : 0}   Tekir aday: %${((100 * tekirRan) / fn).toFixed(1)} (kazandı ${tekirWon})   kaybettiren: ${Object.entries(
       rivalWins,
     )
       .sort((a, b) => b[1] - a[1])
@@ -285,7 +281,7 @@ for (const [name, pol] of Object.entries(policies)) {
   for (const [k, A] of Object.entries(acl)) (acilisSay[k] ||= {})[name] = A;
   if (Object.keys(davet).length)
     console.log(
-      `Ankara daveti (oyun başına): ${Object.entries(davet)
+      `teklif (oyun başına): ${Object.entries(davet)
         .map(([k, v]) => `${k}:${(v / N).toFixed(2)}`)
         .join("  ")}`,
     );

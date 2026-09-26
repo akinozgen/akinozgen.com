@@ -3,7 +3,7 @@
 // DOM'suz, saf fonksiyonlar. Bütün rastlantı dışarıdan verilen rng'den gelir: aynı tohum, aynı yayın.
 // Okuduğu globaller: PEOPLE, ADAYLAR, dateLabel. Gerçek kişi, parti, kurum ya da marka adı yok.
 //
-// ctx: { res, playerName, pct, leader, prev, opened, mahalle, early, flags, seen }
+// ctx: { res, playerName, pct, leader, prev, opened, mahalle, flags, seen }
 //   res       tally() sonucu
 //   pct       o ana kadar açılan sandıklara göre yüzdeler {id: yüzde}; leader o anki birinci
 //   prev      (isteğe bağlı) bir önceki lider; "lider" evresinde liderliği kaptıranı anmak için
@@ -30,7 +30,6 @@ export interface TvCtx {
   prev?: string | null;
   opened?: number;
   mahalle?: string | null;
-  early?: boolean;
   flags?: Record<string, boolean>;
   seen?: Set<string>;
 }
@@ -305,7 +304,6 @@ export const TV_SOZ: Record<string, { win: Line[]; lose: Line[] }> = {
       [v => !v.ilk, "Beş yıl daha evrak, beş yıl daha çay. Hayırlı olsun."],
       [v => v.ilk, "Beş yıl evrak, beş yıl çay. Bismillah."],
       [v => v.ilk, "Söz verdik, sözler defterde. Fikret, çay!"],
-      [v => v.early, "Erken seçim de seçimdir; kepenkler açılsın, çaylar belediyeden."],
       [v => v.res.you < 50, "Yüzde elli şart değilmiş; birinci birincidir."],
     ],
     lose: [
@@ -451,8 +449,6 @@ export const TV_KJ: Record<string, { title: Line[]; sub: Line[] }> = {
       "Seçim gecesi başladı",
       "İlk sandıklar geliyor",
       "KTV seçim özel",
-      [v => v.early, "Erken seçim gecesi"],
-      [v => v.early, "Esnaf istedi, sandık geldi"],
       [v => v.has("tekir"), "Adaylardan biri kedi"],
     ],
     sub: [
@@ -466,9 +462,7 @@ export const TV_KJ: Record<string, { title: Line[]; sub: Line[] }> = {
       [v => v.n >= 4, "{nY} adaylı pusula masa örtüsü boyunda; katlamak başlı başına beceri"],
       [v => v.n === 2, "İki aday, tek kuyruk; Karakavak teke tek yarışı izliyor"],
       [v => v.has("tekir"), "Pusulada bir ilk: Mırnav Partisi. Kurul pati izini imza saydı"],
-      [v => v.has("bekir") && !v.early, "Çarşı ekran başında; Hacı Bekir kepenkleri yarıya indirdi"],
-      [v => v.early, "Esnaf odası belediyeyi okey masasına taşıyınca sandık erken kuruldu"],
-      [v => v.early, "Erken seçim kararı kıraathanede alındı; sandıklar okey masasından kalktı"],
+      [v => v.has("bekir"), "Çarşı ekran başında; Hacı Bekir kepenkleri yarıya indirdi"],
       [v => v.has("burak"), "Burak yayını kendi hesabından da veriyor; gecikme 40 saniye"],
       [v => v.has("kaan"), "Kaan Bey sonuçları 'Karakavak 4.0' panelinden izleyecek; panel yükleniyor"],
     ],
@@ -480,7 +474,6 @@ export const TV_KJ: Record<string, { title: Line[]; sub: Line[] }> = {
       [v => v.mid, "Açılan sandık oranı {oran}"],
       [v => v.mid && v.leader, "{oran} açıldı, {lider} önde"],
       [v => v.mid, "Sayım sürüyor: {oran}"],
-      [v => v.mid && v.early, "Erken seçimde {oran} açıldı"],
       [v => v.opened > 0 && v.opened < 0.15, "İlk sandıklar açıldı"],
       [v => v.opened > 0.8 && v.opened < 1, "Sayımda son viraj"],
       [v => v.youLead, "{you} önde"],
@@ -514,7 +507,6 @@ export const TV_KJ: Record<string, { title: Line[]; sub: Line[] }> = {
       [v => v.gap >= 10, "Fark {fark} puan; öndeki adayın ekibi pastayı şimdiden sipariş etti"],
       [v => v.opened > 0 && v.opened < 0.2, "Daha {oran} açık; iki aday şimdiden balkona çıktı"],
       [v => v.has("tekir"), "Geçersiz oyların bir kısmında pati izi var; kurul 'niyet belli' dedi"],
-      [v => v.early, "Erken seçimde sayım hızlı; esnaf 'dükkânı açmamız lazım' diyor"],
     ],
   },
   lider: {
@@ -594,8 +586,6 @@ export const TV_KJ: Record<string, { title: Line[]; sub: Line[] }> = {
       [v => !v.tekirWon, "Karakavak seçimini yaptı"],
       [v => !v.tekirWon, "Sandık konuştu"],
       [v => !v.tekirWon, "Karakavak kararını verdi"],
-      [v => v.early, "Erken seçim sonuçlandı"],
-      [v => v.early, "Erken seçimde sonuç belli"],
       [v => v.win && !v.ilk, "{you} yeniden başkan"],
       [v => v.win && !v.ilk, "Makam yerinde kaldı"],
       [v => v.win && !v.ilk, "Çaylar yine belediyeden"],
@@ -606,12 +596,10 @@ export const TV_KJ: Record<string, { title: Line[]; sub: Line[] }> = {
       [v => v.win && v.margin < 1, "Foto finiş"],
       [v => v.win && v.margin >= 25, "Sandıktan fark çıktı"],
       [v => v.win && v.res.you < 50, "Birinci birincidir"],
-      [v => v.win && v.early && !v.ilk, "Erken seçimde makam korundu"],
       [v => v.lost, "{kazanan} kazandı"],
       [v => v.lost, "Yeni başkan: {kazanan}"],
       [v => v.lost, "Makam el değiştirdi"],
       [v => v.lost, "Karakavak'ta değişim"],
-      [v => v.lost && v.early && v.winner === "bekir", "Belediye çarşıya taşındı"],
       [v => v.tekirWon, "Tekir başkan!"],
       [v => v.tekirWon, "Karakavak'ın ilk tüylü başkanı"],
       [v => v.tekirWon, "Mırnav Partisi iktidarda"],
@@ -628,8 +616,6 @@ export const TV_KJ: Record<string, { title: Line[]; sub: Line[] }> = {
       [v => v.tekirWon, "Mazbata töreninde Tekir kurdeleyi kesmedi, kovaladı"],
       [v => v.tekirWon, "Tekir'in ilk genelgesi: 'Mama saatleri değişmeyecek.' Meclis oybirliğiyle kabul etti"],
       [v => v.tekirWon, "Tekir zafer konuşması yerine balkonda güneşlendi; kalabalık yine de alkışladı"],
-      [v => v.early && v.win, "Erken seçim bitti; okey masası meclis salonundan çıkarıldı"],
-      [v => v.early && v.winner === "bekir", "Meclis yarın kıraathanede; gündem: çay, okey, çay"],
     ],
   },
 };
@@ -682,8 +668,6 @@ export const TV_TICK: Record<string, Line[]> = {
       "Nuri Bey sandık kuruluna yoklama aldı; 'burada' diyen müşahit 'mevcut' demediği için uyarıldı",
     ],
     [v => v.has("nermin"), "Nermin Hanım tutanakları kendi defterine de yazıyor; kalem üçüncü kez değişti"],
-    [v => v.early, "Erken seçim kararı okey masasında alındığı için sandıklardan biri kıraathaneye kuruldu"],
-    [v => v.early, "Esnaf odası sandık başına 'veresiye oy yok' tabelası astı; kurul tabelayı indirtti"],
     [v => v.youLead && v.opened < 1, "{you} cephesinde bayram havası; Fikret semaveri ikinci kez yaktı"],
     [v => v.youBehind && v.opened < 1, "{lider} önde; {you} cephesinden açıklama: 'Yukarıkavak daha gelmedi'"],
     [
@@ -901,7 +885,6 @@ export function tvView(ctx: TvCtx | null | undefined, phase: string) {
     vars.mahs = TV_MAH[mah]?.s || mah;
     vars.mahde = TV_MAH[mah]?.de || tvEk(mah, "de");
   }
-  const early = !!(c.early ?? res.early);
   return {
     // göreve başlamadan önceki seçim: "yeniden seçildi" değil "seçildi"
     ilk: !!res.ilk,
@@ -915,7 +898,6 @@ export function tvView(ctx: TvCtx | null | undefined, phase: string) {
     gap,
     opened,
     mah,
-    early,
     flags: c.flags || {},
     prev: c.prev || null,
     seen: c.seen,
@@ -1086,6 +1068,5 @@ export function whyLines(res: Tally | null | undefined, playerName?: string) {
   else if (res.rel <= -1) out.push(`Küs olduğunuz kanaat önderleri kahvede konuştu: −${d(-res.rel)} puan.`);
   if (res.fatigue)
     out.push(`${res.term}. dönem yorgunluğu: −${d(res.fatigue)} puan. Seçmen afişteki yüzünüzü ezberledi.`);
-  if (res.early) out.push("Erken seçimdi; esnaf odası sandığa güçlü girdi.");
   return out;
 }

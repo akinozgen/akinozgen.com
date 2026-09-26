@@ -33,7 +33,7 @@ test("zincirler, işler ve ilişkiler var olan kartlara ve kişilere bağlı", (
     assert.ok(ids.has(id), `${c.id} → ${id} yok`);
     linked.add(id);
   };
-  for (const c of [...E.CARDS, ...E.DAVET])
+  for (const c of [...E.CARDS, ...E.DAVET, ...E.ODA])
     for (const s of ["L", "R"]) {
       const o = c[s],
         n = Array.isArray(o.next) ? { id: o.next[0] } : o.next;

@@ -7748,6 +7748,37 @@ export const CARDS: CardDef[] = [
       not: "Rahmi rövanş masasını hâlâ boş tutuyor.",
     },
   },
+  // ══ Esnaftan teklifin reddi: çarşı küser, gönül alınır ══
+  {
+    id: "odaret_kepenk",
+    who: "bekir",
+    konu: "Yarım küslük",
+    chain: true,
+    norel: true,
+    text: "Başkanım, oda başkanlığını reddettiniz, çarşı küs. Kepenkleri yarıya indirdim; tam küslük değil, yarım küslük. Bir çarşı ziyareti gönlümüzü alır, yoksa bu yarım kepenk ay sonuna kadar iner.",
+    L: { t: "Çarşıya çay ziyareti", e: [0, -3, 6, 0], rel: { bekir: 1 } },
+    R: { t: "Kepenk sizin", e: [3, 0, -4, 0] },
+  },
+  {
+    id: "odaret_koltuk",
+    who: "rahmi",
+    konu: "Boş koltuk",
+    chain: true,
+    norel: true,
+    text: "Başkanım, birliği de reddettiniz; pencere kenarındaki koltuğa 'boş' yazısı astım. Müşteriler oturmuyor, uğursuz diyorlar. Bir akşam gelip oturursanız büyü bozulur.",
+    L: { t: "Bir akşam otururum", e: [2, 0, 5, -2], rel: { rahmi: 1 } },
+    R: { t: "Koltuk müzeye", e: [4, -2, -3, 0] },
+  },
+  {
+    id: "odaret_tebesir",
+    who: "bekir",
+    konu: "Tebeşirle fiyat",
+    chain: true,
+    norel: true,
+    text: "Başkanım, borsa kurulmayınca kavun fiyatını tahtaya tebeşirle yazdık, yağmur sildi. Tüccar 'fiyat kimde' diye soruyor. Belediye çarşıya bir fiyat panosu koysa ovanın derdi biter.",
+    L: { t: "Pano belediyeden", e: [2, -5, 6, 0] },
+    R: { t: "Tebeşir yeter", e: [0, 0, -4, 2] },
+  },
 ];
 
 // ─── Seçimde karşınıza çıkabilecek adaylar ──────────────────────────────────
@@ -8011,7 +8042,7 @@ export const CRISES: Record<string, Omit<CardDef, "id">> = {
   e100: {
     who: "rahmi",
     konu: "Esnaf sultası",
-    text: "Esnaf odası 'belediye bizim' demeye başladı başkanım. Meclis toplantısını kıraathanede yapalım diyorlar. Bu gidişle erken seçime gideriz.",
+    text: "Esnaf odası 'belediye bizim' demeye başladı başkanım. Meclis toplantısını kıraathanede yapalım diyorlar. Bu gidişle sizi oda başkanı yapacaklar; belediye başkansız kalır.",
     L: { t: "Denetim başlasın", e: [0, 5, -14, 0] },
     R: { t: "Zabıta sıkı çalışsın", e: [3, 3, -12, 0] },
   },
@@ -8088,6 +8119,63 @@ export const DAVET: CardDef[] = [
   },
 ];
 
+// ─── Esnaftan teklif: esnaf tavan yapınca oyun bitmez, oda sizi başkanlığa çağırır ─
+// Sırası reddetme sayısına (oda_ret) göre: esnaf odası → Kavun Ovası Esnaf Birliği → Kavun Borsası (sonra hep o).
+// L: reddet (esnaf küser, halk sever, peşine evrak gelir) · R: kabul (son: belediyeyi bırakıp çarşıya geçiş). Taraflar çevrilmez.
+export const ODA: CardDef[] = [
+  {
+    id: "oda_baskan",
+    who: "bekir",
+    konu: "Esnaftan teklif",
+    text: "Başkanım, oda genel kurulu toplandı, oy birliğiyle sizi oda başkanı seçti. Tüzüğe 'dükkânı olmayan da olur' maddesi eklendi. Ben emekli olup tespih dükkânıma dönerim. Belediyeyi bırakın, çarşıya gelin.",
+    L: {
+      t: "Belediyeyi bırakmam",
+      e: [6, 0, -30, 0],
+      rel: { bekir: -1 },
+      set: "oda_ret",
+      inc: "oda_ret",
+      next: { id: "odaret_kepenk", in: 0 },
+    },
+    R: { t: "Çarşıya geliyorum", e: [0, 0, 0, 0], son: "e100_oda" },
+  },
+  {
+    id: "oda_birlik",
+    who: "rahmi",
+    konu: "İkinci teklif",
+    text: "Başkanım, oda kırıldı, birlik devreye girdi: Kavun Ovası Esnaf Birliği, sekiz ilçenin odası. Başkanlık koltuğu kıraathanemde, pencere kenarında. Hacı Bekir 'bu sefer hayır demez' diye iddiaya girdi.",
+    L: {
+      t: "Yine belediye",
+      e: [7, 0, -34, 0],
+      rel: { rahmi: -1 },
+      set: "oda_ret",
+      inc: "oda_ret",
+      next: { id: "odaret_koltuk", in: [2, 4] },
+    },
+    R: { t: "Birliğe geçiyorum", e: [0, 0, 0, 0], son: "e100_birlik" },
+  },
+  {
+    id: "oda_borsa",
+    who: "bekir",
+    konu: "Son teklif",
+    text: "Başkanım, son teklif: Kavun Borsası başkanlığı. Ovanın bütün kavunu sizin kürsünüzden fiyatlanacak, tokmak altın kaplama. Üç kez hayır diyen görülmemiş; çarşı 'başkan bizi beğenmiyor mu' diye soruyor.",
+    alt: [
+      {
+        if: { cnt: { oda_ret: 3 } },
+        text: "Başkanım, Kavun Borsası yine kapıda; tokmağı bu sefer yanımda getirdim. Çarşı 'hayır diyen başkan' diye tişört bastı, üstünde sizin yüzünüz var. Satışlar iyi, onu da söyleyeyim.",
+      },
+    ],
+    L: {
+      t: "Yine hayır",
+      e: [9, -4, -40, 0],
+      rel: { bekir: -1 },
+      set: "oda_ret",
+      inc: "oda_ret",
+      next: { id: "odaret_tebesir", in: [2, 4] },
+    },
+    R: { t: "Tokmağı verin", e: [0, 0, 0, 0], son: "e100_borsa" },
+  },
+];
+
 // ─── Sonlar ───────────────────────────────────────────────────────────────
 export const ENDINGS: Record<string, Ending> = {
   h0: {
@@ -8131,9 +8219,11 @@ export const ENDINGS: Record<string, Ending> = {
     spot: "Çarşıda kepenkler inince başkan ekmek almak için komşu ilçeye gitmek zorunda kaldı.",
     kisa: "Çarşı kepenk indirdi",
   },
+  // eski son: erken seçim kalktı (2026-09); duvardaki ve sonlar defterindeki eski oyunlar için duruyor
   e100: {
     who: "bekir",
     konu: "Erken seçim sonucu",
+    legacy: true,
     text: "Erken seçimi Hacı Bekir kazandı başkanım. Esnaf odası belediyeyi resmen devraldı; meclis kararları artık kıraathanede, okey masasında alınıyor. Makam odanız tespihçi dükkânı oldu.",
     manset: "BELEDİYE ÇARŞIYA TAŞINDI",
     spot: "Erken seçimi esnafın adayı Hacı Bekir kazandı; meclis toplantıları kıraathaneye, kararlar okey masasına taşındı.",
@@ -8156,6 +8246,37 @@ export const ENDINGS: Record<string, Ending> = {
     manset: "KARAKAVAK'TAN BAKANLIĞA",
     spot: "Ankara'nın 'bakan yardımcılığı' teklifini sonunda kabul eden başkan, ilçeden semaveriyle uğurlandı.",
     kisa: "Bakan yardımcısı oldu",
+  },
+  // esnaftan teklif kabul edildi: belediyeyi bırakıp çarşıya geçiş, yenilgi değil
+  e100_oda: {
+    who: "bekir",
+    konu: "Oda başkanlığı",
+    win: true,
+    btn: ["Hayırlı olsun", "Çarşıya selam"],
+    text: "Hayırlı olsun oda başkanım! Belediyeyi bıraktınız, çarşıya geçtiniz. İlk icraatınız kıraathaneye ikinci okey masası oldu. Makam aracınız artık tespihçinin kamyoneti; kornası da çalışıyor.",
+    manset: "BAŞKAN ÇARŞIYA GEÇTİ",
+    spot: "Belediye başkanlığını bırakan başkan esnaf odasının başına geçti; ilk genel kurul kıraathanede, çaylar odadan.",
+    kisa: "Esnaf odası başkanı oldu",
+  },
+  e100_birlik: {
+    who: "rahmi",
+    konu: "Birlik başkanlığı",
+    win: true,
+    btn: ["Hayırlı olsun", "Çarşıya selam"],
+    text: "Birliğin başkanlık koltuğu pencere kenarında başkanım; sekiz ilçenin esnafı sırayla elinizi öpmeye geliyor. Toplantılar okey masasında, gündem hep aynı: kira, çay, kira.",
+    manset: "SEKİZ İLÇENİN ESNAF BAŞKANI",
+    spot: "Karakavak'ın başkanı belediyeyi bırakıp Kavun Ovası Esnaf Birliği'nin başına geçti; yemin töreni kıraathanede yapıldı.",
+    kisa: "Esnaf birliği başkanı oldu",
+  },
+  e100_borsa: {
+    who: "bekir",
+    konu: "Kavun Borsası",
+    win: true,
+    btn: ["Hayırlı olsun", "Çarşıya selam"],
+    text: "Altın kaplama tokmak artık sizde başkanım. Ovanın bütün kavunu sizin kürsünüzden fiyatlanıyor; ilk seansta tokmağı kavuna vurdunuz, fiyat o gün yüzde kırk arttı. Çarşı sizi bayramlarda ziyaret ediyor.",
+    manset: "TOKMAK BAŞKANDA",
+    spot: "Üç kez hayır diyen başkan sonunda Kavun Borsası başkanlığını kabul etti; ilk seansta kavun fiyatı rekor kırdı.",
+    kisa: "Kavun borsası başkanı oldu",
   },
   a100_gm: {
     who: "vekil",
@@ -8523,6 +8644,11 @@ export const MIRAS: MirasDef[] = [
       req: "vaat_kura_torba",
     },
     text: "Başkan, işe alım kurasını makam şefine çektiren başkan olarak anılacak. Torba bugün belediye vitrininde; içindeki kâğıtların çoğunda aynı soyadı yazıyor.",
+  },
+  // ══ esnaftan teklif ══
+  {
+    if: { req: "oda_ret" },
+    text: "Esnaf odasının başkanlık teklifini reddedip belediyede kalan başkan; çarşı adına 'hayır diyen başkan' tişörtü bastı, hâlâ satıyor.",
   },
   // ══ göreve başlayış ══
   {

@@ -92,7 +92,6 @@ export type CardKind =
   | "sonuc"
   | "cay"
   | "secim"
-  | "erkensonuc"
   | "adaylar"
   | "davet"
   | "acilis"
@@ -132,7 +131,6 @@ export interface CardDef {
   key?: string;
   restore?: Meters;
   oy?: string;
-  early?: boolean;
 }
 
 export interface Person {
@@ -275,7 +273,6 @@ export interface Tally {
   margin: number;
   month: number;
   term: number;
-  early: boolean;
   order: string[];
   p0: number;
   steal: { id: string; v: number }[];
@@ -297,10 +294,12 @@ export interface Tally {
 export type Pending =
   | { type: "ending"; key: string; oy?: string; rakip?: string }
   | { type: "tekir"; restore: Meters; cause: string }
-  | { type: "erken" }
   | { type: "davet" }
+  | { type: "oda" }
+  /** eski kayıt: erken seçim kalktı, esnaf teklifine döner */
+  | { type: "erken" }
   | { type: "acilis" }
-  | { type: "sonuc"; oy: string; win: boolean; big?: boolean; res?: Tally; early?: boolean };
+  | { type: "sonuc"; oy: string; win: boolean; big?: boolean; res?: Tally };
 
 /** Masaya gelmiş, o ana göre somutlaşmış seçenek */
 export interface Side extends Omit<SideDef, "rel"> {
@@ -315,7 +314,6 @@ export interface Cur {
   oy?: string;
   who: string;
   konu: string;
-  early?: boolean;
   text: string;
   L: Side;
   R: Side;
@@ -365,7 +363,6 @@ export interface State {
   cur: Cur | null;
   over: { key: string; months: number; term: number } | null;
   field?: Field | null;
-  earlyField?: Field | null;
   syn?: Record<string, number>;
   dropped?: string[];
   /** kampanya turu (sandığa giden, göreve başlamadan önce): anket, sözler, evrak sırası */
