@@ -1,9 +1,9 @@
 // İçerik denetimi: kart grafı, bayraklar, sayaçlar, etiketler, uzunluklar.
-// lintContent(E) → { errors: [], warnings: [] }. E: cards.ts + engine.ts'ten dönen nesne (CARDS, CARD, CRISES, INTRO, PEOPLE, SYN; varsa DAVET, ODA, ENDINGS, MIRAS).
+// lintContent(E) → { errors: [], warnings: [] }. E: cards.ts + engine.ts'ten dönen nesne (CARDS, CARD, CRISES, INTRO, PEOPLE, SYN; varsa DAVET, TALEP, TAVAN, ENDINGS, MIRAS).
 // test/content.test.mjs hata bırakmaz; tools/sim.mjs uyarıları da yazar.
 
 // Motorun kendisinin okuduğu sayaçlar (kartlarda kapı olarak geçmese de kullanılıyor)
-const ENGINE_CNT = new Set(["tekir", "vaat", "skandal", "muhur"]);
+const ENGINE_CNT = new Set(["tekir", "vaat", "skandal", "muhur", "boyun_a"]);
 
 // Bağlam: bir olayı "olmuş" sayan metin, o olay yaşanmadan gelmemeli. Metin bu olayı anıyorsa ya kart
 // o olayın kendi zincirindedir (ok), ya da kart/metin varyantı olayın bayrağını ister (flag).
@@ -73,7 +73,7 @@ export function lintContent(E) {
     ...E.INTRO.map(c => ({ ...c, intro: true })),
     ...Object.entries(E.CRISES).map(([k, c]) => ({ ...c, id: "kriz_" + k, crisis: true })),
     ...(E.DAVET || []),
-    ...(E.ODA || []),
+    ...Object.values(E.TALEP || {}).flat(),
     ...(E.KAMPANYA || []).map(c => ({ ...c, kampanya: true })),
   ];
   const ids = new Set(),
@@ -226,6 +226,12 @@ export function lintContent(E) {
     if (n && !ids.has(n.id)) err(`ACILIS ${k}: evrak yok → ${n.id}`);
   }
   if (E.muhurPol) polIds.add(E.muhurPol().id);
+  // tavan hâlleri: kararlarını motor koyar; talep evraklarının kimliği evraklarla çakışmasın
+  for (const T of Object.values(E.TAVAN || {})) polIds.add(T.pol.id);
+  for (const [k, havuz] of Object.entries(E.TALEP || {})) {
+    if (!havuz.length) err(`TALEP ${k}: havuz boş`);
+    for (const c of havuz) if (ids.has(c.id)) err(`TALEP ${c.id}: evraklarla çift kimlik`);
+  }
   // kampanya turu: her aşamada evrak var; her evrakta biri kesin (oy), öbürü zarlı
   if (E.KAMPANYA) {
     for (const a of [0, 1, 2, 3]) if (!E.KAMPANYA.some(c => c.asama === a)) err(`KAMPANYA: ${a}. aşamada evrak yok`);
@@ -251,8 +257,7 @@ export function lintContent(E) {
   }
   // aynı evrakın iki tarafı birden oyunu bitirmesin
   for (const c of all)
-    if (c.L?.son && c.R?.son && !c.id?.startsWith("davet") && !c.id?.startsWith("oda_"))
-      err(`${c.id}: iki taraf da oyunu bitiriyor`);
+    if (c.L?.son && c.R?.son && !c.id?.startsWith("davet")) err(`${c.id}: iki taraf da oyunu bitiriyor`);
 
   // Ulaşılabilirlik: zincir kartları yalnız bağlantıyla gelir; hiçbir yerden bağlanmayan zincir ölü içeriktir
   const reach = new Set(),

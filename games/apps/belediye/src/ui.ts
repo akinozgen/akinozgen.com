@@ -27,6 +27,7 @@ import {
   mirasOf,
   muhurEtki,
   muhurOK,
+  onizle,
   newGame,
   pollOf,
   shuffle,
@@ -423,11 +424,17 @@ function showHints(side: "L" | "R" | null) {
     pp.className = "pv";
     pp.textContent = "";
   }
-  const mh = o && muhurHazir ? muhurEtki(o.e) : null;
+  const mh = o && muhurHazir ? muhurEtki(o.e) : null,
+    on = o && S ? onizle(S, o, muhurHazir) : null;
   METERS.forEach((k, i) => {
     const pv = $("#m-" + k + " .pv"),
       e0 = o ? o.e[i] : 0,
-      v = mh ? mh.e[i] : e0;
+      v = on ? on.d[i] : e0;
+    if (on?.olum === k) {
+      pv.className = "pv on olum"; // bu seçim (o ayın işleyenleriyle) göstergeyi sıfırlar: oyun biter
+      pv.textContent = "☠";
+      return;
+    }
     if (mh?.i === i && !v) {
       pv.className = "pv on muhur"; // mühür bu kaybı siler
       pv.textContent = "◉";
@@ -601,7 +608,7 @@ function dangerToast(before: Meters) {
     window.setTimeout(
       () =>
         toast(
-          `<b>Dikkat</b>${METER_AD[k]} ${m[k] <= 15 ? "dibe yaklaşıyor" : k === "e" ? "tavana dayanıyor, oda sizi başkanlığa çağıracak" : k === "a" ? "tavana dayanıyor, sizi yukarı çağıracaklar" : "tavana dayanıyor"}<span class="tr n">${m[k]}</span>`,
+          `<b>Dikkat</b>${METER_AD[k]} ${m[k] <= 15 ? "dibe yaklaşıyor" : k === "e" ? "tavana dayanıyor, çarşı sultası kapıda" : k === "a" ? "tavana dayanıyor, Ankara'nın gözdesi olacaksınız" : "tavana dayanıyor, herkes pay isteyecek"}<span class="tr n">${m[k]}</span>`,
           "warn",
         ),
       900 + i * 250,
@@ -712,6 +719,16 @@ function optNote(o: Side) {
   if (o.anket) bits.push(o.anket.puan < 0 ? "skandal olur" : "sandıkta anılır");
   return bits.join(" · ");
 }
+// Oyunu bitirecek seçim: düğmenin notuna yazılır (ok önizlemesinde de ☠ çıkar)
+function olumNotu(c: Cur) {
+  if (!S) return;
+  for (const side of ["L", "R"] as const) {
+    const o = onizle(S, c[side], muhurHazir);
+    if (!o.olum || c[side].son) continue;
+    const n = $(`#ch-${side} .n`);
+    n.textContent = `${METER_AD[o.olum]} biter, oyun biter` + (n.textContent ? " · " + n.textContent : "");
+  }
+}
 function renderCard(c: Cur) {
   const P = PEOPLE[c.who];
   const el = document.createElement("article");
@@ -749,6 +766,7 @@ function renderCard(c: Cur) {
   $("#ch-R .t").textContent = c.R.t;
   $("#ch-L .n").textContent = optNote(c.L);
   $("#ch-R .n").textContent = optNote(c.R);
+  olumNotu(c);
   $("#ch-L").classList.toggle("zarli", !!c.L.zar);
   $("#ch-R").classList.toggle("zarli", !!c.R.zar);
   muhurKur(false);
@@ -846,7 +864,14 @@ async function commit(side: "L" | "R", dragged = false) {
   const res = choose(s, side, Math.random, { muhur: muhurlu });
   // kampanyanın dördüncü evrağı: sandık hemen açılır (kayıt da sandıktan sonraki hâli tutar)
   const sandik = res.kampanyaBitti ? kampanyaBitir(s) : null;
+  journalAdd(card, side, res, month); // mühür ve zar notları bu evrağın kaydına düşsün
   muhurKur(false);
+  if (res.zar) {
+    const d = document.createElement("div");
+    d.className = "zar-damga " + (res.zar.iyi ? "iyi" : "kotu");
+    d.textContent = res.zar.iyi ? "TUTTU" : "TUTMADI";
+    el.appendChild(d);
+  }
   if (res.muhur)
     toast(
       `<b>Mühür</b>${METER_AD[res.muhur.k]} kaybı silindi (${res.muhur.v} puan)<span class="tr p">◉ ${s.cnt.muhur || 0} kaldı</span>`,
@@ -864,7 +889,6 @@ async function commit(side: "L" | "R", dragged = false) {
   if (res.oy) pollChip(res.oy);
   showHints(null);
   setMeters(res.d, res.td);
-  journalAdd(card, side, res, month);
   reactions(card, res, side);
   renderOngoing();
   updateHud();
@@ -872,7 +896,7 @@ async function commit(side: "L" | "R", dragged = false) {
   if (kind === "cay") snd.clink();
   if (kind === "sonuc") snd.win();
   if (!s.over) LS.set("save", s);
-  await wait(reduced ? 140 : 400);
+  await wait(reduced ? 140 : res.zar ? 900 : 400); // zar damgası okunsun
   el.style.transition = "transform .42s cubic-bezier(.5,0,.75,0), opacity .42s ease-in";
   el.style.transform = `translateX(${dir * 135}%) translateY(40px) rotate(${dir * 24}deg)`;
   el.style.opacity = "0";
@@ -910,6 +934,7 @@ function updateHud() {
   const K = S.kampanya;
   const poll = K ? Math.round(K.oy) : Math.round(pollOf(S));
   $("#scr-game").classList.toggle("kmp", !!K);
+  $("#poll .lbl").textContent = K ? "Şans" : "Anket";
   $("#dateline").textContent = dateLabel(K ? -1 : S.month); // kampanya göreve başlamadan önce, martta
   $("#countdown").textContent = K
     ? `Sandığa ${K.sira.length - K.i} evrak`
@@ -971,9 +996,9 @@ const SOZ: Record<Meter, string[]> = {
 };
 const ASIRI: Record<Meter, string> = {
   h: "halk fazla şımarır",
-  k: "kasa gereğinden fazla şişer",
-  e: "esnaf fazla güçlenir",
-  a: "Ankara fazla yakınlaşır",
+  k: "kasa şişer, herkes pay ister",
+  e: "çarşı fazla güçlenir, sultası başlar",
+  a: "Ankara'nın gözdesi olursunuz, ilçe kıskanır",
 };
 const miktar = (a: number) => (a >= 15 ? "çok " : a >= 8 ? "epey " : "biraz ");
 const listTR = (a: string[]) => (a.length <= 1 ? a.join("") : a.slice(0, -1).join(", ") + " ve " + a[a.length - 1]);
@@ -1009,20 +1034,11 @@ const DAVET_OGUT = [
   "Milletvekilliği büyük iş başkanım. Yalnız Suat Bey'in yüzüne bir bakın; reddederseniz ömür boyu size borçlu kalır, o borç da bir gün ödenek olur.",
   "Başkanım, bu sefer bakan yardımcılığı. Bir daha hayır derseniz Ankara denetçi gönderir, bilesiniz. Ama gönlünüz Karakavak'taysa ben de buradayım.",
 ];
-// Esnaftan teklif: Fikret çarşıyı iyi tanır
-const ODA_OGUT = [
-  "Başkanım, oda başkanlığı makam aracı değil ama tespihçinin kamyoneti de yol alır. Reddederseniz çarşı biraz küser, halk sizi sever. Kalırsanız çayınızı ben demlerim.",
-  "Sekiz ilçenin esnafı başkanım; pencere kenarındaki koltuk rahattır. Yalnız Rahmi reddi kişisel alır, kıraathanede bir akşam oturmanız gerekir.",
-  "Kavun Borsası son kapı başkanım; tokmak altın kaplama. Bir daha hayır derseniz çarşı sizi 'hayır diyen başkan' diye tişörte basar, ona göre.",
-];
 function fikretAdvice(s: State) {
   const c = s.cur!,
     left = TERM - 1 - (s.month % TERM),
     nearE = left <= 12 && s.term < MAX_TERMS;
-  if (c.kind === "davet")
-    return c.id.startsWith("oda_")
-      ? ODA_OGUT[Math.min(s.cnt.oda_ret || 0, ODA_OGUT.length - 1)]
-      : DAVET_OGUT[Math.min(s.cnt.ankara_ret || 0, DAVET_OGUT.length - 1)];
+  if (c.kind === "davet") return DAVET_OGUT[Math.min(s.cnt.ankara_ret || 0, DAVET_OGUT.length - 1)];
   if (c.kind === "secim") {
     const p = pollOf(s),
       f = s.field,
@@ -1092,6 +1108,7 @@ function muhurKur(on: boolean) {
   if (S?.cur) {
     $("#ch-L .n").textContent = n(S.cur.L);
     $("#ch-R .n").textContent = n(S.cur.R);
+    olumNotu(S.cur);
   }
 }
 function muhurBas() {
@@ -1918,7 +1935,7 @@ function pickMove(e: KeyboardEvent) {
 const SURUM = __SURUM__; // vite.config.js: derleme günü ve kaynağın kısa özeti
 const YENILIK: [string, string][] = [
   ["Kampanya ve mühür", "Sandığa giden dört kampanya evrakı oynar; kazanan mühürle başlar."],
-  ["Esnaftan teklif", "Esnaf tavan yapınca oda sizi başkanlığa çağırır; hayır diyebilirsiniz."],
+  ["Tavanın bedeli", "Çok sevilmek oyunu bitirmez: çarşı sultası, Ankara'nın gözdesi, kasa fazlası."],
   ["Seçim gecesi canlı yayında", "KARAKAVAK TV sandıkları mahalle mahalle açıyor."],
 ];
 let mnBusy = false,
@@ -2171,6 +2188,7 @@ function paintKampanya() {
     b.setAttribute("aria-disabled", String(!on && dolu));
   }
   $("#bn-sans").textContent = `%${sans}`;
+  $("#bn-sans-mini").textContent = `Şans %${sans}`;
   $("#bn-bar").style.setProperty("--w", sans + "%");
   const ez = Math.max(0, Math.round(sans - (SANDIK.ezici - 3) / SANDIK.egim));
   $("#bn-not").textContent =

@@ -1,6 +1,6 @@
 // ─── Karakavak'ın insanları ───────────────────────────────────────────────
 // vesikalık: web-src/portraits/<anahtar>.webp · pos/neg: gönlü olunca / kırılınca tepki
-import type { Aday, Baskan, CardDef, Ending, MirasDef, Person, SynRule, VaatDef } from "./types.ts";
+import type { Aday, Baskan, CardDef, Ending, MirasDef, Person, PolDef, SynRule, VaatDef } from "./types.ts";
 export const PEOPLE: Record<string, Person> = {
   fikret: { ad: "Fikret", unvan: "Makam Şefi" },
   muhtar: {
@@ -7748,36 +7748,62 @@ export const CARDS: CardDef[] = [
       not: "Rahmi rövanş masasını hâlâ boş tutuyor.",
     },
   },
-  // ══ Esnaftan teklifin reddi: çarşı küser, gönül alınır ══
+  // ══ Çarşı sultası: üç kez boyun eğen başkana kıyak dosyası ══
   {
-    id: "odaret_kepenk",
-    who: "bekir",
-    konu: "Yarım küslük",
+    id: "kayirma_1",
+    who: "kaymakam",
+    konu: "Kıyak dosyası",
     chain: true,
     norel: true,
-    text: "Başkanım, oda başkanlığını reddettiniz, çarşı küs. Kepenkleri yarıya indirdim; tam küslük değil, yarım küslük. Bir çarşı ziyareti gönlümüzü alır, yoksa bu yarım kepenk ay sonuna kadar iner.",
-    L: { t: "Çarşıya çay ziyareti", e: [0, -3, 6, 0], rel: { bekir: 1 } },
-    R: { t: "Kepenk sizin", e: [3, 0, -4, 0] },
+    text: "Başkanım, çarşıya yapılan kıyakların dosyası kaymakamlığa geldi: harç affı, esnafa ayrılan otopark, sessiz ihaleler. Müfettiş istenmiş. Dosyayı siz açarsanız iş burada biter; açmazsanız ben de açamam.",
+    L: { t: "Dosyayı açalım", e: [4, -3, -12, 3], set: ["kayirma_acildi", "kayirma_kapandi"] },
+    R: { t: "Esnaf bizim adamımız", e: [-4, 0, 3, -5], set: "kayirma_acildi", next: { id: "kayirma_2", in: [2, 4] } },
   },
   {
-    id: "odaret_koltuk",
-    who: "rahmi",
-    konu: "Boş koltuk",
+    id: "kayirma_2",
+    who: "kaymakam",
+    konu: "Müfettiş raporu",
     chain: true,
     norel: true,
-    text: "Başkanım, birliği de reddettiniz; pencere kenarındaki koltuğa 'boş' yazısı astım. Müşteriler oturmuyor, uğursuz diyorlar. Bir akşam gelip oturursanız büyü bozulur.",
-    L: { t: "Bir akşam otururum", e: [2, 0, 5, -2], rel: { rahmi: 1 } },
-    R: { t: "Koltuk müzeye", e: [4, -2, -3, 0] },
+    text: "Başkanım, müfettiş raporu masada: dört ihale aynı üç dükkâna gitmiş, af listesinde odanın bütün yönetimi var. İhaleleri iptal edip yeniden yaparsak dosya kapanır; imzanızın arkasında durursanız iş mahkemeye gider.",
+    L: {
+      t: "İhaleler yenilensin",
+      e: [2, -8, -14, 4],
+      set: "kayirma_kapandi",
+      anket: { ad: "Kıyak ihaleleri iptal", puan: 1 },
+    },
+    R: { t: "İmzamın arkasındayım", e: [0, 0, 0, 0], son: "kayirma" },
+  },
+  // ══ Ankara'nın daveti kabul edildi: veda evrakı (son burada; vazgeçmek de mümkün) ══
+  {
+    id: "veda_gm",
+    who: "fikret",
+    konu: "Veda",
+    chain: true,
+    norel: true,
+    text: "Başkanım, bavulunuzu hazırladım; genel merkezin arabası kapıda. Yalnız Hüseyin semaveri bırakmıyor, Tekir de bavulun içine yattı. Son kararınız mı?",
+    L: { t: "Kalıyorum, iptal", e: [6, 0, 0, -15], rel: { vekil: -1 } },
+    R: { t: "Yola çıkıyorum", e: [0, 0, 0, 0], son: "a100_gm" },
   },
   {
-    id: "odaret_tebesir",
-    who: "bekir",
-    konu: "Tebeşirle fiyat",
+    id: "veda_mv",
+    who: "fikret",
+    konu: "Veda",
     chain: true,
     norel: true,
-    text: "Başkanım, borsa kurulmayınca kavun fiyatını tahtaya tebeşirle yazdık, yağmur sildi. Tüccar 'fiyat kimde' diye soruyor. Belediye çarşıya bir fiyat panosu koysa ovanın derdi biter.",
-    L: { t: "Pano belediyeden", e: [2, -5, 6, 0] },
-    R: { t: "Tebeşir yeter", e: [0, 0, -4, 2] },
+    text: "Başkanım, listeye adınız yazıldı, yarın kesinleşiyor. Veda mitingi hazır ama meydanda bir pankart var: 'Gitme başkan.' İsterseniz dilekçeyi geri çekeriz; Suat Bey de sevinir.",
+    L: { t: "Dilekçe geri", e: [6, 0, 0, -15], rel: { vekil: 1 } },
+    R: { t: "Meclise gidiyorum", e: [0, 0, 0, 0], son: "a100_mv" },
+  },
+  {
+    id: "veda_bakan",
+    who: "fikret",
+    konu: "Veda",
+    chain: true,
+    norel: true,
+    text: "Başkanım, atamanız Ankara'da imzaya çıktı; bu akşam 'evet' derseniz geri dönüş yok. Belediye önünde çay dağıtılıyor, ben ağlamamak için semaver siliyorum. İmzalıyor musunuz?",
+    L: { t: "İmzalamıyorum", e: [8, 0, 0, -15], rel: { kaymakam: -1 } },
+    R: { t: "İmzalıyorum", e: [0, 0, 0, 0], son: "a100" },
   },
 ];
 
@@ -8018,13 +8044,6 @@ export const CRISES: Record<string, Omit<CardDef, "id">> = {
     L: { t: "Ankara'dan avans", e: [0, 16, 0, -10] },
     R: { t: "Belediye arsası satılsın", e: [-8, 18, 3, 0] },
   },
-  k100: {
-    who: "sevim",
-    konu: "Müfettiş uyarısı",
-    text: "Kasa fazla dolu başkanım; denetim kurulu 'bu para neden harcanmıyor' diye yazı gönderdi. Bir yatırım lazım.",
-    L: { t: "Mahallelere dağıtın", e: [10, -18, 3, 0] },
-    R: { t: "Esnafa destek paketi", e: [0, -18, 10, 0] },
-  },
   h0: {
     who: "fikret",
     konu: "Halk öfkeli",
@@ -8039,13 +8058,6 @@ export const CRISES: Record<string, Omit<CardDef, "id">> = {
     L: { t: "Harç affı", e: [0, -12, 15, 0] },
     R: { t: "Çarşı festivali", e: [3, -10, 13, 0] },
   },
-  e100: {
-    who: "rahmi",
-    konu: "Esnaf sultası",
-    text: "Esnaf odası 'belediye bizim' demeye başladı başkanım. Meclis toplantısını kıraathanede yapalım diyorlar. Bu gidişle sizi oda başkanı yapacaklar; belediye başkansız kalır.",
-    L: { t: "Denetim başlasın", e: [0, 5, -14, 0] },
-    R: { t: "Zabıta sıkı çalışsın", e: [3, 3, -12, 0] },
-  },
   a0: {
     who: "kaymakam",
     konu: "Resmî ihtar",
@@ -8053,18 +8065,12 @@ export const CRISES: Record<string, Omit<CardDef, "id">> = {
     L: { t: "Ankara'ya ziyaret", e: [0, -6, 0, 14] },
     R: { t: "Genelgelere tam uyum", e: [-6, 0, 0, 15] },
   },
-  a100: {
-    who: "vekil",
-    konu: "Tayin kokusu",
-    text: "Başkanım, Ankara'da adınız çok geçiyor; sizi yukarı almak istiyorlar. İlçeden kopmayın!",
-    L: { t: "Ankara'ya mesafe", e: [4, 0, 0, -12] },
-    R: { t: "Muhalefetle ortak proje", e: [6, -4, 0, -14] },
-  },
 };
 
-// ─── Ankara'dan davet: Ankara tavan yapınca oyun bitmez, sizi yukarı çağırırlar ─
+// ─── Ankara'dan davet: Ankara'nın gözdesine, seçimden önceki liste zamanında (dönemde bir kez) gelir ─
+// Gözdelik kazanılır: Ankara en az 80 ve en az iki Ankara ricası karşılanmış olmalı (TUNE.davetA, davetRica).
 // Sırası reddetme sayısına (ankara_ret) göre: genel merkez → milletvekilliği → bakan yardımcılığı (sonra hep o).
-// L: reddet (Ankara küser, halk sever, peşine evrak gelir) · R: kabul (son: terfiyle biten final). Taraflar çevrilmez.
+// L: reddet (Ankara küser, halk sever, peşine evrak gelir) · R: kabul, ardından veda evrakı: son orada, vazgeçmek de mümkün.
 export const DAVET: CardDef[] = [
   {
     id: "davet_gm",
@@ -8079,7 +8085,7 @@ export const DAVET: CardDef[] = [
       inc: "ankara_ret",
       next: { id: "ret_manset", in: 0 },
     },
-    R: { t: "Ankara'ya gidiyorum", e: [0, 0, 0, 0], son: "a100_gm" },
+    R: { t: "Ankara'ya gidiyorum", e: [0, 0, 0, 0], next: { id: "veda_gm", in: 0 } },
   },
   {
     id: "davet_mv",
@@ -8094,7 +8100,7 @@ export const DAVET: CardDef[] = [
       inc: "ankara_ret",
       next: { id: "ret_suat", in: [2, 4] },
     },
-    R: { t: "Listeye yazın beni", e: [0, 0, 0, 0], son: "a100_mv" },
+    R: { t: "Listeye yazın beni", e: [0, 0, 0, 0], next: { id: "veda_mv", in: 0 } },
   },
   {
     id: "davet_bakan",
@@ -8115,66 +8121,162 @@ export const DAVET: CardDef[] = [
       inc: "ankara_ret",
       next: { id: "ret_denetim", in: [2, 4] },
     },
-    R: { t: "Bu sefer evet", e: [0, 0, 0, 0], son: "a100" },
+    R: { t: "Bu sefer evet", e: [0, 0, 0, 0], next: { id: "veda_bakan", in: 0 } },
   },
 ];
 
-// ─── Esnaftan teklif: esnaf tavan yapınca oyun bitmez, oda sizi başkanlığa çağırır ─
-// Sırası reddetme sayısına (oda_ret) göre: esnaf odası → Kavun Ovası Esnaf Birliği → Kavun Borsası (sonra hep o).
-// L: reddet (esnaf küser, halk sever, peşine evrak gelir) · R: kabul (son: belediyeyi bırakıp çarşıya geçiş). Taraflar çevrilmez.
-export const ODA: CardDef[] = [
-  {
-    id: "oda_baskan",
-    who: "bekir",
-    konu: "Esnaftan teklif",
-    text: "Başkanım, oda genel kurulu toplandı, oy birliğiyle sizi oda başkanı seçti. Tüzüğe 'dükkânı olmayan da olur' maddesi eklendi. Ben emekli olup tespih dükkânıma dönerim. Belediyeyi bırakın, çarşıya gelin.",
-    L: {
-      t: "Belediyeyi bırakmam",
-      e: [6, 0, -30, 0],
-      rel: { bekir: -1 },
-      set: "oda_ret",
-      inc: "oda_ret",
-      next: { id: "odaret_kepenk", in: 0 },
-    },
-    R: { t: "Çarşıya geliyorum", e: [0, 0, 0, 0], son: "e100_oda" },
+// ─── Tavan hâlleri: çok sevilmek ve çok para oyunu bitirmez, bedel dönemi başlatır ─
+// Gösterge 85'i geçince hâl kararı yürürlüğe girer (motor koyar, 75'in altında kaldırır; şeritte görünür, her ay bedel).
+// Hâldeyken talep evrakları gelir (TALEP): karşılamak o grubu tutar ama halka ve kasaya patlar, reddetmek sert düşürür.
+// Esnafta üç kez boyun eğen başkana kıyak dosyası açılır (kayirma_1); son orada, iki bilinçli karardan sonra.
+export const TAVAN: Record<"e" | "a" | "k", { pol: PolDef; giris: string; cikis: string }> = {
+  e: {
+    pol: { id: "sulta_e", ad: "Çarşı sultası", e: [-1, 0, 0, 0] },
+    giris: "Çarşı belediyeyi kendi evi sayıyor; kahvede 'esnafın başkanı' diyorlar. Talepler gelecek.",
+    cikis: "Çarşıyla aranıza bir kaldırım boyu mesafe girdi; sulta bitti.",
   },
-  {
-    id: "oda_birlik",
-    who: "rahmi",
-    konu: "İkinci teklif",
-    text: "Başkanım, oda kırıldı, birlik devreye girdi: Kavun Ovası Esnaf Birliği, sekiz ilçenin odası. Başkanlık koltuğu kıraathanemde, pencere kenarında. Hacı Bekir 'bu sefer hayır demez' diye iddiaya girdi.",
-    L: {
-      t: "Yine belediye",
-      e: [7, 0, -34, 0],
-      rel: { rahmi: -1 },
-      set: "oda_ret",
-      inc: "oda_ret",
-      next: { id: "odaret_koltuk", in: [2, 4] },
-    },
-    R: { t: "Birliğe geçiyorum", e: [0, 0, 0, 0], son: "e100_birlik" },
+  a: {
+    pol: { id: "gozde_a", ad: "Ankara'nın gözdesi", e: [-1, 0, 0, 0] },
+    giris: "Ankara sizi çok seviyor; ilçede 'Ankara'nın valisi' lafı dolaşıyor. Ricalar gelecek.",
+    cikis: "Ankara'yla araya mesafe girdi; ilçe sizi yine kendinden sayıyor.",
   },
-  {
-    id: "oda_borsa",
-    who: "bekir",
-    konu: "Son teklif",
-    text: "Başkanım, son teklif: Kavun Borsası başkanlığı. Ovanın bütün kavunu sizin kürsünüzden fiyatlanacak, tokmak altın kaplama. Üç kez hayır diyen görülmemiş; çarşı 'başkan bizi beğenmiyor mu' diye soruyor.",
-    alt: [
-      {
-        if: { cnt: { oda_ret: 3 } },
-        text: "Başkanım, Kavun Borsası yine kapıda; tokmağı bu sefer yanımda getirdim. Çarşı 'hayır diyen başkan' diye tişört bastı, üstünde sizin yüzünüz var. Satışlar iyi, onu da söyleyeyim.",
+  k: {
+    pol: { id: "fazla_k", ad: "Kasa fazlası", e: [0, -2, 0, 0], ozet: "herkes pay istiyor" },
+    giris: "Kasanın dolu olduğunu bütün ilçe duydu; herkes pay istiyor, para da faizde eriyor.",
+    cikis: "Kasa normale döndü; kapıdaki pay isteyenler dağıldı.",
+  },
+};
+// Talep evrakları: yalnız hâldeyken gelir, her biri bir kez. fav: karşılama tarafı (gönderen onu ister).
+// Karşılayan boyun_x, reddeden sinir_x sayacını artırır (miras ve Ankara'nın daveti bunlara bakar).
+const KIYAK = { id: "kayirma_1", in: [1, 2] as [number, number], if: { cnt: { boyun_e: 3 }, not: "kayirma_acildi" } };
+export const TALEP: Record<"e" | "a" | "k", CardDef[]> = {
+  e: [
+    {
+      id: "sulta_otopark",
+      who: "bekir",
+      konu: "Çarşının otoparkı",
+      fav: "L",
+      text: "Başkanım, çarşı otoparkına 'esnafa ayrılmıştır' yazdıralım; müşteri yürüsün, sağlığına iyi. Kaldırıma da masa atacağız, Recep Amir ceza yazmasın. Çarşı sizi seviyor, siz de çarşıyı sevin.",
+      L: { t: "Çarşı rahat etsin", e: [-6, 0, 4, 0], inc: "boyun_e", next: KIYAK },
+      R: { t: "Kural herkese", e: [4, 2, -12, 0], rel: { recep: 1 }, inc: "sinir_e" },
+    },
+    {
+      id: "sulta_harc",
+      who: "bekir",
+      konu: "Harç affı",
+      fav: "L",
+      text: "Başkanım, oda toplandı: bu yıl çarşıya harç yok, tabela vergisi yok, bir de pazar yerine kapalı çatı. 'Başkan bizim adamımız' diye dua ediyorlar; dua bozulmasın.",
+      L: { t: "Harçlar affedilsin", e: [-3, -8, 4, 0], inc: "boyun_e", next: KIYAK },
+      R: { t: "Vergi vergidir", e: [3, 3, -12, 0], inc: "sinir_e" },
+    },
+    {
+      id: "sulta_sanayi",
+      who: "ferhat",
+      konu: "Üvey evlat",
+      fav: "R",
+      text: "Başkanım, çarşının her dediği oluyor, sanayinin yolu hâlâ çamur. Ustalar 'biz esnaf değil miyiz' diye toplandı. Oda seçiminde Hacı Bekir'in karşısına beni çıkaracaklar. Siz kimin başkanısınız?",
+      L: { t: "Hacı Bekir'in yanındayım", e: [-4, 0, 3, 0], rel: { bekir: 1 }, inc: "boyun_e", next: KIYAK },
+      R: { t: "Sanayi yolu sırada", e: [2, -8, -6, 0], inc: "sinir_e" },
+    },
+    {
+      id: "sulta_onerge",
+      who: "nermin",
+      konu: "Oda şubesi",
+      fav: "R",
+      text: "Başkanım, soru önergem hazır: bir yılda çarşıya dokuz af, dört ihale, bir çeşme; sanayiye tek çukur dolgusu. Tuncay manşeti yazdı bile: 'Belediye mi, oda şubesi mi?' Cevabınızı tutanağa geçireceğim.",
+      L: {
+        t: "Çarşı ilçenin kalbidir",
+        e: [-5, 0, 3, -2],
+        anket: { ad: "Oda şubesi belediye", puan: -2 },
+        inc: "boyun_e",
+        next: KIYAK,
       },
-    ],
-    L: {
-      t: "Yine hayır",
-      e: [9, -4, -40, 0],
-      rel: { bekir: -1 },
-      set: "oda_ret",
-      inc: "oda_ret",
-      next: { id: "odaret_tebesir", in: [2, 4] },
+      R: { t: "Sanayiye de yatırım", e: [3, -6, -8, 0], inc: "sinir_e" },
     },
-    R: { t: "Tokmağı verin", e: [0, 0, 0, 0], son: "e100_borsa" },
-  },
-];
+  ],
+  a: [
+    {
+      id: "gozde_vali",
+      who: "tuncay",
+      konu: "Yeni lakap",
+      fav: "R",
+      text: "Başkanım, kahvede yeni lakabınız var: 'Ankara'nın valisi'. Genelgeyi Ankara'dan önce uyguluyorsunuz, mahallenin derdini soran yok. Suat Bey de bozuk: 'Başkan benim koltuğa mı göz dikti?' diyor.",
+      L: {
+        t: "Ankara'yla yürürüz",
+        e: [-5, 3, 0, 3],
+        rel: { vekil: -1 },
+        anket: { ad: "Ankara'nın valisi", puan: -1 },
+        inc: "boyun_a",
+      },
+      R: { t: "Önce Karakavak", e: [5, -2, 0, -12], inc: "sinir_a" },
+    },
+    {
+      id: "gozde_miting",
+      who: "vekil",
+      konu: "Miting otobüsleri",
+      fav: "L",
+      text: "Başkanım, genel merkez mitingine Karakavak'tan on otobüs istiyorlar; mazotu belediyeden, simidi de. Sizi kürsüye çıkaracaklar, bakanın yanına. Otobüsler dolmazsa 'gözde' lafı biter, bilesiniz.",
+      L: { t: "Otobüsler kalksın", e: [-4, -6, 0, 4], inc: "boyun_a" },
+      R: { t: "Belediye aracı değil", e: [3, 0, 0, -12], inc: "sinir_a" },
+    },
+    {
+      id: "gozde_kadro",
+      who: "vekil",
+      konu: "Kadro listesi",
+      fav: "L",
+      text: "Başkanım, Ankara'dan liste geldi: fen işlerine üç 'uzman', üçü de genel merkezin tanıdığı. Kemal Bey 'kepçeyi kim sürecek' diye soruyor. Kabul ederseniz bir sonraki ödenekte adımız öne yazılırmış.",
+      L: { t: "Kadrolar açılsın", e: [-5, -5, 0, 5], rel: { kemal: -1 }, inc: "boyun_a" },
+      R: { t: "Liyakat önce", e: [3, 0, 0, -12], rel: { kemal: 1 }, inc: "sinir_a" },
+    },
+    {
+      id: "gozde_mera",
+      who: "vekil",
+      konu: "Merada depo",
+      fav: "L",
+      text: "Başkanım, Ankara'dan bir yatırımcı geliyor, Yukarıkavak merasına depo kuracak. 'İzni başkan hızlı verir' demişler, gözdesiniz ya. Köylü hayvanını nerede otlatacak, onu soran olmadı henüz.",
+      L: { t: "İzin hızlı çıksın", e: [-6, 4, 0, 4], rel: { muhtar: -1 }, inc: "boyun_a" },
+      R: { t: "Mera köylünün", e: [4, -2, 0, -12], rel: { muhtar: 1 }, inc: "sinir_a" },
+    },
+  ],
+  k: [
+    {
+      id: "fazla_pay",
+      who: "sevim",
+      konu: "Kasa fazlası",
+      text: "Başkanım, kasa ilk kez dolu ve herkes duydu. Ankara payı kıstı: 'Parası olana ödenek yok.' Sendika zam, esnaf harç indirimi, Cengiz Bey saray istiyor. Faizde bekletirsek enflasyon yer. Kime açalım?",
+      L: { t: "Vergiye indirim", e: [8, -14, 3, 0] },
+      R: {
+        t: "Beş yıllık yatırım planı",
+        e: [2, -6, 1, 2],
+        pol: { id: "yatirim_plani", ad: "Yatırım programı", e: [0, -2, 0, 0], ay: 10, done: [8, 0, 3, 2] },
+      },
+    },
+    {
+      id: "fazla_sendika",
+      who: "huseyin",
+      konu: "Toplu sözleşme",
+      text: "Başkanım, sendika kasanın dolu olduğunu duydu; toplu sözleşmede yüzde otuz istiyor. 'Para var, hak yok mu?' diyorlar. Vermezsek çöp kamyonları yavaşlayacak, ben de çay ocağını 'eylem' diye kapatacağım.",
+      L: { t: "Zam verelim", e: [3, -12, 0, -2], rel: { huseyin: 1 } },
+      R: { t: "Kasa kara gün için", e: [-7, 0, -2, 0], rel: { huseyin: -1 } },
+    },
+    {
+      id: "fazla_kubbe",
+      who: "cengiz",
+      konu: "Cam kubbe",
+      text: "Başkanım, kasada para var diye duydum; tam zamanı. Meydana cam kubbeli bir hizmet binası çizdim, kubbede kavun deseni. Parası hazır, işi hazır; siz yalnız imzayı hazırlayın.",
+      L: { t: "Kubbe yapılsın", e: [-5, -14, 4, 3] },
+      R: { t: "Kubbe yok, park var", e: [6, -8, 0, 0] },
+    },
+    {
+      id: "fazla_paket",
+      who: "bekir",
+      konu: "Destek paketi",
+      text: "Başkanım, kasa dolu diye duyduk; çarşıya bir destek paketi yakışır: kira yardımı, bir de ortak tabela. Mahalleler de 'bize ne' diyor, onlar da haklı. Parayı kime açarsanız o sizi unutmaz.",
+      L: { t: "Çarşıya paket", e: [-3, -10, 8, 0] },
+      R: { t: "Önce mahalleler", e: [6, -9, -3, 0] },
+    },
+  ],
+};
 
 // ─── Sonlar ───────────────────────────────────────────────────────────────
 export const ENDINGS: Record<string, Ending> = {
@@ -8203,9 +8305,11 @@ export const ENDINGS: Record<string, Ending> = {
     spot: "İcra memurları makam koltuğundan sonra kedinin mama kabını da götürdü.",
     kisa: "İcra kapıya dayandı",
   },
+  // eski son: kasa tavanı artık hâl (kasa fazlası), son değil; duvardaki eski oyunlar için duruyor
   k100: {
     who: "sevim",
     konu: "Müfettiş raporu",
+    legacy: true,
     text: "Kasada o kadar para birikti ki denetim kurulunun müfettişleri geldi. 'Bu kadar parayı nasıl harcamadınız?' diye üç ay sorguladılar. Görevden uzaklaştırıldınız.",
     manset: "KASA DOLU, MAKAM BOŞ",
     spot: "Hiç harcama yapmayan belediye, müfettişlerin radarına takıldı.",
@@ -8247,36 +8351,15 @@ export const ENDINGS: Record<string, Ending> = {
     spot: "Ankara'nın 'bakan yardımcılığı' teklifini sonunda kabul eden başkan, ilçeden semaveriyle uğurlandı.",
     kisa: "Bakan yardımcısı oldu",
   },
-  // esnaftan teklif kabul edildi: belediyeyi bırakıp çarşıya geçiş, yenilgi değil
-  e100_oda: {
-    who: "bekir",
-    konu: "Oda başkanlığı",
-    win: true,
-    btn: ["Hayırlı olsun", "Çarşıya selam"],
-    text: "Hayırlı olsun oda başkanım! Belediyeyi bıraktınız, çarşıya geçtiniz. İlk icraatınız kıraathaneye ikinci okey masası oldu. Makam aracınız artık tespihçinin kamyoneti; kornası da çalışıyor.",
-    manset: "BAŞKAN ÇARŞIYA GEÇTİ",
-    spot: "Belediye başkanlığını bırakan başkan esnaf odasının başına geçti; ilk genel kurul kıraathanede, çaylar odadan.",
-    kisa: "Esnaf odası başkanı oldu",
-  },
-  e100_birlik: {
-    who: "rahmi",
-    konu: "Birlik başkanlığı",
-    win: true,
-    btn: ["Hayırlı olsun", "Çarşıya selam"],
-    text: "Birliğin başkanlık koltuğu pencere kenarında başkanım; sekiz ilçenin esnafı sırayla elinizi öpmeye geliyor. Toplantılar okey masasında, gündem hep aynı: kira, çay, kira.",
-    manset: "SEKİZ İLÇENİN ESNAF BAŞKANI",
-    spot: "Karakavak'ın başkanı belediyeyi bırakıp Kavun Ovası Esnaf Birliği'nin başına geçti; yemin töreni kıraathanede yapıldı.",
-    kisa: "Esnaf birliği başkanı oldu",
-  },
-  e100_borsa: {
-    who: "bekir",
-    konu: "Kavun Borsası",
-    win: true,
-    btn: ["Hayırlı olsun", "Çarşıya selam"],
-    text: "Altın kaplama tokmak artık sizde başkanım. Ovanın bütün kavunu sizin kürsünüzden fiyatlanıyor; ilk seansta tokmağı kavuna vurdunuz, fiyat o gün yüzde kırk arttı. Çarşı sizi bayramlarda ziyaret ediyor.",
-    manset: "TOKMAK BAŞKANDA",
-    spot: "Üç kez hayır diyen başkan sonunda Kavun Borsası başkanlığını kabul etti; ilk seansta kavun fiyatı rekor kırdı.",
-    kisa: "Kavun borsası başkanı oldu",
+  // çarşı sultasında üç kez boyun eğip kıyak dosyasına da sahip çıkan başkan (kazanılmış ceza sonu)
+  kayirma: {
+    who: "kaymakam",
+    konu: "Kıyak dosyası",
+    tur: "ceza",
+    text: "Başkanım, müfettiş raporu savcılıkta. İhaleler üç yıldır aynı üç dükkâna gitmiş; asfaltı Bekir'in damadı, tabelayı kuzeni almış. Yargılanırken koltuğu bırakmanız istendi. Çarşı size plaket yolladı.",
+    manset: "ÇARŞIYA KIYAK DOSYASI",
+    spot: "Esnafa harç affı, ayrılmış otopark ve sessiz ihaleler savcılıkta; başkan yargılanırken koltuğu bıraktı.",
+    kisa: "Çarşıya kıyaktan gitti",
   },
   a100_gm: {
     who: "vekil",
@@ -8645,10 +8728,18 @@ export const MIRAS: MirasDef[] = [
     },
     text: "Başkan, işe alım kurasını makam şefine çektiren başkan olarak anılacak. Torba bugün belediye vitrininde; içindeki kâğıtların çoğunda aynı soyadı yazıyor.",
   },
-  // ══ esnaftan teklif ══
+  // ══ tavan hâlleri ══
   {
-    if: { req: "oda_ret" },
-    text: "Esnaf odasının başkanlık teklifini reddedip belediyede kalan başkan; çarşı adına 'hayır diyen başkan' tişörtü bastı, hâlâ satıyor.",
+    if: { req: "kayirma_kapandi" },
+    text: "Çarşıya yapılan kıyakların dosyasını kendi eliyle kapatan başkan; çarşı bir süre küstü, sonra alıştı.",
+  },
+  {
+    if: { cnt: { sinir_e: 2 } },
+    text: "Çarşıyla arasına bir kaldırım boyu mesafe koyan başkan; Hacı Bekir 'iyi adamdı ama bizim değildi' diyor.",
+  },
+  {
+    if: { cnt: { sinir_a: 2 } },
+    text: "Ankara'ya iki kez 'önce Karakavak' diyen başkan; Suat Bey bunu hâlâ yemeklerde anlatıyor.",
   },
   // ══ göreve başlayış ══
   {
@@ -9501,7 +9592,7 @@ export const INTRO: CardDef[] = [
     id: "intro2",
     who: "fikret",
     konu: "Göstergeler",
-    text: "Evrakı sürükleyince oklar çıkar: yukarı ok artar, aşağı ok azalır; üç ok büyük etki. Kasa uca varırsa, Ankara dibe vurursa makam gider. Esnaf tavan yaparsa erken seçim olur; Ankara tavan yaparsa sizi yukarı çağırır. Halk dibe inmesin yeter.",
+    text: "Evrakı sürükleyince oklar çıkar: yukarı ok artar, aşağı ok azalır; üç ok büyük etki. Bir gösterge dibe vurursa makam gider. Tavan da bedelsiz değil: çarşı sultası, Ankara'nın gözdesi, kasa fazlası; talepleri gelir. Halk dibe inmesin yeter.",
     L: { t: "Zor iş", e: [0, 0, 0, 0] },
     R: { t: "Devam", e: [0, 0, 0, 0] },
   },
@@ -9509,7 +9600,7 @@ export const INTRO: CardDef[] = [
     id: "intro3",
     who: "fikret",
     konu: "Makamın incelikleri",
-    text: "Bazı kararlar her ay işler; onları üstte 'Yürürlükte' diye görürsünüz. İnsanlar kararlarınızı unutmaz; dost da düşman da kazanırsınız. Beş yılda bir sandık var; anket aşağıda.",
+    text: "Bazı kararlar her ay işler; onları üstte 'Yürürlükte' diye görürsünüz. İnsanlar kararlarınızı unutmaz; dost da düşman da kazanırsınız. Beş yılda bir sandık var; anket sağ üstte.",
     L: { t: "Bismillah", e: [0, 0, 0, 0] },
     R: { t: "Başlayalım", e: [0, 0, 0, 0] },
   },

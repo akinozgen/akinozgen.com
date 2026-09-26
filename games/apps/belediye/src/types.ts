@@ -57,6 +57,8 @@ export interface PolDef {
   yan?: YanDef[];
   /** aylık etkisi olmayan kararın "Yürürlükte" şeridindeki kısa açıklaması */
   ozet?: string;
+  /** tavan hâli (motor koyar, motor kaldırır): yer sınırına sayılmaz */
+  hal?: boolean;
 }
 
 /** Kart seçeneği (içerikte yazıldığı hâliyle) */
@@ -230,6 +232,7 @@ export interface MirasDef {
 
 // ── Oyun durumu
 export interface Ongoing {
+  hal?: boolean;
   id: string;
   ad: string;
   e: Effect;
@@ -295,8 +298,8 @@ export type Pending =
   | { type: "ending"; key: string; oy?: string; rakip?: string }
   | { type: "tekir"; restore: Meters; cause: string }
   | { type: "davet" }
+  /** eski kayıtlar: erken seçim ve oda teklifi kalktı, bekleyen düşer */
   | { type: "oda" }
-  /** eski kayıt: erken seçim kalktı, esnaf teklifine döner */
   | { type: "erken" }
   | { type: "acilis" }
   | { type: "sonuc"; oy: string; win: boolean; big?: boolean; res?: Tally };
@@ -363,6 +366,8 @@ export interface State {
   cur: Cur | null;
   over: { key: string; months: number; term: number } | null;
   field?: Field | null;
+  /** Ankara'nın daveti bu dönemde geldi mi (dönemde bir kez) */
+  davetTerm?: number;
   syn?: Record<string, number>;
   dropped?: string[];
   /** kampanya turu (sandığa giden, göreve başlamadan önce): anket, sözler, evrak sırası */

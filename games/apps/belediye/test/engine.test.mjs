@@ -33,7 +33,7 @@ test("zincirler, işler ve ilişkiler var olan kartlara ve kişilere bağlı", (
     assert.ok(ids.has(id), `${c.id} → ${id} yok`);
     linked.add(id);
   };
-  for (const c of [...E.CARDS, ...E.DAVET, ...E.ODA])
+  for (const c of [...E.CARDS, ...E.DAVET, ...Object.values(E.TALEP).flat()])
     for (const s of ["L", "R"]) {
       const o = c[s],
         n = Array.isArray(o.next) ? { id: o.next[0] } : o.next;
@@ -51,7 +51,7 @@ test("zincirler, işler ve ilişkiler var olan kartlara ve kişilere bağlı", (
   for (const c of E.CARDS) if (c.chain) assert.ok(linked.has(c.id), `${c.id} zincir kartı ama hiçbir yerden gelmiyor`);
 });
 
-test("halk tavan yapınca oyun bitmez, diğer göstergeler bitirir", () => {
+test("tavan oyunu bitirmez, dip bitirir", () => {
   const s = E.newGame();
   s.m.h = 99;
   s.cur = {
@@ -68,7 +68,11 @@ test("halk tavan yapınca oyun bitmez, diğer göstergeler bitirir", () => {
   s.m.k = 99;
   s.cur = { ...s.cur, L: { t: "a", e: [0, 5, 0, 0], rel: {} } };
   E.choose(s, "L", rng(1));
-  assert.deepEqual(s.pending, { type: "ending", key: "k100" });
+  assert.equal(s.pending, null, "kasa tavanı hâldir, son değil");
+  s.m.k = 3;
+  s.cur = { ...s.cur, L: { t: "a", e: [0, -8, 0, 0], rel: {} } };
+  E.choose(s, "L", rng(1));
+  assert.deepEqual(s.pending, { type: "ending", key: "k0" });
 });
 
 test("rastgele oyunlar biter, takılmaz ve makul sürer", () => {

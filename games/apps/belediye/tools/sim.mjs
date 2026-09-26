@@ -96,6 +96,23 @@ const policies = {
       b = score("R");
     return a === b ? (rng() < 0.5 ? "L" : "R") : a < b ? "L" : "R";
   },
+  // Herkesi memnun etmeye çalışan oyuncu: halk + esnaf + Ankara toplamını büyütür, yalnız bir gösterge 30'un altına
+  // düşecekse korkar; davetleri %90 kabul eder (tavanın "sevilince bitme" yayını sınar)
+  sevilen: (s, rng) => {
+    if (s.cur.kind === "davet") return rng() < 0.9 ? "R" : "L";
+    if (rng() < 0.2) return rng() < 0.5 ? "L" : "R";
+    const score = side => {
+      const e = s.cur[side].e;
+      let low = 0;
+      E.METERS.forEach((k, i) => {
+        low = Math.max(low, Math.max(0, 30 - (s.m[k] + e[i])));
+      });
+      return low * 3 - (e[0] + e[2] + e[3]);
+    };
+    const a = score("L"),
+      b = score("R");
+    return a === b ? (rng() < 0.5 ? "L" : "R") : a < b ? "L" : "R";
+  },
   // Ankara'yı seven ama makamı bırakmayan oyuncu: Ankara'yı hep yukarı iter, davetleri hep reddeder (davet yayını sınar)
   ankaraci: (s, rng) => {
     if (s.cur.kind === "davet") return "L";
@@ -217,6 +234,18 @@ for (const [name, pol] of Object.entries(policies)) {
         if (/yer açmak/.test(ev.msg)) dropped++;
       }
       pols = Math.max(pols, s.ongoing.length);
+    }
+    // takılan oyun: son evraklarıyla birlikte haber ver
+    if (!s.over) {
+      const son = [];
+      for (let i = 0; i < 8; i++) {
+        const c = E.draw(s, rng);
+        son.push(`${c.id}/${c.kind} ay ${s.month}`);
+        E.choose(s, "L", rng);
+      }
+      throw new Error(
+        `oyun bitmedi (${name}, oyun ${g}): ${son.join(" · ")} · pending ${JSON.stringify(s.pending)} · dönem ${s.term} seçim dönemi ${s.electionTerm}`,
+      );
     }
     if (s.over.months >= 59) term1++;
     const ak = s.acilis || "eski",

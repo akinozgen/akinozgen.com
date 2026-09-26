@@ -10,9 +10,10 @@ import {
   INTRO,
   KAMPANYA,
   MIRAS,
-  ODA,
   PEOPLE,
   SYN,
+  TALEP,
+  TAVAN,
   VAATLER,
 } from "./cards.ts";
 import type {
@@ -26,6 +27,7 @@ import type {
   Field,
   Kalem,
   Meter,
+  Meters,
   Next,
   Pending,
   PolDef,
@@ -102,7 +104,26 @@ export const TUNE = {
   defterMin: -8,
   defterMax: 6,
   yanAra: 3,
+  // Tavan (esnaf, Ankara, kasa): oyun bitmez, bedel dönemi başlar. Esnaf ve Ankara doyar: 80'in üstüne taşan artı
+  // yarım işler, 85 ve üstünde düşüş 1,3 kat. Gösterge halGir'i geçince hâl başlar (TAVAN), halCik'in altında biter.
+  // Hâldeyken talepP olasılıkla, talepCd ayda bir talep evrakı gelir (TALEP).
+  doyEsik: 80,
+  doyCarp: 0.5,
+  dusEsik: 85,
+  dusCarp: 1.3,
+  halGir: 85,
+  halCik: 75,
+  talepP: 0.35,
+  talepCd: 8,
+  // dip: gösterge bu değerin altındaysa kurtarıcı kriz evrakı kesin gelir, bekleme de yarıya iner
+  dipKriz: 10,
+  // Ankara'nın daveti: dönemde bir kez, seçimden önceki liste zamanında; Ankara en az davetA iken ve en az
+  // davetRica Ankara ricası karşılanmışsa (sevgi tek başına değil, kazanılmış gözdelik)
+  davetA: 80,
+  davetRica: 2,
 };
+// doyan göstergeler (halk sandıkta, kasa harcamada ödenir)
+const DOYAN = new Set<Meter>(["e", "a"]);
 export const MAX_ONGOING = 7;
 
 // ─── Göreve başlayış: seçim beyannamesi, kampanya turu ve açılış seçimi ───────
@@ -356,12 +377,19 @@ export function kampanyaBitir(s: State, rng: Rng = Math.random) {
   return r;
 }
 
-// ── Uygulama: yumuşak kenar, yuvarlama, sınır
-export function applyDelta(s: State, d: Effect): Effect {
+// ── Uygulama: doygunluk, yumuşak kenar, yuvarlama, sınır
+// etkin: göstergeye gerçekten yazılacak fark (durumu değiştirmez; oklar ve önizleme de bunu kullanır)
+export function etkin(m: Meters, d: Effect): Effect {
   return METERS.map((k, i) => {
-    const v = s.m[k];
+    const v = m[k];
     let x = d[i] || 0;
     if (!x) return 0;
+    if (DOYAN.has(k)) {
+      if (x > 0 && v + x > TUNE.doyEsik) {
+        const b = Math.max(TUNE.doyEsik, v);
+        x = b - v + (v + x - b) * TUNE.doyCarp;
+      } else if (x < 0 && v >= TUNE.dusEsik) x *= TUNE.dusCarp;
+    }
     const hi = 100 - TUNE.edge,
       lo = TUNE.edge;
     if (x > 0 && v + x > hi) {
@@ -372,19 +400,22 @@ export function applyDelta(s: State, d: Effect): Effect {
       const b = Math.min(lo, v);
       x = b - v - (b - (v + x)) * TUNE.damp;
     }
-    const nv = clamp(Math.round(v + x), 0, 100);
-    s.m[k] = nv;
-    return nv - v;
+    return clamp(Math.round(v + x), 0, 100) - v;
   });
+}
+export function applyDelta(s: State, d: Effect): Effect {
+  const f = etkin(s.m, d);
+  METERS.forEach((k, i) => (s.m[k] += f[i]));
+  return f;
 }
 
 export function addPol(s: State, p: PolDef) {
   s.ongoing = s.ongoing.filter(o => o.id !== p.id);
   // yer yoksa en eski sıradan karar kalkar (iş/inşaat değil), oyuncuya da haber verilir
-  if (s.ongoing.length >= MAX_ONGOING) {
+  if (!p.hal && s.ongoing.filter(o => !o.hal).length >= MAX_ONGOING) {
     const i = Math.max(
       0,
-      s.ongoing.findIndex(o => !o.proj),
+      s.ongoing.findIndex(o => !o.proj && !o.hal),
     );
     (s.dropped ||= []).push(s.ongoing.splice(i, 1)[0].ad);
   }
@@ -402,8 +433,46 @@ export function addPol(s: State, p: PolDef) {
     ozet: p.ozet,
     yan: p.yan?.map(y => ({ ...y })),
     age: 0,
+    hal: p.hal,
   });
 }
+
+// Tavan hâlleri: gösterge halGir'i geçince hâl kararı yürürlüğe girer (her ay bedel, şeritte görünür),
+// halCik'in altına inince kalkar. Ay başında, ayın etkileri işledikten sonra bakılır.
+export function tavanHal(s: State, events: TickEvent[]) {
+  for (const k of ["e", "a", "k"] as const) {
+    const T = TAVAN[k],
+      on = s.ongoing.some(o => o.id === T.pol.id);
+    if (!on && s.m[k] >= TUNE.halGir) {
+      addPol(s, { ...T.pol, hal: true });
+      events.push({ ad: T.pol.ad, msg: T.giris, e: T.pol.e });
+    } else if (on && s.m[k] < TUNE.halCik) {
+      s.ongoing = s.ongoing.filter(o => o.id !== T.pol.id);
+      events.push({ ad: T.pol.ad, msg: T.cikis });
+    }
+  }
+}
+// Hâldeki göstergenin talebi: aynı hâlden talepCd ayda bir, talepP olasılıkla; her talep bir kez
+export function talepCard(s: State, rng: Rng): CardDef | null {
+  for (const k of ["e", "a", "k"] as const) {
+    if (!s.ongoing.some(o => o.id === TAVAN[k].pol.id)) continue;
+    const son = s.last["talep_" + k];
+    if (son != null && s.month - son < TUNE.talepCd) continue;
+    if (rng() >= TUNE.talepP) continue;
+    const havuz = TALEP[k].filter(c => !s.used[c.id] && condOK(s, gateOf(c)));
+    if (!havuz.length) continue;
+    s.last["talep_" + k] = s.month;
+    return havuz[Math.floor(rng() * havuz.length)];
+  }
+  return null;
+}
+// Ankara'nın daveti vakti: liste zamanı (seçimden 12-10 ay önce), dönemde bir kez, kazanılmış gözdelik
+export const davetVakti = (s: State) =>
+  s.m.a >= TUNE.davetA &&
+  (s.cnt.boyun_a || 0) >= TUNE.davetRica &&
+  s.davetTerm !== s.term &&
+  s.month % TERM >= TERM - 12 &&
+  s.month % TERM < TERM - 10;
 
 // Sayaç: inc "ad" (+1) ya da {ad: n}; dec aynı biçimde düşürür, sayaç sıfırın altına inmez
 export function bump(s: State, x: string | Record<string, number> | undefined, sign: number) {
@@ -534,12 +603,16 @@ export function pick(s: State, rng: Rng): CardDef {
   return pool[pool.length - 1].c;
 }
 
+// Dip krizi: dibe yaklaşan göstergeyi kurtarma evrakı (tavan kriz değil, hâl: TAVAN). Çok dipteyse bekleme yarım.
 export function crisisKey(s: State): string | null {
   const cands = METERS.map(k => ({ k, v: s.m[k] }))
-    .filter(x => x.v <= TUNE.crisisAt || (x.k !== "h" && x.v >= 100 - TUNE.crisisAt))
-    .map(x => ({ key: x.k + (x.v <= TUNE.crisisAt ? "0" : "100"), d: Math.abs(x.v - 50) }))
-    .filter(x => s.last["kriz_" + x.key] == null || s.month - s.last["kriz_" + x.key] >= TUNE.crisisCd)
-    .sort((a, b) => b.d - a.d);
+    .filter(x => x.v <= TUNE.crisisAt)
+    .map(x => ({ key: x.k + "0", v: x.v }))
+    .filter(x => {
+      const son = s.last["kriz_" + x.key];
+      return son == null || s.month - son >= (x.v <= TUNE.dipKriz ? TUNE.crisisCd / 2 : TUNE.crisisCd);
+    })
+    .sort((a, b) => a.v - b.v);
   return cands[0]?.key || null;
 }
 
@@ -847,10 +920,8 @@ export function special(p: Pending, s: State): CardDef {
       L: { t: "Aferin Tekir", e: Z },
       R: { t: "Mamayı iki kat yapın", e: Z },
     };
-  if (p.type === "davet") return { ...DAVET[Math.min(s.cnt.ankara_ret || 0, DAVET.length - 1)], kind: "davet" };
-  // esnaf tavan yapınca oda sizi başkanlığa çağırır (eski kayıtlardaki erken seçim de buraya döner)
-  if (p.type === "oda" || p.type === "erken")
-    return { ...ODA[Math.min(s.cnt.oda_ret || 0, ODA.length - 1)], kind: "davet" };
+  if (p.type === "davet" || p.type === "oda" || p.type === "erken")
+    return { ...DAVET[Math.min(s.cnt.ankara_ret || 0, DAVET.length - 1)], kind: "davet" };
   {
     const r = p.res,
       n = r ? r.cands.length : 2;
@@ -963,23 +1034,49 @@ export function due(s: State): CardDef | null {
 
 export function draw(s: State, rng: Rng = Math.random): Cur {
   let c: CardDef;
+  // eski kayıt: erken seçim ya da oda teklifi bekliyordu; ikisi de kalktı
+  if (s.pending?.type === "erken" || s.pending?.type === "oda") s.pending = null;
   if (s.kampanya) c = { ...KAMPANYA_KART[s.kampanya.sira[s.kampanya.i]], kind: "kampanya" };
   else if (s.pending) {
     c = special(s.pending, s);
     s.pending = null;
   } else if (s.intro > 0) c = INTRO[INTRO.length - s.intro];
-  else if (s.month % TERM === TERM - 1 && s.electionTerm !== s.term) c = electionCard(s, rng);
+  // seçim ayı ya da sonuçlanmamış seçim (seçim evrakında Tekir kurtardıysa seçim bir sonraki evrakta yeniden gelir)
+  else if (s.electionTerm !== s.term && s.month >= s.term * TERM - 1) c = electionCard(s, rng);
   // seçimden 9 ay önceki pencerede ilk fırsatta adaylar ilan edilir (son dönemde seçim yok)
   else if (s.month % TERM >= TERM - 10 && s.month % TERM < TERM - 1 && s.fieldTerm !== s.term && s.term < MAX_TERMS)
     c = fieldCard(s, rng);
-  else {
+  else if (davetVakti(s)) {
+    s.davetTerm = s.term;
+    c = special({ type: "davet" }, s);
+  } else {
     const ck = crisisKey(s);
-    if (ck && rng() < TUNE.crisisP) c = { ...CRISES[ck], id: "kriz_" + ck, kind: "kriz" };
-    else c = due(s) || pick(s, rng);
+    if (ck && (s.m[ck[0] as Meter] <= TUNE.dipKriz || rng() < TUNE.crisisP))
+      c = { ...CRISES[ck], id: "kriz_" + ck, kind: "kriz" };
+    else c = due(s) || talepCard(s, rng) || pick(s, rng);
   }
   const cur = materialize(c, s, rng);
   s.cur = cur;
   return cur;
+}
+
+// Önizleme: seçeneğin göstergeye gerçekten yazacağı fark (doygunluk dahil) ve o ay işleyenlerle birlikte
+// bir göstergeyi sıfırlayıp sıfırlamadığı. Zarlı seçenekte kötü uç da sayılır.
+export function aylikToplam(s: State): Effect {
+  const t = [0, 0, 0, 0],
+    tg = tagsOn(s);
+  for (const o of s.ongoing) o.e.forEach((v, i) => (t[i] += v));
+  for (const x of SYN) if (tg.has(x.a) && tg.has(x.b)) (x.e || Z).forEach((v, i) => (t[i] += v));
+  return t;
+}
+export function onizle(s: State, o: Side, muhur = false): { d: Effect; olum: Meter | null } {
+  let e = o.e;
+  if (o.zar?.kotu.e) e = e.map((v, i) => v + (o.zar!.kotu.e![i] || 0));
+  if (muhur) e = muhurEtki(e).e;
+  const d = etkin(s.m, e),
+    ay = aylikToplam(s);
+  const olum = s.cur?.kind === "kampanya" ? null : (METERS.find((k, i) => s.m[k] + d[i] + ay[i] <= 0) ?? null);
+  return { d: etkin(s.m, muhur ? muhurEtki(o.e).e : o.e), olum };
 }
 
 // Mühür basılabilir mi: elde mühür var, sıradan evrak (kriz, seçim, özel evrak değil)
@@ -1071,6 +1168,7 @@ export function choose(s: State, side: "L" | "R", rng: Rng = Math.random, opt: {
     const t = tick(s, rng);
     out.td = applyDelta(s, t.sum);
     out.events.push(...t.events);
+    tavanHal(s, out.events);
   };
 
   switch (c.kind) {
@@ -1113,14 +1211,13 @@ export function choose(s: State, side: "L" | "R", rng: Rng = Math.random, opt: {
       s.last.cay = s.month;
       passMonth();
       break;
-    case "secim":
-      s.electionTerm = s.term;
+    case "secim": // seçim, sandık açılınca sayılır (aşağıda); oyun o anda bittiyse sayılmaz
       break;
     case "adaylar":
       s.fieldTerm = s.term;
       passMonth();
       break;
-    case "davet": // Ankara'dan ya da esnaftan: kabul finali getirir · ret normal evrak gibi işlenir (günlüğe ve gazeteye girer)
+    case "davet": // Ankara'nın daveti: kabul veda evrakını getirir, ret Ankara'yı küstürür; ikisi de günlüğe girer
       if (o.son) {
         s.pending = { type: "ending", key: o.son };
         return out;
@@ -1136,21 +1233,16 @@ export function choose(s: State, side: "L" | "R", rng: Rng = Math.random, opt: {
     s.pending = { type: "ending", key: o.son };
     return out;
   }
-  // seçim evrakında esnaf ya da Ankara tavanı sandığı bekletmez: önce seçim, teklif sonra
-  const dead = METERS.find(
-    k => s.m[k] <= 0 || (k !== "h" && s.m[k] >= 100 && !((k === "e" || k === "a") && c.kind === "secim")),
-  );
+  // yalnız dip bitirir; tavan bir hâldir (TAVAN), son değil
+  const dead = METERS.find(k => s.m[k] <= 0);
   if (dead) {
-    const key = dead + (s.m[dead] <= 0 ? "0" : "100");
-    if (key === "e100")
-      s.pending = { type: "oda" }; // esnaf tavan yapınca oda sizi başkanlığa çağırır; reddedebilirsiniz
-    else if (key === "a100")
-      s.pending = { type: "davet" }; // Ankara tavan yapınca sizi yukarı çağırır; reddedebilirsiniz
-    else if ((s.cnt.tekir || 0) >= 3 && !s.tekirUsed) s.pending = { type: "tekir", restore: before, cause: key };
+    const key = dead + "0";
+    if ((s.cnt.tekir || 0) >= 3 && !s.tekirUsed) s.pending = { type: "tekir", restore: before, cause: key };
     else s.pending = { type: "ending", key };
     out.dead = dead;
   } else if (c.kind === "secim") {
     const r = tally(s, rng);
+    s.electionTerm = s.term;
     s.lastElection = r; // seçim gecesi ekranı ve gazete için
     s.pending = { type: "sonuc", oy: trPct(r.you), win: r.win, big: r.win && r.margin >= 25, res: r };
   }

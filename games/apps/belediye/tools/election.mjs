@@ -186,19 +186,18 @@ try {
   ); // menüden giriş geçişi bitene kadar
   check((await screenNow()) === "secim", "kaldığım yerden seçim gecesini açmadı");
   console.log("kaldığım yerden:", await screenNow());
-  // Esnaftan teklif: esnaf tavan yapınca oyun bitmez, oda sizi başkanlığa çağırır
+  // Tavan hâli: esnaf 85'i geçince oyun bitmez, "Çarşı sultası" şeritte görünür
   const s = E.newGame();
-  Object.assign(s.m, { h: 55, k: 50, e: 100, a: 50 });
+  Object.assign(s.m, { h: 55, k: 50, e: 84, a: 50 });
   s.month = 22;
-  s.pending = { type: "oda" };
   s.cur = {
     id: "t",
     kind: "normal",
     who: "bekir",
     konu: "Deneme",
     text: "Deneme.",
-    L: { t: "a", e: [0, 0, 0, 0], rel: {} },
-    R: { t: "b", e: [0, 0, 0, 0], rel: {} },
+    L: { t: "a", e: [0, 0, 8, 0], rel: {} },
+    R: { t: "b", e: [0, 0, 8, 0], rel: {} },
   };
   await send("Page.navigate", { url: PAGE });
   await sleep(1200);
@@ -210,19 +209,18 @@ try {
     `new Promise(r => { document.querySelector("#btn-resume").click(); const t0 = Date.now(), k = () => (!document.querySelector("#scr-title").hidden && Date.now() - t0 < 4000 ? setTimeout(k, 50) : setTimeout(r, 300)); k(); })`,
   ); // menüden giriş geçişi bitene kadar
   await ev(`document.dispatchEvent(new KeyboardEvent("keydown",{key:"ArrowRight",bubbles:true}))`);
-  await sleep(1500); // deneme kartı: esnaf teklifi gelir
-  const oda = await ev(`document.querySelector("#card .doc-konu")?.textContent || ""`);
-  check(/Esnaftan teklif/.test(oda), `esnaf teklifi gelmedi (${oda})`);
-  await shot("esnaf-teklif");
-  // ret: oyun sürer, esnaf iner
-  await ev(`document.dispatchEvent(new KeyboardEvent("keydown",{key:"ArrowLeft",bubbles:true}))`);
   await sleep(1600);
   const sv = JSON.parse(await ev(`localStorage.getItem("cb.save")`));
+  const serit = await ev(`document.querySelector("#ongo-list").textContent`);
   check(
-    (await screenNow()) === "game" && !sv.over && sv.m.e <= 75 && sv.cnt.oda_ret === 1,
-    `ret işlemedi (esnaf ${sv.m.e})`,
+    (await screenNow()) === "game" &&
+      !sv.over &&
+      sv.ongoing.some(o => o.id === "sulta_e") &&
+      /Çarşı sultası/.test(serit),
+    `çarşı sultası başlamadı (esnaf ${sv.m.e}, şerit "${serit.slice(0, 80)}")`,
   );
-  console.log("esnaf teklifi:", oda, "· ret sonrası esnaf", sv.m.e);
+  await shot("carsi-sultasi");
+  console.log("tavan hâli: esnaf", sv.m.e, "·", serit.slice(0, 60));
   // "a" kısayolu sol seçeneği hemen imzalar
   const mid = E.newGame();
   mid.month = 10;
