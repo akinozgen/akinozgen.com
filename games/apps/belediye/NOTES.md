@@ -295,3 +295,33 @@ Başkan: "Esnaf niye erken seçim tetikliyor, hâlâ anlamadım; zaten örneği 
 - Ret: halk artı, esnaf −30/−34/−40, Bekir ya da Rahmi kırgın. Peşine küslük evrakları gelir: yarım kepenk, boş koltuk, tebeşirle fiyat. Kabul üç ayrı sonla biter (`e100_oda`, `e100_birlik`, `e100_borsa`); `win` sayılır, düğmesi "Çarşıya selam". Miras satırı: "hayır diyen başkan" tişörtü.
 - Söküldü: `earlyCard`, `EARLY_BEKIR`, `erkensonuc`, `earlyField`, tally'nin `early`'si, yayındaki 15 erken seçim satırı, erken seçim testleri. Eski kayıttaki `{type: "erken"}` teklife döner. Eski son `e100` `legacy`, duvardaki oyunlar için duruyor. Uyarı krizi ("Esnaf sultası") artık teklifi haber veriyor.
 - Simülasyon: rastgele oyuncu oyun başına 0,10 teklif alıyor; okları okuyan 0,01.
+
+## Tavan hâlleri ve görünürlük (2026-09-26)
+Başkan: "Son değil abi, sevilince oyun bu kadar kolay bitmemeli; mantıken mantıksız." Üç rolde inceleme ajanı çalıştı (sistem, anlatı, oyuncu deneyimi; raporlar çalışma klasöründe). Üçü de aynı sonuca vardı: dip bitirir, tavan bitirmemeli, bir bedel dönemi olmalı. Başkan "kazanılmış son kalsın"ı seçti.
+- **Ölçüm, önce:** simülasyonun oka bakan oyuncuları tavana hiç çıkmıyordu, bu yüzden sorun görünmüyordu. Herkesi memnun etmeye çalışan yeni oyuncu tipi (`sevilen`) ekledik. Bu tipte oyunların %74'ü teklif ya da davetle bitiyordu, medyan 62 ay. Teklifi reddetmek de bedava bir sıfırlamaydı.
+- **Tavan hâli (A, "Sulta"):**
+  - doygunluk (esnaf, Ankara) ve yüksekten düşüş;
+  - 85'te başlayan hâl kararı: çarşı sultası, Ankara'nın gözdesi, kasa fazlası; her ay bedel;
+  - 12 talep evrakı.
+  Sonlar kazanılmış oldu: esnafta üç kez boyun eğip dosyaya iki kez sahip çıkan başkan kıyak dosyasıyla gider. Ankara'nın daveti liste zamanında, gözdeliği kazanana gelir; kabulden sonra veda evrakı gelir, vazgeçmek mümkün. Kasa 100 sonu kalktı.
+- **Görünürlük:**
+  - Oklar gerçek etkiyi gösteriyor (doygunluk ve mühür dahil).
+  - O ayın işleyenleriyle göstergeyi sıfırlayan seçimde ☠ çıkıyor, düğmeye "... biter, oyun biter" yazılıyor.
+  - Zar evrağa "TUTTU / TUTMADI" damgası basıyor; mühür ve zar notları artık doğru evrağın kaydına düşüyor.
+  - Gösterge 10'un altındaysa kurtarıcı kriz kesin geliyor, bekleme yarıya iniyor.
+  - Tanıtım "erken seçim" yerine tavan hâllerini, anketi de "sağ üstte" anlatıyor.
+  - Yardımda göstergeler tablosu var; telefonda beyannamenin şansı düğme şeridinde görünüyor; kampanyada anket "Şans" adını taşıyor.
+- **Bulunan eski hata:** seçim evrakında bir gösterge sıfırlanıp Tekir kurtarınca seçim hiç sonuçlanmıyor, oyun sonsuza kadar sürüyordu (simülasyonda 3000. ay). Seçim artık sandık açılınca sayılıyor; sonuçlanmamış seçim bir sonraki evrakta yeniden geliyor. Simülasyon takılan oyunu son evraklarıyla haber veriyor.
+- **Ölçüm, sonra** (2000 oyun, medyan ay / ilk dönem / seçim):
+
+  | Oyuncu tipi | Medyan ay | İlk dönem | Seçim |
+  |---|---|---|---|
+  | rastgele | 59 | %62 | %64 |
+  | insan | 141 | %94 | %73 |
+  | usta | 179 | %98 | %80 |
+  | sevilen | 119 | %91 | %71 |
+
+  - `sevilen`de tavanla biten oyun %13: kıyak dosyası %7, Ankara terfisi %6; ikisi de kazanılmış.
+  - `insan`da kasa sonu %27'den %14'e indi; sebebi kesin gelen dip krizi.
+  - Baskın seçenekli kart 0.
+- Sırada (Faz 3-4): kasa kayması, kıl payının sessizden belirgin kötü olması, kesirli aylık etkiler; anlatı raporundaki 33 metin-etki tutarsızlığı, süreklilik hataları, başkanı erkek varsayan dört metin, Ankara 0 sonunun dili.
