@@ -32,7 +32,11 @@ const send = (m, p = {}) =>
   });
 const ev = async e =>
   (await send("Runtime.evaluate", { expression: e, returnByValue: true, awaitPromise: true })).result?.value;
-const sayi = () => ev(`document.querySelector("#card .doc-meta span").textContent`);
+// evrak kimliği: sayı ve konu (açılış evrağı imza sayısını artırmaz, sonraki evrakla aynı sayıyı taşır)
+const sayi = () =>
+  ev(
+    `document.querySelector("#card .doc-meta span").textContent + " · " + document.querySelector("#card .doc-konu").textContent`,
+  );
 const center = () =>
   ev(
     `(() => { const r = document.querySelector("#card").getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; })()`,
@@ -69,7 +73,7 @@ const line = (x0, y0, dx, dy, steps, ms) => [
 async function trial(name, fn, want) {
   const s0 = await sayi();
   await fn(await center());
-  await sleep(1300);
+  await sleep(2200); // karardan sonra evrak, sonucu okunana kadar masada bekler
   const got = (await sayi()) !== s0;
   console.log(
     `${got === want ? "✓" : "✗"} ${name}: karar ${got ? "verildi" : "verilmedi"} (beklenen: ${want ? "verilsin" : "verilmesin"})`,

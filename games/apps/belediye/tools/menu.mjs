@@ -206,6 +206,15 @@ try {
   await ev(`document.querySelector("#btn-go").click()`);
   await sleep(200);
   await ev(`document.querySelector("#btn-sessiz").click()`); // beyanname: sessiz kampanya
+  await sleep(200);
+  // kayıtlı dönem varsa ilk basış onay ister, ikincisi başlatır
+  if (await ev(`document.querySelector("#btn-sessiz").classList.contains("armed")`)) {
+    check(
+      /emin misiniz/i.test(await ev(`document.querySelector("#btn-sessiz").textContent`)),
+      "sessiz kampanya onay istemedi",
+    );
+    await ev(`document.querySelector("#btn-sessiz").click()`);
+  }
   await sleep(900);
   check(
     (await screenNow()) === "game" &&

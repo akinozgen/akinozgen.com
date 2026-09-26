@@ -178,10 +178,10 @@ try {
     const sans = E.kampanyaSans(vz);
     for (let i = 0; i < 4; i++) {
       check(
-        await until(`document.querySelector("#card") && !document.querySelector("#ch-L").disabled`, 5000),
+        await until(`document.querySelector("#card") && !document.querySelector("#ch-L").disabled`, 9000), // zarlı evrak sonucu okunana kadar bekler
         `${i + 1}. kampanya evrakı gelmedi`,
       );
-      await sleep(300);
+      await sleep(450); // yeni evrak gelir gelmez basılan düğme karar vermez
       const k = JSON.parse(
         await ev(`JSON.stringify({ cd: document.querySelector("#countdown").textContent, org: document.querySelector("#card .org").textContent,
           n: [...document.querySelectorAll(".choice .n")].map(x => x.textContent), z: document.querySelectorAll(".choice.zarli").length,
@@ -217,6 +217,7 @@ try {
     await shot(`secim-gecesi-${tur}`);
     const neden = await ev(`document.querySelector("#scr-secim").textContent`);
     check(/Kampanya anketi/.test(neden), "sonuçta kampanya anketi satırı yok");
+    check(await until(`!document.querySelector("#btn-ec-go").disabled`, 8000), "Devam etkinleşmedi"); // döküm gelmeden atlanmaz
     await click("#btn-ec-go");
     check(await until(`!document.querySelector("#scr-game").hidden`, 5000), "seçim gecesinden oyuna geçilmedi");
     await sleep(400);
@@ -257,6 +258,7 @@ try {
       await click("#ch-L");
       await sleep(900);
       check(await until(`!document.querySelector("#ch-L").disabled`, 5000), "açılıştan sonra evrak gelmedi");
+      await sleep(400); // yeni evrak gelir gelmez basılan düğme karar vermez
       const c = (await saveNow()).cur;
       if (c.kind === "normal") {
         await click("#btn-muhur");

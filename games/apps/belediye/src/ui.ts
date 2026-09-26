@@ -379,17 +379,17 @@ function tweenNum(node: Element, to: number) {
   el._raf = requestAnimationFrame(step);
 }
 // Gösterge üstünde yükselip kaybolan "+8 / −12" fişi
-function chip(k: string, v: number, tick = false) {
+function chip(k: string, v: number, tick = false, sil = false) {
   if (!v) return;
   const box = $("#m-" + k + " .fx"),
     c = document.createElement("span");
-  c.className = "chip " + (v > 0 ? "up" : "down") + (tick ? " tick" : "");
-  c.textContent = (tick ? "↻ " : "") + (v > 0 ? "+" : "−") + Math.abs(v);
+  c.className = "chip " + (sil ? "sil" : v > 0 ? "up" : "down") + (tick ? " tick" : "");
+  c.textContent = (tick ? "↻ " : "") + (v > 0 ? "+" : "−") + Math.abs(v) + (sil ? " ◉" : "");
   box.appendChild(c);
   window.setTimeout(() => c.remove(), 1700);
 }
 // d: kararın etkisi · td: o ay işleyen kararların etkisi (biraz sonra gösterilir)
-function setMeters(d?: Effect | null, td?: Effect | null) {
+function setMeters(d?: Effect | null, td?: Effect | null, muhur?: ChooseOut["muhur"]) {
   const st = S!;
   METERS.forEach((k, i) => {
     const el = $<HTMLElement & Anim>("#m-" + k),
@@ -397,7 +397,8 @@ function setMeters(d?: Effect | null, td?: Effect | null) {
       g = GLYPH[k];
     tweenY(el.querySelector(".lvl")!, g.box[0] + (1 - v / 100) * (g.box[1] - g.box[0]));
     tweenNum(el.querySelector(".num")!, v);
-    el.classList.toggle("danger", v <= 15 || (k !== "h" && v >= 85));
+    el.classList.toggle("danger", v <= 15); // dip: oyunu bitirir
+    el.classList.toggle("tavan", k !== "h" && v >= 85); // tavan: bedel dönemi
     el.classList.toggle("glory", k === "h" && v >= 85);
     el.setAttribute("aria-label", `${METER_AD[k]}: 100 üzerinden ${v}`);
     const tot = (d?.[i] || 0) + (td?.[i] || 0);
@@ -409,7 +410,8 @@ function setMeters(d?: Effect | null, td?: Effect | null) {
       el._t = window.setTimeout(() => el.classList.remove("up", "down"), 900);
     }
     if (d?.[i]) chip(k, d[i]);
-    if (td?.[i]) window.setTimeout(() => chip(k, td[i], true), reduced ? 0 : 560);
+    if (muhur?.k === k) window.setTimeout(() => chip(k, -muhur.v, false, true), 420);
+    if (td?.[i]) window.setTimeout(() => chip(k, td[i], true), 1300);
   });
 }
 // Önizleme: ▲ artar ▼ azalır, ok sayısı büyüklük; renk: dengeye yaklaştırır / uzaklaştırır / tehlikeye sokar
@@ -587,19 +589,34 @@ function openLog(open: boolean) {
     $("#btn-log-x").focus();
   } else if (!wideLog.matches) btn.focus();
 }
-function toast(html: string, cls = "") {
+// Bildirimler birbirini silmez: en çok ikisi görünür, fazlası sıraya girer. Öncelik: 2 zar, mühür ve tehlike;
+// 1 olaylar; 0 tepki ve notlar. Süre metnin uzunluğuna göre. Geniş ekranda günlük açık olduğu için yalnız öncelik 2.
+const TOST_MAX = 2;
+let tostSira: { html: string; cls: string; o: number }[] = [];
+function toast(html: string, cls = "", oncelik = 0) {
   journalNote(html, cls);
-  if (wideLog.matches) return; // geniş ekranda günlük zaten görünüyor
-  const box = $("#toasts"),
-    t = document.createElement("div");
-  t.className = "toast " + cls;
-  t.innerHTML = html;
-  box.appendChild(t);
-  while (box.children.length > 2) box.firstElementChild?.remove();
-  window.setTimeout(() => t.classList.add("out"), 2300);
-  window.setTimeout(() => t.remove(), 2800);
+  if (wideLog.matches && oncelik < 2) return;
+  tostSira.push({ html, cls, o: oncelik });
+  tostSira.sort((a, b) => b.o - a.o);
+  tostAc();
 }
-// Bir gösterge tehlike bölgesine yeni girdiyse uyar
+function tostAc() {
+  const box = $("#toasts");
+  while (box.children.length < TOST_MAX && tostSira.length) {
+    const q = tostSira.shift()!,
+      t = document.createElement("div");
+    t.className = "toast " + q.cls + (q.o >= 2 ? " hi" : "");
+    t.innerHTML = q.html;
+    box.appendChild(t);
+    const sure = Math.max(2500, Math.min(5000, 2200 + 45 * (t.textContent || "").length));
+    window.setTimeout(() => t.classList.add("out"), sure);
+    window.setTimeout(() => {
+      t.remove();
+      tostAc();
+    }, sure + 300);
+  }
+}
+// Bir gösterge tehlike bölgesine yeni girdiyse uyar (evrak masadayken); tehlike var mı döndürür
 function dangerToast(before: Meters) {
   const risky = (k: Meter, v: number) => v <= 15 || (k !== "h" && v >= 85);
   const m = st().m;
@@ -610,29 +627,41 @@ function dangerToast(before: Meters) {
         toast(
           `<b>Dikkat</b>${METER_AD[k]} ${m[k] <= 15 ? "dibe yaklaşıyor" : k === "e" ? "tavana dayanıyor, çarşı sultası kapıda" : k === "a" ? "tavana dayanıyor, Ankara'nın gözdesi olacaksınız" : "tavana dayanıyor, herkes pay isteyecek"}<span class="tr n">${m[k]}</span>`,
           "warn",
+          2,
         ),
-      900 + i * 250,
+      350 + i * 300,
     ),
   );
   if (m.h >= 85 && before.h < 85)
     window.setTimeout(
-      () => toast(`<b>Halk</b>sizi bağrına bastı; sandık kurulsa kazanırsınız<span class="tr p">${m.h}</span>`, "ev"),
-      900,
+      () =>
+        toast(`<b>Halk</b>sizi bağrına bastı; sandık kurulsa kazanırsınız<span class="tr p">${m.h}</span>`, "ev", 1),
+      400,
     );
+  return hot.some(k => m[k] <= 15);
 }
 function reactions(c: Cur, res: ChooseOut, side: "L" | "R") {
   // hafıza notu: bu karar unutulmayacak (gecikmeli sonucun ilk işareti)
   const nt = c[side].not;
   if (nt) toast(`<b>Not</b>${esc(nt)}`, "ev");
-  for (const [w, dv] of Object.entries(res.rel || {})) {
-    const P = PEOPLE[w];
-    if (!P) continue;
+  const rel = Object.entries(res.rel || {}).filter(([w]) => PEOPLE[w]);
+  if (rel.length === 1) {
+    const [w, dv] = rel[0],
+      P = PEOPLE[w];
     const pool = dv > 0 ? P.pos || REACT.pos : P.neg || REACT.neg;
     const line = w === c.who ? `“${pickOne(pool)}”` : dv > 0 ? "bunu duydu, memnun kaldı." : "bunu duydu, kırıldı.";
     toast(
       `<b>${esc(P.ad)}</b>${esc(line)}<span class="tr ${dv > 0 ? "p" : "n"}">${dv > 0 ? "▲" : "▼"} ${esc(REL_AD[st().rel[w] || 0])}</span>`,
     );
-  }
+  } else if (rel.length > 1)
+    toast(
+      `<b>Tepkiler</b>${rel
+        .map(
+          ([w, dv]) =>
+            `${esc(PEOPLE[w].ad)} <span class="tr ${dv > 0 ? "p" : "n"}">${dv > 0 ? "▲" : "▼"} ${esc(REL_AD[st().rel[w] || 0])}</span>`,
+        )
+        .join(" · ")}`,
+    );
   (res.events || []).forEach((ev, i) => {
     const sum = ev.e ? ev.e.reduce((a, v) => a + v, 0) : 0;
     window.setTimeout(
@@ -640,8 +669,9 @@ function reactions(c: Cur, res: ChooseOut, side: "L" | "R") {
         toast(
           `<b>${esc(ev.ad)}</b>${esc(ev.msg)}${ev.e ? `<span class="tr ${sum < 0 ? "n" : "p"}">${esc(etkiKisa(ev.e))}${ev.syn ? "/ay" : ""}</span>` : ""}`,
           sum < 0 ? "warn" : "ev",
+          1,
         ),
-      650 + i * 300,
+      700 + i * 400,
     );
   });
 }
@@ -720,9 +750,13 @@ function optNote(o: Side) {
   return bits.join(" · ");
 }
 // Oyunu bitirecek seçim: düğmenin notuna yazılır (ok önizlemesinde de ☠ çıkar)
+// Oyunu bitiren seçim: son (yay finali) ya da o ayın işleyenleriyle bir göstergeyi sıfırlayan seçim
+const bitirir = (c: Cur, side: "L" | "R") =>
+  !!S && c.kind !== "ending" && c.kind !== "kampanya" && (!!c[side].son || !!onizle(S, c[side], muhurHazir).olum);
 function olumNotu(c: Cur) {
   if (!S) return;
   for (const side of ["L", "R"] as const) {
+    $(`#ch-${side}`).classList.toggle("olum", bitirir(c, side));
     const o = onizle(S, c[side], muhurHazir);
     if (!o.olum || c[side].son) continue;
     const n = $(`#ch-${side} .n`);
@@ -730,6 +764,7 @@ function olumNotu(c: Cur) {
   }
 }
 function renderCard(c: Cur) {
+  onayBitir();
   const P = PEOPLE[c.who];
   const el = document.createElement("article");
   el.className = "card enter";
@@ -801,6 +836,7 @@ function bindDrag(el: HTMLElement) {
       listeners: {
         start() {
           dx = 0;
+          if (atla) return atla();
           if (busy) return;
           el.classList.remove("enter");
           el.classList.add("dragging");
@@ -835,21 +871,72 @@ function setChoices(disabled: boolean) {
   $<HTMLButtonElement>("#ch-R").disabled = disabled;
 }
 
+// Karar anı: ön eğim, karar damgası, (zarlıda) ayrı vuruşta zar damgası ve sonucu, evrak okununca uçar.
+// Bekleme dokunarak ya da tuşla atlanır (yeni karar vermez). Hareket azaltmada süre kısalmaz, hareket kalkar.
+let atla: (() => void) | null = null,
+  kartAt = 0, // yeni evrağın geldiği an: hemen ardından gelen tuş/dokunuş karar sayılmaz
+  onay: { side: "L" | "R"; t: number } | null = null;
+function bekle(ms: number) {
+  return new Promise<void>(r => {
+    const t = window.setTimeout(() => {
+      atla = null;
+      r();
+    }, ms);
+    atla = () => {
+      window.clearTimeout(t);
+      atla = null;
+      r();
+    };
+  });
+}
+// Oyunu bitiren seçim ikinci basışta onaylanır (3 sn içinde); ilk basış düğmeyi "Emin misiniz?" yapar
+function onayBitir() {
+  if (!onay) return;
+  const b = $("#ch-" + onay.side);
+  b.classList.remove("onay");
+  b.querySelector(".t")!.textContent = S?.cur?.[onay.side].t || "";
+  onay = null;
+}
+function onayIste(side: "L" | "R") {
+  onayBitir();
+  onay = { side, t: performance.now() };
+  const b = $("#ch-" + side);
+  b.classList.add("onay");
+  b.querySelector(".t")!.textContent = "Emin misiniz? Oyun biter";
+  snd.tick();
+  vibrate(30);
+  const o = onay;
+  window.setTimeout(() => {
+    if (onay === o) onayBitir();
+  }, 3000);
+}
+const zarUc = (z: NonNullable<ChooseOut["zar"]>, o: Side) => {
+  const u = z.iyi ? o.zar?.iyi : o.zar?.kotu;
+  return u ? ucKisa(u) : "";
+};
 async function commit(side: "L" | "R", dragged = false) {
+  if (atla) return atla();
   if (busy || !S?.cur || screen !== "game") return;
+  if (!dragged && performance.now() - kartAt < 250) return; // yeni evrak gelir gelmez tuş ya da çift dokunuş imzalamasın
   const el = document.querySelector<HTMLElement>("#card");
   if (!el) return;
   const s = S,
     card = S.cur; // await'ler boyunca aynı oyun
+  if (bitirir(card, side) && !(onay && onay.side === side && performance.now() - onay.t < 3000)) {
+    if (dragged) untilt(el);
+    onayIste(side);
+    return;
+  }
+  onayBitir();
   busy = true;
   setChoices(true);
   closeNote();
   const dir = side === "L" ? -1 : 1;
-  if (!dragged) {
+  if (!dragged && !reduced) {
     el.classList.remove("enter");
-    el.style.transition = "transform .16s ease-out";
+    el.style.transition = "transform .12s ease-out";
     tilt(el, dir * 46);
-    await wait(reduced ? 0 : 150);
+    await wait(120);
   }
   const stamp = el.querySelector<HTMLElement>(".stamp." + side)!;
   stamp.style.opacity = "";
@@ -859,48 +946,62 @@ async function commit(side: "L" | "R", dragged = false) {
   vibrate(14);
   const kind = card.kind,
     before = { ...s.m },
-    month = s.month;
+    month = s.month,
+    o = card[side];
   const muhurlu = muhurHazir;
   const res = choose(s, side, Math.random, { muhur: muhurlu });
   // kampanyanın dördüncü evrağı: sandık hemen açılır (kayıt da sandıktan sonraki hâli tutar)
   const sandik = res.kampanyaBitti ? kampanyaBitir(s) : null;
   journalAdd(card, side, res, month); // mühür ve zar notları bu evrağın kaydına düşsün
-  muhurKur(false);
-  if (res.zar) {
-    const d = document.createElement("div");
-    d.className = "zar-damga " + (res.zar.iyi ? "iyi" : "kotu");
-    d.textContent = res.zar.iyi ? "TUTTU" : "TUTMADI";
-    el.appendChild(d);
-  }
-  if (res.muhur)
+  muhurKur(false, false); // rozet evrak uçana kadar kalır
+  if (res.muhur) {
     toast(
       `<b>Mühür</b>${METER_AD[res.muhur.k]} kaybı silindi (${res.muhur.v} puan)<span class="tr p">◉ ${s.cnt.muhur || 0} kaldı</span>`,
       "ev",
+      2,
     );
-  else if (muhurlu) toast(`<b>Mühür</b>bu seçenekte kayıp yoktu; mühür cebinizde`, "ev");
-  if (res.zar) {
-    const oy = res.zar.oy ? `anket ${res.zar.oy > 0 ? "+" : "−"}${Math.abs(res.zar.oy)}` : "";
-    toast(
-      `<b>${res.zar.iyi ? "Tuttu" : "Tutmadı"}</b>${esc(res.zar.msg || "")}${oy ? `<span class="tr ${res.zar.oy! > 0 ? "p" : "n"}">${oy}</span>` : ""}`,
-      res.zar.iyi ? "ev" : "warn",
-    );
-    if (res.zar.iyi) snd.clink();
-  }
-  if (res.oy) pollChip(res.oy);
+    el.classList.add("bas");
+  } else if (muhurlu) toast(`<b>Mühür</b>bu seçenekte kayıp yoktu; mühür cebinizde`, "ev", 2);
   showHints(null);
-  setMeters(res.d, res.td);
+  setMeters(res.d, res.td, res.muhur);
   reactions(card, res, side);
   renderOngoing();
   updateHud();
-  if (!res.dead) dangerToast(before);
+  const tehlike = !res.dead && dangerToast(before);
   if (kind === "cay") snd.clink();
   if (kind === "sonuc") snd.win();
   if (!s.over) LS.set("save", s);
-  await wait(reduced ? 140 : res.zar ? 900 : 400); // zar damgası okunsun
-  el.style.transition = "transform .42s cubic-bezier(.5,0,.75,0), opacity .42s ease-in";
-  el.style.transform = `translateX(${dir * 135}%) translateY(40px) rotate(${dir * 24}deg)`;
+  let bekleme = res.muhur ? 1100 : tehlike ? 1200 : 650;
+  if (res.zar) {
+    // gerilim, sonra zar damgası evrağın alt yarısına; sonucu altında, evrağın üstünde okunur
+    await wait(reduced ? 150 : 300);
+    const z = res.zar,
+      etki = zarUc(z, o),
+      d = document.createElement("div"),
+      n = document.createElement("p");
+    d.className = "zar-damga " + (z.iyi ? "iyi" : "kotu");
+    d.textContent = (z.iyi ? "Tuttu" : "Tutmadı") + (etki ? " · " + etki : "");
+    n.className = "zar-not";
+    n.textContent = z.msg || "";
+    el.append(d, n);
+    journalNote(
+      `<b>${z.iyi ? "Tuttu" : "Tutmadı"}</b>${esc(z.msg || "")}${etki ? ` <span class="tr ${z.iyi ? "p" : "n"}">${esc(etki)}</span>` : ""}`,
+      z.iyi ? "ev" : "warn",
+    );
+    $("#announce").textContent = `Zar ${z.iyi ? "tuttu" : "tutmadı"}. ${z.msg || ""} ${etki}`;
+    if (res.oy) pollChip(res.oy);
+    if (z.iyi) snd.clink();
+    else snd.paper();
+    bekleme = Math.max(1400, Math.min(4000, 900 + 40 * (z.msg || "").length));
+    window.setTimeout(() => el.classList.add("atlanir"), 900); // "dokun: devam" ipucu
+  } else if (res.oy) pollChip(res.oy);
+  await bekle(bekleme);
+  el.style.transition = reduced
+    ? "opacity .2s ease-in"
+    : "transform .36s cubic-bezier(.4,0,.9,.6), opacity .36s ease-in";
+  if (!reduced) el.style.transform = `translateX(${dir * 120}%) translateY(40px) rotate(${dir * 18}deg)`;
   el.style.opacity = "0";
-  await wait(reduced ? 60 : 300);
+  await wait(reduced ? 200 : 360);
   busy = false;
   setChoices(false);
   if (s.over) return gameOver();
@@ -917,6 +1018,8 @@ async function commit(side: "L" | "R", dragged = false) {
   nextCard();
 }
 function nextCard() {
+  tostSira = tostSira.filter(q => q.o >= 1);
+  kartAt = performance.now();
   const s = st(),
     c = draw(s);
   renderCard(c);
@@ -1092,12 +1195,12 @@ function fikretAdvice(s: State) {
 }
 // Mühür: basılıyken seçilen seçeneğin halk kaybı silinir; yalnız sıradan evrakta
 let muhurHazir = false;
-function muhurKur(on: boolean) {
+function muhurKur(on: boolean, kart = true) {
   muhurHazir = on;
   const b = $("#btn-muhur");
   b.setAttribute("aria-pressed", String(on));
   b.classList.toggle("on", on);
-  document.querySelector("#card")?.classList.toggle("muhurlu", on);
+  if (kart) document.querySelector("#card")?.classList.toggle("muhurlu", on);
   const n = (o: Side) => {
     const m = on ? muhurEtki(o.e) : null;
     return (
@@ -1641,6 +1744,8 @@ async function electionNight(res: Tally): Promise<void> {
       later(
         () => {
           $("#tv-info").hidden = false;
+          $<HTMLButtonElement>("#btn-ec-go").disabled = false;
+          if (innerWidth < 860) $(".tv-why").scrollIntoView({ block: "center", behavior: reduced ? "auto" : "smooth" });
         },
         reduced ? 800 : 3800 * speed,
       );
@@ -1648,7 +1753,7 @@ async function electionNight(res: Tally): Promise<void> {
       const line = tekirWon
         ? "Karakavak'ın ilk tüylü başkanı: Tekir! İlk icraatı masadaki bardağı yere itmek oldu."
         : res.win
-          ? `${candName("you")} ${pctTR(res.you)} ile yeniden seçildi! ${n} adaylı yarışta fark ${String(res.margin).replace(".", ",")} puan.`
+          ? `${candName("you")} ${pctTR(res.you)} ile ${res.ilk ? "seçildi" : "yeniden seçildi"}! ${n} adaylı yarışta fark ${String(res.margin).replace(".", ",")} puan.`
           : `${candName(w.id)} ${pctTR(w.pct)} ile Karakavak'ın yeni belediye başkanı. Siz ${pctTR(res.you)} aldınız.`;
       say(line);
       if (res.win) snd.win();
@@ -1657,6 +1762,7 @@ async function electionNight(res: Tally): Promise<void> {
       $("#btn-ec-skip").hidden = true;
       const go = $<HTMLButtonElement>("#btn-ec-go");
       go.hidden = false;
+      go.disabled = true; // döküm ve "Neden?" gelmeden atlanmasın
       go.focus({ preventScroll: true });
       LS.set("ecSeen", true);
       journalNote(`<b>Seçim</b>${esc(line)}`, res.win ? "ev" : "warn");
@@ -1807,6 +1913,7 @@ function renderWall() {
 }
 function openWall() {
   wallFrom = screen === "wall" ? wallFrom : screen;
+  $("#btn-back").textContent = wallFrom === "over" && lastOver ? "Gazeteye dön" : "Menüye dön";
   show("wall");
   $("#scr-wall").scrollTop = 0;
   renderWall();
@@ -2095,9 +2202,16 @@ function paintAyar() {
 }
 function show(name: string) {
   screen = name;
+  document.body.dataset.ekran = name;
   for (const s of ["title", "game", "over", "wall", "help", "pick", "kampanya", "secim"])
     $("#scr-" + s).hidden = s !== name;
   sceneOn(name === "title");
+  // odak boşa düşmesin: ekranın içinde odak yoksa ekranın kendisine
+  const sc = $("#scr-" + name);
+  if (!sc.contains(document.activeElement)) {
+    sc.tabIndex = -1;
+    sc.focus({ preventScroll: true });
+  }
 }
 function showTitle() {
   closeNote();
@@ -2295,10 +2409,28 @@ function wire() {
   // ilk dokunuşta ses açılsın ki menü tıkları duyulsun
   for (const ev of ["pointerdown", "keydown"]) addEventListener(ev, () => snd.unlock(), { once: true, capture: true });
   $("#btn-go").addEventListener("click", () => openKampanya());
-  $("#btn-bn-back").addEventListener("click", () => show("pick"));
-  $("#btn-sessiz").addEventListener("click", () => startNew("sessiz"));
+  $("#btn-bn-back").addEventListener("click", openPick);
+  let sessizT = 0;
+  $("#btn-sessiz").addEventListener("click", e => {
+    const b = e.currentTarget as HTMLElement;
+    if (savedGame() && !b.classList.contains("armed")) {
+      b.classList.add("armed");
+      b.textContent = "Kayıt kapanır, emin misiniz?";
+      window.clearTimeout(sessizT);
+      sessizT = window.setTimeout(() => {
+        b.classList.remove("armed");
+        b.textContent = "Sessiz kampanya";
+      }, 3500);
+      return;
+    }
+    window.clearTimeout(sessizT);
+    b.classList.remove("armed");
+    b.textContent = "Sessiz kampanya";
+    startNew("sessiz");
+  });
   $("#btn-sandik").addEventListener("click", sandigaGit);
   $("#btn-muhur").addEventListener("click", muhurBas);
+  $("#stack").addEventListener("pointerdown", () => atla?.()); // evrağa dokununca bekleme biter
   // Rastgele aday: başka bir hazır aday, adıyla birlikte (broşürdeki lakap ve biyografi o ada ait); ad zarı ayrı düğme
   $("#btn-zar").addEventListener("click", () => {
     const cur = playerAvatar(),
@@ -2444,12 +2576,22 @@ function wire() {
       mnOn(n);
       return;
     }
-    if (screen === "secim" && ["Enter", " ", "Escape"].includes(e.key)) {
+    if (screen === "secim" && ["Enter", " "].includes(e.key)) {
       e.preventDefault();
-      return ($("#btn-ec-go").hidden ? $("#btn-ec-skip") : $("#btn-ec-go")).click();
+      if (e.repeat) return;
+      const go = $<HTMLButtonElement>("#btn-ec-go");
+      return (go.hidden ? $("#btn-ec-skip") : go).click();
     }
     if (screen !== "game") return;
     const k = e.key.toLocaleLowerCase("tr");
+    if (e.repeat && ["ArrowLeft", "ArrowRight", "a", "d", "Enter", " "].includes(k === "a" || k === "d" ? k : e.key)) {
+      e.preventDefault();
+      return; // basılı tutulan tuş art arda karar vermez
+    }
+    if (atla && ["ArrowLeft", "ArrowRight", "Enter", " "].includes(e.key)) {
+      e.preventDefault();
+      return atla(); // beklemeyi atla, karar verme
+    }
     // çekmece açıkken masa kilitli: yalnız kapatma tuşları
     if ($("#log").classList.contains("open")) {
       if (e.key === "Escape" || k === "g") openLog(false);
