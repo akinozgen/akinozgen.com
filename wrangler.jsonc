@@ -6,9 +6,11 @@
 	"assets": {
 		"directory": "./dist",
 		"binding": "ASSETS",
-		// Anything that is not a file gets the static 404 page. Without this
-		// every miss - mostly bots probing for .env and wp-login.php - would
-		// run the Worker and count against its daily quota.
+		// The site is static: only /api/* needs the Worker. Everything else is
+		// served from assets, and a miss gets 404.html. Without these two, each
+		// miss - mostly bots probing for .env and wp-login.php - ran the Worker
+		// and counted against its daily quota.
+		"run_worker_first": ["/api/*"],
 		"not_found_handling": "404-page"
 	},
 	"observability": {
