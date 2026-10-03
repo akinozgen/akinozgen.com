@@ -9,6 +9,7 @@ import {
   TERM,
   ACILIS,
   HAVA,
+  CARD,
   KAMPANYA_KART,
   MUHUR,
   SANDIK,
@@ -763,6 +764,81 @@ function olumNotu(c: Cur) {
     n.textContent = `${METER_AD[o.olum]} biter, oyun biter` + (n.textContent ? " · " + n.textContent : "");
   }
 }
+// ─── Seslendirme: evrak açılınca gönderenin sesiyle okunur. Ses dosyaları depoda değil, R2'de (assets.akinozgen.com).
+// Harita (evrak kimliği → dosya, public/ses.json) sitenin yanında durur, ilk kullanımda bir kez gelir; yayındaki metinlerle
+// aynı sürümdür. Dosya adı metnin özetini taşır: metin değişince yenisi üretilir, eskisi önbellekte karışmaz.
+const SES_KOK = "https://assets.akinozgen.com/belediye/";
+let sesHarita: Record<string, string> | null = null,
+  sesHaritaYukleniyor: Promise<void> | null = null,
+  sesCalan: HTMLAudioElement | null = null;
+const seslendirme = () => LS.get("seslendirme", true);
+const HOPARLOR = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6h3l4-3v10L5 10H2z" fill="currentColor"/><path d="M11 5.5c1 .8 1 4.2 0 5M12.8 4c2 1.6 2 6.4 0 8" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/></svg>`,
+  DUR = `<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="4" y="4" width="8" height="8" rx="1" fill="currentColor"/></svg>`;
+function sesDugmesi(caliyor: boolean) {
+  const b = document.querySelector<HTMLButtonElement>("#card .ses-dugme");
+  if (!b) return;
+  b.innerHTML = caliyor ? DUR : HOPARLOR;
+  b.classList.toggle("caliyor", caliyor);
+  b.setAttribute("aria-label", caliyor ? "Okumayı durdur" : "Evrakı sesli oku");
+}
+function sesDur() {
+  sesCalan?.pause();
+  sesCalan = null;
+  sesDugmesi(false);
+}
+function sesHaritasi() {
+  sesHaritaYukleniyor ||= fetch("ses.json")
+    .then(r => (r.ok ? r.json() : {}))
+    .then(h => {
+      sesHarita = h;
+    })
+    .catch(() => {
+      sesHarita = {};
+    });
+  return sesHaritaYukleniyor;
+}
+function sesKimlik(c: Cur) {
+  if (c.id.startsWith("end_")) return "son_" + c.id.slice(4);
+  // hatırlama metni: evrağın alt varyantıyla eşleşen kimlik
+  const d = CARD[c.id] || KAMPANYA_KART[c.id];
+  const i = d?.alt?.findIndex(a => a.text === c.text) ?? -1;
+  return i >= 0 ? `${c.id}~${i}` : c.id;
+}
+function sesOynat(f: string) {
+  sesDur();
+  const a = new Audio(SES_KOK + f);
+  a.volume = Math.max(0.15, snd.vol / 100);
+  a.addEventListener("ended", () => {
+    if (sesCalan === a) sesDur();
+  });
+  sesCalan = a;
+  sesDugmesi(true);
+  a.play().catch(() => {
+    if (sesCalan === a) sesDur(); // tarayıcı izin vermezse sessiz geçer, düğme hoparlöre döner
+  });
+}
+// Evrak açılınca: sesi varsa sağ üst köşeye hoparlör düğmesi; "Seslendirme" açıksa kendiliğinden okur.
+// Düğme ayardan bağımsız çalışır: basınca okur, okurken basınca durur.
+async function sesKur(c: Cur, el: HTMLElement) {
+  sesDur();
+  if (c.who === "tekir") return;
+  if (!sesHarita) await sesHaritasi();
+  const f = sesHarita?.[sesKimlik(c)];
+  if (!f || S?.cur !== c || !el.isConnected) return; // dosya yok ya da evrak çoktan değişti
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "ses-dugme";
+  b.addEventListener("pointerdown", e => e.stopPropagation()); // sürükleme ve bekleme atlama sayılmasın
+  b.addEventListener("click", e => {
+    e.stopPropagation();
+    if (sesCalan) sesDur();
+    else sesOynat(f);
+  });
+  el.classList.add("sesli");
+  el.appendChild(b);
+  sesDugmesi(false);
+  if (seslendirme() && snd.on) sesOynat(f);
+}
 function renderCard(c: Cur) {
   onayBitir();
   const P = PEOPLE[c.who];
@@ -795,6 +871,7 @@ function renderCard(c: Cur) {
     old.remove();
   }
   $("#stack").appendChild(el);
+  void sesKur(c, el);
   el.addEventListener("animationend", () => el.classList.remove("enter"), { once: true });
   bindDrag(el);
   $("#ch-L .t").textContent = c.L.t;
@@ -2194,6 +2271,7 @@ function paintAyar() {
   $<HTMLInputElement>("#ay-vol").value = String(snd.vol);
   $("#ay-vol-o").textContent = String(snd.vol);
   $<HTMLInputElement>("#ay-tit").checked = LS.get("vibrate", true);
+  $<HTMLInputElement>("#ay-seslendirme").checked = seslendirme();
   $<HTMLInputElement>("#ay-hizli").checked = LS.get("ecSeen", false);
   $("#ay-intro").textContent = LS.get("introSeen", false) ? "Yeniden göster" : "Gösterilecek";
   const sil = $("#ay-sil");
@@ -2201,6 +2279,7 @@ function paintAyar() {
   sil.textContent = "Hepsini sil";
 }
 function show(name: string) {
+  if (name !== "game") sesDur();
   screen = name;
   document.body.dataset.ekran = name;
   for (const s of ["title", "game", "over", "wall", "help", "pick", "kampanya", "secim"])
@@ -2455,6 +2534,7 @@ function wire() {
   });
   $("#ay-ses").addEventListener("change", e => {
     if ((e.target as HTMLInputElement).checked !== snd.on) snd.toggle();
+    if (!snd.on) sesDur();
     paintMute();
   });
   $("#ay-vol").addEventListener("input", e => {
@@ -2463,6 +2543,10 @@ function wire() {
   });
   $("#ay-vol").addEventListener("change", () => snd.tick());
   $("#ay-tit").addEventListener("change", e => LS.set("vibrate", (e.target as HTMLInputElement).checked));
+  $("#ay-seslendirme").addEventListener("change", e => {
+    LS.set("seslendirme", (e.target as HTMLInputElement).checked);
+    if (!seslendirme()) sesDur();
+  });
   $("#ay-hizli").addEventListener("change", e => LS.set("ecSeen", (e.target as HTMLInputElement).checked));
   $("#ay-intro").addEventListener("click", () => {
     LS.set("introSeen", false);

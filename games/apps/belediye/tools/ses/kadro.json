@@ -1,0 +1,247 @@
+{
+  "_not": "Ses kadrosu: cinsiyet (e/k), yaş grubu (genc/orta/yasli/cocuk), perde (alcak/orta/yuksek), tempo (yavas/orta/hizli), dil (tr ya da aksan için de/nb), mizac (Chatterbox exaggeration: 0.3 düz, 0.5 doğal, 0.8 coşkulu)",
+  "fikret": {
+    "cins": "e",
+    "yas": "orta",
+    "perde": "orta",
+    "tempo": "orta",
+    "mizac": 0.5,
+    "tarif": "sadık makam şefi, kurnaz, sıcak"
+  },
+  "muhtar": {
+    "cins": "e",
+    "yas": "yasli",
+    "perde": "alcak",
+    "tempo": "yavas",
+    "mizac": 0.5,
+    "tarif": "köylü kurnazı muhtar"
+  },
+  "bekir": {
+    "cins": "e",
+    "yas": "yasli",
+    "perde": "alcak",
+    "tempo": "orta",
+    "mizac": 0.6,
+    "tarif": "esnaf odası başkanı, tok, pazarlıkçı"
+  },
+  "huseyin": {
+    "cins": "e",
+    "yas": "orta",
+    "perde": "yuksek",
+    "tempo": "hizli",
+    "mizac": 0.7,
+    "tarif": "çaycı, neşeli, telaşlı"
+  },
+  "kaymakam": {
+    "cins": "e",
+    "yas": "orta",
+    "perde": "orta",
+    "tempo": "yavas",
+    "mizac": 0.3,
+    "tarif": "resmi, ölçülü devlet adamı"
+  },
+  "vekil": {
+    "cins": "e",
+    "yas": "orta",
+    "perde": "alcak",
+    "tempo": "orta",
+    "mizac": 0.6,
+    "tarif": "Ankara'dan milletvekili, kibirli, hitabetçi"
+  },
+  "nermin": {
+    "cins": "k",
+    "yas": "orta",
+    "perde": "orta",
+    "tempo": "orta",
+    "mizac": 0.5,
+    "tarif": "muhalefet meclis üyesi, net, dürüst, keskin"
+  },
+  "hayri": {
+    "cins": "e",
+    "yas": "yasli",
+    "perde": "alcak",
+    "tempo": "yavas",
+    "mizac": 0.4,
+    "tarif": "imam, yumuşak, ağır"
+  },
+  "burak": {
+    "cins": "e",
+    "yas": "genc",
+    "perde": "yuksek",
+    "tempo": "hizli",
+    "mizac": 0.8,
+    "tarif": "içerik üreticisi yeğen, heyecanlı"
+  },
+  "albay": {
+    "cins": "e",
+    "yas": "yasli",
+    "perde": "alcak",
+    "tempo": "orta",
+    "mizac": 0.6,
+    "tarif": "emekli albay, kesin, komut verir gibi"
+  },
+  "kemal": {
+    "cins": "e",
+    "yas": "orta",
+    "perde": "orta",
+    "tempo": "orta",
+    "mizac": 0.4,
+    "tarif": "fen işleri müdürü, yorgun mühendis"
+  },
+  "sevim": {
+    "cins": "k",
+    "yas": "orta",
+    "perde": "orta",
+    "tempo": "orta",
+    "mizac": 0.4,
+    "tarif": "mali hizmetler müdürü, titiz, endişeli"
+  },
+  "recep": {
+    "cins": "e",
+    "yas": "orta",
+    "perde": "alcak",
+    "tempo": "orta",
+    "mizac": 0.6,
+    "tarif": "zabıta amiri, sert, otoriter"
+  },
+  "mahir": {
+    "cins": "e",
+    "yas": "orta",
+    "perde": "alcak",
+    "tempo": "yavas",
+    "mizac": 0.3,
+    "tarif": "emniyet müdürü, soğukkanlı"
+  },
+  "tuncay": {
+    "cins": "e",
+    "yas": "orta",
+    "perde": "orta",
+    "tempo": "hizli",
+    "mizac": 0.7,
+    "tarif": "yerel gazeteci, dedikoducu, hızlı"
+  },
+  "elif": {
+    "cins": "k",
+    "yas": "genc",
+    "perde": "yuksek",
+    "tempo": "orta",
+    "mizac": 0.5,
+    "tarif": "ilkokul öğretmeni, sıcak, idealist"
+  },
+  "dursun": {
+    "cins": "e",
+    "yas": "yasli",
+    "perde": "alcak",
+    "tempo": "yavas",
+    "mizac": 0.5,
+    "tarif": "çiftçi ağa, toprak gibi"
+  },
+  "cengiz": {
+    "cins": "e",
+    "yas": "orta",
+    "perde": "alcak",
+    "tempo": "hizli",
+    "mizac": 0.6,
+    "tarif": "müteahhit, yağcı, iş bitirici"
+  },
+  "hatice": {
+    "cins": "k",
+    "yas": "orta",
+    "perde": "orta",
+    "tempo": "orta",
+    "mizac": 0.6,
+    "tarif": "kadın kooperatifi başkanı, enerjik abla"
+  },
+  "deniz": {
+    "cins": "k",
+    "yas": "genc",
+    "perde": "orta",
+    "tempo": "hizli",
+    "mizac": 0.6,
+    "tarif": "üniversite öğrencisi"
+  },
+  "selin": {
+    "cins": "k",
+    "yas": "genc",
+    "perde": "yuksek",
+    "tempo": "orta",
+    "mizac": 0.5,
+    "tarif": "veteriner, hayvansever"
+  },
+  "kaan": {
+    "cins": "e",
+    "yas": "genc",
+    "perde": "orta",
+    "tempo": "hizli",
+    "mizac": 0.6,
+    "tarif": "İstanbullu yatırımcı, plaza ağzı"
+  },
+  "naciye": {
+    "cins": "k",
+    "yas": "yasli",
+    "perde": "orta",
+    "tempo": "orta",
+    "mizac": 0.7,
+    "tarif": "kayınvalide, sitemkâr"
+  },
+  "ferhat": {
+    "cins": "e",
+    "yas": "orta",
+    "perde": "alcak",
+    "tempo": "orta",
+    "mizac": 0.5,
+    "tarif": "oto sanayi ustası"
+  },
+  "hans": {
+    "cins": "e",
+    "yas": "yasli",
+    "perde": "orta",
+    "tempo": "yavas",
+    "mizac": 0.4,
+    "dil": "de",
+    "tarif": "Almanya'dan dönmüş emekli, Alman aksanı"
+  },
+  "orhan": {
+    "cins": "e",
+    "yas": "orta",
+    "perde": "orta",
+    "tempo": "hizli",
+    "mizac": 0.7,
+    "tarif": "spor kulübü başkanı, coşkulu"
+  },
+  "levent": {
+    "cins": "e",
+    "yas": "orta",
+    "perde": "orta",
+    "tempo": "orta",
+    "mizac": 0.4,
+    "tarif": "fabrika müdürü, kurumsal"
+  },
+  "fatma": {
+    "cins": "k",
+    "yas": "yasli",
+    "perde": "orta",
+    "tempo": "yavas",
+    "mizac": 0.6,
+    "tarif": "yaşlı vatandaş teyze"
+  },
+  "rahmi": { "cins": "e", "yas": "yasli", "perde": "orta", "tempo": "orta", "mizac": 0.6, "tarif": "kahveci, geveze" },
+  "ayse": {
+    "cins": "k",
+    "yas": "cocuk",
+    "perde": "yuksek",
+    "tempo": "hizli",
+    "mizac": 0.7,
+    "tarif": "9 yaşında çocuk başkan"
+  },
+  "ingrid": {
+    "cins": "k",
+    "yas": "orta",
+    "perde": "orta",
+    "tempo": "yavas",
+    "mizac": 0.4,
+    "dil": "nb",
+    "tarif": "Norveçli heyet, Norveç aksanı"
+  },
+  "tekir": { "ses": "yok", "tarif": "kedi: insan sesi yok, miyav efekti" }
+}

@@ -3653,3 +3653,36 @@ div.ay-row {
     transform: translate(-50%, 0);
   }
 }
+
+/* seslendirme: kâğıdın sağ üst köşesinde hoparlör; okurken dur */
+.ses-dugme {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  width: max(2.25rem, 36px);
+  height: max(2.25rem, 36px);
+  padding: 0;
+  border: 1.5px solid rgba(35, 33, 42, 0.35);
+  border-radius: 50%;
+  background: rgba(243, 242, 236, 0.92);
+  color: var(--ink);
+  cursor: pointer;
+}
+.ses-dugme svg {
+  width: 55%;
+  height: 55%;
+}
+.ses-dugme:hover {
+  border-color: var(--ink);
+}
+.ses-dugme.caliyor {
+  background: var(--ink);
+  color: #f3f2ec;
+  border-color: var(--ink);
+}
+.card.sesli .doc-head {
+  padding-right: 2.4rem;
+}

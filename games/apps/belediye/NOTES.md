@@ -357,3 +357,24 @@ Başkan: "Damgalar ekranda çok kısa kalıyor, okunmuyor. Zarlı seçimde yeşi
 - **Tarayıcı testleri:** yeni beklemeye göre güncellendi. Kampanya testi zar sonucunu bekliyor, "Devam"ın etkinleşmesini bekliyor, yeni evraktan sonra 400 ms bekliyor. Jest testi evrakı sayı ve konuyla tanıyor (açılış evrağı imza sayısını artırmıyordu). Menü testi sessiz kampanya onayını deniyor.
 - Sonraki tur: "Yürürlükte" bandı yerine sabit özet satırı; renklerin anlamı (kırmızı yalnız tehlike); kısayolların yardımda anlatılması; ekran okuyucuya karar sonucu.
 - Başkan "sulta" kelimesini bilmiyordu, aramada da bir şey çıkmadı. Esnafın tavan dönemi "Esnafın başkanı" oldu, Ankara'daki "Ankara'nın gözdesi" ile aynı kalıpta. Kod kimlikleri (`sulta_e`, `sulta_*`) kayıtlar bozulmasın diye aynı kaldı; eski kayıttaki şerit adı ay başında yenisine döner.
+
+## Seslendirme (2026-10-03)
+Başkan: "Seslendirme desteği; yerel, kaliteli, mekanik olmayan, kadın ve erkek." Sonra: "Karakterlere göre, görselleri ürettiğimiz gibi."
+- **Model:** Chatterbox Multilingual (MIT). Türkçe biliyor, 5-10 saniyelik örnekten ses klonluyor. RTX 4060 Ti'de konuşma süresinin yarısında üretiyor. XTTS-v2'nin lisansı ticari değil, F5-TTS-Turkish'in tonlaması düz. Qwen3-TTS Türkçe bilmiyor.
+- **Kadro:** 31 konuşan karakter. Kaynak sesler Google FLEURS'tan (CC-BY 4.0).
+  - Hans Bey'in sesi Almanca, Ingrid Hanım'ınki Norveççe kayıttan klonlandı; aksan kendiliğinden geliyor.
+  - Klipler perdesine, hızına ve tahmini yaşına göre (audeering wav2vec2) seçildi.
+  - Yaşlı kadınlar ve Ayşe için perde kaydırıldı.
+  - Her karaktere 3 aday çıkarıldı; başkan seçme sayfasından seçti (`tools/ses/secim.json`).
+- **Başkanın notları:**
+  - "Çok hızlı, noktalama işlemiyor." Çözüm: metin cümle cümle okunuyor, noktadan sonra 0,42 sn ara; `cfg_weight` 0,3, %8 yavaşlatma.
+  - "Çok kısık." Ham çıktı −51 LUFS'tu, kaynak klip kısıksa model de kısık konuşuyor. Şimdi her şey −16 LUFS.
+  - "Hacı Bekir 18 yaşında gibi." İlk denemedeki ses rastgeleydi; yaş tahminiyle seçilen kadroya geçildi.
+- **Barındırma:** Sesler depoya girmiyor, Cloudflare R2'de (`assets.akinozgen.com/belediye/`), bir yıl `immutable` önbellekle duruyor. Dosya adı metnin ve sesin özetini taşıyor. Harita `public/ses.json`'da: sitenin yanında, yayındaki metinlerle aynı sürüm, CORS gerektirmiyor. Opus 24 kbps, evrak başına ~30 KB, toplam ~22 MB.
+- **Oyunda:**
+  - Kâğıdın sağ üst köşesinde hoparlör düğmesi var; basınca okuyor, okurken dur karesi oluyor.
+  - Ayarlarda "Seslendirme" açıksa evrak kendiliğinden okunuyor; düğme ayardan bağımsız çalışıyor.
+  - Ekrandan çıkınca okuma duruyor.
+  - Oyunda değişen metinler (seçim sonucu, aday ilanı, açılış evrağı) ve Tekir seslendirilmiyor.
+- **Linux'a geçiş:** tarayıcı testleri Windows'taki Chrome yolunu arıyordu. Artık `CHROME_YOLU` ilk bulunan Chromium türevini kullanıyor (burada Brave). `pnpm` kullanıcı düzeyinde kuruldu.
+- Hat `tools/ses/` altında, README'siyle.
