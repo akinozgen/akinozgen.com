@@ -3,10 +3,11 @@
 import { writeFileSync, mkdirSync, rmSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { CHROME_YOLU } from "./lib/sayfa.mjs";
 
 const DIR = new URL("../public/icons/", import.meta.url);
 mkdirSync(DIR, { recursive: true });
-const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe";
+const CHROME = CHROME_YOLU;
 
 const GLASS = `M48 80 A52 9 0 0 1 152 80 C150 112 135 128 135 152 C135 172 149 186 149 203 C149 218 142 229 128 230 L72 230 C58 229 51 218 51 203 C51 186 65 172 65 152 C65 128 50 112 48 80 Z`;
 // çayın durduğu iç hat: camın kalınlığı kadar içeride

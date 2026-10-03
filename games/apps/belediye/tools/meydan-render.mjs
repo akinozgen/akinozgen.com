@@ -7,7 +7,7 @@
 import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { FONTS } from "./lib/sayfa.mjs";
+import { FONTS, CHROME_YOLU } from "./lib/sayfa.mjs";
 const OUT = process.argv[2] || fileURLToPath(new URL("../.cache/meydan-render/", import.meta.url));
 mkdirSync(OUT, { recursive: true });
 const SRC = readFileSync(new URL("./meydan.js", import.meta.url), "utf8");
@@ -33,7 +33,7 @@ window.kur = pal => {
 </script></body></html>`;
 writeFileSync(OUT + "/render.html", html);
 
-const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe",
+const CHROME = CHROME_YOLU,
   PORT = 9364;
 const chrome = spawn(
   CHROME,

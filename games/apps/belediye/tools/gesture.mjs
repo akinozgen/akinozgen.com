@@ -1,13 +1,13 @@
 // Hareket testi: telefonda (dokunmatik) ve masaüstünde (fare) kaydırma, dokunma, fiske ve sürüklemenin
 // karar verip vermediğini ölçer. node tools/gesture.mjs [çıktı klasörü] [adres]
 import { fileURLToPath } from "node:url";
-import { sunucu } from "./lib/sayfa.mjs";
+import { sunucu, CHROME_YOLU } from "./lib/sayfa.mjs";
 const srv = process.argv[3] ? null : await sunucu(); // önce `pnpm build`: dist/ sunulur
 import { spawn } from "node:child_process";
 const OUT = process.argv[2] || fileURLToPath(new URL("../.cache/gesture/", import.meta.url)),
   PAGE = process.argv[3] || srv.url;
 const chrome = spawn(
-  process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe",
+  CHROME_YOLU,
   [
     "--headless=new",
     "--mute-audio",

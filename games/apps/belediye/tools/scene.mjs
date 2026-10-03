@@ -3,7 +3,7 @@
 import { spawn } from "node:child_process";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { motor, sunucu } from "./lib/sayfa.mjs";
+import { motor, sunucu, CHROME_YOLU } from "./lib/sayfa.mjs";
 const srv = process.argv[3] ? null : await sunucu(); // önce `pnpm build`: dist/ sunulur
 
 const OUT = process.argv[2] || fileURLToPath(new URL("../.cache/scene/", import.meta.url));
@@ -24,7 +24,7 @@ let seed = 7;
 const rng = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 S.cur = E.materialize(E.CARD.maas, S, rng);
 
-const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe",
+const CHROME = CHROME_YOLU,
   PORT = 9334;
 const chrome = spawn(
   CHROME,

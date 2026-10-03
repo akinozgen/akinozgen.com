@@ -4,7 +4,7 @@
 import { spawn } from "node:child_process";
 import { writeFileSync, mkdirSync, rmSync, readdirSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { betik, FONTS } from "./lib/sayfa.mjs";
+import { betik, FONTS, CHROME_YOLU } from "./lib/sayfa.mjs";
 const OUT = process.argv[2] || fileURLToPath(new URL("../.cache/anchor/", import.meta.url));
 mkdirSync(OUT, { recursive: true });
 for (const f of readdirSync(OUT)) if (f.endsWith(".png")) rmSync(OUT + "/" + f);
@@ -25,7 +25,7 @@ window.both = (m, ...a) => { A[m](...a); B[m](...a); document.getElementById("lo
 </script></body></html>`;
 writeFileSync(OUT + "/demo.html", html);
 
-const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe",
+const CHROME = CHROME_YOLU,
   PORT = 9361;
 const chrome = spawn(
   CHROME,

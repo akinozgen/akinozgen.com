@@ -8,7 +8,7 @@
 import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { betik, FONTS } from "./lib/sayfa.mjs";
+import { betik, FONTS, CHROME_YOLU } from "./lib/sayfa.mjs";
 
 const root = new URL("../", import.meta.url);
 const OUT = new URL(".cache/tv/", root);
@@ -158,7 +158,7 @@ console.log("sayfa:", fileURLToPath(PAGE));
 if (process.argv.includes("--no-shot")) process.exit(0);
 
 // ── Fotoğraf ve denetim
-const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe",
+const CHROME = CHROME_YOLU,
   PORT = 9357;
 const chrome = spawn(
   CHROME,

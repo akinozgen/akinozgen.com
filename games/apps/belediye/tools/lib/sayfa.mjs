@@ -12,6 +12,18 @@ import { fileURLToPath } from "node:url";
 
 const APP = new URL("../../", import.meta.url);
 export const DIST = fileURLToPath(new URL("dist/", APP));
+// Headless testlerin tarayıcısı: CHROME ortam değişkeni, yoksa sistemde bulunan ilk Chromium türevi
+export const CHROME_YOLU =
+  process.env.CHROME ||
+  [
+    "C:/Program Files/Google/Chrome/Application/chrome.exe",
+    "/usr/bin/google-chrome-stable",
+    "/usr/bin/google-chrome",
+    "/usr/bin/chromium",
+    "/usr/bin/chromium-browser",
+    "/usr/bin/brave-browser",
+  ].find(existsSync) ||
+  "chrome";
 const TYPES = {
   ".html": "text/html; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",

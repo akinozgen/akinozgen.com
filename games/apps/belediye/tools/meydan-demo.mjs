@@ -4,7 +4,7 @@
 import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync, mkdirSync, rmSync, readdirSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { FONTS } from "./lib/sayfa.mjs";
+import { FONTS, CHROME_YOLU } from "./lib/sayfa.mjs";
 const OUT = process.argv[2] || fileURLToPath(new URL("../.cache/meydan/", import.meta.url));
 mkdirSync(OUT, { recursive: true });
 for (const f of readdirSync(OUT)) if (f.endsWith(".png")) rmSync(OUT + "/" + f);
@@ -37,7 +37,7 @@ window.M = meydan(document.getElementById("m"), { hour: 18 });
 </script></body></html>`;
 writeFileSync(OUT + "/demo.html", html);
 
-const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe",
+const CHROME = CHROME_YOLU,
   PORT = 9363;
 const chrome = spawn(
   CHROME,

@@ -4,6 +4,7 @@
 // node tools/portraits.mjs hans ayse  yalnız adı verilenleri yeniden çizer
 // Resimler tools/portrait.js'teki tariflerden headless Chrome'da tuvale çizilip WebP olarak kaydedilir.
 import { spawn } from "node:child_process";
+import { CHROME_YOLU } from "./lib/sayfa.mjs";
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
@@ -35,7 +36,7 @@ if (!todo.length) {
   process.exit();
 }
 
-const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe",
+const CHROME = CHROME_YOLU,
   PORT = 9339;
 const OUT = fileURLToPath(new URL("../.cache/portraits/", import.meta.url));
 const chrome = spawn(

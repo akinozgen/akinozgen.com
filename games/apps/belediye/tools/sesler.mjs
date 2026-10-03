@@ -1,6 +1,7 @@
 // Oyundaki sentez sesleri WAV'a kaydeder: ui.ts'teki snd nesnesi (tipleri silinmiş hâliyle) başsız Chrome'da OfflineAudioContext ile çalınır.
 // Her ses tepe -1 dBFS'e eşitlenir, 44,1 kHz 16 bit mono. node tools/sesler.mjs [çıktı klasörü]
 import { spawn } from "node:child_process";
+import { CHROME_YOLU } from "./lib/sayfa.mjs";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { stripTypeScriptTypes } from "node:module";
 import { fileURLToPath } from "node:url";
@@ -47,7 +48,7 @@ window.kaydet = async (fn, len) => {
 </script>`;
 writeFileSync(TMP + "/sesler.html", html);
 
-const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe",
+const CHROME = CHROME_YOLU,
   PORT = 9367;
 const chrome = spawn(
   CHROME,

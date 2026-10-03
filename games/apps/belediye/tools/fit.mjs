@@ -1,7 +1,7 @@
 // Sığma testi: dört telefon boyunda bütün evrak metinleri ve seçenek etiketleri kutusuna sığıyor mu,
 // dikey kaydırma kazara karar veriyor mu. node tools/fit.mjs [çıktı klasörü] [adres]
 import { fileURLToPath } from "node:url";
-import { motor, sunucu } from "./lib/sayfa.mjs";
+import { motor, sunucu, CHROME_YOLU } from "./lib/sayfa.mjs";
 const srv = process.argv[3] ? null : await sunucu(); // önce `pnpm build`: dist/ sunulur
 import { spawn } from "node:child_process";
 import { writeFileSync, mkdirSync } from "node:fs";
@@ -21,7 +21,7 @@ S.rel = { bekir: -2 };
 S.month = 5;
 S.cur = E.materialize(E.CARD.tabela, S, rng); // uzun unvan + ruh hâli satırı: en kötü durum
 const chrome = spawn(
-  process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe",
+  CHROME_YOLU,
   [
     "--headless=new",
     "--mute-audio",

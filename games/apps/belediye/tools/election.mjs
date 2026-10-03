@@ -3,14 +3,14 @@
 import { spawn } from "node:child_process";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { motor, sunucu } from "./lib/sayfa.mjs";
+import { motor, sunucu, CHROME_YOLU } from "./lib/sayfa.mjs";
 
 const OUT = process.argv[2] || fileURLToPath(new URL("../.cache/election/", import.meta.url));
 const srv = process.argv[3] ? null : await sunucu(); // önce `pnpm build`: dist/ sunulur
 const PAGE = process.argv[3] || srv.url;
 mkdirSync(OUT, { recursive: true });
 const E = await motor();
-const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe",
+const CHROME = CHROME_YOLU,
   PORT = 9346;
 const chrome = spawn(
   CHROME,
