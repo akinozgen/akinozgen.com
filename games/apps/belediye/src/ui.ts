@@ -777,7 +777,7 @@ const SES_KOK = "https://assets.akinozgen.com/belediye/";
 let sesHarita: Record<string, string> | null = null,
   sesHaritaYukleniyor: Promise<void> | null = null,
   sesCalan: HTMLAudioElement | null = null;
-const seslendirme = () => LS.get("seslendirme", true);
+const seslendirme = () => LS.get("seslendirme", false); // kendiliğinden okuma; varsayılan kapalı, hoparlör düğmesi her zaman çalışır
 const HOPARLOR = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6h3l4-3v10L5 10H2z" fill="currentColor"/><path d="M11 5.5c1 .8 1 4.2 0 5M12.8 4c2 1.6 2 6.4 0 8" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/></svg>`,
   DUR = `<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="4" y="4" width="8" height="8" rx="1" fill="currentColor"/></svg>`;
 function sesDugmesi(caliyor: boolean) {

@@ -373,7 +373,7 @@ Başkan: "Seslendirme desteği; yerel, kaliteli, mekanik olmayan, kadın ve erke
 - **Barındırma:** Sesler depoya girmiyor, Cloudflare R2'de (`assets.akinozgen.com/belediye/`), bir yıl `immutable` önbellekle duruyor. Dosya adı metnin ve sesin özetini taşıyor. Harita `public/ses.json`'da: sitenin yanında, yayındaki metinlerle aynı sürüm, CORS gerektirmiyor. Opus 24 kbps, evrak başına ~30 KB, toplam ~22 MB.
 - **Oyunda:**
   - Kâğıdın sağ üst köşesinde hoparlör düğmesi var; basınca okuyor, okurken dur karesi oluyor.
-  - Ayarlarda "Seslendirme" açıksa evrak kendiliğinden okunuyor; düğme ayardan bağımsız çalışıyor.
+  - Evrak kendiliğinden okunmuyor (başkanın isteği); ayarlardaki "Kendiliğinden oku" açılırsa okunur. Düğme her zaman çalışıyor.
   - Ekrandan çıkınca okuma duruyor.
   - Oyunda değişen metinler (seçim sonucu, aday ilanı, açılış evrağı) ve Tekir seslendirilmiyor.
 - **Linux'a geçiş:** tarayıcı testleri Windows'taki Chrome yolunu arıyordu. Artık `CHROME_YOLU` ilk bulunan Chromium türevini kullanıyor (burada Brave). `pnpm` kullanıcı düzeyinde kuruldu.
