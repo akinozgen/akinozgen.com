@@ -14,7 +14,7 @@ const mulberry32 = seed => () => {
   t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
   return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
 };
-const durum = s => ({
+const durum = s => structuredClone({
   month: s.month,
   term: s.term,
   m: s.m,
