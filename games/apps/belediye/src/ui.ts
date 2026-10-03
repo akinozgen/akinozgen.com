@@ -35,6 +35,7 @@ import {
   vaatCost,
 } from "./engine.ts";
 import type { TvCtx } from "./broadcast.ts";
+import { EFEKT } from "./sesler.ts";
 import type { Acilis, ChooseOut, Cur, Effect, Meter, Meters, Rng, Side, State, Tally, ZarSonuc } from "./types.ts";
 
 // sayfadaki öğeler hep var: bulunamazsa hata, boş dönmez
@@ -121,12 +122,14 @@ const photoSrc = (id: string) => `portraits/${id}.webp`;
 const photo = (id: string) => `<img src="${photoSrc(id)}" alt="" decoding="async" draggable="false">`;
 
 // ─── Ses: hepsi WebAudio ile üretiliyor ───────────────────────────────────
+// tools/godot/efekt.mjs efektleri tarayıcıda WAV'a basar
+if (new URLSearchParams(location.search).has("efekt-dok"))
+  (window as unknown as { __EFEKT: typeof EFEKT }).__EFEKT = EFEKT;
 const snd = (() => {
   let ctx: AudioContext | null = null,
     master: GainNode | null = null,
     on = LS.get("sound", true),
     vol = LS.get("volume", 50);
-  const ks: Record<number, AudioBuffer> = {};
   // Tarayıcı ses motorunu ancak kullanıcı sayfayla etkileştikten sonra açtırır; öncesinde denemek konsola uyarı düşürür
   const izinli = () =>
     (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation?.hasBeenActive ?? true;
@@ -144,43 +147,6 @@ const snd = (() => {
     }
   };
   const ready = () => (on && ctx && master && ctx.state !== "closed" ? { c: ctx, out: master } : null);
-  const env = (g: GainNode, t: number, a: number, peak: number, d: number) => {
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(peak, t + a);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + a + d);
-  };
-  const noise = (c: AudioContext, dur: number) => {
-    const b = c.createBuffer(1, Math.ceil(c.sampleRate * dur), c.sampleRate),
-      d = b.getChannelData(0);
-    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-    const s = c.createBufferSource();
-    s.buffer = b;
-    return s;
-  };
-  const pluckBuf = (c: AudioContext, f: number) => {
-    if (ks[f]) return ks[f];
-    const sr = c.sampleRate,
-      N = Math.round(sr / f),
-      len = Math.floor(sr * 1.8),
-      buf = c.createBuffer(1, len, sr),
-      d = buf.getChannelData(0),
-      ring = new Float32Array(N);
-    for (let i = 0; i < N; i++) ring[i] = Math.random() * 2 - 1;
-    for (let i = 0, j = 0; i < len; i++, j = (j + 1) % N) {
-      const a = ring[j];
-      d[i] = a;
-      ring[j] = 0.4985 * (a + ring[(j + 1) % N]);
-    }
-    return (ks[f] = buf);
-  };
-  const pluck = (c: AudioContext, out: GainNode, f: number, t: number, v = 0.5) => {
-    const s = c.createBufferSource(),
-      g = c.createGain();
-    s.buffer = pluckBuf(c, f);
-    g.gain.value = v;
-    s.connect(g).connect(out);
-    s.start(t);
-  };
   return {
     get on() {
       return on;
@@ -214,99 +180,28 @@ const snd = (() => {
     // menüde madde değişince kısa, yumuşak bir tık
     tick() {
       const r = ready();
-      if (!r) return;
-      const { c, out } = r,
-        t = c.currentTime;
-      const o = c.createOscillator(),
-        g = c.createGain();
-      o.type = "triangle";
-      o.frequency.setValueAtTime(1500, t);
-      o.frequency.exponentialRampToValueAtTime(950, t + 0.035);
-      env(g, t, 0.002, 0.07, 0.045);
-      o.connect(g).connect(out);
-      o.start(t);
-      o.stop(t + 0.09);
+      if (r) EFEKT.tick(r.c, r.out, r.c.currentTime);
     },
     stamp() {
       const r = ready();
-      if (!r) return;
-      const { c, out } = r,
-        t = c.currentTime;
-      const o = c.createOscillator(),
-        g = c.createGain();
-      o.type = "sine";
-      o.frequency.setValueAtTime(150, t);
-      o.frequency.exponentialRampToValueAtTime(46, t + 0.14);
-      env(g, t, 0.004, 0.9, 0.2);
-      o.connect(g).connect(out);
-      o.start(t);
-      o.stop(t + 0.3);
-      const n = noise(c, 0.09),
-        f = c.createBiquadFilter(),
-        g2 = c.createGain();
-      f.type = "lowpass";
-      f.frequency.value = 1500;
-      env(g2, t, 0.002, 0.55, 0.07);
-      n.connect(f).connect(g2).connect(out);
-      n.start(t);
+      if (r) EFEKT.stamp(r.c, r.out, r.c.currentTime);
     },
     paper() {
       const r = ready();
-      if (!r) return;
-      const { c, out } = r,
-        t = c.currentTime + 0.02;
-      const n = noise(c, 0.3),
-        f = c.createBiquadFilter(),
-        g = c.createGain();
-      f.type = "bandpass";
-      f.frequency.setValueAtTime(1800, t);
-      f.frequency.linearRampToValueAtTime(4200, t + 0.22);
-      f.Q.value = 0.8;
-      env(g, t, 0.05, 0.16, 0.2);
-      n.connect(f).connect(g).connect(out);
-      n.start(t);
+      if (r) EFEKT.paper(r.c, r.out, r.c.currentTime);
     },
     clink() {
       const r = ready();
-      if (!r) return;
-      const { c, out } = r,
-        t = c.currentTime + 0.05;
-      [2637, 3951, 5274].forEach((fr, i) => {
-        const o = c.createOscillator(),
-          g = c.createGain();
-        o.frequency.value = fr;
-        env(g, t + i * 0.004, 0.002, 0.12 / (i + 1), 0.5);
-        o.connect(g).connect(out);
-        o.start(t);
-        o.stop(t + 0.7);
-      });
+      if (r) EFEKT.clink(r.c, r.out, r.c.currentTime);
     },
     // Hicaz dörtlüsü: Re, Mi♭, Fa♯, Sol
     hicaz() {
       const r = ready();
-      if (!r) return;
-      const t = r.c.currentTime + 0.1;
-      [
-        [440, 0],
-        [392, 0.3],
-        [369.99, 0.6],
-        [311.13, 0.9],
-        [369.99, 1.25],
-        [311.13, 1.5],
-        [293.66, 1.8],
-      ].forEach(([f, d]) => pluck(r.c, r.out, f, t + d, 0.45));
+      if (r) EFEKT.hicaz(r.c, r.out, r.c.currentTime);
     },
     win() {
       const r = ready();
-      if (!r) return;
-      const t = r.c.currentTime + 0.08;
-      [
-        [293.66, 0],
-        [369.99, 0.12],
-        [440, 0.24],
-        [587.33, 0.38],
-        [587.33, 0.52],
-      ].forEach(([f, d]) => pluck(r.c, r.out, f, t + d, 0.4));
+      if (r) EFEKT.win(r.c, r.out, r.c.currentTime);
     },
   };
 })();

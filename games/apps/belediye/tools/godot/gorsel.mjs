@@ -32,7 +32,16 @@ const PROFIL = fileURLToPath(new URL("../../.cache/godot-gorsel/", import.meta.u
 mkdirSync(PROFIL, { recursive: true });
 const chrome = spawn(
   CHROME_YOLU,
-  ["--headless=new", "--mute-audio", "--disable-gpu", "--hide-scrollbars", `--remote-debugging-port=${PORT}`, `--user-data-dir=${PROFIL}`, "--no-first-run", "about:blank"],
+  [
+    "--headless=new",
+    "--mute-audio",
+    "--disable-gpu",
+    "--hide-scrollbars",
+    `--remote-debugging-port=${PORT}`,
+    `--user-data-dir=${PROFIL}`,
+    "--no-first-run",
+    "about:blank",
+  ],
   { stdio: "ignore" },
 );
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -45,11 +54,17 @@ const send = (m, p = {}) =>
     pend.set(i, { res, rej });
     ws.send(JSON.stringify({ id: i, method: m, params: p }));
   });
-const ev = async e => (await send("Runtime.evaluate", { expression: e, returnByValue: true, awaitPromise: true })).result?.value;
-const boyut = (w, h, dpr = 1, mobil = false) => send("Emulation.setDeviceMetricsOverride", { width: w, height: h, deviceScaleFactor: dpr, mobile: mobil });
+const ev = async e =>
+  (await send("Runtime.evaluate", { expression: e, returnByValue: true, awaitPromise: true })).result?.value;
+const boyut = (w, h, dpr = 1, mobil = false) =>
+  send("Emulation.setDeviceMetricsOverride", { width: w, height: h, deviceScaleFactor: dpr, mobile: mobil });
 // seçicideki öğenin görüntüsü (şeffaf zemin, @2x)
 async function kirp(secici, dosya, pay = 0) {
-  const r = JSON.parse(await ev(`JSON.stringify((() => { const b = document.querySelector(${JSON.stringify(secici)}).getBoundingClientRect(); return { x: b.x, y: b.y, w: b.width, h: b.height }; })())`));
+  const r = JSON.parse(
+    await ev(
+      `JSON.stringify((() => { const b = document.querySelector(${JSON.stringify(secici)}).getBoundingClientRect(); return { x: b.x, y: b.y, w: b.width, h: b.height }; })())`,
+    ),
+  );
   const { data } = await send("Page.captureScreenshot", {
     format: "png",
     captureBeyondViewport: true,
@@ -93,18 +108,25 @@ async function masa(s, w = 1280, h = 800) {
   await boyut(w, h);
   await send("Page.navigate", { url: srv.url });
   await sleep(900);
-  await ev(`localStorage.clear(); localStorage.setItem("cb.introSeen","true"); localStorage.setItem("cb.avatar",'"baskan-03"'); localStorage.setItem("cb.save", ${JSON.stringify(JSON.stringify(s))}); location.reload()`);
+  await ev(
+    `localStorage.clear(); localStorage.setItem("cb.introSeen","true"); localStorage.setItem("cb.avatar",'"baskan-03"'); localStorage.setItem("cb.save", ${JSON.stringify(JSON.stringify(s))}); location.reload()`,
+  );
   await sleep(1400);
   await ev(`document.querySelector("#btn-resume").click()`);
   await sleep(2600);
 }
-const rng = (seed => () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646)(11);
+const rng = (
+  seed => () =>
+    ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646
+)(11);
 
 try {
   let url;
   for (let t = 0; t < 50 && !url; t++) {
     try {
-      url = (await (await fetch(`http://127.0.0.1:${PORT}/json/list`)).json()).find(x => x.type === "page")?.webSocketDebuggerUrl;
+      url = (await (await fetch(`http://127.0.0.1:${PORT}/json/list`)).json()).find(
+        x => x.type === "page",
+      )?.webSocketDebuggerUrl;
     } catch {}
     if (!url) await sleep(200);
   }
@@ -214,36 +236,64 @@ try {
   await ev(`document.querySelector(".ses-dugme")?.remove()`);
   await yalniz("#card", false);
   const kr = await kirp("#card", join(D.ui, "kagit.png"), 14);
-  writeFileSync(join(D.ui, "kagit.9.json"), JSON.stringify({ l: 40, t: 40, r: 40, b: 40, olcek: 2, pay_css: 14, boyut_css: [Math.round(kr.w), Math.round(kr.h)] }, null, 1));
+  writeFileSync(
+    join(D.ui, "kagit.9.json"),
+    JSON.stringify(
+      { l: 40, t: 40, r: 40, b: 40, olcek: 2, pay_css: 14, boyut_css: [Math.round(kr.w), Math.round(kr.h)] },
+      null,
+      1,
+    ),
+  );
   // damga çerçeveleri: Godot metni kendisi yazar; çerçeve 9-slice, metin boş
-  await ev(`(() => { for (const st of document.querySelectorAll("#card .stamp")) { st.style.opacity = "1"; st.style.transform = "none"; st.querySelector("span").textContent = "ÖRNEK DAMGA"; st.querySelector("span").style.color = "transparent"; } })()`);
+  await ev(
+    `(() => { for (const st of document.querySelectorAll("#card .stamp")) { st.style.opacity = "1"; st.style.transform = "none"; st.querySelector("span").textContent = "ÖRNEK DAMGA"; st.querySelector("span").style.color = "transparent"; } })()`,
+  );
   await yalniz("#card .stamp.L");
   await kirp("#card .stamp.L", join(D.ui, "damga-sol.png"), 6);
   await yalniz("#card .stamp.R");
   await kirp("#card .stamp.R", join(D.ui, "damga-sag.png"), 6);
-  writeFileSync(join(D.ui, "damga-sol.9.json"), JSON.stringify({ l: 28, t: 28, r: 28, b: 28, olcek: 2, not: "sol: kırmızı (--stamp-r), -13°; sağ: mor (--stamp-p), +11°; çarpım karışımı ve gürültü maskesi PNG'de" }, null, 1));
+  writeFileSync(
+    join(D.ui, "damga-sol.9.json"),
+    JSON.stringify(
+      {
+        l: 28,
+        t: 28,
+        r: 28,
+        b: 28,
+        olcek: 2,
+        not: "sol: kırmızı (--stamp-r), -13°; sağ: mor (--stamp-p), +11°; çarpım karışımı ve gürültü maskesi PNG'de",
+      },
+      null,
+      1,
+    ),
+  );
   writeFileSync(join(D.ui, "damga-sag.9.json"), JSON.stringify({ l: 28, t: 28, r: 28, b: 28, olcek: 2 }, null, 1));
   // MÜHÜRLÜ rozeti (evrağın ::after'ı): içi gizli evrak + rozet; kâğıdın zemini ve gölgesi kapatılır
   await ev(`(() => { const c = document.querySelector("#card"); c.classList.add("muhurlu"); const r = c.getBoundingClientRect(), b = document.createElement("div"); b.id = "rozet-kutu"; b.style.cssText = "position:fixed;left:" + (r.right - 140) + "px;top:" + (r.bottom - 120) + "px;width:130px;height:80px"; document.body.append(b);
     const st = document.createElement("style"); st.textContent = "#card { background: transparent !important; box-shadow: none !important; border-color: transparent !important; } #card::after { visibility: visible !important; }"; document.head.append(st); })()`);
   await yalniz("#card", false);
-  await ev(`(() => { const st = document.createElement("style"); st.textContent = "#card { visibility: visible !important; background: transparent !important; box-shadow: none !important; border-color: transparent !important; } #card > * { visibility: hidden !important; }"; document.head.append(st); })()`);
+  await ev(
+    `(() => { const st = document.createElement("style"); st.textContent = "#card { visibility: visible !important; background: transparent !important; box-shadow: none !important; border-color: transparent !important; } #card > * { visibility: hidden !important; }"; document.head.append(st); })()`,
+  );
   await sleep(200);
   await kirp("#rozet-kutu", join(D.ui, "muhurlu-rozet.png"));
 
   // ── 4. stil: CSS değişkenleri ve bileşenlerin hesaplanmış stilleri
   await boyut(1280, 800, 1);
   await masa(s);
-  const stil = JSON.parse(await ev(`JSON.stringify((() => {
+  const stil = JSON.parse(
+    await ev(`JSON.stringify((() => {
     const kok = getComputedStyle(document.documentElement), degisken = {};
     for (const sh of document.styleSheets) { try { for (const r of sh.cssRules) if (r.selectorText === ":root") for (const p of r.style) if (p.startsWith("--")) degisken[p] = kok.getPropertyValue(p).trim(); } catch {} }
     const P = ["color","background-color","background-image","border-top-width","border-top-style","border-top-color","border-radius","box-shadow","padding-top","padding-right","padding-bottom","padding-left","font-family","font-size","font-weight","letter-spacing","line-height","text-transform","opacity","min-height","min-width","width","height"];
     const S = { hud: ".hud", ust_cubuk_arac: ".tool", arac_mühür: "#btn-muhur", secenek: "#ch-L", secenek_not: "#ch-L .n", secenek_baslik: "#ch-L .t", evrak: "#card", evrak_metin: "#card .body", evrak_konu: "#card .doc-konu", evrak_kisi_ad: "#card .nm", evrak_kisi_unvan: "#card .un", evrak_ust: "#card .org", damga: "#card .stamp", gosterge_sayi: "#m-h .num", gosterge_ad: "#m-h .lbl", yururlukte: ".ongo", yururlukte_karar: ".ongo .pol", gunluk: "#log", masa: "#scr-game", takvim: ".cal" };
     const out = {}; for (const [ad, sec] of Object.entries(S)) { const el = document.querySelector(sec); if (!el) continue; const cs = getComputedStyle(el); out[ad] = { secici: sec }; for (const p of P) out[ad][p] = cs.getPropertyValue(p); }
     return { degisken, bilesen: out };
-  })())`));
+  })())`),
+  );
   // bildirim, fiş, zar damgası: yeri sabit olmayan öğeler, örnek oluşturup ölç
-  const ek = JSON.parse(await ev(`JSON.stringify((() => {
+  const ek = JSON.parse(
+    await ev(`JSON.stringify((() => {
     const ornek = (html, kap) => { const d = document.createElement("div"); d.innerHTML = html; (document.querySelector(kap) || document.body).append(d.firstElementChild); };
     ornek('<div class="toast warn hi" id="o1"><b>Dikkat</b>Kasa dibe yaklaşıyor<span class="tr n">14</span></div>', "#toasts");
     ornek('<div class="toast ev" id="o2"><b>Not</b>örnek</div>', "#toasts");
@@ -252,10 +302,30 @@ try {
     ornek('<p class="zar-not" id="o7">örnek sonuç cümlesi</p>', "#card");
     const P = ["color","background-color","border-top-width","border-top-color","border-left-width","border-left-color","border-radius","box-shadow","padding-top","padding-left","font-family","font-size","font-weight","letter-spacing","transform"];
     const out = {}; for (const [ad, id] of [["bildirim_uyari","o1"],["bildirim","o2"],["fis_artis","o3"],["fis_dusus","o4"],["zar_tuttu","o5"],["zar_tutmadi","o6"],["zar_not","o7"]]) { const cs = getComputedStyle(document.getElementById(id)); out[ad] = {}; for (const p of P) out[ad][p] = cs.getPropertyValue(p); }
-    return out; })())`));
+    return out; })())`),
+  );
   Object.assign(stil.bilesen, ek);
-  writeFileSync(join(D.data, "_stil.json"), JSON.stringify({ v: 1, not: "Tarayıcının hesapladığı değerler (px, 1280×800, kök yazı boyu bu ekranda). rem kullanılan yerlerde oran için kok_yazi'ye bölün.", kok_yazi: await ev(`getComputedStyle(document.documentElement).fontSize`), ...stil }, null, 1));
-  console.log("ref:", readdirSync(D.ref).length, "· simge:", readdirSync(D.icon).length, "· ui:", readdirSync(D.ui).length);
+  writeFileSync(
+    join(D.data, "_stil.json"),
+    JSON.stringify(
+      {
+        v: 1,
+        not: "Tarayıcının hesapladığı değerler (px, 1280×800, kök yazı boyu bu ekranda). rem kullanılan yerlerde oran için kok_yazi'ye bölün.",
+        kok_yazi: await ev(`getComputedStyle(document.documentElement).fontSize`),
+        ...stil,
+      },
+      null,
+      1,
+    ),
+  );
+  console.log(
+    "ref:",
+    readdirSync(D.ref).length,
+    "· simge:",
+    readdirSync(D.icon).length,
+    "· ui:",
+    readdirSync(D.ui).length,
+  );
 } catch (e) {
   console.log("HATA:", e.message);
 } finally {
