@@ -13,6 +13,15 @@ export function localDate(now: Date = new Date()): string {
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
 
+/**
+ * The day to play. Before the first flag's local midnight, the first flag
+ * itself: it has already begun somewhere east, so the server will serve it.
+ */
+export function playDate(now: Date = new Date()): string {
+  const today = localDate(now);
+  return today < EPOCH ? EPOCH : today;
+}
+
 /** Puzzle number for a local date; the epoch is #1. */
 export function numberFor(date: string): number {
   const [y, m, d] = date.split("-").map(Number);
@@ -94,7 +103,7 @@ export interface Vexle {
 }
 
 export function useVexle(): Vexle {
-  const [date] = useState(() => localDate());
+  const [date] = useState(() => playDate());
   const number = numberFor(date);
   const key = `${GAME_PREFIX}${date}`;
   const [saved, setSaved] = useState<SavedGame>(
@@ -143,9 +152,15 @@ export function useVexle(): Vexle {
     saved.verdict && saved.verdict.results.length === saved.guesses.length ? saved.verdict : null;
   const status: Status = verdict?.status ?? "playing";
 
-  // Count the round exactly once, when it ends.
+  // Count the round exactly once, when it ends. Another tab may have counted
+  // a round since this one loaded, so the record is read afresh first.
   useEffect(() => {
-    if (status === "playing" || stats.lastNumber === number) return;
+    if (status === "playing") return;
+    const stats = { ...emptyStats, ...readJson<Stats>(STATS_KEY) };
+    if (stats.lastNumber === number) {
+      setStats(stats);
+      return;
+    }
     const won = status === "won";
     const tries = saved.guesses.length;
     const streak = won ? (stats.lastWon === number - 1 ? stats.streak + 1 : 1) : 0;
@@ -163,7 +178,7 @@ export function useVexle(): Vexle {
     };
     setStats(next);
     writeJson(STATS_KEY, next);
-  }, [status, stats, number, saved.guesses.length, saved.hardAll]);
+  }, [status, number, saved.guesses.length, saved.hardAll]);
 
   const guess = useCallback(
     (code: string) => {
@@ -181,6 +196,8 @@ export function useVexle(): Vexle {
 
   const setHard = useCallback(
     (next: boolean) => {
+      // Mid-request the switch would race the verdict; it is locked instead.
+      if (inFlight.current) return;
       setHardState(next);
       writeJson(HARD_KEY, next);
       if (status !== "playing" || saved.guesses.length === 0) return;

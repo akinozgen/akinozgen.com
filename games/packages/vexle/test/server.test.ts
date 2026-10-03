@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
+import answersList from "../data/answers.json" with { type: "json" };
 import countries from "../data/countries.json" with { type: "json" };
 import {
   bearing,
@@ -40,10 +41,20 @@ describe("the calendar", () => {
     expect(same).toBeLessThan(3);
   });
 
-  it("does not repeat an answer within weeks", async () => {
+  it("never repeats an answer within 45 days, across cycle boundaries too", async () => {
     const answers: string[] = [];
-    for (let day = 1; day <= 40; day++) answers.push((await dailyRound(SEED, day)).answer);
-    expect(new Set(answers).size).toBeGreaterThanOrEqual(39);
+    // Three passes through the list, boundaries included.
+    for (let day = 1; day <= answersList.length * 3; day++) answers.push((await dailyRound(SEED, day)).answer);
+    for (let i = 0; i < answers.length; i++) {
+      const window = answers.slice(Math.max(0, i - 45), i);
+      expect(window).not.toContain(answers[i]);
+    }
+  });
+
+  it("draws only from the frozen answer list, all of them real flags", () => {
+    const codes = new Set((countries as Country[]).map((c) => c.code));
+    for (const code of answersList) expect(codes.has(code)).toBe(true);
+    expect(new Set(answersList).size).toBe(answersList.length);
   });
 
   it("opens every tile exactly once", async () => {

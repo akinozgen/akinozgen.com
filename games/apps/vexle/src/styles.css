@@ -1035,6 +1035,11 @@ body {
   background: var(--accent);
 }
 
+.switch:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+
 .switch__knob {
   position: absolute;
   top: 3px;

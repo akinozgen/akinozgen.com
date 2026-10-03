@@ -1,6 +1,6 @@
 import { readJson, writeJson } from "@travelle/core";
 import { TILES } from "@vexle/data/client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Compass } from "./components/Compass.tsx";
 import { EndCard } from "./components/EndCard.tsx";
 import { FlagBoard } from "./components/FlagBoard.tsx";
@@ -11,7 +11,7 @@ import { HowToPlay } from "./components/HowToPlay.tsx";
 import { LanguagePicker } from "./components/LanguagePicker.tsx";
 import { Sheet } from "./components/Sheet.tsx";
 import { StatsView } from "./components/StatsView.tsx";
-import { useVexle } from "./game/useVexle.ts";
+import { playDate, useVexle } from "./game/useVexle.ts";
 import { useLocale } from "./i18n/index.tsx";
 
 const SEEN_RULES_KEY = "vexle:seen-rules:v1";
@@ -27,6 +27,8 @@ export function App(): React.ReactElement {
     if (sheet === "rules") writeJson(SEEN_RULES_KEY, true);
     setSheet(null);
   };
+
+  useNewDay(game.date);
 
   const verdict = game.verdict;
   const results = verdict?.results ?? [];
@@ -128,7 +130,7 @@ export function App(): React.ReactElement {
               />
             </div>
           ) : (
-            <HardToggle on={game.hard} onChange={game.setHard} />
+            <HardToggle on={game.hard} disabled={game.pending} onChange={game.setHard} />
           )}
         </aside>
       </main>
@@ -147,4 +149,24 @@ export function App(): React.ReactElement {
       )}
     </div>
   );
+}
+
+/**
+ * A tab left open overnight, or brought back from the background on a
+ * phone, moves on to the new day's flag instead of showing yesterday's.
+ */
+function useNewDay(date: string): void {
+  useEffect(() => {
+    const check = (): void => {
+      if (document.visibilityState === "visible" && playDate() !== date) window.location.reload();
+    };
+    const id = window.setInterval(check, 30_000);
+    document.addEventListener("visibilitychange", check);
+    window.addEventListener("focus", check);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", check);
+      window.removeEventListener("focus", check);
+    };
+  }, [date]);
 }

@@ -1,3 +1,4 @@
+import answersData from "../data/answers.json" with { type: "json" };
 import countriesData from "../data/countries.json" with { type: "json" };
 import { type Country, MAX_GUESSES, TILES } from "./types.ts";
 
@@ -16,11 +17,12 @@ const COUNTRIES = countriesData as Country[];
 const BY_CODE = new Map(COUNTRIES.map((country) => [country.code, country]));
 
 /**
- * Flags that may be guessed but are never the answer: specks with no
- * people, whose flags nobody could be expected to know.
+ * Every flag that can be the answer, in a fixed order. Append-only: the
+ * schedule indexes into it, so removing or reordering an entry would move
+ * every day's answer, past ones included. Specks with no people (Bouvet,
+ * Heard Island…) can be guessed but are not on it.
  */
-const NEVER_ANSWER = new Set(["AQ", "BV", "HM", "TF", "GS", "IO", "UM", "CC", "CX", "NF", "PN"]);
-const ANSWERS = COUNTRIES.filter((country) => !NEVER_ANSWER.has(country.code));
+const ANSWERS = answersData as string[];
 
 /** An answer does not come round again within this many days. */
 const LOOKBACK = 45;
@@ -119,18 +121,48 @@ async function stream(seed: string, label: string): Promise<() => number> {
   };
 }
 
-async function firstDraw(seed: string, number: number): Promise<string> {
-  const random = await stream(seed, `vexle:answer:${number}`);
-  return ANSWERS[Math.floor(random() * ANSWERS.length)].code;
+/** The answer list shuffled for one pass through it. */
+async function shuffled(seed: string, cycle: number): Promise<string[]> {
+  const random = await stream(seed, `vexle:cycle:${cycle}`);
+  const order = [...ANSWERS];
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  return order;
+}
+
+const cycles = new Map<string, string[]>();
+
+/**
+ * One pass through every answer, so nothing repeats within a cycle. Where
+ * a cycle starts with something the previous one ended on, the clash is
+ * swapped with an answer from the middle of the cycle; the ends are never
+ * touched, so each cycle's tail is the same whichever way it is reached.
+ */
+async function cycleOrder(seed: string, cycle: number): Promise<string[]> {
+  const key = `${seed}\u0000${cycle}`;
+  const cached = cycles.get(key);
+  if (cached) return cached;
+  const order = await shuffled(seed, cycle);
+  if (cycle > 0) {
+    const before = new Set((await shuffled(seed, cycle - 1)).slice(-LOOKBACK));
+    let spare = LOOKBACK;
+    for (let i = 0; i < LOOKBACK; i++) {
+      if (!before.has(order[i])) continue;
+      while (spare < order.length - LOOKBACK && before.has(order[spare])) spare++;
+      [order[i], order[spare]] = [order[spare], order[i]];
+      spare++;
+    }
+  }
+  if (cycles.size > 8) cycles.clear();
+  cycles.set(key, order);
+  return order;
 }
 
 const memo = new Map<string, { answer: string; order: number[] }>();
 
-/**
- * Day `number`'s answer and the order its tiles open in. The answer redraws
- * while it matches one of the previous days' first draws — first draws, so a
- * day never depends on the whole chain before it.
- */
+/** Day `number`'s answer, and the order its tiles open in. */
 export async function dailyRound(
   seed: string,
   number: number,
@@ -139,14 +171,9 @@ export async function dailyRound(
   const cached = memo.get(cacheKey);
   if (cached) return cached;
 
-  const recent = new Set<string>();
-  for (let back = 1; back <= LOOKBACK; back++) recent.add(await firstDraw(seed, number - back));
-
-  const random = await stream(seed, `vexle:answer:${number}`);
-  let answer = ANSWERS[Math.floor(random() * ANSWERS.length)].code;
-  for (let attempt = 0; attempt < 40 && recent.has(answer); attempt++) {
-    answer = ANSWERS[Math.floor(random() * ANSWERS.length)].code;
-  }
+  const index = number - 1;
+  const cycle = Math.floor(index / ANSWERS.length);
+  const answer = (await cycleOrder(seed, cycle))[index - cycle * ANSWERS.length];
 
   const shuffle = await stream(seed, `vexle:tiles:${number}`);
   const order = Array.from({ length: TILES }, (_, i) => i);
@@ -216,18 +243,13 @@ function base64(bytes: Uint8Array): string {
   return out;
 }
 
-/** The pack's tiles as data URLs, colour tiles first then grey. */
-function unpack(pack: Uint8Array): string[] {
+/** Tile `index` of a pack (colour 0–5, grey 6–11) as a data URL. */
+function tileOf(pack: Uint8Array, index: number): string {
   const view = new DataView(pack.buffer, pack.byteOffset, pack.byteLength);
-  const count = TILES * 2;
-  const tiles: string[] = [];
-  let offset = count * 4;
-  for (let i = 0; i < count; i++) {
-    const length = view.getUint32(i * 4, true);
-    tiles.push(`data:image/webp;base64,${base64(pack.subarray(offset, offset + length))}`);
-    offset += length;
-  }
-  return tiles;
+  let offset = TILES * 2 * 4;
+  for (let i = 0; i < index; i++) offset += view.getUint32(i * 4, true);
+  const length = view.getUint32(index * 4, true);
+  return `data:image/webp;base64,${base64(pack.subarray(offset, offset + length))}`;
 }
 
 const fail = (status: number, error: string): Reply => ({ status, body: { error }, cache: "no-store" });
@@ -281,10 +303,10 @@ export async function handleVexle(
 
     const tiles: Array<string | null> = Array.from({ length: TILES }, () => null);
     if (opened.length > 0) {
-      const all = unpack(await loadPack(answerCode));
+      const pack = await loadPack(answerCode);
       // Grey only while it is still a puzzle; the finished flag is shown as it is.
       const grey = query.get("hard") === "1" && status === "playing";
-      for (const position of opened) tiles[position] = all[position + (grey ? TILES : 0)];
+      for (const position of opened) tiles[position] = tileOf(pack, position + (grey ? TILES : 0));
     }
 
     const verdict: VexleVerdict = {
