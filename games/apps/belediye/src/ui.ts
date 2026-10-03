@@ -788,14 +788,24 @@ function sesDur() {
   sesCalan = sesBasliyor = null;
   sesDugmesi(false);
   if (!a) return;
-  const kes = () => {
-    a.pause();
-    a.removeAttribute("src"); // indirmeyi de bırak
-    a.load();
-  };
-  if (p) p.then(kes, () => {});
-  else kes();
+  a.muted = true; // başlamamışsa da sesi çıkmasın
+  if (p)
+    p.then(
+      () => a.pause(),
+      () => {},
+    );
+  else a.pause();
 }
+// Medya sözlerinin zararsız reddi (sayfa açılır açılmaz çalma engeli, durdurulan başlangıç) konsolu kirletmesin
+addEventListener("unhandledrejection", e => {
+  const r = e.reason as DOMException | undefined;
+  if (
+    r &&
+    (r.name === "AbortError" || r.name === "NotAllowedError") &&
+    /play\(\)|user didn't interact|interrupted/i.test(r.message)
+  )
+    e.preventDefault();
+});
 function sesHaritasi() {
   sesHaritaYukleniyor ||= fetch("ses.json")
     .then(r => (r.ok ? r.json() : {}))
