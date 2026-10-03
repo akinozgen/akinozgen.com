@@ -141,7 +141,8 @@ for (let tohum = 1; tohum <= 24; tohum++) {
     fin = Object.fromEntries(res.cands.map(c => [c.id, c.pct]));
   const kay = (cagri, girdi, cikti) => satir.push({ tohum, cagri, girdi, cikti, rng_cagri_sayisi: n });
   // sayım ortası yüzdeleri: kesin sonuca göre kaydırılmış, sırası değişebilir
-  const ara = k => Object.fromEntries(ids.map((id, i) => [id, Math.max(0.5, fin[id] + (i % 2 ? 1 : -1) * k)]));
+  const ara = k =>
+    Object.fromEntries(ids.map((id, i) => [id, +Math.max(0.5, fin[id] + (i % 2 ? 1 : -1) * k).toFixed(6)]));
   const ctx = (o = {}) => ({ res, playerName: ad, flags: s.flags, seen, ...o });
   const dis = c => ({ ...c, res: undefined, seen: undefined, flags: undefined });
   satir.push({ tohum, res, oyuncu: ad, flags: s.flags });
