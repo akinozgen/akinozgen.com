@@ -795,12 +795,12 @@ function sesDur() {
   sesDugmesi(false);
   if (!a) return;
   a.muted = true; // başlamamışsa da sesi çıkmasın
-  if (p)
-    p.then(
-      () => a.pause(),
-      () => {},
-    );
-  else a.pause();
+  const kaldir = () => {
+    a.pause();
+    a.remove();
+  };
+  if (p) p.then(kaldir, kaldir);
+  else kaldir();
 }
 // Medya sözlerinin zararsız reddi (sayfa açılır açılmaz çalma engeli, durdurulan başlangıç) konsolu kirletmesin
 addEventListener("unhandledrejection", e => {
@@ -832,15 +832,21 @@ function sesKimlik(c: Cur) {
 }
 function sesOynat(f: string) {
   sesDur();
-  const a = new Audio(SES_KOK + f);
+  // Sayfaya bağlı, görünmez <audio>: Brave sayfaya bağlı olmayan sesin play() sözünü çalarken bile AbortError ile reddediyor
+  const a = document.createElement("audio");
+  a.src = SES_KOK + f;
+  a.preload = "auto";
+  a.hidden = true;
   a.volume = Math.max(0.15, snd.vol / 100);
-  a.addEventListener("ended", () => {
-    if (sesCalan === a) sesDur();
-  });
+  document.body.appendChild(a);
+  // düğmenin durumu sesin kendi olaylarından: play() sözünün sonucu tarayıcıdan tarayıcıya güvenilmez
+  a.addEventListener("playing", () => sesCalan === a && sesDugmesi(true));
+  a.addEventListener("ended", () => sesCalan === a && sesDur());
   sesCalan = a;
   sesDugmesi(true);
-  const p = a.play().catch(() => {
-    if (sesCalan === a) sesDur(); // tarayıcı izin vermezse sessiz geçer, düğme hoparlöre döner
+  const p = a.play().catch((e: DOMException) => {
+    // yalnız gerçek engel (kullanıcı etkileşimi yok) sesi durdurur; AbortError gibi retler çalmayı kesmez
+    if (e?.name === "NotAllowedError" && sesCalan === a) sesDur();
   });
   sesBasliyor = p;
   p.then(() => {
