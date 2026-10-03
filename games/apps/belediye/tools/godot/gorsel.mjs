@@ -94,6 +94,10 @@ const SVG_CIKAR = `(sec) => { const kaynak = document.querySelector(sec); if (!k
     for (const p of ["fill", "stroke", "stroke-width", "opacity", "fill-opacity", "stroke-opacity", "stroke-linecap", "stroke-linejoin"]) {
       const v = cs.getPropertyValue(p); if (v && v !== "none" || p === "fill") y.setAttribute(p, v.replace(/^rgb\\((\\d+), (\\d+), (\\d+)\\)$/, (m, r, g, bb) => "#" + [r, g, bb].map(n => (+n).toString(16).padStart(2, "0")).join("")));
     }
+    // Godot'nun SVG okuyucusu rgba() tanımıyor: #rrggbb + fill-opacity / stroke-opacity
+    for (const p of ["fill", "stroke"]) { const m = (y.getAttribute(p) || "").match(/^rgba\\((\\d+), (\\d+), (\\d+), ([\\d.]+)\\)$/); if (!m) continue;
+      y.setAttribute(p, "#" + m.slice(1, 4).map(n => (+n).toString(16).padStart(2, "0")).join(""));
+      y.setAttribute(p + "-opacity", String(+(parseFloat(y.getAttribute(p + "-opacity") ?? "1") * +m[4]).toFixed(3))); }
     y.removeAttribute("class"); y.removeAttribute("clip-path"); });
   k.setAttribute("xmlns", "http://www.w3.org/2000/svg"); k.removeAttribute("aria-hidden"); k.removeAttribute("class");
   if (!k.getAttribute("width")) { const r = kaynak.getBoundingClientRect(); k.setAttribute("width", Math.round(r.width)); k.setAttribute("height", Math.round(r.height)); }

@@ -12,7 +12,8 @@ const govde = ui.match(/const GLYPH[^=]*= (\{[\s\S]*?\n\});/)[1];
 const GLYPH = new Function(`return ${govde}`)();
 const tok = ad => css.match(new RegExp(`--${ad}:\\s*([^;]+);`))[1].trim();
 const RENK = {
-  ghost: "rgba(243, 242, 236, 0.26)",
+  ghost: tok("paper"),
+  ghost_opaklik: 0.26,
   det: tok("wood"),
   fill: {
     normal: tok("paper"),
@@ -30,7 +31,7 @@ for (const [k, g] of Object.entries(GLYPH)) {
   const det = `<g fill="none" stroke="${RENK.det}" stroke-width="1.6" stroke-linecap="round">${g.det}</g>`;
   writeFileSync(
     join(PROJE, "assets/icon", `gosterge-${AD[k]}-bos.svg`),
-    svg(`<path d="${g.d}" fill="${RENK.ghost}"/>`),
+    svg(`<path d="${g.d}" fill="${RENK.ghost}" fill-opacity="${RENK.ghost_opaklik}"/>`),
   );
   writeFileSync(join(PROJE, "assets/icon", `gosterge-${AD[k]}-dolu.svg`), svg(`<path d="${g.d}" fill="#ffffff"/>`));
   if (g.det) writeFileSync(join(PROJE, "assets/icon", `gosterge-${AD[k]}-detay.svg`), svg(det));
