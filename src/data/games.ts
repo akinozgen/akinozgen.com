@@ -10,6 +10,15 @@ export interface Game {
 /** Everything under /games. The sources live in this repo under games/. */
 export const games: Game[] = [
   {
+    slug: "vexle",
+    name: "vexle",
+    tagline: "name the flag",
+    description:
+      "A daily flag game. Each guess turns over one tile of the flag, and a compass points from your last guess towards the answer — how far, which way, how close.",
+    year: "2026",
+    tags: ["daily", "flags", "five languages"],
+  },
+  {
     slug: "travelle",
     name: "travelle",
     tagline: "walk the borders",

@@ -4,6 +4,8 @@ The small browser games served under [akinozgen.com/games](https://akinozgen.com
 
 - **travelle** — a clone of [travle.earth](https://travle.earth): name the
   countries that link a start country to an end country by land.
+- **vexle** — a daily flag game: every guess turns over one tile of the flag,
+  and a compass points from your last guess towards the answer.
 - **Çaylar Belediyeden** (`belediye`) — a card game in Turkish: you run a
   made-up Anatolian town by swiping memos left or right. TypeScript built
   with Vite; see [apps/belediye/README.md](apps/belediye/README.md).
@@ -19,6 +21,8 @@ countries dropped, and a route length you choose.
 | `packages/geo`   | Border graph: the Natural Earth pipeline, the solver, the game server |
 | `packages/core`  | Game-agnostic bits shared across games (daily index, storage, share)  |
 | `apps/travelle`  | The game itself — React + Vite                                        |
+| `packages/vexle` | vexle's countries, tile packs and game server                         |
+| `apps/vexle`     | vexle — React + Vite                                                  |
 | `apps/belediye`  | Çaylar Belediyeden — TypeScript + Vite                                |
 
 ## Commands
@@ -69,3 +73,19 @@ before this existed and are kept as they were in `data/legacy.json`.
 call it in-process, so neither needs the real one. The Worker only runs for
 `/api/*` (`run_worker_first` in the site's `wrangler.jsonc`); every other
 request, including the bots' 404s, is served from static assets.
+
+## How vexle keeps its answer
+
+`packages/vexle/scripts/build-data.ts` takes 3:2 flags from
+[country-flag-icons](https://gitlab.com/catamphetamine/country-flag-icons)
+(MIT), cuts each into six tiles (colour and grey, WebP) and writes one pack per
+flag to the site's `public/games/vexle-tiles/`, plus `data/countries.json`
+(names in five languages from ICU, centroids from travelle's regions). Every
+flag is public anyway; what stays on the server is which one is today's.
+
+`/api/vexle/judge?d=<date>&g=<codes>&hard=1` (`src/pages/api/vexle/[action].ts`,
+backed by `packages/vexle/src/server.ts`) picks the day's flag from
+`HMAC(seed, day)`, scores each guess (distance, bearing, proximity), and sends
+back only the tiles earned so far, as data URLs. The answer's code appears only
+once the round is over. It uses the same Worker secret as travelle, prefixed so
+the two games' draws are unrelated.
