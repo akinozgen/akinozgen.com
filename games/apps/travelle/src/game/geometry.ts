@@ -1,6 +1,6 @@
 import type { Feature, MultiPolygon } from "geojson";
 import { useEffect, useState } from "react";
-import { graph } from "./puzzle.ts";
+import { region } from "./regions.ts";
 
 /** Outer ring first, holes after, per area — the shape shipped for display. */
 export type Geometry = number[][][][];
@@ -30,8 +30,7 @@ export function useGeometry(): Geometry | null {
 }
 
 export function toFeature(regionId: string, geometry: Geometry): Feature<MultiPolygon> | null {
-  const polygons = graph
-    .region(regionId)
+  const polygons = region(regionId)
     .areas.map((id) => geometry[id])
     .filter((polygon) => polygon && polygon.length > 0);
   if (polygons.length === 0) return null;

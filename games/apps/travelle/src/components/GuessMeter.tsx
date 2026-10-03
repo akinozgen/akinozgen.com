@@ -1,4 +1,4 @@
-import type { GuessResult } from "@travelle/geo";
+import type { Judged } from "../game/useGame.ts";
 import { plural, useLocale } from "../i18n/index.tsx";
 
 /**
@@ -9,7 +9,7 @@ export function GuessMeter({
   results,
   budget,
 }: {
-  results: readonly GuessResult[];
+  results: readonly Judged[];
   budget: number;
 }): React.ReactElement {
   const { t } = useLocale();

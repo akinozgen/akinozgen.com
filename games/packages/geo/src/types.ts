@@ -42,3 +42,40 @@ export interface GeoData {
 
 /** Outer ring first, holes after — lon/lat pairs, already simplified for display. */
 export type AreaGeometry = number[][][];
+
+/** Continent names as Natural Earth spells them, in the order they're shown. */
+export const CONTINENTS = [
+  "Europe",
+  "Asia",
+  "Africa",
+  "North America",
+  "South America",
+  "Oceania",
+] as const;
+
+/** A set of continents as a bitmask over CONTINENTS — compact enough for a URL. */
+export function continentMask(continents: Iterable<string>): number {
+  let mask = 0;
+  for (const name of continents) {
+    const index = (CONTINENTS as readonly string[]).indexOf(name);
+    if (index >= 0) mask |= 1 << index;
+  }
+  return mask;
+}
+
+export function continentsOf(mask: number): string[] {
+  return CONTINENTS.filter((_, index) => mask & (1 << index));
+}
+
+/**
+ * What the browser is told about a region: enough to name it, draw it and
+ * file it under a continent, and nothing about which regions it borders.
+ * The borders stay on the server, so the answer cannot be read off the page.
+ */
+export type PublicRegion = Region;
+
+export interface PublicData {
+  regions: PublicRegion[];
+  /** Per continent mask: countries left in play, and the longest route possible. */
+  maps: Record<string, { inPlay: number; longest: number }>;
+}

@@ -1,6 +1,6 @@
 import { useLocale } from "../i18n/index.tsx";
 import type { StringKey } from "../i18n/strings.ts";
-import { HINTS, type Hint } from "../game/useGame.ts";
+import { type Game, HINTS, type Hint } from "../game/useGame.ts";
 
 const LABEL: Record<Hint, StringKey> = {
   neighbours: "hintNeighbours",
@@ -12,18 +12,16 @@ const LABEL: Record<Hint, StringKey> = {
 export function Hints({
   used,
   disabled,
-  suggestion,
+  initials,
   onUse,
 }: {
   used: readonly Hint[];
   disabled: boolean;
-  suggestion: readonly string[];
+  initials: Game["initials"];
   onUse: (hint: Hint) => void;
 }): React.ReactElement {
-  const { t, name } = useLocale();
-  const initials = used.includes("initials")
-    ? suggestion.map((id) => name(id).charAt(0)).join(" · ")
-    : null;
+  const { t, language } = useLocale();
+  const letters = used.includes("initials") && initials ? initials[language] : null;
 
   return (
     <section className="hints">
@@ -43,10 +41,8 @@ export function Hints({
           </button>
         ))}
       </div>
-      {initials !== null && (
-        <p className="hints__initials">
-          {initials.length > 0 ? initials : t("routeComplete")}
-        </p>
+      {letters !== null && (
+        <p className="hints__initials">{letters.length > 0 ? letters : t("routeComplete")}</p>
       )}
     </section>
   );

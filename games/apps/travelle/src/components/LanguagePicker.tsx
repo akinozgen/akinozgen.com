@@ -1,4 +1,4 @@
-import { LANGUAGES, type Language } from "@travelle/geo";
+import { LANGUAGES, type Language } from "@travelle/geo/client";
 import { useLocale } from "../i18n/index.tsx";
 import { LANGUAGE_NAMES } from "../i18n/strings.ts";
 

@@ -1,4 +1,4 @@
-import type { Language } from "@travelle/geo";
+import type { Language } from "@travelle/geo/client";
 
 /** English is the shape every other language has to match. */
 const en = {
@@ -40,6 +40,9 @@ const en = {
   mapLabel: "Globe showing the route so far",
   mapLoading: "Loading the map…",
   recentre: "Recentre",
+  puzzleLoading: "Loading today's puzzle…",
+  serverError: "Couldn't reach the server.",
+  retry: "Try again",
   zoomIn: "Zoom in",
   zoomOut: "Zoom out",
 
@@ -148,6 +151,9 @@ const tr: Dict = {
   mapLabel: "Şu ana kadarki rotayı gösteren küre",
   mapLoading: "Harita yükleniyor…",
   recentre: "Ortala",
+  puzzleLoading: "Günün bulmacası yükleniyor…",
+  serverError: "Sunucuya ulaşılamadı.",
+  retry: "Tekrar dene",
   zoomIn: "Yakınlaştır",
   zoomOut: "Uzaklaştır",
 
@@ -253,6 +259,9 @@ const de: Dict = {
   mapLabel: "Globus mit der bisherigen Route",
   mapLoading: "Karte wird geladen…",
   recentre: "Zentrieren",
+  puzzleLoading: "Das heutige Rätsel wird geladen…",
+  serverError: "Server nicht erreichbar.",
+  retry: "Nochmal versuchen",
   zoomIn: "Vergrößern",
   zoomOut: "Verkleinern",
 
@@ -358,6 +367,9 @@ const es: Dict = {
   mapLabel: "Globo con la ruta hasta ahora",
   mapLoading: "Cargando el mapa…",
   recentre: "Centrar",
+  puzzleLoading: "Cargando el reto de hoy…",
+  serverError: "No se pudo contactar con el servidor.",
+  retry: "Reintentar",
   zoomIn: "Acercar",
   zoomOut: "Alejar",
 
@@ -463,6 +475,9 @@ const fr: Dict = {
   mapLabel: "Globe montrant la route jusqu'ici",
   mapLoading: "Chargement de la carte…",
   recentre: "Recentrer",
+  puzzleLoading: "Chargement du défi du jour…",
+  serverError: "Impossible de joindre le serveur.",
+  retry: "Réessayer",
   zoomIn: "Zoomer",
   zoomOut: "Dézoomer",
 

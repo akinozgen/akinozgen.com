@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { CONTINENTS, type Endless } from "../game/endless.ts";
-import { graph } from "../game/puzzle.ts";
+import { PLAYABLE } from "../game/regions.ts";
 import { useLocale } from "../i18n/index.tsx";
 import type { StringKey } from "../i18n/strings.ts";
 import { Sheet } from "./Sheet.tsx";
@@ -17,7 +17,7 @@ const fold = (value: string): string =>
 const COUNTS = new Map<string, number>(
   CONTINENTS.map((continent) => [
     continent,
-    graph.playableRegions().filter((r) => r.continent === continent).length,
+    PLAYABLE.filter((r) => r.continent === continent).length,
   ]),
 );
 
@@ -34,14 +34,11 @@ function ExcludePicker({
   const matches = useMemo(() => {
     const needle = fold(query);
     if (needle.length === 0) return [];
-    return graph
-      .playableRegions()
-      .filter(
+    return PLAYABLE.filter(
         (region) =>
           !excluded.includes(region.id) &&
-          Object.values(region.names).some((n) => fold(n).includes(needle)),
-      )
-      .slice(0, 5);
+        Object.values(region.names).some((n) => fold(n).includes(needle)),
+    ).slice(0, 5);
   }, [query, excluded]);
 
   return (

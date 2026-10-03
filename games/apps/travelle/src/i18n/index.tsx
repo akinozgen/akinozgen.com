@@ -1,7 +1,7 @@
 import { readJson, writeJson } from "@travelle/core";
-import { LANGUAGES, type Language } from "@travelle/geo";
+import { LANGUAGES, type Language } from "@travelle/geo/client";
 import { createContext, Fragment, useCallback, useContext, useMemo, useState } from "react";
-import { graph } from "../game/puzzle.ts";
+import { region } from "../game/regions.ts";
 import { STRINGS, type StringKey } from "./strings.ts";
 
 const KEY = "travle:language:v1";
@@ -49,7 +49,7 @@ export function LocaleProvider({ children }: { children: React.ReactNode }): Rea
           name in vars ? String(vars[name]) : whole,
         );
       },
-      name: (regionId) => graph.region(regionId).names[language],
+      name: (regionId) => region(regionId).names[language],
     };
   }, [language, setLanguage]);
 

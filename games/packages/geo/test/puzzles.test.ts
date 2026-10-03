@@ -1,52 +1,98 @@
 import { describe, expect, it } from "vitest";
-import calendar from "../data/puzzles.json" with { type: "json" };
+import legacy from "../data/legacy.json" with { type: "json" };
 import { borderGraph, evaluateGuess, guessBudget } from "../src/index.ts";
+import { dailyPair, dateOf, dayNumber, FIRST_GENERATED_DAY, latestDate } from "../src/server/daily.ts";
 
 const graph = borderGraph();
-const puzzles = calendar.puzzles as Array<{ start: string; end: string; shortest: number }>;
+const SEED = "test-seed-not-the-real-one";
 
-/** Every 37th day — enough spread to catch a systematic fault, fast enough to run always. */
-const sample = puzzles.filter((_, index) => index % 37 === 0);
+/** A spread of generated days — enough to catch a systematic fault, quick enough to run always. */
+const DAYS = Array.from({ length: 60 }, (_, i) => FIRST_GENERATED_DAY + i * 7);
 
-describe("puzzle calendar", () => {
-  it("schedules a full run of days", () => {
-    expect(puzzles.length).toBeGreaterThan(2900);
+describe("the daily calendar", () => {
+  it("keeps every day already played exactly as it was published", async () => {
+    const published = legacy.puzzles as Array<{ start: string; end: string; shortest: number }>;
+    expect(published.length).toBe(FIRST_GENERATED_DAY);
+    for (const day of [0, 100, FIRST_GENERATED_DAY - 1]) {
+      expect(await dailyPair(graph, SEED, day)).toEqual(published[day]);
+    }
+    // 4 October 2026 was the last published day.
+    expect(dateOf(FIRST_GENERATED_DAY - 1)).toBe("2026-10-04");
   });
 
-  it("never repeats a country inside a week's endpoints", () => {
-    for (let week = 0; week * 7 < puzzles.length; week++) {
-      const days = puzzles.slice(week * 7, week * 7 + 7);
-      const endpoints = days.flatMap((p) => [p.start, p.end]);
-      expect(new Set(endpoints).size).toBe(endpoints.length);
+  it("gives every request the same pair for the same day and seed", async () => {
+    for (const day of DAYS.slice(0, 10)) {
+      expect(await dailyPair(graph, SEED, day)).toEqual(await dailyPair(graph, SEED, day));
     }
   });
 
-  it("stores a shortest length the solver agrees with", () => {
-    for (const puzzle of sample) {
-      expect(graph.solve(puzzle.start, puzzle.end).cost).toBe(puzzle.shortest);
-      expect(puzzle.shortest).toBeGreaterThanOrEqual(3);
+  it("depends on the secret: another seed gives other puzzles", async () => {
+    let same = 0;
+    for (const day of DAYS.slice(0, 20)) {
+      const a = await dailyPair(graph, SEED, day);
+      const b = await dailyPair(graph, "a-different-seed", day);
+      if (a.start === b.start && a.end === b.end) same++;
+    }
+    expect(same).toBeLessThan(2);
+  });
+
+  it("stores a shortest length the solver agrees with", async () => {
+    for (const day of DAYS) {
+      const pair = await dailyPair(graph, SEED, day);
+      expect(graph.solve(pair.start, pair.end).cost).toBe(pair.shortest);
+      expect(pair.shortest).toBeGreaterThanOrEqual(3);
+      expect(pair.shortest).toBeLessThanOrEqual(12);
     }
   });
 
-  it("is winnable by playing the shortest route in order", () => {
-    for (const puzzle of sample) {
-      const route = graph.solve(puzzle.start, puzzle.end).path;
+  it("does not reuse an endpoint from the days just before", async () => {
+    let clashes = 0;
+    for (const day of DAYS.slice(0, 30)) {
+      const today = await dailyPair(graph, SEED, day);
+      for (let back = 1; back <= 6; back++) {
+        const earlier = await dailyPair(graph, SEED, day - back);
+        if ([earlier.start, earlier.end].some((id) => id === today.start || id === today.end)) {
+          clashes++;
+        }
+      }
+    }
+    // Days are checked against earlier first draws, not final picks, so a
+    // rare clash can slip through; a systematic one cannot.
+    expect(clashes).toBeLessThan(3);
+  });
+
+  it("is winnable by playing the shortest route in order", async () => {
+    for (const day of DAYS.slice(0, 20)) {
+      const { start, end, shortest } = await dailyPair(graph, SEED, day);
+      const route = graph.solve(start, end).path;
       const played: string[] = [];
       for (const region of route) {
-        const result = evaluateGuess(graph, puzzle.start, puzzle.end, played, region);
-        // Walking out from the start, every step should join the chain.
-        expect(result.mark).toBe("chain");
+        expect(evaluateGuess(graph, start, end, played, region).mark).toBe("chain");
         played.push(region);
       }
-      expect(graph.isComplete(puzzle.start, puzzle.end, played)).toBe(true);
-      expect(played.length).toBeLessThan(guessBudget(puzzle.shortest));
+      expect(graph.isComplete(start, end, played)).toBe(true);
+      expect(graph.isComplete(start, end, route.slice(0, -1))).toBe(false);
+      expect(played.length).toBeLessThan(guessBudget(shortest));
     }
   });
+});
 
-  it("leaves the puzzle unsolved until the chain is whole", () => {
-    for (const puzzle of sample) {
-      const route = graph.solve(puzzle.start, puzzle.end).path;
-      expect(graph.isComplete(puzzle.start, puzzle.end, route.slice(0, -1))).toBe(false);
-    }
+describe("dates", () => {
+  it("counts days from the epoch and back", () => {
+    expect(dayNumber("2026-01-01")).toBe(0);
+    expect(dayNumber("2026-10-04")).toBe(276);
+    expect(dateOf(276)).toBe("2026-10-04");
+  });
+
+  it("rejects malformed and impossible dates", () => {
+    expect(dayNumber("2026-02-31")).toBeNull();
+    expect(dayNumber("tomorrow")).toBeNull();
+    expect(dayNumber("2026-1-5")).toBeNull();
+  });
+
+  it("knows the latest date anywhere on Earth", () => {
+    // 11:00 UTC on 4 October is already 01:00 on the 5th in Kiribati.
+    expect(latestDate(new Date("2026-10-04T11:00:00Z"))).toBe("2026-10-05");
+    expect(latestDate(new Date("2026-10-04T09:00:00Z"))).toBe("2026-10-04");
   });
 });

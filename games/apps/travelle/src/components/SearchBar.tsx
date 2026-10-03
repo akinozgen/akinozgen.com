@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { graph } from "../game/puzzle.ts";
+import { REGIONS } from "../game/regions.ts";
 import { useLocale } from "../i18n/index.tsx";
 
 const fold = (value: string): string =>
@@ -38,7 +38,7 @@ export function SearchBar({
 
   const entries = useMemo<Entry[]>(() => {
     const onMap = new Set(allowed);
-    return graph.regions
+    return REGIONS
       .filter((region) => onMap.has(region.id))
       .map((region) => ({
         id: region.id,

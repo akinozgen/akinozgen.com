@@ -2,10 +2,25 @@ import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { render } from "./helpers.tsx";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { App } from "../src/App.tsx";
-import { dailyPuzzle, graph, todayIndex } from "../src/game/puzzle.ts";
+import { borderGraph } from "@travelle/geo";
+import type { DailyPuzzle } from "@travelle/geo/client";
+import { handleTravelle } from "@travelle/geo/server";
+import { todayDate } from "../src/game/puzzle.ts";
 import { HINTS } from "../src/game/useGame.ts";
+import { TEST_SEED } from "./setup.ts";
 
-const puzzle = dailyPuzzle(todayIndex());
+/** The answers live on the server; the tests ask the same code for them. */
+const graph = borderGraph();
+const puzzle = (
+  await handleTravelle("daily", new URLSearchParams({ date: todayDate() }), TEST_SEED)
+).body as DailyPuzzle;
+
+/** Renders the page and waits for today's puzzle to arrive from the server. */
+const renderApp = async () => {
+  const result = render(<App />);
+  await screen.findByLabelText("Guess a country");
+  return result;
+};
 
 /** The guess list, addressed by class so the map's labels can't be mistaken for it. */
 const guessEntries = (): HTMLLIElement[] =>
@@ -15,7 +30,10 @@ const typeGuess = async (name: string): Promise<void> => {
   const input = screen.getByLabelText("Guess a country");
   fireEvent.change(input, { target: { value: name } });
   const option = await screen.findByRole("button", { name });
+  const before = guessEntries().length;
   fireEvent.click(option);
+  // The guess counts once the server has judged it.
+  await waitFor(() => expect(guessEntries().length).toBe(before + 1));
 };
 
 beforeEach(() => {
@@ -26,7 +44,7 @@ afterEach(cleanup);
 
 describe("the game page", () => {
   it("shows today's puzzle and draws it", async () => {
-    render(<App />);
+    await renderApp();
 
     expect(screen.getByRole("heading", { name: "travelle" })).toBeTruthy();
     expect(screen.getByText(graph.region(puzzle.start).names.en)).toBeTruthy();
@@ -46,14 +64,14 @@ describe("the game page", () => {
   });
 
   it("puts the ocean and the graticule on a sized canvas", async () => {
-    render(<App />);
+    await renderApp();
     const canvas = document.querySelector<HTMLCanvasElement>(".map__canvas")!;
     expect(canvas).toBeTruthy();
     await waitFor(() => expect(canvas.width).toBeGreaterThan(0));
   });
 
   it("spins when dragged and offers a way back", async () => {
-    render(<App />);
+    await renderApp();
     const svg = document.querySelector("svg")!;
     await waitFor(() => expect(document.querySelectorAll(".shape").length).toBe(2));
 
@@ -67,7 +85,7 @@ describe("the game page", () => {
   });
 
   it("shows the world's borders for the second hint, not the answer", async () => {
-    render(<App />);
+    await renderApp();
     await waitFor(() => expect(document.querySelectorAll(".shape").length).toBe(2));
 
     fireEvent.click(screen.getByRole("button", { name: "Show all country outlines" }));
@@ -80,7 +98,7 @@ describe("the game page", () => {
   });
 
   it("outlines one country for the first hint without moving the camera", async () => {
-    render(<App />);
+    await renderApp();
     await waitFor(() => expect(document.querySelectorAll(".shape").length).toBe(2));
     const framed = [...document.querySelectorAll(".shape")].map((n) => n.getAttribute("d"));
 
@@ -95,7 +113,7 @@ describe("the game page", () => {
   });
 
   it("plays the shortest route through to a perfect win", async () => {
-    render(<App />);
+    await renderApp();
     const route = graph.solve(puzzle.start, puzzle.end).path;
 
     for (const regionId of route) {
@@ -111,7 +129,7 @@ describe("the game page", () => {
   });
 
   it("marks a hopeless guess red and keeps the round going", async () => {
-    render(<App />);
+    await renderApp();
     // Somewhere no route can pass: a country on another landmass entirely.
     const reachable = new Set(graph.componentOf(puzzle.start));
     const furthest = graph.playableRegions().find((region) => !reachable.has(region.id))!.id;
@@ -126,24 +144,24 @@ describe("the game page", () => {
   });
 
   it("reveals initials as a hint without naming the country", async () => {
-    render(<App />);
+    await renderApp();
     fireEvent.click(screen.getByRole("button", { name: "Show country initials" }));
 
     const expected = graph
       .solve(puzzle.start, puzzle.end)
       .path.map((id) => graph.region(id).names.en.charAt(0))
       .join(" · ");
-    expect(screen.getByText(expected)).toBeTruthy();
+    expect(await screen.findByText(expected)).toBeTruthy();
     expect(screen.getByText("Hints").parentElement?.textContent).toContain(`1/${HINTS.length}`);
   });
 
   it("remembers a game across a reload", async () => {
-    const first = render(<App />);
+    const first = await renderApp();
     const route = graph.solve(puzzle.start, puzzle.end).path;
     await typeGuess(graph.region(route[0]).names.en);
     first.unmount();
 
-    render(<App />);
+    await renderApp();
     await waitFor(() => expect(guessEntries().length).toBe(1));
     expect(guessEntries()[0].textContent).toContain(graph.region(route[0]).names.en);
   });
@@ -151,7 +169,7 @@ describe("the game page", () => {
 
 describe("the trimmings", () => {
   it("counts the guesses left as pips that keep their colour", async () => {
-    render(<App />);
+    await renderApp();
     expect(screen.getByText(`Guess 1 of ${puzzle.budget}`)).toBeTruthy();
     expect(document.querySelectorAll(".meter__pips .pip").length).toBe(puzzle.budget);
 
@@ -163,7 +181,7 @@ describe("the trimmings", () => {
   });
 
   it("counts down to tomorrow's puzzle, but only on the daily", async () => {
-    render(<App />);
+    await renderApp();
     fireEvent.click(screen.getByRole("button", { name: "Give up" }));
 
     const countdown = await screen.findByText(/Next travelle in/);
@@ -173,7 +191,7 @@ describe("the trimmings", () => {
 
 describe("languages", () => {
   it("switches the whole page, country names included", async () => {
-    render(<App />);
+    await renderApp();
     const region = graph.region(puzzle.start);
     expect(document.querySelector(".prompt")?.textContent).toContain(region.names.en);
 
@@ -188,7 +206,7 @@ describe("languages", () => {
   });
 
   it("finds a country typed in any language", async () => {
-    render(<App />);
+    await renderApp();
     const input = screen.getByLabelText("Guess a country");
 
     fireEvent.change(input, { target: { value: "Almanya" } });
@@ -201,7 +219,7 @@ describe("languages", () => {
 
 describe("the neighbours hint", () => {
   it("outlines every country bordering either end, and nothing else", async () => {
-    render(<App />);
+    await renderApp();
     await waitFor(() => expect(document.querySelectorAll(".shape").length).toBe(2));
     const framed = [...document.querySelectorAll(".shape")].map((n) => n.getAttribute("d"));
 

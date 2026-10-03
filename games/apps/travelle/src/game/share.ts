@@ -1,11 +1,12 @@
-import { MARK_EMOJI, type GuessResult } from "@travelle/geo";
+import { MARK_EMOJI } from "@travelle/geo/client";
+import type { Judged } from "./useGame.ts";
 import type { Puzzle } from "./puzzle.ts";
 import type { Status } from "./useGame.ts";
 
 export function shareText(
   puzzle: Puzzle,
   title: string,
-  results: readonly GuessResult[],
+  results: readonly Judged[],
   status: Status,
   aside: readonly string[],
 ): string {

@@ -1,17 +1,19 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Board, EmptyBoard } from "./components/Board.tsx";
 import { EndlessSettings } from "./components/EndlessSettings.tsx";
 import { HowToPlay } from "./components/HowToPlay.tsx";
 import { ENDLESS_STATS_KEY, useEndless } from "./game/endless.ts";
 import { LanguagePicker } from "./components/LanguagePicker.tsx";
 import { useLocale } from "./i18n/index.tsx";
-import { dailyPuzzle, graph, todayIndex } from "./game/puzzle.ts";
+import { useDaily } from "./game/daily.ts";
+import { PLAYABLE } from "./game/regions.ts";
 import { useGame, type Round } from "./game/useGame.ts";
 
 const MODES = ["daily", "endless"] as const;
 type Mode = (typeof MODES)[number];
 
 const DAILY_STATS_KEY = "travle:stats:v1";
+const EVERYWHERE = PLAYABLE.map((region) => region.id);
 function readMode(): Mode {
   const hash = window.location.hash.replace(/^#\/?/, "");
   return MODES.includes(hash as Mode) ? (hash as Mode) : "daily";
@@ -39,28 +41,50 @@ export function App(): React.ReactElement {
   const [mode, setMode] = useMode();
   const [showRules, setShowRules] = useState(false);
   const [showSetup, setShowSetup] = useState(false);
-  const endless = useEndless();
+  const endless = useEndless(mode === "endless");
+  const topbarRef = useRef<HTMLElement>(null);
+  useTopbarHeight(topbarRef);
+  const daily = useDaily();
 
-  const dayIndex = todayIndex();
   const round: Round | null =
     mode === "daily"
-      ? {
-          puzzle: dailyPuzzle(dayIndex),
-          graph,
+      ? daily.puzzle && {
+          puzzle: daily.puzzle,
           statsKey: DAILY_STATS_KEY,
-          sequence: dayIndex,
+          sequence: daily.puzzle.number,
+          allowed: EVERYWHERE,
         }
-      : endless.puzzle
-        ? {
-            puzzle: endless.puzzle,
-            graph: endless.map,
-            statsKey: ENDLESS_STATS_KEY,
-            sequence: endless.round,
-          }
-        : null;
+      : endless.puzzle && {
+          puzzle: endless.puzzle,
+          statsKey: ENDLESS_STATS_KEY,
+          sequence: endless.round,
+          allowed: endless.allowed,
+        };
+
+  const failed = mode === "daily" ? daily.failed : endless.failed;
+  const loading = mode === "daily" ? !daily.puzzle && !daily.failed : endless.loading;
+  const waiting = failed ? (
+    <>
+      {t("serverError")}{" "}
+      <button
+        type="button"
+        className="button"
+        onClick={mode === "daily" ? daily.retry : endless.retry}
+      >
+        {t("retry")}
+      </button>
+    </>
+  ) : loading ? (
+    t("puzzleLoading")
+  ) : (
+    t("nothingToPlay", {
+      min: endless.settings.minLength,
+      max: endless.settings.maxLength,
+    })
+  );
 
   const topbar = (
-    <header className="topbar">
+    <header className="topbar" ref={topbarRef}>
       <div className="topbar__brand">
         <h1 className="topbar__title">travelle</h1>
         <span className="topbar__tag">{t("tagline")}</span>
@@ -95,20 +119,15 @@ export function App(): React.ReactElement {
 
   return (
     <div className="app">
+      {topbar}
       {round ? (
         <Game
           key={round.puzzle.id}
           round={round}
-          topbar={topbar}
           onNext={mode === "endless" ? endless.next : null}
         />
       ) : (
-        <EmptyBoard topbar={topbar}>
-          {t("nothingToPlay", {
-            min: endless.settings.minLength,
-            max: endless.settings.maxLength,
-          })}
-        </EmptyBoard>
+        <EmptyBoard>{waiting}</EmptyBoard>
       )}
 
       {showSetup && <EndlessSettings endless={endless} onClose={() => setShowSetup(false)} />}
@@ -120,11 +139,9 @@ export function App(): React.ReactElement {
 /** Split out so a new round remounts with fresh state via the key above. */
 function Game({
   round,
-  topbar,
   onNext,
 }: {
   round: Round;
-  topbar: React.ReactNode;
   onNext: (() => void) | null;
 }): React.ReactElement {
   const { t } = useLocale();
@@ -133,7 +150,6 @@ function Game({
     <Board
       round={round}
       game={game}
-      topbar={topbar}
       footer={
         onNext && game.status !== "playing" ? (
           <button type="button" className="button button--primary next" onClick={onNext}>
@@ -143,4 +159,22 @@ function Game({
       }
     />
   );
+}
+
+/**
+ * The bar sits outside the board so it survives the board being swapped
+ * (loading, then playing); the board leaves a gap of its height for it.
+ */
+function useTopbarHeight(ref: React.RefObject<HTMLElement | null>): void {
+  useLayoutEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const update = (): void =>
+      document.documentElement.style.setProperty("--topbar-h", `${node.offsetHeight}px`);
+    update();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(update);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [ref]);
 }

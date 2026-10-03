@@ -1,4 +1,4 @@
-import { MARK_EMOJI } from "@travelle/geo";
+import { MARK_EMOJI } from "@travelle/geo/client";
 import { useLocale } from "../i18n/index.tsx";
 import { Sheet } from "./Sheet.tsx";
 

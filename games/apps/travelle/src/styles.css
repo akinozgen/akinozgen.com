@@ -258,8 +258,17 @@ body {
 
 /* --- the bar across the top --- */
 
-.topbar {
+.hud__top {
   grid-area: top;
+  height: var(--topbar-h, 36px);
+}
+
+.topbar {
+  position: fixed;
+  z-index: 3;
+  top: max(16px, env(safe-area-inset-top));
+  left: 16px;
+  right: 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -465,6 +474,9 @@ body {
   }
 
   .topbar {
+    top: max(10px, env(safe-area-inset-top));
+    left: 10px;
+    right: 10px;
     flex-wrap: wrap;
     gap: 8px;
   }
@@ -1312,4 +1324,14 @@ body {
 .empty {
   margin: 0;
   color: var(--ink-soft);
+}
+
+.link-button {
+  padding: 0;
+  font: inherit;
+  color: var(--accent);
+  text-decoration: underline;
+  background: none;
+  border: 0;
+  cursor: pointer;
 }

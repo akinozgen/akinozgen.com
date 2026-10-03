@@ -7,6 +7,8 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./client": "./src/client.ts",
+    "./server": "./src/server/api.ts",
     "./data/*": "./data/*"
   },
   "scripts": {
@@ -14,7 +16,7 @@
     "build:data": "node scripts/build-data.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "build:puzzles": "node scripts/build-puzzles.ts"
+    "build:public": "node scripts/build-public.ts"
   },
   "devDependencies": {
     "@types/node": "^22.20.2",

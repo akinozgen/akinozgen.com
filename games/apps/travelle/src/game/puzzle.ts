@@ -1,16 +1,8 @@
 import { dateForIndex, dayIndex } from "@travelle/core";
-import { borderGraph, guessBudget } from "@travelle/geo";
-import calendar from "@travelle/geo/data/puzzles.json";
+import type { DailyPuzzle, EndlessPuzzle } from "@travelle/geo/client";
 
-export const EPOCH: string = calendar.epoch;
-
-interface CalendarEntry {
-  start: string;
-  end: string;
-  shortest: number;
-}
-
-const entries = calendar.puzzles as CalendarEntry[];
+/** Day 0 of the daily calendar. */
+export const EPOCH = "2026-01-01";
 
 export interface Puzzle {
   /** Stable across reloads — it keys the saved progress for this round. */
@@ -27,27 +19,48 @@ export interface Puzzle {
   shortest: number;
   /** Total guesses allowed: the shortest solution plus the published allowance. */
   budget: number;
+  /** Endless only: what the server needs back to judge the round. */
+  key?: string;
 }
 
-export const graph = borderGraph();
-
-/** Today's puzzle number, wrapping if the calendar ever runs out. */
+/** Today's puzzle number, counted in the player's own timezone. */
 export function todayIndex(now: Date = new Date()): number {
-  const raw = dayIndex(EPOCH, now);
-  if (raw < 0) return 0;
-  return raw % entries.length;
+  return Math.max(0, dayIndex(EPOCH, now));
 }
 
-export function dailyPuzzle(index: number): Puzzle {
-  const entry = entries[((index % entries.length) + entries.length) % entries.length];
+/** Today's date where the player is, which is what the daily is asked for by. */
+export function todayDate(now: Date = new Date()): string {
+  return dateForIndex(EPOCH, todayIndex(now));
+}
+
+export function fromDaily(daily: DailyPuzzle): Puzzle {
   return {
-    id: `daily:${index}`,
+    id: `daily:${daily.number}`,
     kind: "daily",
-    number: index,
-    date: dateForIndex(EPOCH, index),
-    start: entry.start,
-    end: entry.end,
-    shortest: entry.shortest,
-    budget: guessBudget(entry.shortest),
+    number: daily.number,
+    date: daily.date,
+    start: daily.start,
+    end: daily.end,
+    shortest: daily.shortest,
+    budget: daily.budget,
+  };
+}
+
+export function fromEndless(
+  endless: EndlessPuzzle,
+  round: number,
+  seed: number,
+  scope: string[] | undefined,
+): Puzzle {
+  return {
+    id: `endless:${seed}`,
+    kind: "endless",
+    number: round,
+    scope,
+    start: endless.start,
+    end: endless.end,
+    shortest: endless.shortest,
+    budget: endless.budget,
+    key: endless.key,
   };
 }

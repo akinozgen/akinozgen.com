@@ -1,15 +1,16 @@
-import { MARK_EMOJI, type GuessResult } from "@travelle/geo";
+import { MARK_EMOJI } from "@travelle/geo/client";
+import type { Judged } from "../game/useGame.ts";
 import { useLocale } from "../i18n/index.tsx";
 import type { StringKey } from "../i18n/strings.ts";
 
-const EXPLANATION: Record<GuessResult["mark"], StringKey> = {
+const EXPLANATION: Record<Judged["mark"], StringKey> = {
   chain: "markChain",
   closer: "markCloser",
   detour: "markDetour",
   wrong: "markWrong",
 };
 
-export function GuessList({ results }: { results: readonly GuessResult[] }): React.ReactElement {
+export function GuessList({ results }: { results: readonly Judged[] }): React.ReactElement {
   const { t, name } = useLocale();
   if (results.length === 0) {
     return <p className="guesses__empty">{t("noGuessesYet")}</p>;

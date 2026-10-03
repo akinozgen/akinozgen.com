@@ -1,4 +1,4 @@
-import type { GuessResult } from "@travelle/geo";
+import type { GuessMark } from "@travelle/geo/client";
 import { useMemo, useRef, useState } from "react";
 import { Trans, useLocale } from "../i18n/index.tsx";
 import { puzzleTitle, puzzleSubtitle } from "../i18n/puzzleText.ts";
@@ -10,7 +10,7 @@ import { Hints } from "./Hints.tsx";
 import { MapView, type Shown, type Tone } from "./MapView.tsx";
 import { SearchBar } from "./SearchBar.tsx";
 
-const TONE_FOR_MARK: Record<GuessResult["mark"], Tone> = {
+const TONE_FOR_MARK: Record<GuessMark, Tone> = {
   chain: "chain",
   closer: "closer",
   detour: "detour",
@@ -20,15 +20,13 @@ const TONE_FOR_MARK: Record<GuessResult["mark"], Tone> = {
 export function Board({
   round,
   game,
-  topbar,
   footer,
 }: {
   round: Round;
   game: Game;
-  topbar: React.ReactNode;
   footer?: React.ReactNode;
 }): React.ReactElement {
-  const { puzzle, graph } = round;
+  const { puzzle } = round;
   const { t, name } = useLocale();
   const [notice, setNotice] = useState<string | null>(null);
   const over = game.status !== "playing";
@@ -55,12 +53,9 @@ export function Board({
       entries.push({ regionId, tone: "hint" });
     }
     return entries;
-  }, [puzzle.start, puzzle.end, game.results, game.hints, game.suggestion, game.nextRegion, game.endpointNeighbours, name]);
+  }, [puzzle.start, puzzle.end, game.results, game.hints, game.nextRegion, game.endpointNeighbours, name]);
 
-  const guessable = useMemo(
-    () => graph.playableRegions().map((region) => region.id),
-    [graph],
-  );
+  const guessable = round.allowed;
 
   return (
     <>
@@ -71,7 +66,7 @@ export function Board({
         windowRef={windowRef}
       />
       <div className="hud">
-        {topbar}
+        <div className="hud__top" />
         <div className="hud__window" ref={windowRef} />
         <div className={`hud__sheet${over ? " is-over" : ""}`}>
           <aside className="panel panel--play">
@@ -92,7 +87,7 @@ export function Board({
               <>
                 <GuessMeter results={game.results} budget={puzzle.budget} />
                 <SearchBar
-                  disabled={over}
+                  disabled={over || game.pending}
                   allowed={guessable}
                   taken={[puzzle.start, puzzle.end, ...game.guesses]}
                   onGuess={(regionId) => {
@@ -103,6 +98,14 @@ export function Board({
                   }}
                 />
                 {notice && <p className="notice">{notice}</p>}
+                {game.failed && (
+                  <p className="notice">
+                    {t("serverError")}{" "}
+                    <button type="button" className="link-button" onClick={game.retry}>
+                      {t("retry")}
+                    </button>
+                  </p>
+                )}
               </>
             )}
 
@@ -123,8 +126,8 @@ export function Board({
             ) : (
               <Hints
                 used={game.hints}
-                disabled={over}
-                suggestion={game.suggestion}
+                disabled={over || game.pending}
+                initials={game.initials}
                 onUse={game.useHint}
               />
             )}
@@ -136,20 +139,14 @@ export function Board({
   );
 }
 
-/** The frame without a round in it: the globe, the bar, and why it is empty. */
-export function EmptyBoard({
-  topbar,
-  children,
-}: {
-  topbar: React.ReactNode;
-  children: React.ReactNode;
-}): React.ReactElement {
+/** The frame without a round in it: the globe, and why it is empty. */
+export function EmptyBoard({ children }: { children: React.ReactNode }): React.ReactElement {
   const windowRef = useRef<HTMLDivElement>(null);
   return (
     <>
       <MapView shown={[]} windowRef={windowRef} />
       <div className="hud">
-        {topbar}
+        <div className="hud__top" />
         <div className="hud__window" ref={windowRef} />
         <div className="hud__sheet">
           <aside className="panel panel--play">

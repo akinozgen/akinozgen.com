@@ -2,7 +2,9 @@ import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { render } from "./helpers.tsx";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { App } from "../src/App.tsx";
-import { graph } from "../src/game/puzzle.ts";
+import { borderGraph } from "@travelle/geo";
+
+const graph = borderGraph();
 
 beforeEach(() => {
   localStorage.clear();
@@ -11,8 +13,10 @@ beforeEach(() => {
 afterEach(cleanup);
 
 const openEndless = async (): Promise<void> => {
-  fireEvent.click(screen.getByRole("button", { name: "Endless" }));
-  fireEvent.click(await screen.findByRole("button", { name: "Setup" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Endless" }));
+  // Let the first round arrive, so the bar being clicked is the one that stays.
+  await screen.findByText(/Endless #1/);
+  fireEvent.click(screen.getByRole("button", { name: "Setup" }));
   await screen.findByRole("dialog", { name: "Map setup" });
 };
 
@@ -29,6 +33,7 @@ const continentOf = (name: string): string =>
 describe("endless mode", () => {
   it("keeps its own puzzle, separate from the daily one", async () => {
     render(<App />);
+    await screen.findByLabelText("Guess a country");
     const [dailyStart] = endpoints();
 
     fireEvent.click(screen.getByRole("button", { name: "Endless" }));
@@ -36,7 +41,7 @@ describe("endless mode", () => {
     expect(window.location.hash).toBe("#/endless");
 
     fireEvent.click(screen.getByRole("button", { name: "Daily" }));
-    expect(endpoints()[0]).toBe(dailyStart);
+    await waitFor(() => expect(endpoints()[0]).toBe(dailyStart));
   });
 
   it("plays inside one continent once the others are switched off", async () => {
@@ -71,7 +76,7 @@ describe("endless mode", () => {
     await waitFor(() => expect(countNow()).toBe(before - 1));
 
     fireEvent.click(screen.getByRole("button", { name: "Done" }));
-    const guessBox = screen.getByLabelText("Guess a country");
+    const guessBox = await screen.findByLabelText("Guess a country");
     fireEvent.change(guessBox, { target: { value: "Egypt" } });
     expect(guessBox.parentElement?.querySelector(".search__list")).toBeNull();
   });
