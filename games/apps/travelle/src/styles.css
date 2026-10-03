@@ -11,11 +11,21 @@
   --closer: #74c476;
   --detour: #e8890c;
   --wrong: #d6483b;
-  --hint: #9a938a;
-  --ocean: #cfe0ea;
-  --ocean-lit: #eaf3f8;
-  --graticule: #9fb8c6;
-  --world-border: #93aab8;
+  --hint: #6f6a62;
+  --space: #dbe5ec;
+  --space-far: #b9cad6;
+  --ocean: #bcd6e6;
+  --ocean-lit: #eef6fb;
+  --ocean-deep: #86aec6;
+  --graticule: #8fb0c4;
+  --world-border: #6f93a8;
+  --glow: rgba(255, 255, 255, 0.9);
+  --glow-fade: rgba(255, 255, 255, 0);
+  --shade: rgba(20, 50, 80, 0.22);
+  --stars: 0;
+  --panel: color-mix(in srgb, var(--surface) 84%, transparent);
+  --panel-line: color-mix(in srgb, var(--ink) 9%, transparent);
+  --panel-shadow: 0 18px 50px rgb(30 50 70 / 16%), 0 2px 6px rgb(30 50 70 / 8%);
   --radius: 10px;
   color-scheme: light dark;
 }
@@ -23,22 +33,32 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #131519;
-    --surface: #1c1f25;
+    --surface: #181b22;
     --line: #2e333b;
     --ink: #e9e6e1;
     --ink-soft: #9aa0a8;
     --accent: #7a95ff;
-    --start: #a988ff;
-    --end: #38d3e8;
+    --start: #b294ff;
+    --end: #45dcef;
     --chain: #4fca6a;
     --closer: #8fd99f;
     --detour: #f0a344;
     --wrong: #ef6a5d;
-    --hint: #767d86;
-    --ocean: #10202b;
-    --ocean-lit: #1b3341;
-    --graticule: #2f4a5a;
-    --world-border: #3c5a6c;
+    --hint: #c3cad3;
+    --space: #0b1220;
+    --space-far: #03050a;
+    --ocean: #123247;
+    --ocean-lit: #2a5873;
+    --ocean-deep: #071723;
+    --graticule: #2c5269;
+    --world-border: #5d849b;
+    --glow: rgba(90, 160, 255, 0.42);
+    --glow-fade: rgba(90, 160, 255, 0);
+    --shade: rgba(0, 0, 0, 0.45);
+    --stars: 1;
+    --panel: color-mix(in srgb, var(--surface) 78%, transparent);
+    --panel-line: color-mix(in srgb, #fff 9%, transparent);
+    --panel-shadow: 0 18px 50px rgb(0 0 0 / 45%), 0 2px 6px rgb(0 0 0 / 25%);
   }
 }
 
@@ -46,88 +66,21 @@
   box-sizing: border-box;
 }
 
+html,
+body {
+  height: 100%;
+}
+
 body {
   margin: 0;
-  background: var(--bg);
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 40%, var(--space), var(--space-far));
   color: var(--ink);
   font:
     15px/1.55 system-ui,
     -apple-system,
     "Segoe UI",
     sans-serif;
-}
-
-.page {
-  max-width: 680px;
-  margin: 0 auto;
-  padding: 20px 16px 64px;
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.header__brand {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-}
-
-.header__tools {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.lang__select {
-  padding: 5px 8px;
-  font: inherit;
-  font-size: 13px;
-  color: var(--ink-soft);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.lang__select:hover {
-  color: var(--ink);
-  border-color: var(--accent);
-}
-
-.header__title {
-  margin: 0;
-  font-size: 34px;
-  font-weight: 800;
-  letter-spacing: -0.045em;
-  color: var(--accent);
-}
-
-/* Gradient only where it can be clipped to the glyphs; elsewhere the solid
-   accent above stands, rather than a title made of transparent text. */
-@supports (background-clip: text) or (-webkit-background-clip: text) {
-  .header__title {
-    background: linear-gradient(105deg, var(--accent), var(--end) 62%, var(--chain));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-}
-
-.header__tag {
-  color: var(--ink-soft);
-  font-size: 12px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-@media (max-width: 480px) {
-  .header__tag {
-    display: none;
-  }
 }
 
 .visually-hidden {
@@ -141,41 +94,11 @@ body {
   white-space: nowrap;
 }
 
-.prompt {
-  margin: 20px 0 2px;
-  font-size: 21px;
-  letter-spacing: -0.01em;
-}
-
-.prompt__start {
-  color: var(--start);
-}
-
-.prompt__end {
-  color: var(--end);
-}
-
-.prompt strong {
-  font-weight: 650;
-}
-
-.prompt__meta,
-.muted {
-  color: var(--ink-soft);
-  font-size: 13px;
-}
-
-.prompt__meta {
-  margin: 0 0 14px;
-}
-
-/* --- map --- */
+/* --- the frame: a globe behind everything, panels floating over it --- */
 
 .map {
-  position: relative;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
+  position: fixed;
+  inset: 0;
   overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
@@ -192,10 +115,11 @@ body {
 }
 
 .map svg {
-  position: relative;
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
   touch-action: none;
   cursor: grab;
 }
@@ -204,18 +128,54 @@ body {
   cursor: grabbing;
 }
 
-.map__recentre {
+/* Pinned to the bottom-right corner of the free window, wherever that is. */
+.map__controls {
   position: absolute;
-  right: 10px;
-  bottom: 10px;
-  padding: 6px 11px;
+  z-index: 3;
+  left: var(--win-right);
+  top: var(--win-bottom);
+  display: flex;
+  gap: 6px;
+  transform: translate(calc(-100% - 12px), calc(-100% - 12px));
+}
+
+/* On a phone the bottom of the window is crowded by the sheet; go up top. */
+@media (max-width: 860px) {
+  .map__controls {
+    top: var(--win-top);
+    flex-direction: column;
+    align-items: flex-end;
+    transform: translate(calc(-100% - 4px), 4px);
+  }
+}
+
+.map__button {
+  display: grid;
+  place-items: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
   font: inherit;
-  font-size: 12px;
-  color: inherit;
-  background: color-mix(in srgb, var(--surface) 88%, transparent);
-  border: 1px solid var(--line);
+  font-size: 18px;
+  line-height: 1;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--panel-line);
   border-radius: 999px;
+  box-shadow: var(--panel-shadow);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   cursor: pointer;
+}
+
+.map__button--wide {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0 14px;
+}
+
+.map__button:hover {
+  color: var(--accent);
 }
 
 .map__loading {
@@ -225,6 +185,322 @@ body {
   place-items: center;
   margin: 0;
   color: var(--ink-soft);
+  pointer-events: none;
+}
+
+.hud {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  grid-template:
+    "top top top" auto
+    "play window side" minmax(0, 1fr)
+    / minmax(300px, 360px) minmax(0, 1fr) minmax(280px, 330px);
+  gap: 16px;
+  padding: 16px;
+  padding-top: max(16px, env(safe-area-inset-top));
+  pointer-events: none;
+}
+
+.hud > *,
+.hud__sheet > * {
+  pointer-events: auto;
+}
+
+.hud__window {
+  grid-area: window;
+  pointer-events: none !important;
+}
+
+.hud__sheet {
+  display: contents;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  align-self: start;
+  max-height: 100%;
+  min-height: 0;
+  padding: 18px;
+  background: var(--panel);
+  border: 1px solid var(--panel-line);
+  border-radius: 18px;
+  box-shadow: var(--panel-shadow);
+  backdrop-filter: blur(18px) saturate(1.3);
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+  animation: rise-in 360ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+.panel--play {
+  grid-area: play;
+}
+
+.panel--side {
+  grid-area: side;
+  overflow-y: auto;
+  animation-delay: 60ms;
+}
+
+/* Only the guesses scroll, so the search box — and its suggestions — stay put. */
+.panel__scroll {
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0 -6px;
+  padding: 0 6px;
+}
+
+.panel--play .button--quiet {
+  align-self: flex-start;
+  margin-top: 14px;
+}
+
+/* --- the bar across the top --- */
+
+.topbar {
+  grid-area: top;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  pointer-events: none !important;
+}
+
+.topbar > * {
+  pointer-events: auto;
+}
+
+.topbar__brand {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.topbar__title {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 850;
+  letter-spacing: -0.05em;
+  line-height: 1;
+  color: var(--accent);
+}
+
+/* Gradient only where it can be clipped to the glyphs; elsewhere the solid
+   accent above stands, rather than a title made of transparent text. */
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .topbar__title {
+    background: linear-gradient(105deg, var(--start), var(--accent) 40%, var(--end) 75%, var(--chain));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
+
+.topbar__tag {
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.topbar__tools {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.chip,
+.lang__select {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--panel-line);
+  border-radius: 999px;
+  box-shadow: var(--panel-shadow);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  cursor: pointer;
+}
+
+.lang__select {
+  padding: 0 10px;
+}
+
+.chip:hover,
+.lang__select:hover {
+  color: var(--accent);
+}
+
+.modes {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--panel);
+  border: 1px solid var(--panel-line);
+  border-radius: 999px;
+  box-shadow: var(--panel-shadow);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.modes__tab {
+  height: 30px;
+  padding: 0 18px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--ink-soft);
+  background: none;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.modes__tab:hover:not(.is-on) {
+  color: var(--ink);
+}
+
+.modes__tab.is-on {
+  color: #fff;
+  background: var(--accent);
+}
+
+/* --- the route being asked for --- */
+
+.prompt {
+  margin: 0 0 4px;
+  font-size: 22px;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+}
+
+.prompt strong {
+  font-weight: 750;
+}
+
+.prompt__start {
+  color: var(--start);
+}
+
+.prompt__end {
+  color: var(--end);
+}
+
+.prompt__meta,
+.muted {
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.prompt__meta {
+  margin: 0 0 4px;
+  letter-spacing: 0.02em;
+}
+
+/* --- phones: the globe on top, everything else in a sheet below --- */
+
+@media (max-width: 860px) {
+  .hud {
+    grid-template:
+      "top" auto
+      "window" minmax(0, 1fr)
+      "sheet" minmax(0, 54dvh)
+      / minmax(0, 1fr);
+    gap: 8px;
+    padding: 10px;
+    padding-top: max(10px, env(safe-area-inset-top));
+    padding-bottom: 0;
+  }
+
+  .hud__sheet {
+    grid-area: sheet;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 0;
+    overflow-y: auto;
+    margin: 0 -10px;
+    padding: 14px 14px max(20px, env(safe-area-inset-bottom));
+    background: var(--panel);
+    border-top: 1px solid var(--panel-line);
+    border-radius: 22px 22px 0 0;
+    box-shadow: 0 -12px 40px rgb(0 0 0 / 18%);
+    backdrop-filter: blur(18px) saturate(1.3);
+    -webkit-backdrop-filter: blur(18px) saturate(1.3);
+  }
+
+  .panel {
+    max-height: none;
+    padding: 0;
+    background: none;
+    border: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    overflow: visible;
+  }
+
+  .panel,
+  .panel__scroll {
+    flex: none;
+    min-height: auto;
+    overflow: visible;
+  }
+
+  /* Once the round is over, the result is what matters: lead with it. */
+  .hud__sheet.is-over .panel--side {
+    order: -1;
+  }
+
+  .topbar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .topbar__title {
+    font-size: 24px;
+  }
+
+  .topbar__tag {
+    display: none;
+  }
+
+  .modes {
+    order: 3;
+  }
+
+  .chip,
+  .lang__select {
+    height: 32px;
+    padding: 0 11px;
+    font-size: 12px;
+  }
+
+  .prompt {
+    font-size: 19px;
+  }
+}
+
+@media (max-width: 1080px) and (min-width: 861px) {
+  .hud {
+    grid-template-columns: minmax(280px, 320px) minmax(0, 1fr) minmax(250px, 290px);
+  }
+
+  .topbar__tag {
+    display: none;
+  }
 }
 
 .shape {
@@ -257,9 +533,10 @@ body {
   stroke: var(--wrong);
 }
 .shape--hint {
-  fill: none;
+  fill: color-mix(in srgb, var(--hint) 10%, transparent);
   stroke: var(--hint);
-  stroke-dasharray: 4 3;
+  stroke-width: 1.6;
+  stroke-dasharray: 5 3;
 }
 
 /* On winning, the chain lights up from the start country outwards. */
@@ -274,13 +551,13 @@ body {
 
 .marker__text {
   fill: var(--ink);
-  font-size: 11px;
+  font-size: 12.5px;
   font-weight: 650;
   text-anchor: middle;
   dominant-baseline: middle;
   paint-order: stroke;
   stroke: var(--ocean);
-  stroke-width: 3.5px;
+  stroke-width: 4px;
   stroke-linejoin: round;
 }
 
@@ -821,72 +1098,6 @@ body {
   }
 }
 
-/* --- modes and the endless setup panel --- */
-
-.modes {
-  display: flex;
-  gap: 4px;
-  margin: 18px 0 0;
-  padding: 4px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  width: fit-content;
-}
-
-.modes__tab {
-  padding: 8px 22px;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--ink-soft);
-  background: none;
-  border: 0;
-  border-radius: 999px;
-  cursor: pointer;
-}
-
-.modes__tab:hover:not(.is-on) {
-  color: var(--ink);
-}
-
-.modes__tab.is-on {
-  color: #fff;
-  background: var(--accent);
-}
-
-.modes-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.setup-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 9px 16px;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--ink);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  cursor: pointer;
-}
-
-.setup-button:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.setup-button__gear {
-  font-size: 15px;
-  line-height: 1;
-}
 
 .setup__section {
   padding: 16px 0;
@@ -1064,17 +1275,41 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+
+/* --- inside the panels --- */
+
+.panel .hints {
+  margin-top: 0;
+}
+
+.panel .hints__button {
+  text-align: left;
+}
+
+.panel--side .hints__row {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.panel .end {
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  background: none;
+  border: 0;
+}
+
+.panel .guesses__empty {
+  margin: 14px 0 0;
+  font-size: 13px;
+}
+
 .next {
-  margin-top: 18px;
+  margin-top: 16px;
   width: 100%;
 }
 
 .empty {
-  margin-top: 22px;
-  padding: 18px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
+  margin: 0;
   color: var(--ink-soft);
 }
-

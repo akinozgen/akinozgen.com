@@ -33,12 +33,16 @@ describe("the game page", () => {
     expect(screen.getByText(graph.region(puzzle.end).names.en)).toBeTruthy();
     expect(screen.getByText(`Guess 1 of ${puzzle.budget}`)).toBeTruthy();
 
-    // The map loads its geometry lazily, then draws one shape per country shown.
-    await waitFor(() => {
-      const shapes = document.querySelectorAll("svg .shape");
-      expect(shapes.length).toBe(2);
-      for (const shape of shapes) expect(shape.getAttribute("d")?.length).toBeGreaterThan(20);
-    });
+    // The map loads its geometry lazily, then turns the globe to face the
+    // route — until it lands, either country may still be round the back.
+    await waitFor(
+      () => {
+        const shapes = document.querySelectorAll("svg .shape");
+        expect(shapes.length).toBe(2);
+        for (const shape of shapes) expect(shape.getAttribute("d")?.length).toBeGreaterThan(20);
+      },
+      { timeout: 4000 },
+    );
   });
 
   it("puts the ocean and the graticule on a sized canvas", async () => {
@@ -108,9 +112,9 @@ describe("the game page", () => {
 
   it("marks a hopeless guess red and keeps the round going", async () => {
     render(<App />);
-    // Somewhere far from any route: pick the region furthest from the start.
-    const distances = graph.distancesFrom(puzzle.start);
-    const [furthest] = [...distances].sort((a, b) => b[1] - a[1])[0];
+    // Somewhere no route can pass: a country on another landmass entirely.
+    const reachable = new Set(graph.componentOf(puzzle.start));
+    const furthest = graph.playableRegions().find((region) => !reachable.has(region.id))!.id;
 
     await typeGuess(graph.region(furthest).names.en);
 

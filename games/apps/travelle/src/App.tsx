@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Board } from "./components/Board.tsx";
+import { Board, EmptyBoard } from "./components/Board.tsx";
 import { EndlessSettings } from "./components/EndlessSettings.tsx";
 import { HowToPlay } from "./components/HowToPlay.tsx";
 import { ENDLESS_STATS_KEY, useEndless } from "./game/endless.ts";
@@ -59,54 +59,56 @@ export function App(): React.ReactElement {
           }
         : null;
 
-  return (
-    <div className="page">
-      <header className="header">
-        <div className="header__brand">
-          <h1 className="header__title">travelle</h1>
-          <span className="header__tag">{t("tagline")}</span>
-        </div>
-        <div className="header__tools">
-          <LanguagePicker />
-          <button type="button" className="button button--ghost" onClick={() => setShowRules(true)}>
-            {t("rules")}
+  const topbar = (
+    <header className="topbar">
+      <div className="topbar__brand">
+        <h1 className="topbar__title">travelle</h1>
+        <span className="topbar__tag">{t("tagline")}</span>
+      </div>
+      <nav className="modes" aria-label="Game mode">
+        {MODES.map((option) => (
+          <button
+            key={option}
+            type="button"
+            className={`modes__tab${mode === option ? " is-on" : ""}`}
+            aria-current={mode === option ? "page" : undefined}
+            onClick={() => setMode(option)}
+          >
+            {option === "daily" ? t("modeDaily") : t("modeEndless")}
           </button>
-        </div>
-      </header>
-
-      <div className="modes-row">
-        <nav className="modes" aria-label="Game mode">
-          {MODES.map((option) => (
-            <button
-              key={option}
-              type="button"
-              className={`modes__tab${mode === option ? " is-on" : ""}`}
-              aria-current={mode === option ? "page" : undefined}
-              onClick={() => setMode(option)}
-            >
-              {option === "daily" ? t("modeDaily") : t("modeEndless")}
-            </button>
-          ))}
-        </nav>
+        ))}
+      </nav>
+      <div className="topbar__tools">
         {mode === "endless" && (
-          <button type="button" className="setup-button" onClick={() => setShowSetup(true)}>
-            <span className="setup-button__gear" aria-hidden="true">
-              ⚙
-            </span>
+          <button type="button" className="chip" onClick={() => setShowSetup(true)}>
+            <span aria-hidden="true">⚙</span>
             {t("setup")}
           </button>
         )}
+        <LanguagePicker />
+        <button type="button" className="chip" onClick={() => setShowRules(true)}>
+          {t("rules")}
+        </button>
       </div>
+    </header>
+  );
 
+  return (
+    <div className="app">
       {round ? (
-        <Game key={round.puzzle.id} round={round} onNext={mode === "endless" ? endless.next : null} />
+        <Game
+          key={round.puzzle.id}
+          round={round}
+          topbar={topbar}
+          onNext={mode === "endless" ? endless.next : null}
+        />
       ) : (
-        <p className="empty">
+        <EmptyBoard topbar={topbar}>
           {t("nothingToPlay", {
             min: endless.settings.minLength,
             max: endless.settings.maxLength,
           })}
-        </p>
+        </EmptyBoard>
       )}
 
       {showSetup && <EndlessSettings endless={endless} onClose={() => setShowSetup(false)} />}
@@ -116,13 +118,22 @@ export function App(): React.ReactElement {
 }
 
 /** Split out so a new round remounts with fresh state via the key above. */
-function Game({ round, onNext }: { round: Round; onNext: (() => void) | null }): React.ReactElement {
+function Game({
+  round,
+  topbar,
+  onNext,
+}: {
+  round: Round;
+  topbar: React.ReactNode;
+  onNext: (() => void) | null;
+}): React.ReactElement {
   const { t } = useLocale();
   const game = useGame(round);
   return (
     <Board
       round={round}
       game={game}
+      topbar={topbar}
       footer={
         onNext && game.status !== "playing" ? (
           <button type="button" className="button button--primary next" onClick={onNext}>

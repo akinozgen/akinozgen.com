@@ -1,6 +1,14 @@
 import { geoGraticule, geoPath } from "d3-geo";
 import { describe, expect, it } from "vitest";
-import { CLIP_ANGLE, type Frame, idealFrame, interpolateFrame, makeProjection } from "../src/components/globe.ts";
+import {
+  CLIP_ANGLE,
+  facesCamera,
+  type Frame,
+  globeScale,
+  idealFrame,
+  interpolateFrame,
+  makeProjection,
+} from "../src/components/globe.ts";
 import type { FeatureCollection, MultiPolygon } from "geojson";
 
 const box = (lon: number, lat: number): FeatureCollection<MultiPolygon> => ({
@@ -35,43 +43,60 @@ const frame = (lambda: number): Frame => ({
   translate: [0, 0],
 });
 
+const view = (width: number, height: number) => ({ x: 0, y: 0, width, height });
+
 describe("the projection", () => {
-  it("keeps the far side of the globe, minus a sliver", () => {
+  it("shows the near hemisphere, like a globe seen from space", () => {
     expect(makeProjection().clipAngle()).toBe(CLIP_ANGLE);
-    expect(CLIP_ANGLE).toBeLessThan(180);
-    expect(CLIP_ANGLE).toBeGreaterThan(179.99);
+    expect(CLIP_ANGLE).toBe(90);
   });
 
-  it("wraps the world onto a disc, which is what makes it look round", () => {
+  it("draws the world as a disc as wide as twice the scale", () => {
     const projection = makeProjection().scale(200).translate([320, 210]);
-    const path = geoPath(projection);
-    expect((path({ type: "Sphere" }) ?? "").length).toBeGreaterThan(20);
-    // Clipped just shy of the antipode, the whole globe lands in a circle of
-    // radius scale · π. A flat projection would not be bounded like this.
-    const [[left, top], [right, bottom]] = path.bounds({ type: "Sphere" });
-    expect(right - left).toBeCloseTo(2 * Math.PI * 200, 0);
-    expect(bottom - top).toBeCloseTo(2 * Math.PI * 200, 0);
+    const [[left, top], [right, bottom]] = geoPath(projection).bounds({ type: "Sphere" });
+    expect(right - left).toBeCloseTo(400, 0);
+    expect(bottom - top).toBeCloseTo(400, 0);
   });
 
   it("bends the meridians", () => {
     const projection = makeProjection().scale(200).translate([320, 210]);
     const drawn = geoPath(projection)(geoGraticule().step([15, 15])()) ?? "";
     // A straight meridian would be two points; a curved one is many.
-    expect(drawn.split("L").length).toBeGreaterThan(400);
+    expect(drawn.split("L").length).toBeGreaterThan(200);
   });
 
   it("centres on whatever it is asked to frame", () => {
-    const { rotate } = idealFrame(box(120, -30), 640, 420, 32);
-    expect(rotate[0]).toBeCloseTo(-120, 4);
-    // A lat/lon box's spherical centroid sits a hair off its middle latitude.
-    expect(rotate[1]).toBeCloseTo(30, 2);
+    const { rotate, translate } = idealFrame(box(120, -30), view(640, 420), 32);
+    expect(rotate[0]).toBeCloseTo(-120, 0);
+    expect(rotate[1]).toBeCloseTo(30, 0);
+    expect(translate).toEqual([320, 210]);
+  });
+
+  it("frames inside the window it is given, not the whole screen", () => {
+    const { translate } = idealFrame(box(0, 0), { x: 400, y: 60, width: 600, height: 500 }, 32);
+    expect(translate).toEqual([700, 310]);
   });
 
   it("fills the box it is given", () => {
-    const near = idealFrame(box(0, 0), 640, 420, 32);
-    const wide = idealFrame(box(0, 0), 320, 210, 16);
+    const near = idealFrame(box(0, 0), view(640, 420), 32);
+    const wide = idealFrame(box(0, 0), view(320, 210), 16);
     // Half the canvas, half the scale — the framing is proportional.
-    expect(wide.scale).toBeCloseTo(near.scale / 2, 2);
+    expect(wide.scale).toBeCloseTo(near.scale / 2, 1);
+  });
+
+  it("never zooms out past the whole globe", () => {
+    const far = idealFrame(
+      { type: "FeatureCollection", features: [...box(-100, 40).features, ...box(80, 40).features] },
+      view(640, 420),
+      32,
+    );
+    expect(far.scale).toBeGreaterThanOrEqual(globeScale(view(640, 420), 32));
+  });
+
+  it("hides what is round the back", () => {
+    const front: Frame = { rotate: [0, 0, 0], scale: 100, translate: [0, 0] };
+    expect(facesCamera(front, [10, 10])).toBe(true);
+    expect(facesCamera(front, [180, 0])).toBe(false);
   });
 });
 

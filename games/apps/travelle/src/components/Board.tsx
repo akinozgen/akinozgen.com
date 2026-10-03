@@ -1,5 +1,5 @@
 import type { GuessResult } from "@travelle/geo";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Trans, useLocale } from "../i18n/index.tsx";
 import { puzzleTitle, puzzleSubtitle } from "../i18n/puzzleText.ts";
 import type { Game, Round } from "../game/useGame.ts";
@@ -20,16 +20,19 @@ const TONE_FOR_MARK: Record<GuessResult["mark"], Tone> = {
 export function Board({
   round,
   game,
+  topbar,
   footer,
 }: {
   round: Round;
   game: Game;
+  topbar: React.ReactNode;
   footer?: React.ReactNode;
 }): React.ReactElement {
   const { puzzle, graph } = round;
   const { t, name } = useLocale();
   const [notice, setNotice] = useState<string | null>(null);
   const over = game.status !== "playing";
+  const windowRef = useRef<HTMLDivElement>(null);
 
   const shown = useMemo<Shown[]>(() => {
     const entries: Shown[] = [
@@ -61,61 +64,99 @@ export function Board({
 
   return (
     <>
-      <p className="prompt">
-        <Trans
-          k="travelFrom"
-          values={{
-            start: <strong className="prompt__start">{name(puzzle.start)}</strong>,
-            end: <strong className="prompt__end">{name(puzzle.end)}</strong>,
-          }}
-        />
-      </p>
-      <p className="prompt__meta">
-        {puzzleTitle(puzzle, t)} · {puzzleSubtitle(puzzle, t)}
-      </p>
-
       <MapView
         shown={shown}
         worldOutline={game.hints.includes("all-outlines")}
         celebrate={game.status === "won"}
+        windowRef={windowRef}
       />
+      <div className="hud">
+        {topbar}
+        <div className="hud__window" ref={windowRef} />
+        <div className={`hud__sheet${over ? " is-over" : ""}`}>
+          <aside className="panel panel--play">
+            <p className="prompt">
+              <Trans
+                k="travelFrom"
+                values={{
+                  start: <strong className="prompt__start">{name(puzzle.start)}</strong>,
+                  end: <strong className="prompt__end">{name(puzzle.end)}</strong>,
+                }}
+              />
+            </p>
+            <p className="prompt__meta">
+              {puzzleTitle(puzzle, t)} · {puzzleSubtitle(puzzle, t)}
+            </p>
 
-      {!over && (
-        <>
-          <GuessMeter results={game.results} budget={puzzle.budget} />
-          <SearchBar
-            disabled={over}
-            allowed={guessable}
-            taken={[puzzle.start, puzzle.end, ...game.guesses]}
-            onGuess={(regionId) => {
-              const outcome = game.guess(regionId);
-              setNotice(
-                outcome === "duplicate" ? t("alreadyIn", { country: name(regionId) }) : null,
-              );
-            }}
-          />
-          {notice && <p className="notice">{notice}</p>}
-        </>
-      )}
+            {!over && (
+              <>
+                <GuessMeter results={game.results} budget={puzzle.budget} />
+                <SearchBar
+                  disabled={over}
+                  allowed={guessable}
+                  taken={[puzzle.start, puzzle.end, ...game.guesses]}
+                  onGuess={(regionId) => {
+                    const outcome = game.guess(regionId);
+                    setNotice(
+                      outcome === "duplicate" ? t("alreadyIn", { country: name(regionId) }) : null,
+                    );
+                  }}
+                />
+                {notice && <p className="notice">{notice}</p>}
+              </>
+            )}
 
-      <GuessList results={game.results} />
+            <div className="panel__scroll">
+              <GuessList results={game.results} />
+            </div>
 
-      {!over && (
-        <>
-          <Hints
-            used={game.hints}
-            disabled={over}
-            suggestion={game.suggestion}
-            onUse={game.useHint}
-          />
-          <button type="button" className="button button--quiet" onClick={game.giveUp}>
-            {t("giveUp")}
-          </button>
-        </>
-      )}
+            {!over && (
+              <button type="button" className="button button--quiet" onClick={game.giveUp}>
+                {t("giveUp")}
+              </button>
+            )}
+          </aside>
 
-      {over && <EndPanel puzzle={puzzle} game={game} stats={game.stats} />}
-      {footer}
+          <aside className="panel panel--side">
+            {over ? (
+              <EndPanel puzzle={puzzle} game={game} stats={game.stats} />
+            ) : (
+              <Hints
+                used={game.hints}
+                disabled={over}
+                suggestion={game.suggestion}
+                onUse={game.useHint}
+              />
+            )}
+            {footer}
+          </aside>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/** The frame without a round in it: the globe, the bar, and why it is empty. */
+export function EmptyBoard({
+  topbar,
+  children,
+}: {
+  topbar: React.ReactNode;
+  children: React.ReactNode;
+}): React.ReactElement {
+  const windowRef = useRef<HTMLDivElement>(null);
+  return (
+    <>
+      <MapView shown={[]} windowRef={windowRef} />
+      <div className="hud">
+        {topbar}
+        <div className="hud__window" ref={windowRef} />
+        <div className="hud__sheet">
+          <aside className="panel panel--play">
+            <p className="empty">{children}</p>
+          </aside>
+        </div>
+      </div>
     </>
   );
 }

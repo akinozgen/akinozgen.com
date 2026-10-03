@@ -21,8 +21,8 @@ describe("the map", () => {
     await waitFor(() => {
       expect(document.querySelector('.shape[data-region="china"]')?.getAttribute("d")?.length)
         .toBeGreaterThan(100);
-      expect(document.querySelector(".marker--detour")?.className.baseVal).toContain("is-tiny");
-      expect(document.querySelector(".marker--end")?.className.baseVal).not.toContain("is-tiny");
+      expect(document.querySelector(".marker--detour")?.getAttribute("class")).toContain("is-tiny");
+      expect(document.querySelector(".marker--end")?.getAttribute("class")).not.toContain("is-tiny");
     });
   });
 });

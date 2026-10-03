@@ -40,6 +40,8 @@ const en = {
   mapLabel: "Globe showing the route so far",
   mapLoading: "Loading the map…",
   recentre: "Recentre",
+  zoomIn: "Zoom in",
+  zoomOut: "Zoom out",
 
   wonPerfect: "Perfect — the shortest route, in order.",
   wonIn: "Made it in {n} of {total}.",
@@ -146,6 +148,8 @@ const tr: Dict = {
   mapLabel: "Şu ana kadarki rotayı gösteren küre",
   mapLoading: "Harita yükleniyor…",
   recentre: "Ortala",
+  zoomIn: "Yakınlaştır",
+  zoomOut: "Uzaklaştır",
 
   wonPerfect: "Kusursuz — en kısa rota, sırasıyla.",
   wonIn: "{total} hakkın {n} tanesiyle bitirdin.",
@@ -249,6 +253,8 @@ const de: Dict = {
   mapLabel: "Globus mit der bisherigen Route",
   mapLoading: "Karte wird geladen…",
   recentre: "Zentrieren",
+  zoomIn: "Vergrößern",
+  zoomOut: "Verkleinern",
 
   wonPerfect: "Perfekt — die kürzeste Route, der Reihe nach.",
   wonIn: "Geschafft mit {n} von {total}.",
@@ -352,6 +358,8 @@ const es: Dict = {
   mapLabel: "Globo con la ruta hasta ahora",
   mapLoading: "Cargando el mapa…",
   recentre: "Centrar",
+  zoomIn: "Acercar",
+  zoomOut: "Alejar",
 
   wonPerfect: "Perfecto: la ruta más corta, en orden.",
   wonIn: "Resuelto en {n} de {total}.",
@@ -455,6 +463,8 @@ const fr: Dict = {
   mapLabel: "Globe montrant la route jusqu'ici",
   mapLoading: "Chargement de la carte…",
   recentre: "Recentrer",
+  zoomIn: "Zoomer",
+  zoomOut: "Dézoomer",
 
   wonPerfect: "Parfait — la route la plus courte, dans l'ordre.",
   wonIn: "Réussi en {n} sur {total}.",
