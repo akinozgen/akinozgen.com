@@ -781,10 +781,20 @@ function sesDugmesi(caliyor: boolean) {
   b.classList.toggle("caliyor", caliyor);
   b.setAttribute("aria-label", caliyor ? "Okumayı durdur" : "Evrakı sesli oku");
 }
+let sesBasliyor: Promise<void> | null = null; // play() sözü: başlamadan pause() çağrılırsa tarayıcı AbortError atar
 function sesDur() {
-  sesCalan?.pause();
-  sesCalan = null;
+  const a = sesCalan,
+    p = sesBasliyor;
+  sesCalan = sesBasliyor = null;
   sesDugmesi(false);
+  if (!a) return;
+  const kes = () => {
+    a.pause();
+    a.removeAttribute("src"); // indirmeyi de bırak
+    a.load();
+  };
+  if (p) p.then(kes, () => {});
+  else kes();
 }
 function sesHaritasi() {
   sesHaritaYukleniyor ||= fetch("ses.json")
@@ -813,8 +823,12 @@ function sesOynat(f: string) {
   });
   sesCalan = a;
   sesDugmesi(true);
-  a.play().catch(() => {
+  const p = a.play().catch(() => {
     if (sesCalan === a) sesDur(); // tarayıcı izin vermezse sessiz geçer, düğme hoparlöre döner
+  });
+  sesBasliyor = p;
+  p.then(() => {
+    if (sesBasliyor === p) sesBasliyor = null;
   });
 }
 // Evrak açılınca: sesi varsa sağ üst köşeye hoparlör düğmesi; "Seslendirme" açıksa kendiliğinden okur.
