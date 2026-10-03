@@ -127,8 +127,11 @@ const snd = (() => {
     on = LS.get("sound", true),
     vol = LS.get("volume", 50);
   const ks: Record<number, AudioBuffer> = {};
+  // Tarayıcı ses motorunu ancak kullanıcı sayfayla etkileştikten sonra açtırır; öncesinde denemek konsola uyarı düşürür
+  const izinli = () =>
+    (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation?.hasBeenActive ?? true;
   const init = () => {
-    if (ctx) return;
+    if (ctx || !izinli()) return;
     const AC =
       window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     try {
@@ -183,17 +186,20 @@ const snd = (() => {
       return on;
     },
     unlock() {
-      if (on) {
-        init();
-        ctx?.resume?.();
-      }
+      if (!on || !izinli()) return;
+      init();
+      if (ctx?.state === "suspended") ctx.resume().catch(() => {});
+    },
+    // ses motoru çalışıyor mu (ya da ses kapalı, açmaya gerek yok)
+    get hazir() {
+      return !on || ctx?.state === "running";
     },
     toggle() {
       on = !on;
       LS.set("sound", on);
       if (on) {
         init();
-        ctx?.resume?.();
+        if (ctx?.state === "suspended") ctx.resume().catch(() => {});
       }
       return on;
     },
@@ -2510,7 +2516,13 @@ function wire() {
     });
   });
   // ilk dokunuşta ses açılsın ki menü tıkları duyulsun
-  for (const ev of ["pointerdown", "keydown"]) addEventListener(ev, () => snd.unlock(), { once: true, capture: true });
+  // ses motoru, tarayıcının izin verdiği ilk etkileşimde açılır (dokunmanın başı ve tuşa basış sayılmaz; bırakış sayılır)
+  const kilit = () => {
+    snd.unlock();
+    if (snd.hazir) for (const ev of KILIT) removeEventListener(ev, kilit, true);
+  };
+  const KILIT = ["click", "keyup", "pointerup", "touchend"];
+  for (const ev of KILIT) addEventListener(ev, kilit, true);
   $("#btn-go").addEventListener("click", () => openKampanya());
   $("#btn-bn-back").addEventListener("click", openPick);
   let sessizT = 0;
