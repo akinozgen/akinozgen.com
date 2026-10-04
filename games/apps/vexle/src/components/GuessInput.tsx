@@ -21,7 +21,8 @@ export function GuessInput({
 }: {
   taken: readonly string[];
   disabled: boolean;
-  onGuess: (code: string) => void;
+  /** "busy" leaves the box as it is, to try again once the last guess lands. */
+  onGuess: (code: string) => string;
 }): React.ReactElement {
   const { t, name, language } = useLocale();
   const [query, setQuery] = useState("");
@@ -36,7 +37,7 @@ export function GuessInput({
       COUNTRIES.map((country) => ({
         code: country.code,
         name: country.names[language],
-        keys: [...new Set(Object.values(country.names).map(fold))],
+        keys: [...new Set([...Object.values(country.names), ...country.aliases].map(fold))],
       })).sort((a, b) => a.name.localeCompare(b.name, language)),
     [language],
   );
@@ -65,7 +66,7 @@ export function GuessInput({
       setHint(t("alreadyGuessed", { country: entry.name }));
       return;
     }
-    onGuess(entry.code);
+    if (onGuess(entry.code) === "busy") return;
     setQuery("");
     setActive(0);
     setHint(null);
@@ -112,7 +113,8 @@ export function GuessInput({
             autoComplete="off"
             autoCorrect="off"
             spellCheck={false}
-            disabled={disabled}
+            readOnly={disabled}
+            aria-busy={disabled}
             value={query}
             onChange={(event) => {
               setQuery(event.target.value);

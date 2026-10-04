@@ -272,7 +272,7 @@ importers:
         specifier: ^26.6.4
         version: 26.6.4
       country-flag-icons:
-        specifier: ^1.6.20
+        specifier: 1.6.20
         version: 1.6.20
       i18n-iso-countries:
         specifier: ^7.14.0

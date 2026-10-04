@@ -36,7 +36,7 @@ export function GuessRows({
         return (
           <li key={result.code} className={`row row--filled dot--${slot}${correct ? " is-correct" : ""}`}>
             <span className="row__badge">{slot}</span>
-            <span className="row__name">{name(result.code)}</span>
+            <span className="row__name" title={name(result.code)}>{name(result.code)}</span>
             {correct ? (
               <span className="row__found">
                 <svg viewBox="0 0 24 24" aria-hidden="true">

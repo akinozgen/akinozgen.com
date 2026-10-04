@@ -21,6 +21,18 @@ async function guess(name: string): Promise<void> {
   await waitFor(() => expect(rows().length).toBe(before + 1));
 }
 
+/** What the share button puts on the clipboard. */
+async function shared(): Promise<string> {
+  let copied = "";
+  Object.defineProperty(navigator, "clipboard", {
+    configurable: true,
+    value: { writeText: async (text: string) => void (copied = text) },
+  });
+  fireEvent.click(await screen.findByRole("button", { name: "Share result" }));
+  await screen.findByRole("button", { name: "Copied" });
+  return copied;
+}
+
 beforeEach(() => {
   localStorage.clear();
   localStorage.setItem("vexle:seen-rules:v1", "true");
@@ -65,14 +77,16 @@ describe("vexle", () => {
     expect(document.querySelector(".board.is-whole")).toBeTruthy();
     expect(document.querySelector(".compass.is-won")).toBeTruthy();
     expect(screen.getByRole("heading", { name: new RegExp(country(answer).names.en) })).toBeTruthy();
-    expect(screen.getByText(/vexle #\d+ 2\/6/)).toBeTruthy();
+    const text = await shared();
+    expect(text).toMatch(/^vexle #\d+ 2\/6\n/);
+    expect(text).not.toContain("hard mode");
   });
 
   it("ends the round after six misses", async () => {
     render(<App />);
     for (const name of wrong.slice(0, 6)) await guess(name);
     expect(await screen.findByText("Out of guesses")).toBeTruthy();
-    expect(screen.getByText(/vexle #\d+ X\/6/)).toBeTruthy();
+    expect(await shared()).toMatch(/^vexle #\d+ X\/6\n/);
   });
 
   it("marks a round played in hard mode from the start", async () => {
@@ -80,7 +94,7 @@ describe("vexle", () => {
     fireEvent.click(screen.getByRole("switch", { name: "Hard mode" }));
     await guess(wrong[0]);
     await guess(country(answer).names.en);
-    expect(await screen.findByText(/2\/6 · hard mode/)).toBeTruthy();
+    expect(await shared()).toMatch(/2\/6 · hard mode/);
   });
 
   it("forfeits the mark when hard mode is switched off mid-round", async () => {
@@ -90,8 +104,9 @@ describe("vexle", () => {
     fireEvent.click(screen.getByRole("switch", { name: "Hard mode" }));
     await waitFor(() => expect(document.querySelector(".row__dots")).toBeNull());
     await guess(country(answer).names.en);
-    const share = await screen.findByText(/vexle #\d+ 2\/6/);
-    expect(share.textContent).not.toContain("hard mode");
+    const share = await shared();
+    expect(share).toMatch(/vexle #\d+ 2\/6/);
+    expect(share).not.toContain("hard mode");
   });
 
   it("refuses a country already guessed", async () => {

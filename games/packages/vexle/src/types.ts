@@ -7,6 +7,8 @@ export interface Country {
   /** ISO 3166-1 alpha-2, upper case. */
   code: string;
   names: Record<Language, string>;
+  /** Other names people type: short forms, old names, ICU's spellings. */
+  aliases: string[];
   continent: string;
   /** Centroid, for distance and direction between guesses. */
   lat: number;
@@ -21,3 +23,6 @@ export const TILE_PX = 400;
 
 /** Guesses allowed: one per tile. */
 export const MAX_GUESSES = TILES;
+
+/** Entries in a tile pack: colour tiles, grey tiles, then the whole flag. */
+export const PACK_ENTRIES = TILES * 2 + 1;

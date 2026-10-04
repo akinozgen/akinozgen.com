@@ -1,6 +1,6 @@
 import answersData from "../data/answers.json" with { type: "json" };
 import countriesData from "../data/countries.json" with { type: "json" };
-import { type Country, MAX_GUESSES, TILES } from "./types.ts";
+import { type Country, MAX_GUESSES, PACK_ENTRIES, TILES } from "./types.ts";
 
 /**
  * vexle's game server. The browser knows every country's name and nothing
@@ -53,6 +53,8 @@ export interface VexleVerdict {
   opened: number[];
   /** The answer's code, once the round is over. */
   answer: string | null;
+  /** The whole flag as one image, once the round is over. */
+  flag: string | null;
 }
 
 export interface Reply {
@@ -243,10 +245,10 @@ function base64(bytes: Uint8Array): string {
   return out;
 }
 
-/** Tile `index` of a pack (colour 0–5, grey 6–11) as a data URL. */
+/** Entry `index` of a pack (colour 0–5, grey 6–11, whole flag 12) as a data URL. */
 function tileOf(pack: Uint8Array, index: number): string {
   const view = new DataView(pack.buffer, pack.byteOffset, pack.byteLength);
-  let offset = TILES * 2 * 4;
+  let offset = PACK_ENTRIES * 4;
   for (let i = 0; i < index; i++) offset += view.getUint32(i * 4, true);
   const length = view.getUint32(index * 4, true);
   return `data:image/webp;base64,${base64(pack.subarray(offset, offset + length))}`;
@@ -302,8 +304,10 @@ export async function handleVexle(
     const opened = order.slice(0, openCount);
 
     const tiles: Array<string | null> = Array.from({ length: TILES }, () => null);
+    let flag: string | null = null;
     if (opened.length > 0) {
       const pack = await loadPack(answerCode);
+      if (status !== "playing") flag = tileOf(pack, TILES * 2);
       // Grey only while it is still a puzzle; the finished flag is shown as it is.
       const grey = query.get("hard") === "1" && status === "playing";
       for (const position of opened) tiles[position] = tileOf(pack, position + (grey ? TILES : 0));
@@ -315,6 +319,7 @@ export async function handleVexle(
       tiles,
       opened,
       answer: status === "playing" ? null : answerCode,
+      flag,
     };
     return { status: 200, body: verdict, cache: "private, max-age=86400" };
   } catch (error) {

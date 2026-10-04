@@ -30,14 +30,16 @@ const SOVEREIGN_FIRST = new Set(["FR", "NO", "US"]);
 interface GeoRegion {
   id: string;
   iso3: string;
-  names: { en: string };
+  names: { en: string; tr: string; de: string; es: string };
   continent: string;
   centroid: [number, number];
 }
 
 /**
- * A pack is the six colour tiles, then the same six in grey, each a WebP.
- * Header: 12 little-endian uint32 byte lengths.
+ * A pack is the six colour tiles, the same six in grey, then the whole flag,
+ * each a WebP. Header: 13 little-endian uint32 byte lengths. The whole flag
+ * is only ever sent once a round is over, so the finished board shows one
+ * clean image rather than six tiles resampled side by side.
  */
 async function pack(svg: Buffer): Promise<Buffer> {
   const width = COLUMNS * TILE_PX;
@@ -62,26 +64,81 @@ async function pack(svg: Buffer): Promise<Buffer> {
     }
   }
 
+  tiles.push(await sharp(full).webp({ quality: 86 }).toBuffer());
+
   const header = Buffer.alloc(tiles.length * 4);
   tiles.forEach((tile, i) => header.writeUInt32LE(tile.length, i * 4));
   return Buffer.concat([header, ...tiles]);
 }
 
-/** Where ICU's name is not what players would type. */
-const NAME_FIXES: Record<string, Partial<Country["names"]>> = {
-  PS: { en: "Palestine", tr: "Filistin", de: "Palästina", ru: "Палестина", es: "Palestina" },
-  CI: { tr: "Fildişi Sahili", de: "Elfenbeinküste", es: "Costa de Marfil" },
+/** ICU's Russian short forms ("о-ва", "Конго - Киншаса") spelled out. */
+const RU_FIXES: Record<string, string> = {
+  CD: "Демократическая Республика Конго",
+  CG: "Республика Конго",
+  HK: "Гонконг",
+  MO: "Макао",
+  MM: "Мьянма",
+  SH: "Остров Святой Елены",
+  VG: "Британские Виргинские острова",
+  VI: "Американские Виргинские острова",
+  PS: "Палестина",
 };
 
-/** The country's name in each language, from ICU. */
-function namesOf(code: string, fallback: string): Country["names"] {
-  return Object.fromEntries(
-    LANGUAGES.map((language) => {
-      const name = new Intl.DisplayNames([language], { type: "region" }).of(code);
-      const fixed = NAME_FIXES[code]?.[language];
-      return [language, fixed ?? (name && name !== code ? name : fallback)];
-    }),
-  ) as Country["names"];
+/** Names people type that no language's official form covers. */
+const EXTRA_ALIASES: Record<string, string[]> = {
+  US: ["USA", "United States", "America", "ABD", "США"],
+  GB: ["UK", "Great Britain", "Britain", "England", "İngiltere", "Birleşik Krallık"],
+  TR: ["Turkey", "Türkiye", "Turkei", "Турция"],
+  CZ: ["Czech Republic", "Czechia", "Çekya"],
+  CI: ["Ivory Coast", "Côte d'Ivoire", "Fildişi Sahili"],
+  TL: ["East Timor", "Doğu Timor"],
+  SZ: ["Swaziland", "Eswatini", "Svaziland"],
+  BA: ["Bosnia", "Bosna"],
+  TT: ["Trinidad", "Tobago"],
+  MK: ["Macedonia", "Makedonya"],
+  CD: ["DRC", "DR Congo", "Congo-Kinshasa", "Kongo DC"],
+  CG: ["Congo-Brazzaville", "Congo"],
+  KR: ["South Korea", "Korea", "Güney Kore"],
+  KP: ["North Korea", "Kuzey Kore"],
+  AE: ["UAE", "BAE"],
+  NL: ["Holland", "Hollanda"],
+  VA: ["Vatican", "Vatikan"],
+  MM: ["Burma", "Birmanya"],
+  CV: ["Cape Verde", "Yeşil Burun Adaları"],
+  PS: ["Palestine", "Filistin"],
+};
+
+const ICU = Object.fromEntries(
+  LANGUAGES.map((language) => [language, new Intl.DisplayNames([language], { type: "region" })]),
+) as Record<string, Intl.DisplayNames>;
+
+function russian(code: string, fallback: string): string {
+  if (RU_FIXES[code]) return RU_FIXES[code];
+  const name = ICU.ru.of(code);
+  if (!name || name === code) return fallback;
+  const spelled = name.replace(/о-ва/g, "острова").replace(/о-в/g, "остров").replace(/Св\./g, "Святого");
+  return spelled.charAt(0).toUpperCase() + spelled.slice(1);
+}
+
+/**
+ * Display names: travelle's curated Natural Earth names where it has the
+ * language, Russian from ICU with its short forms spelled out. Everything
+ * else ICU knows the country as becomes a search alias.
+ */
+function namesOf(code: string, region: GeoRegion): { names: Country["names"]; aliases: string[] } {
+  const names: Country["names"] = {
+    en: code === "SZ" ? "Eswatini" : region.names.en,
+    tr: region.names.tr,
+    de: region.names.de,
+    es: region.names.es,
+    ru: russian(code, region.names.en),
+  };
+  const shown = new Set(Object.values(names));
+  const aliases = [
+    ...LANGUAGES.map((language) => ICU[language].of(code) ?? ""),
+    ...(EXTRA_ALIASES[code] ?? []),
+  ].filter((alias) => alias && alias !== code && !shown.has(alias));
+  return { names, aliases: [...new Set(aliases)] };
 }
 
 async function main(): Promise<void> {
@@ -137,7 +194,7 @@ async function main(): Promise<void> {
 
     chosen.push({
       code,
-      names: namesOf(code, region.names.en),
+      ...namesOf(code, region),
       continent: region.continent,
       lat: Math.round(region.centroid[1] * 1000) / 1000,
       lon: Math.round(region.centroid[0] * 1000) / 1000,

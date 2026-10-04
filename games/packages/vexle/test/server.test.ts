@@ -127,6 +127,8 @@ describe("the API", () => {
     expect(won.status).toBe("won");
     expect(won.answer).toBe(answer);
     expect(won.tiles.every(Boolean)).toBe(true);
+    expect(won.flag).toMatch(/^data:image\/webp;base64,/);
+    expect(colour.flag ?? null).toBeNull();
     const finished = await judge({ d: "2026-10-10", g: `${wrong},${answer}` });
     expect(won.tiles).toEqual(finished.tiles);
   });

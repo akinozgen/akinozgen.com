@@ -36,6 +36,7 @@ export function EndCard({
   const answer = verdict.answer!;
   const english = country(answer).names.en;
   const share = shareText(number, verdict, guesses, won && hardAll ? t("hardTag") : null);
+  const spent = new Set(verdict.opened.slice(0, won ? guesses - 1 : 6));
 
   return (
     <section className={`end${won ? " is-won" : " is-lost"}`}>
@@ -48,11 +49,11 @@ export function EndCard({
       <div className="end__links">
         <a
           className="chip"
-          href={`https://${language}.wikipedia.org/wiki/${encodeURIComponent(name(answer))}`}
+          href={`https://${language}.wikipedia.org/wiki/Special:Search?go=Go&search=${encodeURIComponent(name(answer))}`}
           target="_blank"
           rel="noreferrer"
         >
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10" /></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h10.5a3 3 0 0 1 3 3V20H8a3 3 0 0 1-3-3z" /><path d="M5 17a3 3 0 0 1 3-3h10.5" /></svg>
           {t("wikipedia")}
         </a>
         <a
@@ -82,7 +83,11 @@ export function EndCard({
         </svg>
         {copied ? t("copied") : t("share")}
       </button>
-      <pre className="end__preview">{share}</pre>
+      <div className="end__grid" aria-hidden="true">
+        {Array.from({ length: 6 }, (_, i) => (
+          <span key={i} className={spent.has(i) ? "is-spent" : ""} />
+        ))}
+      </div>
 
       <p className="end__next">
         {t("nextIn")} <strong>{countdown}</strong>

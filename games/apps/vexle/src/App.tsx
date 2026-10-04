@@ -75,17 +75,28 @@ export function App(): React.ReactElement {
             <time dateTime={game.date}>
               {new Date(`${game.date}T12:00:00`).toLocaleDateString(language, {
                 day: "numeric",
-                month: "long",
+                month: "short",
                 year: "numeric",
               })}
             </time>
           </p>
-          <FlagBoard tiles={verdict?.tiles ?? EMPTY_TILES} opened={verdict?.opened ?? []} whole={over}>
+          <FlagBoard
+            tiles={verdict?.tiles ?? EMPTY_TILES}
+            opened={verdict?.opened ?? []}
+            whole={over}
+            flag={verdict?.flag ?? null}
+          >
             <Compass results={results} status={game.status} className="board__compass" />
           </FlagBoard>
           <p className={`stage__caption${over ? " is-done" : ""}`} aria-live="polite">
             {caption}
           </p>
+          {/* Once it's over the guesses sit under the flag they were spent on. */}
+          {over && (
+            <div className="stage__rows">
+              <GuessRows results={results} pending={false} compact />
+            </div>
+          )}
         </section>
 
         <aside className="panel">
@@ -101,7 +112,7 @@ export function App(): React.ReactElement {
               </div>
               <GuessInput taken={game.guesses} disabled={game.pending} onGuess={game.guess} />
               {game.failed && (
-                <p className="notice">
+                <p className="notice" role="alert">
                   {t("serverError")}{" "}
                   <button type="button" className="link-button" onClick={game.retry}>
                     {t("retry")}
@@ -120,7 +131,7 @@ export function App(): React.ReactElement {
             />
           )}
 
-          <GuessRows results={results} pending={game.pending} compact={over} />
+          {!over && <GuessRows results={results} pending={game.pending} />}
 
           {over ? (
             <div className="panel__stats">
@@ -137,7 +148,6 @@ export function App(): React.ReactElement {
 
       <footer className="credits">
         <a href="/games/">akinozgen.com/games</a>
-        <span aria-hidden="true">·</span>
         <span>{t("flagCredit")}</span>
       </footer>
 

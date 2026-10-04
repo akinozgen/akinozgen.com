@@ -18,6 +18,7 @@ export function fold(value: string): string {
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
     .replace(/ı/g, "i")
+    .replace(/&/g, " and ")
     .replace(/[’'`.-]/g, " ")
     .replace(/\s+/g, " ")
     .toLowerCase()

@@ -10,6 +10,7 @@ export function FlagBoard({
   tiles,
   opened,
   whole,
+  flag = null,
   children,
 }: {
   /** Per grid position: the tile image, or null while covered. */
@@ -17,6 +18,8 @@ export function FlagBoard({
   /** Grid positions in the order they opened. */
   opened: readonly number[];
   whole: boolean;
+  /** The finished flag as one image, laid over the tiles once their seams close. */
+  flag?: string | null;
   /** Laid over the board — the compass. */
   children?: React.ReactNode;
 }): React.ReactElement {
@@ -51,7 +54,6 @@ export function FlagBoard({
             <div
               key={position}
               className={`tile${open ? " is-open" : ""}${open && position === latest && !whole ? " is-latest" : ""}`}
-              style={{ transitionDelay: `${delays[position] ?? 0}ms` }}
               role="img"
               aria-label={t(open ? "tileOpen" : "tileCovered", { n: position + 1 })}
             >
@@ -67,6 +69,7 @@ export function FlagBoard({
             </div>
           );
         })}
+        {whole && flag && <img className="board__flag" src={flag} alt="" />}
       </div>
       {children}
     </div>

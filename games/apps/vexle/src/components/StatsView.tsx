@@ -21,8 +21,8 @@ export function StatsView({ stats, today }: { stats: Stats; today?: number }): R
           ] as const
         ).map(([label, value]) => (
           <div key={label} className="stats__cell">
-            <dd>{value}</dd>
             <dt>{t(label)}</dt>
+            <dd>{value}</dd>
           </div>
         ))}
       </dl>

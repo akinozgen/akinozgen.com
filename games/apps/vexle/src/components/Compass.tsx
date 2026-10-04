@@ -1,5 +1,5 @@
 import type { Judged, Status } from "@vexle/data/client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useLocale } from "../i18n/index.tsx";
 
 /** Distance at which a dot reaches the rim: half the planet. */
@@ -57,6 +57,7 @@ export function Compass({
   }, [target, won]);
 
   const idle = results.length === 0;
+  const faceId = useId();
   const dots = results.filter((r) => r.bearing !== null);
 
   return (
@@ -66,13 +67,13 @@ export function Compass({
     >
       <svg viewBox="-100 -100 200 200" className="compass__dial" aria-hidden="true">
         <defs>
-          <radialGradient id="compass-face" cx="38%" cy="32%" r="80%">
+          <radialGradient id={faceId} cx="38%" cy="32%" r="80%">
             <stop offset="0%" stopColor="var(--compass-lit)" />
             <stop offset="100%" stopColor="var(--compass-face)" />
           </radialGradient>
         </defs>
         <circle r="96" className="compass__bezel" />
-        <circle r="88" fill="url(#compass-face)" className="compass__face" />
+        <circle r="88" fill={`url(#${faceId})`} className="compass__face" />
         <circle r={dotRadius(2000)} className="compass__band" />
         <circle r={dotRadius(8000)} className="compass__band" />
         {TICKS.map((deg) => {
@@ -100,6 +101,15 @@ export function Compass({
           );
         })}
 
+        <g className="compass__needle-wrap">
+          <g className="compass__needle" style={{ transform: `rotate(${shown}deg)` }}>
+            <path d="M0 -70 L9 0 L0 6 L-9 0 Z" className="compass__needle-north" />
+            <path d="M0 70 L9 0 L0 -6 L-9 0 Z" className="compass__needle-south" />
+          </g>
+        </g>
+        <circle r="8" className="compass__hub" />
+        <circle r="3" className="compass__pin" />
+
         {dots.map((result, index) => {
           const [x, y] = polar(result.bearing!, dotRadius(result.km));
           const latest = index === dots.length - 1 && !won;
@@ -112,14 +122,6 @@ export function Compass({
           );
         })}
 
-        <g className="compass__needle-wrap">
-          <g className="compass__needle" style={{ transform: `rotate(${shown}deg)` }}>
-            <path d="M0 -70 L9 0 L0 6 L-9 0 Z" className="compass__needle-north" />
-            <path d="M0 70 L9 0 L0 -6 L-9 0 Z" className="compass__needle-south" />
-          </g>
-        </g>
-        <circle r="8" className="compass__hub" />
-        <circle r="3" className="compass__pin" />
       </svg>
 
       <figcaption className="compass__readout">
