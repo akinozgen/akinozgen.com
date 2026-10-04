@@ -87,7 +87,8 @@ export function Board({
               <>
                 <GuessMeter results={game.results} budget={puzzle.budget} />
                 <SearchBar
-                  disabled={over || game.pending}
+                  disabled={over}
+                  busy={game.pending}
                   allowed={guessable}
                   taken={[puzzle.start, puzzle.end, ...game.guesses]}
                   onGuess={(regionId) => {
@@ -95,6 +96,7 @@ export function Board({
                     setNotice(
                       outcome === "duplicate" ? t("alreadyIn", { country: name(regionId) }) : null,
                     );
+                    return outcome;
                   }}
                 />
                 {notice && <p className="notice">{notice}</p>}

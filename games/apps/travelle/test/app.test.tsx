@@ -247,3 +247,15 @@ describe("the neighbours hint", () => {
     expect(after).toEqual(framed);
   });
 });
+
+describe("the search box", () => {
+  it("keeps focus from one guess to the next", async () => {
+    await renderApp();
+    const input = screen.getByLabelText("Guess a country") as HTMLInputElement;
+    input.focus();
+    const route = graph.solve(puzzle.start, puzzle.end).path;
+    await typeGuess(graph.region(route[0]).names.en);
+    expect(document.activeElement).toBe(input);
+    expect(input.disabled).toBe(false);
+  });
+});

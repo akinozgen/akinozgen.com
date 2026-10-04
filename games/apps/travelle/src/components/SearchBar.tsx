@@ -21,15 +21,24 @@ const MAX_SUGGESTIONS = 6;
 
 export function SearchBar({
   disabled,
+  busy = false,
   allowed,
   taken,
   onGuess,
 }: {
+  /** The round is over: nothing more to type. */
   disabled: boolean;
+  /**
+   * A guess is being judged. The box stays focused and keeps what is typed —
+   * a disabled input would drop focus, and the player would have to click
+   * back into it after every guess.
+   */
+  busy?: boolean;
   /** Countries on the map for this round — the endless mode narrows this. */
   allowed: readonly string[];
   taken: readonly string[];
-  onGuess: (regionId: string) => void;
+  /** "busy" leaves the box as it is, to try again once the last guess lands. */
+  onGuess: (regionId: string) => string;
 }): React.ReactElement {
   const { t, name } = useLocale();
   const [query, setQuery] = useState("");
@@ -61,8 +70,8 @@ export function SearchBar({
   }, [query, entries, taken]);
 
   const submit = (entry: Entry | undefined): void => {
-    if (!entry) return;
-    onGuess(entry.id);
+    if (!entry || busy) return;
+    if (onGuess(entry.id) === "busy") return;
     setQuery("");
     setActive(0);
     inputRef.current?.focus();
@@ -77,6 +86,8 @@ export function SearchBar({
         placeholder={disabled ? t("roundOver") : t("guessPlaceholder")}
         value={query}
         disabled={disabled}
+        readOnly={busy}
+        aria-busy={busy}
         autoComplete="off"
         autoCorrect="off"
         spellCheck={false}
@@ -107,6 +118,8 @@ export function SearchBar({
               <button
                 type="button"
                 className={`search__option${index === active ? " is-active" : ""}`}
+                // Keep focus in the box: a click on an option must not steal it.
+                onMouseDown={(event) => event.preventDefault()}
                 onMouseEnter={() => setActive(index)}
                 onClick={() => submit(entry)}
               >
