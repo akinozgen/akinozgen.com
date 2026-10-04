@@ -1,6 +1,14 @@
 import answersData from "../data/answers.json" with { type: "json" };
 import countriesData from "../data/countries.json" with { type: "json" };
-import { type Country, MAX_GUESSES, PACK_ENTRIES, TILES } from "./types.ts";
+import {
+  type Country,
+  FREE_TILES,
+  LEGACY_DAYS,
+  LEGACY_RULES,
+  MAX_GUESSES,
+  PACK_ENTRIES,
+  TILES,
+} from "./types.ts";
 
 /**
  * vexle's game server. The browser knows every country's name and nothing
@@ -55,6 +63,10 @@ export interface VexleVerdict {
   answer: string | null;
   /** The whole flag as one image, once the round is over. */
   flag: string | null;
+  /** Guesses this round allows. */
+  limit: number;
+  /** Tiles open before any guess: the die's tile, first in `opened`. */
+  free: number;
 }
 
 export interface Reply {
@@ -306,6 +318,7 @@ export async function handleVexle(
     if (!seed) return fail(503, "vexle is not configured");
 
     let round: { answer: string; order: number[] };
+    let rules: { limit: number; free: number } = { limit: MAX_GUESSES, free: FREE_TILES };
     if (action === "endless") {
       const number = Number(query.get("e"));
       if (!Number.isInteger(number) || number < 0 || number > 0xffffffff) throw new BadRequest("bad round");
@@ -315,10 +328,11 @@ export async function handleVexle(
       if (!day) return fail(404, "that day has not started anywhere yet");
       if (action === "daily") return { status: 200, body: day, cache: "public, max-age=3600" };
       round = await dailyRound(seed, day.number);
+      if (day.number <= LEGACY_DAYS) rules = LEGACY_RULES;
     }
 
     const codes = (query.get("g") ?? "").split(",").filter(Boolean);
-    if (codes.length > MAX_GUESSES) throw new BadRequest("too many guesses");
+    if (codes.length > rules.limit) throw new BadRequest("too many guesses");
     const guesses = codes.map((code) => {
       const country = BY_CODE.get(code);
       if (!country) throw new BadRequest(`unknown country: ${code}`);
@@ -332,8 +346,10 @@ export async function handleVexle(
     if (won !== -1 && won !== codes.length - 1) throw new BadRequest("guesses after the answer");
 
     const results = guesses.map((guess) => judgeGuess(guess, answer));
-    const status: Status = won !== -1 ? "won" : codes.length >= MAX_GUESSES ? "lost" : "playing";
-    const openCount = status === "playing" ? codes.length : TILES;
+    const status: Status = won !== -1 ? "won" : codes.length >= rules.limit ? "lost" : "playing";
+    // The die's tile is open from the start; it is the server's pick, the same
+    // for everyone, never the browser's — or any tile could be asked for.
+    const openCount = status === "playing" ? Math.min(TILES, rules.free + codes.length) : TILES;
     const opened = order.slice(0, openCount);
 
     const tiles: Array<string | null> = Array.from({ length: TILES }, () => null);
@@ -353,6 +369,8 @@ export async function handleVexle(
       opened,
       answer: status === "playing" ? null : answerCode,
       flag,
+      limit: rules.limit,
+      free: rules.free,
     };
     return { status: 200, body: verdict, cache: "private, max-age=86400" };
   } catch (error) {

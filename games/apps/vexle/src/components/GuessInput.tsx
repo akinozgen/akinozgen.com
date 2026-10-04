@@ -17,10 +17,13 @@ interface Entry {
 export function GuessInput({
   taken,
   disabled,
+  placeholder,
   onGuess,
 }: {
   taken: readonly string[];
   disabled: boolean;
+  /** Overrides the usual prompt, e.g. while the die waits to be rolled. */
+  placeholder?: string;
   /** "busy" leaves the box as it is, to try again once the last guess lands. */
   onGuess: (code: string) => string;
 }): React.ReactElement {
@@ -106,7 +109,7 @@ export function GuessInput({
             ref={inputRef}
             type="text"
             className="guess-input__text"
-            placeholder={t("placeholder")}
+            placeholder={placeholder ?? t("placeholder")}
             aria-label={t("guessLabel")}
             role="combobox"
             aria-expanded={showList}

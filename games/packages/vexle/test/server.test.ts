@@ -111,18 +111,22 @@ describe("the API", () => {
     expect((await call("daily", { date: "2026-10-10" }, null)).status).toBe(503);
   });
 
-  it("opens one tile per guess and keeps the rest covered", async () => {
-    const { answer } = await dailyRound(SEED, 7);
+  it("opens the die's tile at the start, then one per guess", async () => {
+    const { answer, order } = await dailyRound(SEED, 7);
     const wrong = (countries as Country[]).filter((c) => c.code !== answer).slice(0, 2).map((c) => c.code);
 
-    const none = await judge({ d: "2026-10-10" });
-    expect(none.tiles.every((t) => t === null)).toBe(true);
-    expect(none.answer).toBeNull();
+    const start = await judge({ d: "2026-10-10" });
+    expect(start.limit).toBe(5);
+    expect(start.free).toBe(1);
+    // The die's tile is the server's first in the order: the same for everyone.
+    expect(start.opened).toEqual([order[0]]);
+    expect(start.tiles.filter(Boolean).length).toBe(1);
+    expect(start.answer).toBeNull();
 
     const two = await judge({ d: "2026-10-10", g: wrong.join(",") });
     expect(two.status).toBe("playing");
-    expect(two.opened.length).toBe(2);
-    expect(two.tiles.filter(Boolean).length).toBe(2);
+    expect(two.opened.length).toBe(3);
+    expect(two.tiles.filter(Boolean).length).toBe(3);
     expect(two.tiles[two.opened[0]]).toMatch(/^data:image\/webp;base64,/);
     expect(two.answer).toBeNull();
     // Nothing in the reply names the answer while the round is on.
@@ -146,12 +150,25 @@ describe("the API", () => {
     expect(won.tiles).toEqual(finished.tiles);
   });
 
-  it("ends the round after six misses", async () => {
+  it("ends the round after five misses, with every tile open", async () => {
     const { answer } = await dailyRound(SEED, 7);
-    const misses = (countries as Country[]).filter((c) => c.code !== answer).slice(0, 6).map((c) => c.code);
-    const lost = await judge({ d: "2026-10-10", g: misses.join(",") });
+    const misses = (countries as Country[]).filter((c) => c.code !== answer).map((c) => c.code);
+    const four = await judge({ d: "2026-10-10", g: misses.slice(0, 4).join(",") });
+    expect(four.status).toBe("playing");
+    expect(four.opened.length).toBe(5);
+    const lost = await judge({ d: "2026-10-10", g: misses.slice(0, 5).join(",") });
     expect(lost.status).toBe("lost");
     expect(lost.answer).toBe(answer);
+    expect(lost.tiles.every(Boolean)).toBe(true);
+    expect((await call("judge", { d: "2026-10-10", g: misses.slice(0, 6).join(",") })).status).toBe(400);
+  });
+
+  it("keeps day 1 on the rules it was played with", async () => {
+    const reply = await handleVexle("judge", new URLSearchParams({ d: "2026-10-04" }), SEED, load, NOW);
+    const day1 = reply.body as VexleVerdict;
+    expect(day1.limit).toBe(6);
+    expect(day1.free).toBe(0);
+    expect(day1.tiles.every((t) => t === null)).toBe(true);
   });
 
   it("rejects junk", async () => {
@@ -183,7 +200,7 @@ describe("endless", () => {
     const mid = await endless({ e: "99", g: wrong });
     expect(mid.status).toBe("playing");
     expect(mid.answer).toBeNull();
-    expect(mid.tiles.filter(Boolean).length).toBe(1);
+    expect(mid.tiles.filter(Boolean).length).toBe(2);
     expect(JSON.stringify(mid)).not.toContain(`"${answer}"`);
     const won = await endless({ e: "99", g: `${wrong},${answer}` });
     expect(won.status).toBe("won");

@@ -1784,3 +1784,127 @@ body {
     transition-delay: 0ms !important;
   }
 }
+
+/* --- the die --- */
+
+.dice {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--space-far) 18%, transparent);
+  backdrop-filter: blur(1.5px);
+  -webkit-backdrop-filter: blur(1.5px);
+  animation: fade 260ms ease-out both;
+}
+
+.dice--landed {
+  animation: dice-out 380ms ease 260ms both;
+}
+
+@keyframes dice-out {
+  to {
+    opacity: 0;
+  }
+}
+
+.dice__button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 22px 30px 18px;
+  font: inherit;
+  color: var(--ink);
+  background: var(--panel-solid);
+  border: 1px solid var(--panel-line);
+  border-radius: 22px;
+  box-shadow: var(--panel-shadow);
+  cursor: pointer;
+  transition: transform 120ms ease;
+}
+
+.dice__button:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.dice__button:hover:not(:disabled) .dice__die {
+  transform: rotate(-10deg) scale(1.04);
+}
+
+.dice__button:disabled {
+  cursor: default;
+}
+
+.die {
+  width: 84px;
+  height: 84px;
+  transition: transform 200ms ease;
+}
+
+.die__body {
+  fill: var(--panel-solid);
+  stroke: var(--ink);
+  stroke-width: 3.5;
+}
+
+.die__pip {
+  fill: var(--accent);
+}
+
+.dice--rolling .dice__die {
+  animation: tumble 950ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+.dice--landed .dice__die {
+  animation: land 360ms cubic-bezier(0.3, 1.6, 0.5, 1) both;
+}
+
+@keyframes tumble {
+  0% {
+    transform: translateY(0) rotate(0);
+  }
+  22% {
+    transform: translateY(-28px) rotate(150deg);
+  }
+  46% {
+    transform: translateY(0) rotate(270deg);
+  }
+  64% {
+    transform: translateY(-12px) rotate(330deg);
+  }
+  82% {
+    transform: translateY(0) rotate(352deg);
+  }
+  100% {
+    transform: translateY(0) rotate(360deg);
+  }
+}
+
+@keyframes land {
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+.dice__label {
+  font-size: 15px;
+  font-weight: 750;
+}
+
+.end__grid span.is-die {
+  background: var(--accent);
+}
+
+@media (max-width: 880px) {
+  .die {
+    width: 64px;
+    height: 64px;
+  }
+
+  .dice__button {
+    padding: 16px 22px 14px;
+  }
+}

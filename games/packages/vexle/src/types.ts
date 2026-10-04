@@ -23,8 +23,16 @@ export const TILES = COLUMNS * ROWS;
 export const TILE_W = 400;
 export const TILE_H = 450;
 
-/** Guesses allowed: one per tile. */
-export const MAX_GUESSES = TILES;
+/**
+ * The rules: five guesses, and one tile open from the start (the die).
+ * Five misses and the die open all six tiles.
+ */
+export const MAX_GUESSES = 5;
+export const FREE_TILES = 1;
+
+/** Day 1 was played with six guesses and no free tile, and keeps those rules. */
+export const LEGACY_RULES = { limit: 6, free: 0 } as const;
+export const LEGACY_DAYS = 1;
 
 /** Entries in a tile pack: colour tiles, grey tiles, then the whole flag. */
 export const PACK_ENTRIES = TILES * 2 + 1;

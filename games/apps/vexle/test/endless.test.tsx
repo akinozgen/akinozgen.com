@@ -14,7 +14,21 @@ const { answer: endlessAnswer } = await endlessRound(TEST_SEED, ROUND);
 const rows = (): HTMLElement[] =>
   Array.from(document.querySelector(".rows")?.querySelectorAll<HTMLElement>(".row--filled") ?? []);
 
+/** Rolls the die if it is waiting, then lets its tile land. */
+async function rollIfAsked(): Promise<void> {
+  // Wait for the round to arrive: either the die is offered or the box opens.
+  await waitFor(() => {
+    const box = screen.getByLabelText("Guess a country") as HTMLInputElement;
+    expect(screen.queryByRole("button", { name: "Roll the die" }) !== null || !box.readOnly).toBe(true);
+  });
+  const die = screen.queryByRole("button", { name: "Roll the die" });
+  if (!die) return;
+  fireEvent.click(die);
+  await waitFor(() => expect(screen.queryByRole("button", { name: "Roll the die" })).toBeNull(), { timeout: 3000 });
+}
+
 async function guess(name: string): Promise<void> {
+  await rollIfAsked();
   const before = rows().length;
   fireEvent.change(screen.getByLabelText("Guess a country"), { target: { value: name } });
   fireEvent.click(await screen.findByRole("button", { name }));

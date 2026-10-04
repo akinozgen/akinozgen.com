@@ -1,4 +1,4 @@
-import { type Judged, MAX_GUESSES } from "@vexle/data/client";
+import type { Judged } from "@vexle/data/client";
 import { useLocale } from "../i18n/index.tsx";
 import { Arrow } from "./Compass.tsx";
 
@@ -9,10 +9,13 @@ import { Arrow } from "./Compass.tsx";
 export function GuessRows({
   results,
   pending,
+  limit,
   compact = false,
 }: {
   results: readonly Judged[];
   pending: boolean;
+  /** Guesses the round allows: one slot each. */
+  limit: number;
   /** Once the round is over the empty slots have nothing left to promise. */
   compact?: boolean;
 }): React.ReactElement {
@@ -20,7 +23,7 @@ export function GuessRows({
 
   return (
     <ol className="rows">
-      {Array.from({ length: compact ? results.length : MAX_GUESSES }, (_, index) => {
+      {Array.from({ length: compact ? results.length : limit }, (_, index) => {
         const result = results[index];
         const slot = index + 1;
         if (!result) {

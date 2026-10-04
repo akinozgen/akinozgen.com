@@ -39,11 +39,12 @@ export function EndCard({
   const answer = verdict.answer!;
   const english = country(answer).names.en;
   const share = shareText(number, verdict, guesses, won && hardAll ? t("hardTag") : null);
-  const spent = new Set(verdict.opened.slice(0, won ? guesses - 1 : 6));
+  const die = new Set(verdict.opened.slice(0, verdict.free));
+  const spent = new Set(verdict.opened.slice(verdict.free, verdict.free + (won ? guesses - 1 : guesses)));
 
   return (
     <section className={`end${won ? " is-won" : " is-lost"}`}>
-      <p className="end__kicker">{won ? (guesses === 1 ? t("wonFirst") : t("wonIn", { n: guesses, total: 6 })) : t("lost")}</p>
+      <p className="end__kicker">{won ? (guesses === 1 ? t("wonFirst") : t("wonIn", { n: guesses, total: verdict.limit })) : t("lost")}</p>
       <h2 className="end__answer">
         <span className="end__was">{t("answerWas")}</span>
         {name(answer)}
@@ -102,7 +103,7 @@ export function EndCard({
         </button>
         <div className="end__grid" aria-hidden="true">
           {Array.from({ length: 6 }, (_, i) => (
-            <span key={i} className={spent.has(i) ? "is-spent" : ""} />
+            <span key={i} className={die.has(i) ? "is-die" : spent.has(i) ? "is-spent" : ""} />
           ))}
         </div>
 

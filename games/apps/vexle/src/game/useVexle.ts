@@ -33,6 +33,10 @@ interface SavedGame {
   /** Endless only: the round being played, picked at random by this browser. */
   round?: number;
   guesses: string[];
+  /** The die has been rolled, so its tile is shown. */
+  rolled?: boolean;
+  /** Whether the saved verdict's tiles came back grey. */
+  verdictHard?: boolean;
   /** Every guess so far was made with hard mode on, and it was never switched off. */
   hardAll: boolean;
   /** The server's word on exactly these guesses. */
@@ -60,7 +64,8 @@ export const emptyStats: Stats = {
   streak: 0,
   best: 0,
   hardWins: 0,
-  distribution: Array.from({ length: MAX_GUESSES }, () => 0),
+  // Six slots: day 1 allowed six guesses, and its wins are kept.
+  distribution: Array.from({ length: 6 }, () => 0),
   lastNumber: null,
   lastWon: null,
 };
@@ -120,6 +125,11 @@ export interface Vexle {
   hard: boolean;
   /** This round counts as played in hard mode. */
   hardAll: boolean;
+  /** Guesses this round allows. */
+  limit: number;
+  /** The die is waiting to be rolled: its tile is held back until then. */
+  needsRoll: boolean;
+  roll: () => void;
   stats: Stats;
   guess: (code: string) => "accepted" | "duplicate" | "busy";
   setHard: (hard: boolean) => void;
@@ -133,7 +143,7 @@ export interface Vexle {
  * whatever round this browser last dealt itself, kept in one slot, with a
  * record of its own so practice never touches the daily streak.
  */
-export function useVexle(mode: Mode = "daily"): Vexle {
+export function useVexle(mode: Mode = "daily", active = true): Vexle {
   const endless = mode === "endless";
   const [date] = useState(() => playDate());
   const number = numberFor(date);
@@ -162,7 +172,7 @@ export function useVexle(mode: Mode = "daily"): Vexle {
       setFailed(false);
       (endless ? judgeEndless(next.round ?? 0, next.guesses, withHard) : judge(date, next.guesses, withHard))
         .then((verdict) => {
-          const stored = { ...next, verdict };
+          const stored = { ...next, verdict, verdictHard: withHard };
           setSaved(stored);
           writeJson(key, stored);
         })
@@ -175,16 +185,20 @@ export function useVexle(mode: Mode = "daily"): Vexle {
     [date, key, endless],
   );
 
-  // A round saved before its verdict came back asks again once.
+  // The round's opening state (the die's tile), or a verdict that never
+  // arrived, is asked for once the round is on screen.
   useEffect(() => {
-    if (saved.guesses.length > 0 && saved.verdict?.results.length !== saved.guesses.length) {
+    if (active && saved.verdict?.results.length !== saved.guesses.length && !inFlight.current) {
       submit(saved, hard);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [active, saved.round]);
 
+  // Verdicts saved before the die existed carry no rules: they were day 1's.
   const verdict =
-    saved.verdict && saved.verdict.results.length === saved.guesses.length ? saved.verdict : null;
+    saved.verdict && saved.verdict.results.length === saved.guesses.length
+      ? { ...saved.verdict, limit: saved.verdict.limit ?? 6, free: saved.verdict.free ?? 0 }
+      : null;
   const status: Status = verdict?.status ?? "playing";
 
   // Count the round exactly once, when it ends. Another tab may have counted
@@ -234,16 +248,30 @@ export function useVexle(mode: Mode = "daily"): Vexle {
 
   const setHard = useCallback(
     (next: boolean) => {
-      // Mid-request the switch would race the verdict; it is locked instead.
-      if (inFlight.current) return;
+      // Mid-round, a guess in flight would race the switch; it waits instead.
+      // Before the first guess there is nothing to race.
+      if (inFlight.current && saved.guesses.length > 0) return;
       setHardState(next);
       writeJson(HARD_KEY, next);
-      if (status !== "playing" || saved.guesses.length === 0) return;
-      // Switching mid-round repaints the open tiles; switching off forfeits the mark.
-      submit({ ...saved, hardAll: saved.hardAll && next }, next);
+      // Switching off mid-round forfeits the mark.
+      if (status === "playing" && saved.guesses.length > 0 && !next && saved.hardAll) {
+        const updated = { ...saved, hardAll: false };
+        setSaved(updated);
+        writeJson(key, updated);
+      }
     },
-    [status, saved, submit],
+    [status, saved, key],
   );
+
+  // Open tiles in the wrong colour for the switch (it was flipped since they
+  // came back) are fetched again. Only while it is still a puzzle: the
+  // finished flag is always shown in colour.
+  useEffect(() => {
+    if (!active || inFlight.current || status !== "playing" || !saved.verdict) return;
+    const shown = saved.verdict.opened.length > 0;
+    if (shown && (saved.verdictHard ?? false) !== hard) submit(saved, hard);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, hard, saved.verdict, status]);
 
   const retry = useCallback(() => {
     const last = lastAttempt.current;
@@ -257,7 +285,20 @@ export function useVexle(mode: Mode = "daily"): Vexle {
     setFailed(false);
     setSaved(fresh);
     writeJson(key, fresh);
-  }, [endless, hard, key]);
+    submit(fresh, hard);
+  }, [endless, hard, key, submit]);
+
+  const roll = useCallback(() => {
+    setSaved((current) => {
+      const next = { ...current, rolled: true };
+      writeJson(key, next);
+      return next;
+    });
+  }, [key]);
+
+  // A round with guesses in it has had its die rolled, whatever was saved.
+  const needsRoll =
+    !!verdict && verdict.free > 0 && status === "playing" && saved.guesses.length === 0 && !saved.rolled;
 
   return {
     mode,
@@ -271,6 +312,9 @@ export function useVexle(mode: Mode = "daily"): Vexle {
     failed,
     hard,
     hardAll: saved.guesses.length > 0 ? saved.hardAll : hard,
+    limit: verdict?.limit ?? MAX_GUESSES,
+    needsRoll,
+    roll,
     stats,
     guess,
     setHard,
@@ -279,7 +323,10 @@ export function useVexle(mode: Mode = "daily"): Vexle {
   };
 }
 
-/** The text a player pastes: score, then which tiles their misses cost them. */
+/**
+ * The text a player pastes: score, then the tiles — the die's, the ones
+ * misses cost, and the ones never needed.
+ */
 export function shareText(
   number: number,
   verdict: VexleVerdict,
@@ -287,11 +334,10 @@ export function shareText(
   hardTag: string | null,
 ): string {
   const won = verdict.status === "won";
-  const misses = won ? guesses - 1 : TILES;
-  const spent = new Set(verdict.opened.slice(0, misses));
-  const cells = Array.from({ length: TILES }, (_, i) => (spent.has(i) ? "🟥" : "🟩"));
-  const head = `vexle #${number} ${won ? guesses : "X"}/${MAX_GUESSES}${hardTag ? ` · ${hardTag}` : ""}`;
-  return [head, cells.slice(0, 3).join(""), cells.slice(3).join(""), "akinozgen.com/games/vexle"].join(
-    "\n",
-  );
+  const misses = won ? guesses - 1 : guesses;
+  const die = new Set(verdict.opened.slice(0, verdict.free));
+  const spent = new Set(verdict.opened.slice(verdict.free, verdict.free + misses));
+  const cells = Array.from({ length: TILES }, (_, i) => (die.has(i) ? "🎲" : spent.has(i) ? "🟥" : "🟩"));
+  const head = `vexle #${number} ${won ? guesses : "X"}/${verdict.limit}${hardTag ? ` · ${hardTag}` : ""}`;
+  return [head, cells.slice(0, 3).join(""), cells.slice(3).join(""), "akinozgen.com/games/vexle"].join("\n");
 }

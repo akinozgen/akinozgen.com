@@ -2,6 +2,7 @@ import { readJson, writeJson } from "@travelle/core";
 import { TILES } from "@vexle/data/client";
 import { useEffect, useState } from "react";
 import { Compass } from "./components/Compass.tsx";
+import { Dice } from "./components/Dice.tsx";
 import { EndCard } from "./components/EndCard.tsx";
 import { FlagBoard } from "./components/FlagBoard.tsx";
 import { GuessInput } from "./components/GuessInput.tsx";
@@ -39,9 +40,9 @@ export function App(): React.ReactElement {
   const { t, name, language } = useLocale();
   const [mode, setMode] = useMode();
   const daily = useVexle("daily");
-  const practice = useVexle("endless");
   // Endless waits until the day's flag is done, so it can never spoil it.
   const locked = mode === "endless" && daily.status === "playing";
+  const practice = useVexle("endless", mode === "endless" && !locked);
   const game = mode === "endless" ? practice : daily;
   const [sheet, setSheet] = useState<"rules" | "stats" | null>(() =>
     readJson<boolean>(SEEN_RULES_KEY) ? null : "rules",
@@ -56,12 +57,17 @@ export function App(): React.ReactElement {
   const verdict = game.verdict;
   const results = verdict?.results ?? [];
   const over = game.status !== "playing";
-  const openCount = verdict?.opened.length ?? 0;
+  // Until the die is rolled its tile stays covered on screen.
+  const opened = (verdict?.opened ?? []).slice(game.needsRoll ? 1 : 0);
+  const tiles = (verdict?.tiles ?? EMPTY_TILES).map((tile, i) => (opened.includes(i) ? tile : null));
+  const openCount = opened.length;
 
   const caption = over
     ? t("captionDone", { country: name(verdict!.answer!) })
-    : openCount === 0
-      ? t("captionStart")
+    : game.needsRoll
+      ? t("captionRoll")
+      : openCount === 0
+        ? t("captionStart")
       : t("captionOpen", { n: openCount, total: TILES });
 
   return (
@@ -145,12 +151,13 @@ export function App(): React.ReactElement {
             )}
           </p>
           <FlagBoard
-            tiles={verdict?.tiles ?? EMPTY_TILES}
-            opened={verdict?.opened ?? []}
+            tiles={tiles}
+            opened={opened}
             whole={over}
             flag={verdict?.flag ?? null}
           >
             <Compass results={results} status={game.status} className="board__compass" />
+            {game.needsRoll && verdict && <Dice face={verdict.opened[0] + 1} onRolled={game.roll} />}
           </FlagBoard>
           <p className={`stage__caption${over ? " is-done" : ""}`} aria-live="polite">
             {caption}
@@ -158,7 +165,7 @@ export function App(): React.ReactElement {
           {/* Once it's over the guesses sit under the flag they were spent on. */}
           {over && (
             <div className="stage__rows">
-              <GuessRows results={results} pending={false} compact />
+              <GuessRows results={results} pending={false} limit={game.limit} compact />
             </div>
           )}
         </section>
@@ -167,14 +174,19 @@ export function App(): React.ReactElement {
           {!over && (
             <>
               <div className="panel__head">
-                <h2 className="panel__title">{t("guessOf", { n: Math.min(results.length + 1, 6), total: 6 })}</h2>
+                <h2 className="panel__title">{t("guessOf", { n: Math.min(results.length + 1, game.limit), total: game.limit })}</h2>
                 <ol className="pips" aria-hidden="true">
-                  {Array.from({ length: 6 }, (_, i) => (
+                  {Array.from({ length: game.limit }, (_, i) => (
                     <li key={i} className={`pip${i < results.length ? ` is-used dot--${i + 1}` : ""}`} />
                   ))}
                 </ol>
               </div>
-              <GuessInput taken={game.guesses} disabled={game.pending} onGuess={game.guess} />
+              <GuessInput
+                taken={game.guesses}
+                disabled={game.pending || game.needsRoll || !verdict}
+                placeholder={game.needsRoll ? t("rollFirst") : undefined}
+                onGuess={game.guess}
+              />
               {game.failed && (
                 <p className="notice" role="alert">
                   {t("serverError")}{" "}
@@ -196,12 +208,12 @@ export function App(): React.ReactElement {
               onNext={mode === "endless" ? game.next : undefined}
               />
               <div className="end-rows">
-                <GuessRows results={results} pending={false} compact />
+                <GuessRows results={results} pending={false} limit={game.limit} compact />
               </div>
             </>
           )}
 
-          {!over && <GuessRows results={results} pending={game.pending} />}
+          {!over && <GuessRows results={results} pending={game.pending} limit={game.limit} />}
 
           {over ? (
             <div className="panel__stats">
@@ -211,7 +223,7 @@ export function App(): React.ReactElement {
               />
             </div>
           ) : (
-            <HardToggle on={game.hard} disabled={game.pending} onChange={game.setHard} />
+            <HardToggle on={game.hard} disabled={game.pending && game.guesses.length > 0} onChange={game.setHard} />
           )}
         </aside>
       </main>

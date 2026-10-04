@@ -32,7 +32,8 @@ export function StatsView({ stats, today }: { stats: Stats; today?: number }): R
         <p className="muted">{t("statsEmpty")}</p>
       ) : (
         <ol className="dist">
-          {Array.from({ length: MAX_GUESSES }, (_, i) => {
+          {/* Day 1 allowed six guesses; its sixth-guess wins keep their row. */}
+          {Array.from({ length: (stats.distribution[MAX_GUESSES] ?? 0) > 0 ? MAX_GUESSES + 1 : MAX_GUESSES }, (_, i) => {
             const count = stats.distribution[i] ?? 0;
             return (
               <li key={i} className={`dist__row${today === i + 1 ? " is-today" : ""}`}>

@@ -45,8 +45,7 @@ const en = {
   statHard: "Hard wins",
   distribution: "Guess distribution",
   statsEmpty: "Finish a round to start your record.",
-  rulesAim:
-    "Guess the country behind today's flag in six tries. Every guess opens one more tile, right or wrong.",
+  rulesAim: "Guess the country behind today's flag in five tries. A roll of the die opens the first tile; every guess opens one more, right or wrong.",
   rulesCompass: "The compass",
   rulesNeedle: "The needle points from your last guess towards the answer, the way it lies on a flat map.",
   rulesDots:
@@ -68,6 +67,9 @@ const en = {
   statsDaily: "Daily",
   statsEndless: "Endless",
   rulesEndless: "Endless deals practice flags without limit once today's is done. Its record is kept apart from your daily streak.",
+  rollDie: "Roll the die",
+  rollFirst: "Roll the die first…",
+  captionRoll: "Roll the die to open the first tile",
   flagCredit: "Flags: flag-icons (MIT)",
   tileCovered: "Tile {n}, covered",
   tileOpen: "Tile {n}, open",
@@ -121,8 +123,7 @@ const tr: Dict = {
   statHard: "Zor modda",
   distribution: "Tahmin dağılımı",
   statsEmpty: "Kaydın, ilk turu bitirince başlar.",
-  rulesAim:
-    "Günün bayrağının hangi ülkeye ait olduğunu altı denemede bul. Her tahmin, doğru ya da yanlış, bir karo daha açar.",
+  rulesAim: "Günün bayrağının hangi ülkeye ait olduğunu beş denemede bul. Zar ilk karoyu açar; her tahmin, doğru ya da yanlış, bir karo daha açar.",
   rulesCompass: "Pusula",
   rulesNeedle: "İbre, son tahmininden cevaba doğru, düz bir haritada nasıl görünüyorsa öyle gösterir.",
   rulesDots:
@@ -144,6 +145,9 @@ const tr: Dict = {
   statsDaily: "Günlük",
   statsEndless: "Sonsuz",
   rulesEndless: "Günün bayrağını bitirince Sonsuz mod sınırsız pratik bayrak verir. Kaydı günlük serinden ayrı tutulur.",
+  rollDie: "Zarı at",
+  rollFirst: "Önce zarı at…",
+  captionRoll: "İlk karoyu açmak için zarı at",
   flagCredit: "Bayraklar: flag-icons (MIT)",
   tileCovered: "Karo {n}, kapalı",
   tileOpen: "Karo {n}, açık",
@@ -195,8 +199,7 @@ const de: Dict = {
   statHard: "Schwer gewonnen",
   distribution: "Verteilung der Versuche",
   statsEmpty: "Beende eine Runde, um deine Statistik zu starten.",
-  rulesAim:
-    "Errate in sechs Versuchen, zu welchem Land die heutige Flagge gehört. Jeder Tipp deckt ein weiteres Feld auf, ob richtig oder falsch.",
+  rulesAim: "Errate in fünf Versuchen, zu welchem Land die heutige Flagge gehört. Ein Würfelwurf deckt das erste Feld auf; jeder Tipp deckt ein weiteres auf, ob richtig oder falsch.",
   rulesCompass: "Der Kompass",
   rulesNeedle: "Die Nadel zeigt von deinem letzten Tipp in Richtung der Lösung — so, wie es auf einer flachen Karte aussieht.",
   rulesDots:
@@ -218,6 +221,9 @@ const de: Dict = {
   statsDaily: "Täglich",
   statsEndless: "Endlos",
   rulesEndless: "Ist die heutige Flagge gelöst, gibt es im Endlos-Modus unbegrenzt Übungsflaggen. Ihre Statistik bleibt von deiner Tagesserie getrennt.",
+  rollDie: "Würfeln",
+  rollFirst: "Erst würfeln…",
+  captionRoll: "Würfle, um das erste Feld aufzudecken",
   flagCredit: "Flaggen: flag-icons (MIT)",
   tileCovered: "Feld {n}, verdeckt",
   tileOpen: "Feld {n}, offen",
@@ -269,8 +275,7 @@ const ru: Dict = {
   statHard: "В сложном",
   distribution: "Распределение попыток",
   statsEmpty: "Завершите раунд, чтобы начать статистику.",
-  rulesAim:
-    "Угадайте страну по сегодняшнему флагу за шесть попыток. Каждая попытка, верная или нет, открывает ещё одну плитку.",
+  rulesAim: "Угадайте страну по сегодняшнему флагу за пять попыток. Бросок кубика открывает первую плитку; каждая попытка, верная или нет, открывает ещё одну.",
   rulesCompass: "Компас",
   rulesNeedle: "Стрелка указывает от вашей последней попытки в сторону ответа — так, как это выглядит на плоской карте.",
   rulesDots:
@@ -292,6 +297,9 @@ const ru: Dict = {
   statsDaily: "Ежедневно",
   statsEndless: "Без конца",
   rulesEndless: "Когда сегодняшний флаг сыгран, режим без конца даёт сколько угодно тренировочных флагов. Его статистика отдельна от ежедневной серии.",
+  rollDie: "Бросить кубик",
+  rollFirst: "Сначала бросьте кубик…",
+  captionRoll: "Бросьте кубик, чтобы открыть первую плитку",
   flagCredit: "Флаги: flag-icons (MIT)",
   tileCovered: "Плитка {n}, закрыта",
   tileOpen: "Плитка {n}, открыта",
@@ -343,8 +351,7 @@ const es: Dict = {
   statHard: "En difícil",
   distribution: "Distribución de intentos",
   statsEmpty: "Termina una ronda para empezar tu historial.",
-  rulesAim:
-    "Adivina de qué país es la bandera de hoy en seis intentos. Cada intento, acierte o no, destapa una casilla más.",
+  rulesAim: "Adivina de qué país es la bandera de hoy en cinco intentos. Una tirada de dado destapa la primera casilla; cada intento, acierte o no, destapa una más.",
   rulesCompass: "La brújula",
   rulesNeedle: "La aguja apunta desde tu último intento hacia la respuesta, tal como se ve en un mapa plano.",
   rulesDots:
@@ -366,6 +373,9 @@ const es: Dict = {
   statsDaily: "Diario",
   statsEndless: "Sin fin",
   rulesEndless: "Cuando terminas la bandera de hoy, el modo sin fin reparte banderas de práctica sin límite. Su historial va aparte de tu racha diaria.",
+  rollDie: "Tirar el dado",
+  rollFirst: "Primero tira el dado…",
+  captionRoll: "Tira el dado para destapar la primera casilla",
   flagCredit: "Banderas: flag-icons (MIT)",
   tileCovered: "Casilla {n}, tapada",
   tileOpen: "Casilla {n}, destapada",
