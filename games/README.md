@@ -6,8 +6,6 @@ The small browser games served under [akinozgen.com/games](https://akinozgen.com
   countries that link a start country to an end country by land.
 - **vexle** — a daily flag game: every guess turns over one tile of the flag,
   and a compass points from your last guess towards the answer.
-- **babelle** — a daily language game: five picture cards in a hidden language,
-  then name it.
 - **Çaylar Belediyeden** (`belediye`) — a card game in Turkish: you run a
   made-up Anatolian town by swiping memos left or right. TypeScript built
   with Vite; see [apps/belediye/README.md](apps/belediye/README.md).
@@ -25,8 +23,6 @@ countries dropped, and a route length you choose.
 | `apps/travelle`  | The game itself — React + Vite                                        |
 | `packages/vexle` | vexle's countries, tile packs and game server                         |
 | `apps/vexle`     | vexle — React + Vite                                                  |
-| `packages/babelle` | babelle's word lists, languages and game server                     |
-| `apps/babelle`   | babelle — React + Vite                                                |
 | `apps/belediye`  | Çaylar Belediyeden — TypeScript + Vite                                |
 
 ## Commands
@@ -95,31 +91,11 @@ back only the tiles earned so far, as data URLs. The answer's code appears only
 once the round is over. It uses the same Worker secret as travelle, prefixed so
 the two games' draws are unrelated.
 
-## How babelle keeps its language
+## vexle's endless mode
 
-`packages/babelle/scripts/fetch-source.ts` downloads
-[NorthEuraLex](http://www.northeuralex.org) (Dellert et al. 2020, CC BY 4.0)
-and `build-data.ts` keeps 65 pictured concepts (icons from Tabler, MIT) across
-the 85 languages ICU can name in all five interface languages:
-
-- `data/public.json` — concepts and language names; shipped to the browser.
-- `data/server.json` — every language's words, family, location and home
-  country; only the Worker sees it, since the words alone would give the day away.
-- `data/answers.json` — the 64 languages a day can be.
-- `data/schedule.json` — how often each comes up: well-known languages three
-  times a cycle, regional ones twice, rare ones (mostly small languages of
-  Russia and the Caucasus, which NorthEuraLex is rich in) once. Options and
-  decoys come only from the first two groups. Day 1 is kept as it was played.
-
-`/api/babelle/judge?d=<date>&a=<choices>&g=<languages>` picks the day's
-language from `HMAC(seed, day)`, hands out one question at a time, marks each
-answer, and reveals the language only when the day is over.
-
-## Endless modes (vexle, babelle)
-
-Both games have an endless mode: back-to-back practice rounds with a record
+vexle has an endless mode: back-to-back practice rounds with a record
 of their own, kept apart from the daily streak. A round is a random 32-bit
-number the browser picks; the server turns it into a flag or language with
+number the browser picks; the server turns it into a flag with
 `HMAC(seed, number)`, so the number alone gives nothing away.
 
 Endless deliberately excludes nothing — not even today's answer. A rule

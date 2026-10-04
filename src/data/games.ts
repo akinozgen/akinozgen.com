@@ -9,15 +9,7 @@ export interface Game {
 
 /** Everything under /games. The sources live in this repo under games/. */
 export const games: Game[] = [
-  {
-    slug: "babelle",
-    name: "babelle",
-    tagline: "name the language",
-    description:
-      "A daily language game. Five picture cards in a hidden language — match the words, spot it among its neighbours, find its relatives — then name it in three tries.",
-    year: "2026",
-    tags: ["daily", "languages", "five languages"],
-  },
+
   {
     slug: "vexle",
     name: "vexle",
