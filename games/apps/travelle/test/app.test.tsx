@@ -215,6 +215,19 @@ describe("languages", () => {
     fireEvent.change(input, { target: { value: "Allemagne" } });
     expect(await screen.findByRole("button", { name: "Germany" })).toBeTruthy();
   });
+
+  it("offers the name in the language being played first", async () => {
+    await renderApp();
+    fireEvent.change(screen.getByLabelText("Language"), { target: { value: "tr" } });
+    const input = await screen.findByLabelText("Ülke tahmin et");
+
+    // French Guiana's Spanish name starts "gua" too; Enter takes the first.
+    fireEvent.change(input, { target: { value: "gua" } });
+    const options = (): string[] =>
+      Array.from(document.querySelectorAll(".search__option"), (option) => option.textContent ?? "");
+    await waitFor(() => expect(options()[0]).toBe("Guatemala"));
+    expect(options()).toContain("Fransız Guyanası");
+  });
 });
 
 describe("the neighbours hint", () => {

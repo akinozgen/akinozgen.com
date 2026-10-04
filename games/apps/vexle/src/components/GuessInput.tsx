@@ -1,4 +1,5 @@
 import { useId, useMemo, useRef, useState } from "react";
+import { bestMatches } from "@travelle/core";
 import { COUNTRIES, fold } from "../game/countries.ts";
 import { useLocale } from "../i18n/index.tsx";
 
@@ -7,6 +8,9 @@ const MAX_SUGGESTIONS = 6;
 interface Entry {
   code: string;
   name: string;
+  /** The name in the language being played, folded: it ranks first. */
+  own: string;
+  /** Every language's name and alias, folded. */
   keys: string[];
 }
 
@@ -40,27 +44,22 @@ export function GuessInput({
       COUNTRIES.map((country) => ({
         code: country.code,
         name: country.names[language],
+        own: fold(country.names[language]),
         keys: [...new Set([...Object.values(country.names), ...country.aliases].map(fold))],
       })).sort((a, b) => a.name.localeCompare(b.name, language)),
     [language],
   );
 
   const suggestions = useMemo(() => {
-    const needle = fold(query);
-    if (needle.length === 0) return [];
-    const exact: Entry[] = [];
-    const starts: Entry[] = [];
-    const words: Entry[] = [];
-    const contains: Entry[] = [];
-    for (const entry of entries) {
-      if (taken.includes(entry.code)) continue;
-      if (entry.keys.includes(needle)) exact.push(entry);
-      else if (entry.keys.some((key) => key.startsWith(needle))) starts.push(entry);
-      else if (entry.keys.some((key) => key.split(" ").some((w) => w.startsWith(needle)))) words.push(entry);
-      else if (entry.keys.some((key) => key.includes(needle))) contains.push(entry);
-    }
-    return [...exact, ...starts, ...words, ...contains].slice(0, MAX_SUGGESTIONS);
-  }, [query, entries, taken]);
+    const open = entries.filter((entry) => !taken.includes(entry.code));
+    return bestMatches(
+      open,
+      fold(query),
+      (entry) => ({ own: entry.own, others: entry.keys, label: entry.name }),
+      MAX_SUGGESTIONS,
+      language,
+    );
+  }, [query, entries, taken, language]);
 
   const pick = (entry: Entry | undefined): void => {
     if (!entry) {

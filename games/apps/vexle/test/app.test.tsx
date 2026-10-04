@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { dailyRound, puzzleNumber } from "@vexle/data/server";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { App } from "../src/App.tsx";
@@ -126,6 +126,16 @@ describe("vexle", () => {
     expect(await screen.findByRole("button", { name: "Germany" })).toBeTruthy();
     fireEvent.change(screen.getByLabelText("Guess a country"), { target: { value: "Германия" } });
     expect(await screen.findByRole("button", { name: "Germany" })).toBeTruthy();
+  });
+
+  it("offers the name in the language being played first", async () => {
+    render(<App />);
+    // Algeria is "Argelia" in Spanish; an English player typing "arg" means Argentina.
+    fireEvent.change(screen.getByLabelText("Guess a country"), { target: { value: "arg" } });
+    const list = await screen.findByRole("listbox");
+    const options = within(list).getAllByRole("option").map((option) => option.textContent);
+    expect(options[0]).toBe("Argentina");
+    expect(options).toContain("Algeria");
   });
 
   it("remembers the round across a reload", async () => {

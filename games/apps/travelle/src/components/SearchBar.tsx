@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import { bestMatches } from "@travelle/core";
 import { REGIONS } from "../game/regions.ts";
 import { useLocale } from "../i18n/index.tsx";
 
@@ -13,6 +14,8 @@ const fold = (value: string): string =>
 interface Entry {
   id: string;
   name: string;
+  /** The name in the language being played, folded: it ranks first. */
+  own: string;
   /** Every language's name, folded, so any spelling finds the country. */
   keys: string[];
 }
@@ -40,7 +43,7 @@ export function SearchBar({
   /** "busy" leaves the box as it is, to try again once the last guess lands. */
   onGuess: (regionId: string) => string;
 }): React.ReactElement {
-  const { t, name } = useLocale();
+  const { t, name, language } = useLocale();
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -52,22 +55,21 @@ export function SearchBar({
       .map((region) => ({
         id: region.id,
         name: name(region.id),
+        own: fold(name(region.id)),
         keys: [...new Set(Object.values(region.names).map(fold))],
       }));
   }, [allowed, name]);
 
   const suggestions = useMemo(() => {
-    const needle = fold(query);
-    if (needle.length === 0) return [];
-    const starts: Entry[] = [];
-    const contains: Entry[] = [];
-    for (const entry of entries) {
-      if (taken.includes(entry.id)) continue;
-      if (entry.keys.some((key) => key.startsWith(needle))) starts.push(entry);
-      else if (entry.keys.some((key) => key.includes(needle))) contains.push(entry);
-    }
-    return [...starts, ...contains].slice(0, MAX_SUGGESTIONS);
-  }, [query, entries, taken]);
+    const open = entries.filter((entry) => !taken.includes(entry.id));
+    return bestMatches(
+      open,
+      fold(query),
+      (entry) => ({ own: entry.own, others: entry.keys, label: entry.name }),
+      MAX_SUGGESTIONS,
+      language,
+    );
+  }, [query, entries, taken, language]);
 
   const submit = (entry: Entry | undefined): void => {
     if (!entry || busy) return;
