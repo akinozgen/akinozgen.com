@@ -295,10 +295,6 @@ importers:
         version: 5.0.0(@types/node@26.6.4)(jsdom@30.0.1)(vite@8.2.2(@types/node@26.6.4)(esbuild@0.28.2))
 
   packages/babelle:
-    dependencies:
-      '@vexle/data':
-        specifier: workspace:*
-        version: link:../vexle
     devDependencies:
       '@tabler/icons':
         specifier: ^3.48.0

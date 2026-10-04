@@ -14,9 +14,6 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
-  "dependencies": {
-    "@vexle/data": "workspace:*"
-  },
   "devDependencies": {
     "@tabler/icons": "^3.48.0",
     "@types/node": "^26.6.4"

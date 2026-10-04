@@ -1,5 +1,5 @@
-import vexleAnswers from "@vexle/data/data/answers.json" with { type: "json" };
-import vexleCountries from "@vexle/data/data/countries.json" with { type: "json" };
+import vexleAnswers from "../../vexle/data/answers.json" with { type: "json" };
+import vexleCountries from "../../vexle/data/countries.json" with { type: "json" };
 import answersData from "../data/answers.json" with { type: "json" };
 import publicData from "../data/public.json" with { type: "json" };
 import serverData from "../data/server.json" with { type: "json" };
