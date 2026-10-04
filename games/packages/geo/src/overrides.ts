@@ -59,7 +59,18 @@ export const SPLIT_REGIONS: SplitRule[] = [
  * next to "Çin" and helps nobody find Tayvan.
  */
 export const NAME_OVERRIDES: Record<string, Partial<Record<string, string>>> = {
-  taiwan: { tr: "Tayvan" },
+  // A region built from several pieces takes its names from the first one,
+  // which for these is a merged base or a split-off island: Cuba came out as
+  // "Guantanamo Bay", Cyprus as "Dekelia", New Zealand as "North Island".
+  cuba: { tr: "Küba", de: "Kuba", es: "Cuba", fr: "Cuba" },
+  cyprus: { tr: "Kıbrıs", de: "Zypern", es: "Chipre", fr: "Chypre" },
+  "new-zealand": { tr: "Yeni Zelanda", de: "Neuseeland", es: "Nueva Zelanda", fr: "Nouvelle-Zélande" },
+  taiwan: { tr: "Tayvan", de: "Taiwan", es: "Taiwán" },
+  // Left in English, or clashing with another region's name.
+  "indian-ocean-territories": { tr: "Avustralya Hint Okyanusu Toprakları" },
+  "united-states-minor-outlying-islands": { tr: "ABD Küçük Harici Adaları", de: "Amerikanische Überseeinseln" },
+  "cayman-islands": { de: "Kaimaninseln" },
+  "sint-maarten": { es: "Sint Maarten" },
   "macao-s-a-r": { en: "Macau", tr: "Makao", de: "Macau", es: "Macao", fr: "Macao" },
   "hong-kong-s-a-r": { en: "Hong Kong" },
 };

@@ -30,6 +30,21 @@ const PACKS = new URL("../tiles/", import.meta.url);
 /** Natural Earth codes that are not the country's ISO code. */
 const ISO3_FIXES: Record<string, string> = { cuba: "CUB", cyprus: "CYP", kosovo: "XKX" };
 const ALPHA2_FIXES: Record<string, string> = { XKX: "XK" };
+/**
+ * Countries without an ISO code, so missing from flag-icons, added by hand
+ * from flags-extra/ (see its README for sources). Guessable, not answers:
+ * the answer list is frozen.
+ */
+const EXTRA: Array<{ code: string; region: string; file: string; ru: string; aliases: string[] }> = [
+  {
+    code: "XN",
+    region: "northern-cyprus",
+    file: "xn.svg",
+    ru: "Северный Кипр",
+    aliases: ["KKTC", "TRNC", "Kuzey Kıbrıs", "Nordzypern", "Chipre del Norte", "Турецкая Республика Северного Кипра"],
+  },
+];
+
 /** Where flag-icons files a territory's own flag under another name. */
 const FLAG_FILES: Record<string, string> = { SH: "sh-hl" };
 /** When two codes share a flag, these keep it over their territories. */
@@ -64,11 +79,11 @@ function alike(a: Buffer, b: Buffer): boolean {
  * is only ever sent once a round is over, so the finished board shows one
  * clean image rather than six tiles resampled side by side.
  */
-async function pack(svg: Buffer): Promise<Buffer> {
+async function pack(svg: Buffer, fit: "fill" | "cover" = "fill"): Promise<Buffer> {
   const width = COLUMNS * TILE_W;
   const height = ROWS * TILE_H;
   const full = await sharp(svg, { density: 400 })
-    .resize(width, height, { fit: "fill" })
+    .resize(width, height, { fit })
     .flatten({ background: "#ffffff" })
     .png()
     .toBuffer();
@@ -224,6 +239,21 @@ async function main(): Promise<void> {
       lon: Math.round(region.centroid[0] * 1000) / 1000,
     });
     await writeFile(new URL(`${code.toLowerCase()}.bin`, PACKS), await pack(svg));
+  }
+
+  for (const extra of EXTRA) {
+    const region = (geo as unknown as { regions: GeoRegion[] }).regions.find((r) => r.id === extra.region);
+    if (!region) throw new Error(`no region ${extra.region}`);
+    const svg = await readFile(new URL(`../flags-extra/${extra.file}`, import.meta.url));
+    chosen.push({
+      code: extra.code,
+      names: { en: region.names.en, tr: region.names.tr, de: region.names.de, es: region.names.es, ru: extra.ru },
+      aliases: extra.aliases,
+      continent: region.continent,
+      lat: Math.round(region.centroid[1] * 1000) / 1000,
+      lon: Math.round(region.centroid[0] * 1000) / 1000,
+    });
+    await writeFile(new URL(`${extra.code.toLowerCase()}.bin`, PACKS), await pack(svg, "cover"));
   }
 
   chosen.sort((a, b) => a.code.localeCompare(b.code));
