@@ -79,6 +79,18 @@ describe("geometry", () => {
     expect(toGermany).toBeLessThan(330);
   });
 
+  it("points the way a flat map would, not over the pole", () => {
+    // Great-circle, Russia to the Dominican Republic heads due north over
+    // the pole. On the map the Caribbean is west-south-west.
+    const toCaribbean = bearing(byCode("RU"), byCode("DO"));
+    expect(toCaribbean).toBeGreaterThan(235);
+    expect(toCaribbean).toBeLessThan(265);
+    // Across the Pacific the short way: Guam to the Caribbean is east.
+    const fromGuam = bearing(byCode("GU"), byCode("DO"));
+    expect(fromGuam).toBeGreaterThan(70);
+    expect(fromGuam).toBeLessThan(110);
+  });
+
   it("scores the answer as 100 and anything else below", () => {
     expect(judgeGuess(byCode("FR"), byCode("FR"))).toEqual({ code: "FR", km: 0, bearing: null, proximity: 100 });
     expect(judgeGuess(byCode("BE"), byCode("FR")).proximity).toBeLessThan(100);

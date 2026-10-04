@@ -203,14 +203,21 @@ export function distanceKm(from: Country, to: Country): number {
   return 2 * RADIUS_KM * Math.asin(Math.min(1, Math.sqrt(h)));
 }
 
-/** Initial great-circle bearing from one centroid to the other. */
+/**
+ * The direction from one centroid to the other as it looks on a flat map:
+ * the rhumb line, which holds one compass heading the whole way. The
+ * great-circle heading is shorter to fly but reads wrong in a game — from
+ * Russia it sends you over the pole, due north, to reach the Caribbean.
+ * Distance stays great-circle; only the arrow follows the map.
+ */
 export function bearing(from: Country, to: Country): number {
   const φ1 = toRad(from.lat);
   const φ2 = toRad(to.lat);
-  const Δλ = toRad(to.lon - from.lon);
-  const y = Math.sin(Δλ) * Math.cos(φ2);
-  const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
-  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+  let Δλ = toRad(to.lon - from.lon);
+  // The shorter way round, across the date line if that is nearer.
+  if (Math.abs(Δλ) > Math.PI) Δλ = Δλ > 0 ? Δλ - 2 * Math.PI : Δλ + 2 * Math.PI;
+  const Δψ = Math.log(Math.tan(Math.PI / 4 + φ2 / 2) / Math.tan(Math.PI / 4 + φ1 / 2));
+  return ((Math.atan2(Δλ, Δψ) * 180) / Math.PI + 360) % 360;
 }
 
 /** Half the Earth's circumference: the furthest two places can be. */

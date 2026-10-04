@@ -48,7 +48,7 @@ const en = {
   rulesAim:
     "Guess the country behind today's flag in six tries. Every guess opens one more tile, right or wrong.",
   rulesCompass: "The compass",
-  rulesNeedle: "The needle points from your last guess towards the answer.",
+  rulesNeedle: "The needle points from your last guess towards the answer, the way it lies on a flat map.",
   rulesDots:
     "Each dot is one of your guesses, in its own colour. It sits in the direction you'd travel from that country, and the nearer the centre, the nearer the answer.",
   rulesRows: "Each guess shows",
@@ -114,7 +114,7 @@ const tr: Dict = {
   rulesAim:
     "Günün bayrağının hangi ülkeye ait olduğunu altı denemede bul. Her tahmin, doğru ya da yanlış, bir karo daha açar.",
   rulesCompass: "Pusula",
-  rulesNeedle: "İbre, son tahmininden cevaba doğru gösterir.",
+  rulesNeedle: "İbre, son tahmininden cevaba doğru, düz bir haritada nasıl görünüyorsa öyle gösterir.",
   rulesDots:
     "Her nokta bir tahminin, kendi renginde. O ülkeden yola çıksan gideceğin yönde durur; merkeze ne kadar yakınsa cevap da o kadar yakındır.",
   rulesRows: "Her tahmin gösterir",
@@ -178,7 +178,7 @@ const de: Dict = {
   rulesAim:
     "Errate in sechs Versuchen, zu welchem Land die heutige Flagge gehört. Jeder Tipp deckt ein weiteres Feld auf, ob richtig oder falsch.",
   rulesCompass: "Der Kompass",
-  rulesNeedle: "Die Nadel zeigt von deinem letzten Tipp in Richtung der Lösung.",
+  rulesNeedle: "Die Nadel zeigt von deinem letzten Tipp in Richtung der Lösung — so, wie es auf einer flachen Karte aussieht.",
   rulesDots:
     "Jeder Punkt ist einer deiner Tipps, in seiner eigenen Farbe. Er liegt in der Richtung, in die du von diesem Land aus reisen müsstest — je näher an der Mitte, desto näher die Lösung.",
   rulesRows: "Jeder Tipp zeigt",
@@ -242,7 +242,7 @@ const ru: Dict = {
   rulesAim:
     "Угадайте страну по сегодняшнему флагу за шесть попыток. Каждая попытка, верная или нет, открывает ещё одну плитку.",
   rulesCompass: "Компас",
-  rulesNeedle: "Стрелка указывает от вашей последней попытки в сторону ответа.",
+  rulesNeedle: "Стрелка указывает от вашей последней попытки в сторону ответа — так, как это выглядит на плоской карте.",
   rulesDots:
     "Каждая точка — одна из ваших попыток, своего цвета. Она стоит в том направлении, куда нужно ехать от этой страны, и чем ближе к центру, тем ближе ответ.",
   rulesRows: "Каждая попытка показывает",
@@ -306,7 +306,7 @@ const es: Dict = {
   rulesAim:
     "Adivina de qué país es la bandera de hoy en seis intentos. Cada intento, acierte o no, destapa una casilla más.",
   rulesCompass: "La brújula",
-  rulesNeedle: "La aguja apunta desde tu último intento hacia la respuesta.",
+  rulesNeedle: "La aguja apunta desde tu último intento hacia la respuesta, tal como se ve en un mapa plano.",
   rulesDots:
     "Cada punto es uno de tus intentos, con su propio color. Se sitúa en la dirección en la que viajarías desde ese país, y cuanto más cerca del centro, más cerca está la respuesta.",
   rulesRows: "Cada intento muestra",
