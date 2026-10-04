@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import answers from "../data/answers.json" with { type: "json" };
+import schedule from "../data/schedule.json" with { type: "json" };
 import publicData from "../data/public.json" with { type: "json" };
 import { type BabelleVerdict, dailyRound, endlessRound, handleBabelle, puzzleNumber } from "../src/server.ts";
 
@@ -15,10 +16,28 @@ describe("the calendar", () => {
     expect(puzzleNumber("2026-10-10")).toBe(7);
   });
 
-  it("never repeats a language within 20 days, cycle boundaries included", async () => {
-    const seen: string[] = [];
-    for (let day = 1; day <= answers.length * 3; day++) seen.push((await dailyRound(SEED, day)).language.id);
-    for (let i = 0; i < seen.length; i++) expect(seen.slice(Math.max(0, i - 20), i)).not.toContain(seen[i]);
+  it("never repeats a language within 12 days, across cycles", async () => {
+    for (const seed of [SEED, "another-seed"]) {
+      const seen: string[] = [];
+      for (let day = 1; day <= 450; day++) seen.push((await dailyRound(seed, day)).language.id);
+      for (let i = 0; i < seen.length; i++) expect(seen.slice(Math.max(0, i - 12), i)).not.toContain(seen[i]);
+    }
+  });
+
+  it("deals the big languages most and the rare ones least", async () => {
+    const count = new Map<string, number>();
+    for (let day = 2; day <= 2 + 145 * 4 - 1; day++) {
+      const id = (await dailyRound(SEED, day)).language.id;
+      count.set(id, (count.get(id) ?? 0) + 1);
+    }
+    // Four full cycles: three, two or one appearance per cycle.
+    for (const id of schedule.tiers.common) expect(count.get(id)).toBe(12);
+    for (const id of schedule.tiers.known) expect(count.get(id)).toBe(8);
+    for (const id of schedule.tiers.rare) expect(count.get(id)).toBe(4);
+  });
+
+  it("keeps day 1 as it was first played", async () => {
+    expect((await dailyRound(SEED, 1)).language.id).toBe("sah");
   });
 
   it("depends on the secret", async () => {
@@ -152,6 +171,36 @@ describe("endless", () => {
   it("rejects a bad round number", async () => {
     for (const e of ["-1", "x", String(2 ** 32)]) {
       expect((await handleBabelle("endless", new URLSearchParams({ e }), SEED, NOW)).status).toBe(400);
+    }
+  });
+});
+
+describe("familiar decoys", () => {
+  it("fills options only with languages a player may have met", async () => {
+    const familiar = new Set([...schedule.tiers.common, ...schedule.tiers.known]);
+    const srv = (await import("../data/server.json", { with: { type: "json" } })).default as {
+      languages: Array<{ id: string; family: string }>;
+      forms: Record<string, Record<string, string>>;
+    };
+    const family = new Map(srv.languages.map((l) => [l.id, l.family]));
+    for (let day = 2; day <= 300; day++) {
+      const round = await dailyRound(SEED, day);
+      for (const q of round.questions) {
+        if (q.kind === "relative" || q.kind === "neighbour") {
+          // The right answer may be an obscure relative; the decoys never are.
+          q.options.forEach((id, i) => {
+            if (i !== round.correct[round.questions.indexOf(q)]) expect(familiar.has(id)).toBe(true);
+          });
+        }
+        if (q.kind === "which") {
+          // Every decoy word belongs to a familiar language or a relative of the day's.
+          for (const word of q.options) {
+            if (word === srv.forms[round.language.id][q.concept]) continue;
+            const owners = [...family.keys()].filter((id) => srv.forms[id][q.concept] === word);
+            expect(owners.some((id) => familiar.has(id) || family.get(id) === round.language.family)).toBe(true);
+          }
+        }
+      }
     }
   });
 });

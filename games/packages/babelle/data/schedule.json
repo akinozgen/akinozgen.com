@@ -1,0 +1,8 @@
+{
+  "legacy": ["sah"],
+  "tiers": {
+    "common": ["eng", "deu", "fra", "spa", "por", "ita", "nld", "swe", "nor", "dan", "fin", "pol", "ces", "rus", "ukr", "tur", "ell", "hun", "ron", "arb", "heb", "hin", "ben", "jpn", "kor", "cmn", "pes", "lat", "isl", "cat"],
+    "known": ["ekk", "lav", "lit", "slk", "slv", "hrv", "bul", "sqi", "gle", "cym", "eus", "kat", "hye", "kaz", "uzn", "azj", "tam", "tel", "mal", "kan", "pbu"],
+    "rare": ["bel", "khk", "sme", "bre", "tat", "chv", "sah", "bak", "oss", "che", "abk", "kal", "ain"]
+  }
+}

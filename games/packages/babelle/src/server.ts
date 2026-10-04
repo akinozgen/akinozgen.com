@@ -2,6 +2,7 @@ import vexleAnswers from "../../vexle/data/answers.json" with { type: "json" };
 import vexleCountries from "../../vexle/data/countries.json" with { type: "json" };
 import answersData from "../data/answers.json" with { type: "json" };
 import publicData from "../data/public.json" with { type: "json" };
+import scheduleData from "../data/schedule.json" with { type: "json" };
 import serverData from "../data/server.json" with { type: "json" };
 import { FINAL_TRIES, type Language, QUESTIONS, type ServerData, WITHDRAWN } from "./types.ts";
 
@@ -22,10 +23,32 @@ const LANGUAGES = DATA.languages;
 const BY_ID = new Map(LANGUAGES.map((l) => [l.id, l]));
 const CONCEPTS = (publicData as { concepts: Array<{ id: string }> }).concepts.map((c) => c.id);
 
-/** Append-only: the schedule indexes into it. */
+/** Every language a round can be in. */
 const ANSWERS = answersData as string[];
+
+/**
+ * How often each language is the day's, by how likely a player is to have
+ * met it: the big languages three times a cycle, the regional ones twice,
+ * the rare ones (mostly small languages of Russia and the Caucasus, which
+ * NorthEuraLex is rich in) once. Without this the Cyrillic minorities
+ * crowded out everything else.
+ */
+const TIERS = scheduleData.tiers;
+const WEIGHTED: string[] = [
+  ...TIERS.common.flatMap((id) => [id, id, id]),
+  ...TIERS.known.flatMap((id) => [id, id]),
+  ...TIERS.rare,
+];
+
+for (const id of WEIGHTED) if (!ANSWERS.includes(id)) throw new Error(`${id} is scheduled but not an answer`);
+
+/** Day 1 was played under the first rules and stays as it was. */
+const LEGACY = scheduleData.legacy;
+
 /** No language comes round again within this many days. */
-const LOOKBACK = 20;
+const MIN_GAP = 12;
+/** Options and decoys come only from languages a player may have met. */
+const FAMILIAR = new Set([...TIERS.common, ...TIERS.known]);
 
 interface Country {
   code: string;
@@ -158,23 +181,55 @@ function shuffle<T>(items: readonly T[], random: () => number): T[] {
 
 const cycles = new Map<string, string[]>();
 
-/** One pass through every language, the start kept clear of the last pass's end. */
+/** How many times each language comes up in one cycle. */
+const WEIGHTS: Array<[string, number]> = [
+  ...TIERS.common.map((id): [string, number] => [id, 3]),
+  ...TIERS.known.map((id): [string, number] => [id, 2]),
+  ...TIERS.rare.map((id): [string, number] => [id, 1]),
+];
+
+/**
+ * One cycle of days. Each language's appearances are spread evenly through
+ * it from a random offset — a three-a-cycle language comes round about every
+ * 48 days — and the cycle's first days are kept clear of the last cycle's
+ * final ones by swapping with days from the middle, where it is safe both ways.
+ */
 async function cycleOrder(seed: string, cycle: number): Promise<string[]> {
   const key = `${seed}\u0000${cycle}`;
   const cached = cycles.get(key);
   if (cached) return cached;
-  const order = shuffle(ANSWERS, await stream(seed, `babelle:cycle:${cycle}`));
-  if (cycle > 0) {
-    const before = new Set(shuffle(ANSWERS, await stream(seed, `babelle:cycle:${cycle - 1}`)).slice(-LOOKBACK));
-    let spare = LOOKBACK;
-    for (let i = 0; i < LOOKBACK; i++) {
-      if (!before.has(order[i])) continue;
-      while (spare < order.length - LOOKBACK && before.has(order[spare])) spare++;
-      [order[i], order[spare]] = [order[spare], order[i]];
-      spare++;
+
+  const random = await stream(seed, `babelle:schedule:${cycle}`);
+  const length = WEIGHTED.length;
+  const slots: Array<{ id: string; at: number; tie: number }> = [];
+  for (const [id, weight] of WEIGHTS) {
+    const step = length / weight;
+    const offset = random() * step;
+    for (let i = 0; i < weight; i++) slots.push({ id, at: offset + i * step, tie: random() });
+  }
+  const order = slots.sort((a, b) => a.at - b.at || a.tie - b.tie).map((slot) => slot.id);
+
+  // The first cycle follows the legacy days, so those count as its tail.
+  const tail = (cycle > 0 ? await cycleOrder(seed, cycle - 1) : LEGACY).slice(-MIN_GAP);
+  // Day i of this cycle clashes if its language came up within MIN_GAP days either side.
+  const clashes = (i: number): boolean => {
+    const id = order[i];
+    for (let k = Math.max(0, i - MIN_GAP); k <= Math.min(length - 1, i + MIN_GAP); k++) {
+      if (k !== i && order[k] === id) return true;
+    }
+    for (let t = 0; t < tail.length; t++) if (tail[t] === id && tail.length - t + i <= MIN_GAP) return true;
+    return false;
+  };
+  for (let i = 0; i < MIN_GAP; i++) {
+    if (!clashes(i)) continue;
+    for (let j = MIN_GAP; j < length - MIN_GAP; j++) {
+      [order[i], order[j]] = [order[j], order[i]];
+      if (!clashes(i) && !clashes(j)) break;
+      [order[i], order[j]] = [order[j], order[i]];
     }
   }
-  if (cycles.size > 8) cycles.clear();
+
+  if (cycles.size > 16) cycles.clear();
   cycles.set(key, order);
   return order;
 }
@@ -227,10 +282,16 @@ export async function dailyRound(seed: string, number: number): Promise<Round> {
   const cached = rounds.get(cacheKey);
   if (cached) return cached;
 
-  const index = number - 1;
-  const cycle = Math.floor(index / ANSWERS.length);
-  const language = BY_ID.get((await cycleOrder(seed, cycle))[index - cycle * ANSWERS.length])!;
-  const round = buildRound(language, await stream(seed, `babelle:questions:${number}`));
+  const random = await stream(seed, `babelle:questions:${number}`);
+  let round: Round;
+  if (number <= LEGACY.length) {
+    round = buildRound(BY_ID.get(LEGACY[number - 1])!, random, LANGUAGES);
+  } else {
+    const index = number - LEGACY.length - 1;
+    const cycle = Math.floor(index / WEIGHTED.length);
+    const language = BY_ID.get((await cycleOrder(seed, cycle))[index - cycle * WEIGHTED.length])!;
+    round = buildRound(language, random, LANGUAGES.filter((l) => FAMILIAR.has(l.id)));
+  }
   if (rounds.size > 64) rounds.clear();
   rounds.set(cacheKey, round);
   return round;
@@ -246,12 +307,16 @@ export async function dailyRound(seed: string, number: number): Promise<Round> {
  */
 export async function endlessRound(seed: string, number: number): Promise<Round> {
   const random = await stream(seed, `babelle:endless:${number}`);
-  const language = BY_ID.get(ANSWERS[Math.floor(random() * ANSWERS.length)])!;
-  return buildRound(language, random);
+  const language = BY_ID.get(WEIGHTED[Math.floor(random() * WEIGHTED.length)])!;
+  return buildRound(language, random, LANGUAGES.filter((l) => FAMILIAR.has(l.id)));
 }
 
-/** Five questions in `language`, drawn from `random`. */
-function buildRound(language: Language, random: () => number): Round {
+/**
+ * Five questions in `language`, drawn from `random`. `field` holds the
+ * languages decoys and options may come from: a player can tell Russian
+ * from Hungarian, not Udmurt from Komi.
+ */
+function buildRound(language: Language, random: () => number, field: readonly Language[]): Round {
   const words = DATA.forms[language.id];
 
   // Concepts this language has distinct words for, in a random order.
@@ -287,12 +352,12 @@ function buildRound(language: Language, random: () => number): Round {
   }
   // 3. One concept, four languages: spot today's. One decoy is a relative when there is one.
   {
-    const relatives = shuffle(
-      LANGUAGES.filter((l) => l.family === language.family && l.id !== language.id && DATA.forms[l.id][c3]),
-      random,
-    );
+    // A familiar relative where there is one; failing that, any relative.
+    const kin = (pool: readonly Language[]) =>
+      pool.filter((l) => l.family === language.family && l.id !== language.id && DATA.forms[l.id][c3]);
+    const relatives = shuffle(kin(field).length > 0 ? kin(field) : kin(LANGUAGES), random);
     const strangers = shuffle(
-      LANGUAGES.filter((l) => l.family !== language.family && DATA.forms[l.id][c3]),
+      field.filter((l) => l.family !== language.family && DATA.forms[l.id][c3]),
       random,
     );
     // A relative first if there is one, then strangers; never a twin of the right word.
@@ -309,7 +374,9 @@ function buildRound(language: Language, random: () => number): Round {
   }
   // 4. Family: a relative among strangers, or for an isolate, the nearest neighbour.
   {
-    const relatives = LANGUAGES.filter((l) => l.family === language.family && l.id !== language.id);
+    const related = (pool: readonly Language[]) =>
+      pool.filter((l) => l.family === language.family && l.id !== language.id && !WITHDRAWN.has(l.id));
+    const relatives = related(field).length > 0 ? related(field) : related(LANGUAGES);
     // A close relative when there is one: Lithuanian for Latvian, not Icelandic.
     const close = relatives.filter((l) => l.subfamily && l.subfamily === language.subfamily);
     const shown = (list: Language[]): boolean => list.some((l) => !WITHDRAWN.has(l.id));
@@ -319,11 +386,11 @@ function buildRound(language: Language, random: () => number): Round {
       let pick = Math.floor(random() * pool.length);
       while (WITHDRAWN.has(pool[pick].id)) pick = (pick + 1) % pool.length;
       const right = pool[pick].id;
-      const strangers = LANGUAGES.filter((l) => l.family !== language.family).map((l) => l.id);
+      const strangers = field.filter((l) => l.family !== language.family).map((l) => l.id);
       const o = options(right, strangers, random);
       add({ kind: "relative", options: o.options }, o.correct);
     } else {
-      const byDistance = LANGUAGES.filter((l) => l.id !== language.id)
+      const byDistance = field.filter((l) => l.id !== language.id)
         .map((l) => ({ id: l.id, km: distanceKm(l, language) }))
         .sort((a, b) => a.km - b.km);
       const nearest = byDistance.find((l) => !WITHDRAWN.has(l.id))!;

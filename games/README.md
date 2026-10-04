@@ -104,7 +104,11 @@ the 85 languages ICU can name in all five interface languages:
 - `data/public.json` — concepts and language names; shipped to the browser.
 - `data/server.json` — every language's words, family, location and home
   country; only the Worker sees it, since the words alone would give the day away.
-- `data/answers.json` — the 64 languages a day can be, frozen and append-only.
+- `data/answers.json` — the 64 languages a day can be.
+- `data/schedule.json` — how often each comes up: well-known languages three
+  times a cycle, regional ones twice, rare ones (mostly small languages of
+  Russia and the Caucasus, which NorthEuraLex is rich in) once. Options and
+  decoys come only from the first two groups. Day 1 is kept as it was played.
 
 `/api/babelle/judge?d=<date>&a=<choices>&g=<languages>` picks the day's
 language from `HMAC(seed, day)`, hands out one question at a time, marks each
