@@ -229,7 +229,28 @@ export async function dailyRound(seed: string, number: number): Promise<Round> {
   const index = number - 1;
   const cycle = Math.floor(index / ANSWERS.length);
   const language = BY_ID.get((await cycleOrder(seed, cycle))[index - cycle * ANSWERS.length])!;
-  const random = await stream(seed, `babelle:questions:${number}`);
+  const round = buildRound(language, await stream(seed, `babelle:questions:${number}`));
+  if (rounds.size > 64) rounds.clear();
+  rounds.set(cacheKey, round);
+  return round;
+}
+
+/**
+ * An endless round, from a number the player's browser picks at random. The
+ * language comes from HMAC(secret, number), so the number alone says
+ * nothing. Endless deliberately avoids nothing — not even today's language:
+ * any rule like "never deal today's" could be measured by asking for
+ * thousands of rounds and seeing which language never turns up. The page
+ * opens endless only once the day is finished instead.
+ */
+export async function endlessRound(seed: string, number: number): Promise<Round> {
+  const random = await stream(seed, `babelle:endless:${number}`);
+  const language = BY_ID.get(ANSWERS[Math.floor(random() * ANSWERS.length)])!;
+  return buildRound(language, random);
+}
+
+/** Five questions in `language`, drawn from `random`. */
+function buildRound(language: Language, random: () => number): Round {
   const words = DATA.forms[language.id];
 
   // Concepts this language has distinct words for, in a random order.
@@ -314,10 +335,7 @@ export async function dailyRound(seed: string, number: number): Promise<Round> {
     add({ kind: "country", options: o.options }, o.correct);
   }
 
-  const round: Round = { language, questions, correct };
-  if (rounds.size > 64) rounds.clear();
-  rounds.set(cacheKey, round);
-  return round;
+  return { language, questions, correct };
 }
 
 /** The words the round showed in its language, for the recap. */
@@ -344,13 +362,24 @@ export async function handleBabelle(
   now: Date = new Date(),
 ): Promise<Reply> {
   try {
-    if (action !== "judge") return fail(404, "no such endpoint");
+    if (action !== "judge" && action !== "endless") return fail(404, "no such endpoint");
     if (!seed) return fail(503, "babelle is not configured");
 
-    const date = query.get("d") ?? "";
-    const number = puzzleNumber(date);
-    if (number === null || number < 1) throw new BadRequest("bad date");
-    if (date > latestDate(now)) return fail(404, "that day has not started anywhere yet");
+    let date = "";
+    let number: number;
+    let round: Round;
+    if (action === "endless") {
+      number = Number(query.get("e"));
+      if (!Number.isInteger(number) || number < 0 || number > 0xffffffff) throw new BadRequest("bad round");
+      round = await endlessRound(seed, number);
+    } else {
+      date = query.get("d") ?? "";
+      const day = puzzleNumber(date);
+      if (day === null || day < 1) throw new BadRequest("bad date");
+      if (date > latestDate(now)) return fail(404, "that day has not started anywhere yet");
+      number = day;
+      round = await dailyRound(seed, number);
+    }
 
     const chosen = (query.get("a") ?? "").split(",").filter(Boolean).map(Number);
     if (chosen.length > QUESTIONS || chosen.some((n) => !Number.isInteger(n) || n < 0 || n > 3)) {
@@ -362,7 +391,6 @@ export async function handleBabelle(
     if (new Set(guessIds).size !== guessIds.length) throw new BadRequest("repeated guess");
     for (const id of guessIds) if (!BY_ID.has(id)) throw new BadRequest(`unknown language: ${id}`);
 
-    const round = await dailyRound(seed, number);
     const answers = chosen.map((choice, i) => ({ chosen: choice, correct: round.correct[i] }));
 
     const won = guessIds.indexOf(round.language.id);

@@ -41,7 +41,7 @@ describe("babelle", () => {
     render(<App />);
     expect(await screen.findByText("Question 1 of 5")).toBeTruthy();
     expect(document.querySelectorAll(".option").length).toBe(4);
-    expect(screen.getByText("Words you meet in today's language collect here.")).toBeTruthy();
+    expect(screen.getByText("Words you meet in the hidden language collect here.")).toBeTruthy();
   });
 
   it("marks the answer, fills the notebook and waits for Next", async () => {
@@ -58,7 +58,7 @@ describe("babelle", () => {
   it("never names the language before the end", async () => {
     render(<App />);
     await answerAll(true);
-    expect(document.body.textContent).not.toContain(`Today's language${answer}`);
+    expect(document.body.textContent).not.toContain(`The language was${answer}`);
     expect(document.querySelector(".end")).toBeNull();
   });
 

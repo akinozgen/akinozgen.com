@@ -40,6 +40,7 @@ export function HowToPlay({ onClose }: { onClose: () => void }): React.ReactElem
       <p>{t("rulesHardText")}</p>
 
       <p className="muted">{t("rulesDaily")}</p>
+      <p className="muted">{t("rulesEndless")}</p>
     </Sheet>
   );
 }

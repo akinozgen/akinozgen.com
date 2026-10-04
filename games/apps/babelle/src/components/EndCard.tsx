@@ -19,7 +19,16 @@ function useCountdown(): string {
 }
 
 /** The day's language revealed, with where to read about it and the share. */
-export function EndCard({ number, verdict }: { number: number; verdict: BabelleVerdict }): React.ReactElement {
+export function EndCard({
+  number,
+  verdict,
+  onNext,
+}: {
+  number: number;
+  verdict: BabelleVerdict;
+  /** Endless: deal the next language. Its rounds aren't shared or counted down to. */
+  onNext?: () => void;
+}): React.ReactElement {
   const { t, name, language } = useLocale();
   const [copied, setCopied] = useState(false);
   const countdown = useCountdown();
@@ -55,42 +64,53 @@ export function EndCard({ number, verdict }: { number: number; verdict: BabelleV
         </a>
       </div>
 
-      <button
-        type="button"
-        className="button button--primary end__share"
-        onClick={() => {
-          if (navigator.share && window.matchMedia?.("(pointer: coarse)").matches) {
-            void navigator.share({ text: share }).catch(() => undefined);
-            return;
-          }
-          void copyText(share).then((ok) => {
-            setCopied(ok);
-            window.setTimeout(() => setCopied(false), 2000);
-          });
-        }}
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="6" cy="12" r="2.5" />
-          <circle cx="18" cy="6" r="2.5" />
-          <circle cx="18" cy="18" r="2.5" />
-          <path d="M8.2 10.9 15.8 7.1M8.2 13.1l7.6 3.8" />
-        </svg>
-        {copied ? t("copied") : t("share")}
-      </button>
+      {onNext ? (
+        <button type="button" className="button button--primary end__share" onClick={onNext} autoFocus>
+          {t("nextLanguage")}
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 12h14M13 6l6 6-6 6" />
+          </svg>
+        </button>
+      ) : (
+        <>
+        <button
+          type="button"
+          className="button button--primary end__share"
+          onClick={() => {
+            if (navigator.share && window.matchMedia?.("(pointer: coarse)").matches) {
+              void navigator.share({ text: share }).catch(() => undefined);
+              return;
+            }
+            void copyText(share).then((ok) => {
+              setCopied(ok);
+              window.setTimeout(() => setCopied(false), 2000);
+            });
+          }}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="6" cy="12" r="2.5" />
+            <circle cx="18" cy="6" r="2.5" />
+            <circle cx="18" cy="18" r="2.5" />
+            <path d="M8.2 10.9 15.8 7.1M8.2 13.1l7.6 3.8" />
+          </svg>
+          {copied ? t("copied") : t("share")}
+        </button>
 
-      <div className="end__strip" aria-hidden="true">
-        {verdict.answers.map((a, i) => (
-          <span key={i} className={a.chosen === a.correct ? "is-right" : "is-wrong"} />
-        ))}
-        <i />
-        {verdict.guesses.map((g) => (
-          <span key={g.id} className={g.km === 0 ? "is-right" : "is-wrong"} />
-        ))}
-      </div>
+        <div className="end__strip" aria-hidden="true">
+          {verdict.answers.map((a, i) => (
+            <span key={i} className={a.chosen === a.correct ? "is-right" : "is-wrong"} />
+          ))}
+          <i />
+          {verdict.guesses.map((g) => (
+            <span key={g.id} className={g.km === 0 ? "is-right" : "is-wrong"} />
+          ))}
+        </div>
 
-      <p className="end__next">
-        {t("nextIn")} <strong>{countdown}</strong>
-      </p>
+        <p className="end__next">
+          {t("nextIn")} <strong>{countdown}</strong>
+        </p>
+        </>
+      )}
     </section>
   );
 }

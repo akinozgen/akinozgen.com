@@ -15,3 +15,17 @@ export async function judge(
   if (!response.ok) throw new Error(`server answered ${response.status}`);
   return (await response.json()) as BabelleVerdict;
 }
+
+/** An endless round: the browser's random number, judged against the server's secret. */
+export async function judgeEndless(
+  round: number,
+  answers: readonly number[],
+  guesses: readonly string[],
+): Promise<BabelleVerdict> {
+  const query = new URLSearchParams({ e: String(round) });
+  if (answers.length) query.set("a", answers.join(","));
+  if (guesses.length) query.set("g", guesses.join(","));
+  const response = await fetch(`${BASE}/endless?${query}`);
+  if (!response.ok) throw new Error(`server answered ${response.status}`);
+  return (await response.json()) as BabelleVerdict;
+}

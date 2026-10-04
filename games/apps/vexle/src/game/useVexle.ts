@@ -1,7 +1,7 @@
 import { readJson, writeJson } from "@travelle/core";
 import { MAX_GUESSES, type Status, TILES, type VexleVerdict } from "@vexle/data/client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { judge } from "./api.ts";
+import { judge, judgeEndless } from "./api.ts";
 
 /** Day 1 of vexle. */
 export const EPOCH = "2026-10-04";
@@ -30,6 +30,8 @@ export function numberFor(date: string): number {
 }
 
 interface SavedGame {
+  /** Endless only: the round being played, picked at random by this browser. */
+  round?: number;
   guesses: string[];
   /** Every guess so far was made with hard mode on, and it was never switched off. */
   hardAll: boolean;
@@ -48,6 +50,8 @@ export interface Stats {
   /** The last puzzle recorded, so a round is counted once. */
   lastNumber: number | null;
   lastWon: number | null;
+  /** Endless only: the last round counted. */
+  lastRound?: number | null;
 }
 
 export const emptyStats: Stats = {
@@ -63,6 +67,23 @@ export const emptyStats: Stats = {
 
 const GAME_PREFIX = "vexle:game:v1:";
 const STATS_KEY = "vexle:stats:v1";
+const ENDLESS_KEY = "vexle:endless:v1";
+const ENDLESS_STATS_KEY = "vexle:endless-stats:v1";
+
+/** A fresh endless round: 32 random bits, meaningless without the server's secret. */
+function freshRound(): number {
+  const bits = new Uint32Array(1);
+  crypto.getRandomValues(bits);
+  return bits[0];
+}
+
+export type Mode = "daily" | "endless";
+
+/** Whether today's daily is over, read straight from storage. */
+export function dailyFinished(date: string = playDate()): boolean {
+  const saved = readJson<SavedGame>(`${GAME_PREFIX}${date}`);
+  return !!saved?.verdict && saved.verdict.status !== "playing";
+}
 const HARD_KEY = "vexle:hard:v1";
 const KEEP_GAMES = 14;
 
@@ -84,8 +105,11 @@ function prune(): void {
 }
 
 export interface Vexle {
+  mode: Mode;
   date: string;
   number: number;
+  /** Endless only: the round being played. */
+  round: number | null;
   guesses: string[];
   verdict: VexleVerdict | null;
   status: Status;
@@ -100,17 +124,28 @@ export interface Vexle {
   guess: (code: string) => "accepted" | "duplicate" | "busy";
   setHard: (hard: boolean) => void;
   retry: () => void;
+  /** Endless only: deal a new flag. */
+  next: () => void;
 }
 
-export function useVexle(): Vexle {
+/**
+ * One mode's round. The daily is the day's flag, kept per date; endless is
+ * whatever round this browser last dealt itself, kept in one slot, with a
+ * record of its own so practice never touches the daily streak.
+ */
+export function useVexle(mode: Mode = "daily"): Vexle {
+  const endless = mode === "endless";
   const [date] = useState(() => playDate());
   const number = numberFor(date);
-  const key = `${GAME_PREFIX}${date}`;
-  const [saved, setSaved] = useState<SavedGame>(
-    () => readJson<SavedGame>(key) ?? { guesses: [], hardAll: true },
-  );
+  const key = endless ? ENDLESS_KEY : `${GAME_PREFIX}${date}`;
+  const statsKey = endless ? ENDLESS_STATS_KEY : STATS_KEY;
+  const [saved, setSaved] = useState<SavedGame>(() => {
+    const stored = readJson<SavedGame>(key);
+    if (stored) return stored;
+    return endless ? { round: freshRound(), guesses: [], hardAll: true } : { guesses: [], hardAll: true };
+  });
   const [hard, setHardState] = useState<boolean>(() => readJson<boolean>(HARD_KEY) ?? false);
-  const [stats, setStats] = useState<Stats>(() => ({ ...emptyStats, ...readJson<Stats>(STATS_KEY) }));
+  const [stats, setStats] = useState<Stats>(() => ({ ...emptyStats, ...readJson<Stats>(statsKey) }));
   const [pending, setPending] = useState(false);
   const [failed, setFailed] = useState(false);
   const inFlight = useRef(false);
@@ -125,7 +160,7 @@ export function useVexle(): Vexle {
       lastAttempt.current = { next, hard: withHard };
       setPending(true);
       setFailed(false);
-      judge(date, next.guesses, withHard)
+      (endless ? judgeEndless(next.round ?? 0, next.guesses, withHard) : judge(date, next.guesses, withHard))
         .then((verdict) => {
           const stored = { ...next, verdict };
           setSaved(stored);
@@ -137,7 +172,7 @@ export function useVexle(): Vexle {
           setPending(false);
         });
     },
-    [date, key],
+    [date, key, endless],
   );
 
   // A round saved before its verdict came back asks again once.
@@ -156,14 +191,16 @@ export function useVexle(): Vexle {
   // a round since this one loaded, so the record is read afresh first.
   useEffect(() => {
     if (status === "playing") return;
-    const stats = { ...emptyStats, ...readJson<Stats>(STATS_KEY) };
-    if (stats.lastNumber === number) {
+    const stats = { ...emptyStats, ...readJson<Stats>(statsKey) };
+    const counted = endless ? stats.lastRound === saved.round : stats.lastNumber === number;
+    if (counted) {
       setStats(stats);
       return;
     }
     const won = status === "won";
     const tries = saved.guesses.length;
-    const streak = won ? (stats.lastWon === number - 1 ? stats.streak + 1 : 1) : 0;
+    // A daily streak is consecutive days; an endless run is consecutive rounds solved.
+    const streak = won ? (endless || stats.lastWon === number - 1 ? stats.streak + 1 : 1) : 0;
     const distribution = [...stats.distribution];
     if (won) distribution[tries - 1] = (distribution[tries - 1] ?? 0) + 1;
     const next: Stats = {
@@ -173,12 +210,13 @@ export function useVexle(): Vexle {
       best: Math.max(stats.best, streak),
       hardWins: stats.hardWins + (won && saved.hardAll ? 1 : 0),
       distribution,
-      lastNumber: number,
-      lastWon: won ? number : stats.lastWon,
+      lastNumber: endless ? stats.lastNumber : number,
+      lastWon: endless ? stats.lastWon : won ? number : stats.lastWon,
+      lastRound: endless ? (saved.round ?? null) : (stats.lastRound ?? null),
     };
     setStats(next);
-    writeJson(STATS_KEY, next);
-  }, [status, number, saved.guesses.length, saved.hardAll]);
+    writeJson(statsKey, next);
+  }, [status, number, saved.guesses.length, saved.hardAll, saved.round, endless, statsKey]);
 
   const guess = useCallback(
     (code: string) => {
@@ -186,7 +224,7 @@ export function useVexle(): Vexle {
       if (saved.guesses.includes(code)) return "duplicate" as const;
       const guesses = [...saved.guesses, code];
       submit(
-        { guesses, hardAll: saved.guesses.length === 0 ? hard : saved.hardAll && hard },
+        { ...saved, guesses, hardAll: saved.guesses.length === 0 ? hard : saved.hardAll && hard },
         hard,
       );
       return "accepted" as const;
@@ -212,9 +250,20 @@ export function useVexle(): Vexle {
     if (last) submit(last.next, last.hard);
   }, [submit]);
 
+  const next = useCallback(() => {
+    if (!endless || inFlight.current) return;
+    const fresh: SavedGame = { round: freshRound(), guesses: [], hardAll: hard };
+    lastAttempt.current = null;
+    setFailed(false);
+    setSaved(fresh);
+    writeJson(key, fresh);
+  }, [endless, hard, key]);
+
   return {
+    mode,
     date,
     number,
+    round: endless ? (saved.round ?? null) : null,
     guesses: verdict ? saved.guesses : saved.guesses.slice(0, 0),
     verdict,
     status,
@@ -226,6 +275,7 @@ export function useVexle(): Vexle {
     guess,
     setHard,
     retry,
+    next,
   };
 }
 

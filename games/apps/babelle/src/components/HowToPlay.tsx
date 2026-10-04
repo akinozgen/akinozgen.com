@@ -27,6 +27,7 @@ export function HowToPlay({ onClose }: { onClose: () => void }): React.ReactElem
       <h3>{t("rulesFinal")}</h3>
       <p>{t("rulesFinalText")}</p>
       <p className="muted">{t("rulesDaily")}</p>
+      <p className="muted">{t("rulesEndless")}</p>
     </Sheet>
   );
 }

@@ -23,11 +23,14 @@ export function EndCard({
   verdict,
   guesses,
   hardAll,
+  onNext,
 }: {
   number: number;
   verdict: VexleVerdict;
   guesses: number;
   hardAll: boolean;
+  /** Endless: deal the next flag. Its rounds aren't shared or counted down to. */
+  onNext?: () => void;
 }): React.ReactElement {
   const { t, name, language } = useLocale();
   const [copied, setCopied] = useState(false);
@@ -67,36 +70,47 @@ export function EndCard({
         </a>
       </div>
 
-      <button
-        type="button"
-        className="button button--primary end__share"
-        onClick={() => {
-          // Phones get the system share sheet; everything else, the clipboard.
-          if (navigator.share && window.matchMedia?.("(pointer: coarse)").matches) {
-            void navigator.share({ text: share }).catch(() => undefined);
-            return;
-          }
-          void copyText(share).then((ok) => {
-            setCopied(ok);
-            window.setTimeout(() => setCopied(false), 2000);
-          });
-        }}
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="6" cy="12" r="2.5" /><circle cx="18" cy="6" r="2.5" /><circle cx="18" cy="18" r="2.5" />
-          <path d="M8.2 10.9 15.8 7.1M8.2 13.1l7.6 3.8" />
-        </svg>
-        {copied ? t("copied") : t("share")}
-      </button>
-      <div className="end__grid" aria-hidden="true">
-        {Array.from({ length: 6 }, (_, i) => (
-          <span key={i} className={spent.has(i) ? "is-spent" : ""} />
-        ))}
-      </div>
+      {onNext ? (
+        <button type="button" className="button button--primary end__share" onClick={onNext} autoFocus>
+          {t("nextFlag")}
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 12h14M13 6l6 6-6 6" />
+          </svg>
+        </button>
+      ) : (
+        <>
+        <button
+          type="button"
+          className="button button--primary end__share"
+          onClick={() => {
+            // Phones get the system share sheet; everything else, the clipboard.
+            if (navigator.share && window.matchMedia?.("(pointer: coarse)").matches) {
+              void navigator.share({ text: share }).catch(() => undefined);
+              return;
+            }
+            void copyText(share).then((ok) => {
+              setCopied(ok);
+              window.setTimeout(() => setCopied(false), 2000);
+            });
+          }}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="6" cy="12" r="2.5" /><circle cx="18" cy="6" r="2.5" /><circle cx="18" cy="18" r="2.5" />
+            <path d="M8.2 10.9 15.8 7.1M8.2 13.1l7.6 3.8" />
+          </svg>
+          {copied ? t("copied") : t("share")}
+        </button>
+        <div className="end__grid" aria-hidden="true">
+          {Array.from({ length: 6 }, (_, i) => (
+            <span key={i} className={spent.has(i) ? "is-spent" : ""} />
+          ))}
+        </div>
 
-      <p className="end__next">
-        {t("nextIn")} <strong>{countdown}</strong>
-      </p>
+        <p className="end__next">
+          {t("nextIn")} <strong>{countdown}</strong>
+        </p>
+        </>
+      )}
     </section>
   );
 }

@@ -1,7 +1,7 @@
 import { readJson, writeJson } from "@travelle/core";
 import { type BabelleVerdict, FINAL_TRIES, QUESTIONS, type Status } from "@babelle/data/client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { judge } from "./api.ts";
+import { judge, judgeEndless } from "./api.ts";
 
 /** Day 1 of babelle. */
 export const EPOCH = "2026-10-04";
@@ -25,6 +25,8 @@ export function numberFor(date: string): number {
 }
 
 interface SavedDay {
+  /** Endless only: the round being played, picked at random by this browser. */
+  round?: number;
   answers: number[];
   guesses: string[];
   /** The server's word on exactly these answers and guesses. */
@@ -42,6 +44,8 @@ export interface Stats {
   distribution: number[];
   lastNumber: number | null;
   lastWon: number | null;
+  /** Endless only: the last round counted. */
+  lastRound?: number | null;
 }
 
 export const emptyStats: Stats = {
@@ -57,6 +61,17 @@ export const emptyStats: Stats = {
 
 const DAY_PREFIX = "babelle:day:v1:";
 const STATS_KEY = "babelle:stats:v1";
+const ENDLESS_KEY = "babelle:endless:v1";
+const ENDLESS_STATS_KEY = "babelle:endless-stats:v1";
+
+/** A fresh endless round: 32 random bits, meaningless without the server's secret. */
+function freshRound(): number {
+  const bits = new Uint32Array(1);
+  crypto.getRandomValues(bits);
+  return bits[0];
+}
+
+export type Mode = "daily" | "endless";
 
 const fits = (saved: SavedDay): boolean =>
   !!saved.verdict &&
@@ -64,6 +79,9 @@ const fits = (saved: SavedDay): boolean =>
   saved.verdict.guesses.length === saved.guesses.length;
 
 export interface Babelle {
+  mode: Mode;
+  /** Endless only: the round being played. */
+  round: number | null;
   date: string;
   number: number;
   verdict: BabelleVerdict | null;
@@ -76,14 +94,28 @@ export interface Babelle {
   answer: (choice: number) => void;
   guess: (id: string) => "accepted" | "duplicate" | "busy";
   retry: () => void;
+  /** Endless only: deal a new language. */
+  next: () => void;
 }
 
-export function useBabelle(): Babelle {
+/**
+ * One mode's round. The daily is the day's language, kept per date; endless
+ * is whatever round this browser last dealt itself, in one slot, with a
+ * record of its own. `active` holds endless back from the server until it
+ * is open and on screen.
+ */
+export function useBabelle(mode: Mode = "daily", active = true): Babelle {
+  const endless = mode === "endless";
   const [date] = useState(() => playDate());
   const number = numberFor(date);
-  const key = `${DAY_PREFIX}${date}`;
-  const [saved, setSaved] = useState<SavedDay>(() => readJson<SavedDay>(key) ?? { answers: [], guesses: [] });
-  const [stats, setStats] = useState<Stats>(() => ({ ...emptyStats, ...readJson<Stats>(STATS_KEY) }));
+  const key = endless ? ENDLESS_KEY : `${DAY_PREFIX}${date}`;
+  const statsKey = endless ? ENDLESS_STATS_KEY : STATS_KEY;
+  const [saved, setSaved] = useState<SavedDay>(() => {
+    const stored = readJson<SavedDay>(key);
+    if (stored) return stored;
+    return endless ? { round: freshRound(), answers: [], guesses: [] } : { answers: [], guesses: [] };
+  });
+  const [stats, setStats] = useState<Stats>(() => ({ ...emptyStats, ...readJson<Stats>(statsKey) }));
   const [pending, setPending] = useState(false);
   const [failed, setFailed] = useState(false);
   const inFlight = useRef(false);
@@ -96,7 +128,9 @@ export function useBabelle(): Babelle {
       lastAttempt.current = next;
       setPending(true);
       setFailed(false);
-      judge(date, next.answers, next.guesses)
+      (endless
+        ? judgeEndless(next.round ?? 0, next.answers, next.guesses)
+        : judge(date, next.answers, next.guesses))
         .then((verdict) => {
           const stored = { ...next, verdict };
           setSaved(stored);
@@ -108,14 +142,15 @@ export function useBabelle(): Babelle {
           setPending(false);
         });
     },
-    [date, key],
+    [date, key, endless],
   );
 
-  // The first question, or a verdict that never arrived, is asked for once.
+  // The first question, or a verdict that never arrived, is asked for once
+  // the round is on screen.
   useEffect(() => {
-    if (!fits(saved)) submit(saved);
+    if (active && !fits(saved) && !inFlight.current) submit(saved);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [active, saved.round]);
 
   const verdict = fits(saved) ? saved.verdict! : null;
   const status: Status = verdict?.status ?? "playing";
@@ -124,14 +159,16 @@ export function useBabelle(): Babelle {
   // Count the day once, when it ends; another tab may have counted it already.
   useEffect(() => {
     if (status === "playing" || !verdict) return;
-    const stats = { ...emptyStats, ...readJson<Stats>(STATS_KEY) };
-    if (stats.lastNumber === number) {
+    const stats = { ...emptyStats, ...readJson<Stats>(statsKey) };
+    const counted = endless ? stats.lastRound === saved.round : stats.lastNumber === number;
+    if (counted) {
       setStats(stats);
       return;
     }
     const won = status === "won";
     const tries = verdict.guesses.length;
-    const streak = won ? (stats.lastWon === number - 1 ? stats.streak + 1 : 1) : 0;
+    // A daily streak is consecutive days; an endless run is consecutive rounds named.
+    const streak = won ? (endless || stats.lastWon === number - 1 ? stats.streak + 1 : 1) : 0;
     const distribution = [...stats.distribution];
     if (won) distribution[tries - 1] = (distribution[tries - 1] ?? 0) + 1;
     const next: Stats = {
@@ -141,12 +178,13 @@ export function useBabelle(): Babelle {
       best: Math.max(stats.best, streak),
       perfect: stats.perfect + (won && tries === 1 && cardsRight === QUESTIONS ? 1 : 0),
       distribution,
-      lastNumber: number,
-      lastWon: won ? number : stats.lastWon,
+      lastNumber: endless ? stats.lastNumber : number,
+      lastWon: endless ? stats.lastWon : won ? number : stats.lastWon,
+      lastRound: endless ? (saved.round ?? null) : (stats.lastRound ?? null),
     };
     setStats(next);
-    writeJson(STATS_KEY, next);
-  }, [status, verdict, number, cardsRight]);
+    writeJson(statsKey, next);
+  }, [status, verdict, number, cardsRight, endless, statsKey, saved.round]);
 
   const answer = useCallback(
     (choice: number) => {
@@ -170,7 +208,32 @@ export function useBabelle(): Babelle {
     if (lastAttempt.current) submit(lastAttempt.current);
   }, [submit]);
 
-  return { date, number, verdict, status, pending, failed, stats, cardsRight, answer, guess, retry };
+  const next = useCallback(() => {
+    if (!endless || inFlight.current) return;
+    const fresh: SavedDay = { round: freshRound(), answers: [], guesses: [] };
+    lastAttempt.current = null;
+    setFailed(false);
+    setSaved(fresh);
+    writeJson(key, fresh);
+    submit(fresh);
+  }, [endless, key, submit]);
+
+  return {
+    mode,
+    round: endless ? (saved.round ?? null) : null,
+    date,
+    number,
+    verdict,
+    status,
+    pending,
+    failed,
+    stats,
+    cardsRight,
+    answer,
+    guess,
+    retry,
+    next,
+  };
 }
 
 /** The text a player pastes: cards right or wrong, then the tries it took. */

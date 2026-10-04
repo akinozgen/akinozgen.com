@@ -198,6 +198,111 @@ body {
   white-space: nowrap;
 }
 
+.modes {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--panel);
+  border: 1px solid var(--panel-line);
+  border-radius: 999px;
+  box-shadow: var(--panel-shadow);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.modes__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 16px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--ink-soft);
+  background: none;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    color 150ms ease,
+    background 150ms ease;
+}
+
+.modes__tab:hover:not(.is-on) {
+  color: var(--ink);
+}
+
+.modes__tab.is-on {
+  color: #fff;
+  background: var(--accent);
+}
+
+@media (prefers-color-scheme: dark) {
+  .modes__tab.is-on {
+    color: #0b1020;
+  }
+}
+
+.modes__lock {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.8;
+}
+
+.stage.stage--locked {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+}
+
+.locked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  max-width: 520px;
+  margin-top: 6vh;
+  padding: 36px 32px;
+  text-align: center;
+  background: var(--panel);
+  border: 1px solid var(--panel-line);
+  border-radius: 20px;
+  box-shadow: var(--panel-shadow);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  animation: rise-in 360ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+.locked__icon {
+  width: 40px;
+  height: 40px;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.locked__title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+
+.locked__hint {
+  margin: 0 0 8px;
+  color: var(--ink-soft);
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
 .topbar__tools {
   display: flex;
   align-items: center;
@@ -1592,6 +1697,21 @@ body {
 
   .brand__tag {
     display: none;
+  }
+
+  .topbar {
+    flex-wrap: wrap;
+  }
+
+  .modes {
+    order: 3;
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .modes__tab {
+    flex: 1;
+    justify-content: center;
   }
 
   .panel {

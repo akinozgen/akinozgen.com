@@ -11,15 +11,38 @@ import { HowToPlay } from "./components/HowToPlay.tsx";
 import { LanguagePicker } from "./components/LanguagePicker.tsx";
 import { Sheet } from "./components/Sheet.tsx";
 import { StatsView } from "./components/StatsView.tsx";
-import { playDate, useVexle } from "./game/useVexle.ts";
+import { type Mode, playDate, useVexle } from "./game/useVexle.ts";
 import { useLocale } from "./i18n/index.tsx";
 
 const SEEN_RULES_KEY = "vexle:seen-rules:v1";
 const EMPTY_TILES: Array<string | null> = Array.from({ length: TILES }, () => null);
 
+/** The mode lives in the hash, so a reload or a shared link keeps it. */
+function useMode(): [Mode, (mode: Mode) => void] {
+  const read = (): Mode => (window.location.hash.replace(/^#\/?/, "") === "endless" ? "endless" : "daily");
+  const [mode, setMode] = useState<Mode>(read);
+  useEffect(() => {
+    const onHash = (): void => setMode(read());
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+  return [
+    mode,
+    (next) => {
+      window.location.hash = next === "daily" ? "" : "/endless";
+      setMode(next);
+    },
+  ];
+}
+
 export function App(): React.ReactElement {
   const { t, name, language } = useLocale();
-  const game = useVexle();
+  const [mode, setMode] = useMode();
+  const daily = useVexle("daily");
+  const practice = useVexle("endless");
+  // Endless waits until the day's flag is done, so it can never spoil it.
+  const locked = mode === "endless" && daily.status === "playing";
+  const game = mode === "endless" ? practice : daily;
   const [sheet, setSheet] = useState<"rules" | "stats" | null>(() =>
     readJson<boolean>(SEEN_RULES_KEY) ? null : "rules",
   );
@@ -28,7 +51,7 @@ export function App(): React.ReactElement {
     setSheet(null);
   };
 
-  useNewDay(game.date);
+  useNewDay(daily.date);
 
   const verdict = game.verdict;
   const results = verdict?.results ?? [];
@@ -52,6 +75,25 @@ export function App(): React.ReactElement {
           <h1 className="brand__name">vexle</h1>
           <span className="brand__tag">{t("tagline")}</span>
         </div>
+        <nav className="modes" aria-label={t("modeDaily") + " / " + t("modeEndless")}>
+          {(["daily", "endless"] as const).map((option) => (
+            <button
+              key={option}
+              type="button"
+              className={`modes__tab${mode === option ? " is-on" : ""}`}
+              aria-current={mode === option ? "page" : undefined}
+              onClick={() => setMode(option)}
+            >
+              {option === "daily" ? t("modeDaily") : t("modeEndless")}
+              {option === "endless" && daily.status === "playing" && (
+                <svg viewBox="0 0 24 24" className="modes__lock" aria-hidden="true">
+                  <rect x="5" y="11" width="14" height="10" rx="2" />
+                  <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+                </svg>
+              )}
+            </button>
+          ))}
+        </nav>
         <nav className="topbar__tools">
           <LanguagePicker />
           <button type="button" className="icon-button" aria-label={t("stats")} onClick={() => setSheet("stats")}>
@@ -67,18 +109,40 @@ export function App(): React.ReactElement {
         </nav>
       </header>
 
-      <main className="stage">
+      {locked ? (
+        <main className="stage stage--locked">
+          <section className="locked">
+            <svg viewBox="0 0 24 24" className="locked__icon" aria-hidden="true">
+              <rect x="5" y="11" width="14" height="10" rx="2" />
+              <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+            </svg>
+            <h2 className="locked__title">{t("endlessLocked")}</h2>
+            <p className="locked__hint">{t("endlessLockedHint")}</p>
+            <button type="button" className="button button--primary" onClick={() => setMode("daily")}>
+              {t("playDaily")}
+            </button>
+          </section>
+        </main>
+      ) : (
+      // A new round (or the other mode) starts with a fresh board and compass.
+      <main className="stage" key={mode === "endless" ? `endless-${game.round}` : "daily"}>
         <section className="stage__flag">
           <p className="stage__meta">
-            <span>{t("puzzle", { n: game.number })}</span>
-            <span aria-hidden="true">·</span>
-            <time dateTime={game.date}>
-              {new Date(`${game.date}T12:00:00`).toLocaleDateString(language, {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              })}
-            </time>
+            {mode === "endless" ? (
+              <span>{t("endlessRound", { n: game.stats.played + (over ? 0 : 1) })}</span>
+            ) : (
+              <>
+                <span>{t("puzzle", { n: game.number })}</span>
+                <span aria-hidden="true">·</span>
+                <time dateTime={game.date}>
+                  {new Date(`${game.date}T12:00:00`).toLocaleDateString(language, {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </time>
+              </>
+            )}
           </p>
           <FlagBoard
             tiles={verdict?.tiles ?? EMPTY_TILES}
@@ -129,6 +193,7 @@ export function App(): React.ReactElement {
               verdict={verdict}
               guesses={results.length}
               hardAll={game.hardAll}
+              onNext={mode === "endless" ? game.next : undefined}
               />
               <div className="end-rows">
                 <GuessRows results={results} pending={false} compact />
@@ -150,6 +215,7 @@ export function App(): React.ReactElement {
           )}
         </aside>
       </main>
+      )}
 
       <footer className="credits">
         <a href="/games/">akinozgen.com/games</a>
@@ -159,7 +225,10 @@ export function App(): React.ReactElement {
       {sheet === "rules" && <HowToPlay onClose={closeSheet} />}
       {sheet === "stats" && (
         <Sheet title={t("stats")} onClose={closeSheet}>
-          <StatsView stats={game.stats} />
+          <h3>{t("statsDaily")}</h3>
+          <StatsView stats={daily.stats} />
+          <h3>{t("statsEndless")}</h3>
+          <StatsView stats={practice.stats} />
         </Sheet>
       )}
     </div>

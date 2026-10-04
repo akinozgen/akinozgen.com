@@ -20,3 +20,8 @@ export function fetchDaily(date: string): Promise<DailyInfo> {
 export function judge(date: string, guesses: readonly string[], hard: boolean): Promise<VexleVerdict> {
   return get("judge", { d: date, g: guesses.join(","), hard: hard ? "1" : undefined });
 }
+
+/** An endless round: the browser's random number, judged against the server's secret. */
+export function judgeEndless(round: number, guesses: readonly string[], hard: boolean): Promise<VexleVerdict> {
+  return get("endless", { e: String(round), g: guesses.join(","), hard: hard ? "1" : undefined });
+}

@@ -5,6 +5,7 @@ import countries from "../data/countries.json" with { type: "json" };
 import {
   bearing,
   dailyRound,
+  endlessRound,
   distanceKm,
   handleVexle,
   judgeGuess,
@@ -158,5 +159,48 @@ describe("the API", () => {
     expect((await call("judge", { d: "2026-10-10", g: "FR,FR" })).status).toBe(400);
     expect((await call("judge", { d: "2026-10-10", g: "FR,DE,IT,ES,PT,BE,NL" })).status).toBe(400);
     expect((await call("nope", {})).status).toBe(404);
+  });
+});
+
+describe("endless", () => {
+  const endless = async (params: Record<string, string>) =>
+    (await call("endless", params)).body as VexleVerdict;
+
+  it("deals a round from the secret and the round number", async () => {
+    const a = await endlessRound(SEED, 12345);
+    expect(await endlessRound(SEED, 12345)).toEqual(a);
+    let same = 0;
+    for (let n = 0; n < 40; n++) {
+      if ((await endlessRound(SEED, n)).answer === (await endlessRound("another", n)).answer) same++;
+    }
+    // Without the secret, the number says nothing about the flag.
+    expect(same).toBeLessThan(4);
+  });
+
+  it("judges like the daily and reveals only at the end", async () => {
+    const { answer } = await endlessRound(SEED, 99);
+    const wrong = (countries as Country[]).find((c) => c.code !== answer)!.code;
+    const mid = await endless({ e: "99", g: wrong });
+    expect(mid.status).toBe("playing");
+    expect(mid.answer).toBeNull();
+    expect(mid.tiles.filter(Boolean).length).toBe(1);
+    expect(JSON.stringify(mid)).not.toContain(`"${answer}"`);
+    const won = await endless({ e: "99", g: `${wrong},${answer}` });
+    expect(won.status).toBe("won");
+    expect(won.answer).toBe(answer);
+  });
+
+  it("does not steer around the daily: every flag can turn up", async () => {
+    // A rule like "never deal today's flag" would be measurable from outside.
+    const seen = new Set<string>();
+    for (let n = 0; n < 4000; n++) seen.add((await endlessRound(SEED, n)).answer);
+    expect(seen.size).toBe(answersList.length);
+  });
+
+  it("rejects a bad round number and runs only with a secret", async () => {
+    expect((await call("endless", { e: "-1" })).status).toBe(400);
+    expect((await call("endless", { e: "abc" })).status).toBe(400);
+    expect((await call("endless", { e: String(2 ** 32) })).status).toBe(400);
+    expect((await call("endless", { e: "5" }, null)).status).toBe(503);
   });
 });

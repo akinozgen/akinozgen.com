@@ -109,3 +109,16 @@ the 85 languages ICU can name in all five interface languages:
 `/api/babelle/judge?d=<date>&a=<choices>&g=<languages>` picks the day's
 language from `HMAC(seed, day)`, hands out one question at a time, marks each
 answer, and reveals the language only when the day is over.
+
+## Endless modes (vexle, babelle)
+
+Both games have an endless mode: back-to-back practice rounds with a record
+of their own, kept apart from the daily streak. A round is a random 32-bit
+number the browser picks; the server turns it into a flag or language with
+`HMAC(seed, number)`, so the number alone gives nothing away.
+
+Endless deliberately excludes nothing — not even today's answer. A rule
+like "never deal today's flag" could be measured from outside by asking for
+thousands of rounds and seeing which answer never turns up, which would
+narrow the daily down to a handful. Instead the page keeps endless closed
+until the day's round is finished, so an honest player can't be spoiled.

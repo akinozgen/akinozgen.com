@@ -190,6 +190,25 @@ export async function dailyRound(
   return round;
 }
 
+/**
+ * An endless round, from a number the player's browser picks at random.
+ * The answer comes from HMAC(secret, number), so the number alone says
+ * nothing. Endless deliberately avoids nothing — not even today's flag:
+ * any rule like "never deal today's answer" could be measured by asking
+ * for thousands of rounds and seeing which flag never turns up. The page
+ * opens endless only once the day's round is finished instead.
+ */
+export async function endlessRound(seed: string, round: number): Promise<{ answer: string; order: number[] }> {
+  const random = await stream(seed, `vexle:endless:${round}`);
+  const answer = ANSWERS[Math.floor(random() * ANSWERS.length)];
+  const order = Array.from({ length: TILES }, (_, i) => i);
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  return { answer, order };
+}
+
 const RADIUS_KM = 6371;
 const toRad = (deg: number): number => (deg * Math.PI) / 180;
 
@@ -283,13 +302,20 @@ export async function handleVexle(
   now: Date = new Date(),
 ): Promise<Reply> {
   try {
-    if (action !== "daily" && action !== "judge") return fail(404, "no such endpoint");
+    if (action !== "daily" && action !== "judge" && action !== "endless") return fail(404, "no such endpoint");
     if (!seed) return fail(503, "vexle is not configured");
 
-    const day = dayOf(query.get("date") ?? query.get("d"), now);
-    if (!day) return fail(404, "that day has not started anywhere yet");
-
-    if (action === "daily") return { status: 200, body: day, cache: "public, max-age=3600" };
+    let round: { answer: string; order: number[] };
+    if (action === "endless") {
+      const number = Number(query.get("e"));
+      if (!Number.isInteger(number) || number < 0 || number > 0xffffffff) throw new BadRequest("bad round");
+      round = await endlessRound(seed, number);
+    } else {
+      const day = dayOf(query.get("date") ?? query.get("d"), now);
+      if (!day) return fail(404, "that day has not started anywhere yet");
+      if (action === "daily") return { status: 200, body: day, cache: "public, max-age=3600" };
+      round = await dailyRound(seed, day.number);
+    }
 
     const codes = (query.get("g") ?? "").split(",").filter(Boolean);
     if (codes.length > MAX_GUESSES) throw new BadRequest("too many guesses");
@@ -300,7 +326,7 @@ export async function handleVexle(
     });
     if (new Set(codes).size !== codes.length) throw new BadRequest("repeated country");
 
-    const { answer: answerCode, order } = await dailyRound(seed, day.number);
+    const { answer: answerCode, order } = round;
     const answer = BY_CODE.get(answerCode)!;
     const won = codes.indexOf(answerCode);
     if (won !== -1 && won !== codes.length - 1) throw new BadRequest("guesses after the answer");

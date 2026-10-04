@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import answers from "../data/answers.json" with { type: "json" };
 import publicData from "../data/public.json" with { type: "json" };
-import { type BabelleVerdict, dailyRound, handleBabelle, puzzleNumber } from "../src/server.ts";
+import { type BabelleVerdict, dailyRound, endlessRound, handleBabelle, puzzleNumber } from "../src/server.ts";
 
 const SEED = "test-seed-not-the-real-one";
 const NOW = new Date("2026-10-10T12:00:00Z");
@@ -108,5 +108,50 @@ describe("the API", () => {
     expect((await call({ d: "2026-10-10", g: "eng" })).status).toBe(400);
     expect((await call({ d: "2026-10-10", a: "0,0,0,0,0", g: "xxx" })).status).toBe(400);
     expect((await call({ d: "2026-10-10" }, null)).status).toBe(503);
+  });
+});
+
+describe("endless", () => {
+  const endless = async (params: Record<string, string>) =>
+    (await handleBabelle("endless", new URLSearchParams(params), SEED, NOW)).body as BabelleVerdict;
+
+  it("deals a round from the secret and the round number", async () => {
+    const a = await endlessRound(SEED, 777);
+    expect((await endlessRound(SEED, 777)).language.id).toBe(a.language.id);
+    let same = 0;
+    for (let n = 0; n < 40; n++) {
+      if ((await endlessRound(SEED, n)).language.id === (await endlessRound("another", n)).language.id) same++;
+    }
+    expect(same).toBeLessThan(5);
+  });
+
+  it("plays like the daily: one question at a time, the language only at the end", async () => {
+    const round = await endlessRound(SEED, 777);
+    const first = await endless({ e: "777" });
+    expect(first.questions.length).toBe(1);
+    expect(first.reveal).toBeNull();
+    expect(JSON.stringify(first)).not.toContain(`"${round.language.id}"`);
+    const won = await endless({ e: "777", a: "0,0,0,0,0", g: round.language.id });
+    expect(won.status).toBe("won");
+    expect(won.reveal?.language).toBe(round.language.id);
+  });
+
+  it("does not steer around the daily: every language can turn up", async () => {
+    const seen = new Set<string>();
+    for (let n = 0; n < 3000; n++) seen.add((await endlessRound(SEED, n)).language.id);
+    expect(seen.size).toBe(answers.length);
+  });
+
+  it("builds a sound round for many numbers", async () => {
+    for (let n = 0; n < 300; n++) {
+      const round = await endlessRound(SEED, n);
+      for (const q of round.questions) expect(new Set(q.options).size).toBe(4);
+    }
+  });
+
+  it("rejects a bad round number", async () => {
+    for (const e of ["-1", "x", String(2 ** 32)]) {
+      expect((await handleBabelle("endless", new URLSearchParams({ e }), SEED, NOW)).status).toBe(400);
+    }
   });
 });
