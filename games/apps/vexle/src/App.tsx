@@ -123,12 +123,17 @@ export function App(): React.ReactElement {
           )}
 
           {over && verdict && (
-            <EndCard
+            <>
+              <EndCard
               number={game.number}
               verdict={verdict}
               guesses={results.length}
               hardAll={game.hardAll}
-            />
+              />
+              <div className="end-rows">
+                <GuessRows results={results} pending={false} compact />
+              </div>
+            </>
           )}
 
           {!over && <GuessRows results={results} pending={game.pending} />}

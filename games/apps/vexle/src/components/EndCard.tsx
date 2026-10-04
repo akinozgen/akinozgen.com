@@ -71,6 +71,11 @@ export function EndCard({
         type="button"
         className="button button--primary end__share"
         onClick={() => {
+          // Phones get the system share sheet; everything else, the clipboard.
+          if (navigator.share && window.matchMedia?.("(pointer: coarse)").matches) {
+            void navigator.share({ text: share }).catch(() => undefined);
+            return;
+          }
           void copyText(share).then((ok) => {
             setCopied(ok);
             window.setTimeout(() => setCopied(false), 2000);

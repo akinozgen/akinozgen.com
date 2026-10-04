@@ -45,16 +45,18 @@ export function GuessInput({
   const suggestions = useMemo(() => {
     const needle = fold(query);
     if (needle.length === 0) return [];
+    const exact: Entry[] = [];
     const starts: Entry[] = [];
     const words: Entry[] = [];
     const contains: Entry[] = [];
     for (const entry of entries) {
       if (taken.includes(entry.code)) continue;
-      if (entry.keys.some((key) => key.startsWith(needle))) starts.push(entry);
+      if (entry.keys.includes(needle)) exact.push(entry);
+      else if (entry.keys.some((key) => key.startsWith(needle))) starts.push(entry);
       else if (entry.keys.some((key) => key.split(" ").some((w) => w.startsWith(needle)))) words.push(entry);
       else if (entry.keys.some((key) => key.includes(needle))) contains.push(entry);
     }
-    return [...starts, ...words, ...contains].slice(0, MAX_SUGGESTIONS);
+    return [...exact, ...starts, ...words, ...contains].slice(0, MAX_SUGGESTIONS);
   }, [query, entries, taken]);
 
   const pick = (entry: Entry | undefined): void => {
@@ -110,6 +112,7 @@ export function GuessInput({
             aria-expanded={showList}
             aria-controls={listId}
             aria-autocomplete="list"
+            aria-activedescendant={showList ? `${listId}-${active}` : undefined}
             autoComplete="off"
             autoCorrect="off"
             spellCheck={false}
@@ -145,7 +148,7 @@ export function GuessInput({
       {showList && (
         <ul className="guess-input__list" id={listId} role="listbox">
           {suggestions.map((entry, index) => (
-            <li key={entry.code} role="option" aria-selected={index === active}>
+            <li key={entry.code} id={`${listId}-${index}`} role="option" aria-selected={index === active}>
               <button
                 type="button"
                 className={`guess-input__option${index === active ? " is-active" : ""}`}

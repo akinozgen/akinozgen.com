@@ -10,7 +10,9 @@ import { TEST_SEED } from "./setup.ts";
 const { answer } = await dailyRound(TEST_SEED, puzzleNumber(localDate())!);
 const wrong = COUNTRIES.filter((c) => c.code !== answer).map((c) => c.names.en);
 
-const rows = (): HTMLElement[] => Array.from(document.querySelectorAll<HTMLElement>(".row--filled"));
+/** The first list of guesses on the page (a finished round shows it twice, one per layout). */
+const rows = (): HTMLElement[] =>
+  Array.from(document.querySelector(".rows")?.querySelectorAll<HTMLElement>(".row--filled") ?? []);
 const openTiles = (): number => document.querySelectorAll(".tile.is-open").length;
 
 async function guess(name: string): Promise<void> {

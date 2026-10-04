@@ -112,7 +112,7 @@ export function Compass({
 
         {dots.map((result, index) => {
           const [x, y] = polar(result.bearing!, dotRadius(result.km));
-          const latest = index === dots.length - 1 && !won;
+          const latest = index === dots.length - 1 && status === "playing";
           const slot = results.indexOf(result) + 1;
           return (
             <g key={result.code} className={`compass__dot dot--${slot}${latest ? " is-latest" : ""}`}>
