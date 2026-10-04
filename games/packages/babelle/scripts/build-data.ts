@@ -1,6 +1,6 @@
 import { readFile, writeFile } from "node:fs/promises";
 import type { Concept, Language, PublicData, ServerData, UiLanguage } from "../src/types.ts";
-import { UI_LANGUAGES } from "../src/types.ts";
+import { UI_LANGUAGES, WITHDRAWN } from "../src/types.ts";
 
 /**
  * Builds babelle's data from NorthEuraLex (Dellert et al. 2020, CC BY 4.0;
@@ -227,7 +227,7 @@ const kept = new Set(languages.map((l) => l.id));
 const serverForms = Object.fromEntries(Object.entries(forms).filter(([id]) => kept.has(id)));
 const publicData: PublicData = {
   concepts,
-  languages: languages.map(({ id, names }) => ({ id, names })),
+  languages: languages.filter((l) => !WITHDRAWN.has(l.id)).map(({ id, names }) => ({ id, names })),
 };
 const serverData: ServerData = { languages, forms: serverForms };
 

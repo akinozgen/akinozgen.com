@@ -38,6 +38,13 @@ export interface ServerData {
   forms: Record<string, Record<string, string>>;
 }
 
+/**
+ * Languages taken out of the game. They stay in the word lists so every
+ * other day's shuffles come out as before; they are skipped wherever one
+ * would be shown, and the browser's list no longer has them.
+ */
+export const WITHDRAWN: ReadonlySet<string> = new Set(["kmr"]);
+
 /** Questions before the final guess. */
 export const QUESTIONS = 5;
 /** Tries at naming the language. */

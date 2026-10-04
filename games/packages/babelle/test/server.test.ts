@@ -155,3 +155,23 @@ describe("endless", () => {
     }
   });
 });
+
+describe("withdrawn languages", () => {
+  it("never appear as the language, an option, or in the browser's list", async () => {
+    const { WITHDRAWN } = await import("../src/types.ts");
+    for (const id of WITHDRAWN) {
+      expect(answers).not.toContain(id);
+      expect(publicData.languages.some((l) => l.id === id)).toBe(false);
+    }
+    for (let n = 1; n <= 400; n++) {
+      for (const round of [await dailyRound(SEED, n), await endlessRound(SEED, n)]) {
+        expect(WITHDRAWN.has(round.language.id)).toBe(false);
+        for (const q of round.questions) for (const o of q.options) expect(WITHDRAWN.has(o)).toBe(false);
+      }
+    }
+  });
+
+  it("can't be guessed", async () => {
+    expect((await call({ d: "2026-10-10", a: "0,0,0,0,0", g: "kmr" })).status).toBe(400);
+  });
+});

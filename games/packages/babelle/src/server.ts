@@ -3,7 +3,7 @@ import vexleCountries from "../../vexle/data/countries.json" with { type: "json"
 import answersData from "../data/answers.json" with { type: "json" };
 import publicData from "../data/public.json" with { type: "json" };
 import serverData from "../data/server.json" with { type: "json" };
-import { FINAL_TRIES, type Language, QUESTIONS, type ServerData } from "./types.ts";
+import { FINAL_TRIES, type Language, QUESTIONS, type ServerData, WITHDRAWN } from "./types.ts";
 
 /**
  * babelle's game server. Each day has a hidden language; the player answers
@@ -209,6 +209,7 @@ function bearing(a: { lat: number; lon: number }, b: { lat: number; lon: number 
 function options(right: string, decoys: readonly string[], random: () => number): { options: string[]; correct: number } {
   const chosen: string[] = [];
   for (const decoy of shuffle(decoys, random)) {
+    if (WITHDRAWN.has(decoy)) continue;
     if (decoy !== right && !chosen.includes(decoy)) chosen.push(decoy);
     if (chosen.length === 3) break;
   }
@@ -297,7 +298,8 @@ function buildRound(language: Language, random: () => number): Round {
     // A relative first if there is one, then strangers; never a twin of the right word.
     const right = words[c3];
     const decoys: string[] = [];
-    for (const l of [...relatives.slice(0, 1), ...strangers]) {
+    for (const l of [...relatives.filter((r) => !WITHDRAWN.has(r.id)).slice(0, 1), ...strangers]) {
+      if (WITHDRAWN.has(l.id)) continue;
       const word = DATA.forms[l.id][c3];
       if (word !== right && !decoys.includes(word)) decoys.push(word);
       if (decoys.length === 3) break;
@@ -310,9 +312,13 @@ function buildRound(language: Language, random: () => number): Round {
     const relatives = LANGUAGES.filter((l) => l.family === language.family && l.id !== language.id);
     // A close relative when there is one: Lithuanian for Latvian, not Icelandic.
     const close = relatives.filter((l) => l.subfamily && l.subfamily === language.subfamily);
-    const pool = close.length > 0 ? close : relatives;
-    if (pool.length > 0) {
-      const right = pool[Math.floor(random() * pool.length)].id;
+    const shown = (list: Language[]): boolean => list.some((l) => !WITHDRAWN.has(l.id));
+    const pool = shown(close) ? close : relatives;
+    if (shown(pool)) {
+      // A withdrawn pick passes to the next relative, so the draw is unchanged otherwise.
+      let pick = Math.floor(random() * pool.length);
+      while (WITHDRAWN.has(pool[pick].id)) pick = (pick + 1) % pool.length;
+      const right = pool[pick].id;
       const strangers = LANGUAGES.filter((l) => l.family !== language.family).map((l) => l.id);
       const o = options(right, strangers, random);
       add({ kind: "relative", options: o.options }, o.correct);
@@ -320,8 +326,9 @@ function buildRound(language: Language, random: () => number): Round {
       const byDistance = LANGUAGES.filter((l) => l.id !== language.id)
         .map((l) => ({ id: l.id, km: distanceKm(l, language) }))
         .sort((a, b) => a.km - b.km);
-      const right = byDistance[0].id;
-      const far = byDistance.filter((l) => l.km > byDistance[0].km + 2500).map((l) => l.id);
+      const nearest = byDistance.find((l) => !WITHDRAWN.has(l.id))!;
+      const right = nearest.id;
+      const far = byDistance.filter((l) => l.km > nearest.km + 2500).map((l) => l.id);
       const o = options(right, far, random);
       add({ kind: "neighbour", options: o.options }, o.correct);
     }
@@ -389,7 +396,9 @@ export async function handleBabelle(
     if (guessIds.length > FINAL_TRIES) throw new BadRequest("too many guesses");
     if (guessIds.length > 0 && chosen.length < QUESTIONS) throw new BadRequest("questions first");
     if (new Set(guessIds).size !== guessIds.length) throw new BadRequest("repeated guess");
-    for (const id of guessIds) if (!BY_ID.has(id)) throw new BadRequest(`unknown language: ${id}`);
+    for (const id of guessIds) {
+      if (!BY_ID.has(id) || WITHDRAWN.has(id)) throw new BadRequest(`unknown language: ${id}`);
+    }
 
     const answers = chosen.map((choice, i) => ({ chosen: choice, correct: round.correct[i] }));
 
