@@ -19,7 +19,9 @@ export interface Country {
 export const COLUMNS = 3;
 export const ROWS = 2;
 export const TILES = COLUMNS * ROWS;
-export const TILE_PX = 400;
+/** A tile's size in the packs: the flag is drawn at 1200×900 (4:3) and cut in six. */
+export const TILE_W = 400;
+export const TILE_H = 450;
 
 /** Guesses allowed: one per tile. */
 export const MAX_GUESSES = TILES;

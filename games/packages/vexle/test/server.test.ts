@@ -17,7 +17,7 @@ import type { Country } from "../src/types.ts";
 
 const SEED = "test-seed-not-the-real-one";
 const NOW = new Date("2026-10-10T12:00:00Z");
-const PACKS = new URL("../../../../public/games/vexle-tiles/", import.meta.url);
+const PACKS = new URL("../tiles/", import.meta.url);
 const load = async (code: string) => new Uint8Array(await readFile(new URL(`${code.toLowerCase()}.bin`, PACKS)));
 const byCode = (code: string) => (countries as Country[]).find((c) => c.code === code)!;
 

@@ -482,7 +482,7 @@ body {
   display: grid;
   grid-template-rows: repeat(2, 1fr);
   gap: 6px;
-  aspect-ratio: 3 / 2;
+  aspect-ratio: 4 / 3;
   border-radius: 12px;
   transition: gap 700ms cubic-bezier(0.3, 0.8, 0.3, 1) 650ms;
 }

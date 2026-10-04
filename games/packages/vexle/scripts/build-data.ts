@@ -1,16 +1,18 @@
-import { createHash } from "node:crypto";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import countries from "i18n-iso-countries";
 import sharp from "sharp";
 import geo from "../../geo/data/geo.json" with { type: "json" };
-import { COLUMNS, type Country, LANGUAGES, ROWS, TILE_PX } from "../src/types.ts";
+import answers from "../data/answers.json" with { type: "json" };
+import { COLUMNS, type Country, LANGUAGES, ROWS, TILE_H, TILE_W } from "../src/types.ts";
 
 /**
  * Builds vexle's data from two sources:
  *
  *  - travelle's regions, for a centroid to measure distances from;
  *  - the platform's Intl.DisplayNames, for names in every language;
- *  - country-flag-icons (MIT), for 3:2 flags.
+ *  - flag-icons (MIT), for faithful flags redrawn at one 4:3 ratio. Real
+ *    ratios would give the answer away (Qatar's long strip, Switzerland's
+ *    square); stretching them to one ratio would warp circles and suns.
  *
  * It writes data/countries.json, which anyone may see, and one tile pack per
  * flag under the site's public folder. The packs are public too — every flag
@@ -18,14 +20,20 @@ import { COLUMNS, type Country, LANGUAGES, ROWS, TILE_PX } from "../src/types.ts
  * a player has earned, so nothing on the page says what the answer is.
  */
 
-const FLAGS = new URL("../node_modules/country-flag-icons/3x2/", import.meta.url);
-const PACKS = new URL("../../../../public/games/vexle-tiles/", import.meta.url);
+const FLAGS = new URL("../node_modules/flag-icons/flags/4x3/", import.meta.url);
+/**
+ * Tile packs land here, outside git; `upload-tiles.ts` puts them in the
+ * akinozgen-games R2 bucket, which the site's Worker reads through a binding.
+ */
+const PACKS = new URL("../tiles/", import.meta.url);
 
 /** Natural Earth codes that are not the country's ISO code. */
 const ISO3_FIXES: Record<string, string> = { cuba: "CUB", cyprus: "CYP", kosovo: "XKX" };
 const ALPHA2_FIXES: Record<string, string> = { XKX: "XK" };
+/** Where flag-icons files a territory's own flag under another name. */
+const FLAG_FILES: Record<string, string> = { SH: "sh-hl" };
 /** When two codes share a flag, these keep it over their territories. */
-const SOVEREIGN_FIRST = new Set(["FR", "NO", "US"]);
+const SOVEREIGN_FIRST = new Set(["FR", "NO", "US", "GB", "NL", "AU", "NZ", "DK"]);
 
 interface GeoRegion {
   id: string;
@@ -35,6 +43,21 @@ interface GeoRegion {
   centroid: [number, number];
 }
 
+/** A small rendering of a flag, to tell whether two files draw the same thing. */
+async function thumbnail(svg: Buffer): Promise<Buffer> {
+  return sharp(svg, { density: 72 }).resize(64, 48, { fit: "fill" }).flatten({ background: "#ffffff" }).raw().toBuffer();
+}
+
+/** Same picture, give or take antialiasing. */
+function alike(a: Buffer, b: Buffer): boolean {
+  if (a.length !== b.length) return false;
+  let total = 0;
+  for (let i = 0; i < a.length; i++) total += Math.abs(a[i] - b[i]);
+  // Svalbard against Norway measures under 4; Romania against Chad, the
+  // nearest real pair of distinct flags, measures 18.
+  return total / a.length < 6;
+}
+
 /**
  * A pack is the six colour tiles, the same six in grey, then the whole flag,
  * each a WebP. Header: 13 little-endian uint32 byte lengths. The whole flag
@@ -42,8 +65,8 @@ interface GeoRegion {
  * clean image rather than six tiles resampled side by side.
  */
 async function pack(svg: Buffer): Promise<Buffer> {
-  const width = COLUMNS * TILE_PX;
-  const height = ROWS * TILE_PX;
+  const width = COLUMNS * TILE_W;
+  const height = ROWS * TILE_H;
   const full = await sharp(svg, { density: 400 })
     .resize(width, height, { fit: "fill" })
     .flatten({ background: "#ffffff" })
@@ -54,10 +77,10 @@ async function pack(svg: Buffer): Promise<Buffer> {
   for (const grey of [false, true]) {
     for (let index = 0; index < COLUMNS * ROWS; index++) {
       let tile = sharp(full).extract({
-        left: (index % COLUMNS) * TILE_PX,
-        top: Math.floor(index / COLUMNS) * TILE_PX,
-        width: TILE_PX,
-        height: TILE_PX,
+        left: (index % COLUMNS) * TILE_W,
+        top: Math.floor(index / COLUMNS) * TILE_H,
+        width: TILE_W,
+        height: TILE_H,
       });
       if (grey) tile = tile.grayscale();
       tiles.push(await tile.webp({ quality: 82 }).toBuffer());
@@ -169,28 +192,29 @@ async function main(): Promise<void> {
 
   // Réunion and Saint Pierre fly the French flag, Svalbard the Norwegian.
   // Two answers behind one picture is not a puzzle, so the sovereign keeps it.
-  const codes = [...byCode.keys()].sort(
-    (a, b) =>
-      Number(SOVEREIGN_FIRST.has(b)) - Number(SOVEREIGN_FIRST.has(a)) || a.localeCompare(b),
-  );
-  const seenFlags = new Map<string, string>();
+  // Sovereigns first, then the frozen answers, so neither loses its flag to a territory.
+  const answered = new Set(answers as string[]);
+  const rank = (code: string): number => (SOVEREIGN_FIRST.has(code) ? 0 : answered.has(code) ? 1 : 2);
+  const codes = [...byCode.keys()].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
+  const seenFlags = new Map<string, Buffer>();
   const chosen: Country[] = [];
   for (const code of codes) {
     const region = byCode.get(code)!;
     let svg: Buffer;
     try {
-      svg = await readFile(new URL(`${code}.svg`, FLAGS));
+      svg = await readFile(new URL(`${FLAG_FILES[code] ?? code.toLowerCase()}.svg`, FLAGS));
     } catch {
       skipped.push(`${region.id} (no flag)`);
       continue;
     }
-    const digest = createHash("sha256").update(svg).digest("hex");
-    const twin = seenFlags.get(digest);
+    // Compared as pictures, not files: two SVGs can draw the same flag.
+    const look = await thumbnail(svg);
+    const twin = [...seenFlags].find(([, seen]) => alike(seen, look))?.[0];
     if (twin) {
       skipped.push(`${region.id} (same flag as ${twin})`);
       continue;
     }
-    seenFlags.set(digest, code);
+    seenFlags.set(code, look);
 
     chosen.push({
       code,
@@ -205,10 +229,10 @@ async function main(): Promise<void> {
   chosen.sort((a, b) => a.code.localeCompare(b.code));
   await writeFile(new URL("../data/countries.json", import.meta.url), JSON.stringify(chosen));
 
-  const licence = await readFile(new URL("../LICENSE", FLAGS), "utf8");
+  const licence = await readFile(new URL("../../LICENSE", FLAGS), "utf8");
   await writeFile(
     new URL("FLAGS-LICENSE.txt", PACKS),
-    `Flags from country-flag-icons (https://gitlab.com/catamphetamine/country-flag-icons)\n\n${licence}`,
+    `Flags from flag-icons (https://github.com/lipis/flag-icons)\n\n${licence}`,
   );
 
   console.log(`countries: ${chosen.length}`);

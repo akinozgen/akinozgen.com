@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import react from "@vitejs/plugin-react";
 import { defineConfig, type Plugin } from "vite";
 
-const PACKS = new URL("../../../public/games/vexle-tiles/", import.meta.url);
+const PACKS = new URL("../../packages/vexle/tiles/", import.meta.url);
 
 /**
  * In development the game talks to the same API code the site runs, served

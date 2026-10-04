@@ -80,10 +80,11 @@ request, including the bots' 404s, is served from static assets.
 
 ## How vexle keeps its answer
 
-`packages/vexle/scripts/build-data.ts` takes 3:2 flags from
-[country-flag-icons](https://gitlab.com/catamphetamine/country-flag-icons)
-(MIT), cuts each into six tiles (colour and grey, WebP) and writes one pack per
-flag to the site's `public/games/vexle-tiles/`, plus `data/countries.json`
+`packages/vexle/scripts/build-data.ts` takes flags from
+[flag-icons](https://github.com/lipis/flag-icons) (MIT), drawn faithfully at
+one 4:3 ratio (real ratios would give answers away), cuts each into six tiles (colour and grey, WebP) and writes one pack per
+flag to `packages/vexle/tiles/` (not in git; `scripts/upload-tiles.ts` puts
+them in the `akinozgen-games` R2 bucket, bound to the Worker as `GAME_ASSETS`), plus `data/countries.json`
 (names in five languages from ICU, centroids from travelle's regions). Every
 flag is public anyway; what stays on the server is which one is today's.
 

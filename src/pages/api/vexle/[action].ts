@@ -4,24 +4,39 @@ import { handleVexle } from "../../../../games/packages/vexle/src/server.ts";
 
 /**
  * vexle's game server: which flag is today's, how each guess scores, and
- * which tiles have been earned. The tile packs are ordinary static files;
- * only this code knows which one is today's.
+ * which tiles have been earned. The tile packs live in the akinozgen-games
+ * R2 bucket, bound to this Worker; only this code knows which one is today's.
  */
 export const prerender = false;
 
+/** Versioned, so a rebuilt set never mixes with an old one. */
+const TILES = "vexle/tiles-v2/";
+
+interface Bucket {
+  get: (key: string) => Promise<{ arrayBuffer: () => Promise<ArrayBuffer> } | null>;
+}
+
+/** Packs read lately, kept in the isolate: the day's flag is asked for all day. */
+const packs = new Map<string, Uint8Array>();
+
 interface Env {
   TRAVELLE_SEED?: string;
-  ASSETS: { fetch: (request: Request | string) => Promise<Response> };
+  GAME_ASSETS: Bucket;
 }
 
 export const GET: APIRoute = async ({ params, url }) => {
-  const { TRAVELLE_SEED, ASSETS } = env as unknown as Env;
+  const { TRAVELLE_SEED, GAME_ASSETS } = env as unknown as Env;
   // One secret serves both games; the labels inside keep their streams apart.
   const seed = TRAVELLE_SEED && `vexle:${TRAVELLE_SEED}`;
   const loadPack = async (code: string): Promise<Uint8Array> => {
-    const response = await ASSETS.fetch(new URL(`/games/vexle-tiles/${code.toLowerCase()}.bin`, url).toString());
-    if (!response.ok) throw new Error(`no tile pack for ${code}`);
-    return new Uint8Array(await response.arrayBuffer());
+    const cached = packs.get(code);
+    if (cached) return cached;
+    const object = await GAME_ASSETS.get(`${TILES}${code.toLowerCase()}.bin`);
+    if (!object) throw new Error(`no tile pack for ${code}`);
+    const pack = new Uint8Array(await object.arrayBuffer());
+    if (packs.size >= 24) packs.delete(packs.keys().next().value!);
+    packs.set(code, pack);
+    return pack;
   };
   try {
     const reply = await handleVexle(params.action ?? "", url.searchParams, seed, loadPack);

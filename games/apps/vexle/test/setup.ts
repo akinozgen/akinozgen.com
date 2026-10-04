@@ -6,7 +6,7 @@ import { vi } from "vitest";
 /** The tests talk to the real API code, in process, with a seed of their own. */
 export const TEST_SEED = "test-seed-not-the-real-one";
 // jsdom gives modules http URLs, so the packs are found from the working directory.
-const PACKS = join(process.cwd(), "../../../public/games/vexle-tiles");
+const PACKS = join(process.cwd(), "../../packages/vexle/tiles");
 export const loadPack = async (code: string): Promise<Uint8Array> =>
   new Uint8Array(await readFile(join(PACKS, `${code.toLowerCase()}.bin`)));
 

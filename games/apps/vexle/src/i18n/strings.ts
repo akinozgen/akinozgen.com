@@ -68,7 +68,7 @@ const en = {
   statsDaily: "Daily",
   statsEndless: "Endless",
   rulesEndless: "Endless deals practice flags without limit once today's is done. Its record is kept apart from your daily streak.",
-  flagCredit: "Flags: country-flag-icons (MIT)",
+  flagCredit: "Flags: flag-icons (MIT)",
   tileCovered: "Tile {n}, covered",
   tileOpen: "Tile {n}, open",
 };
@@ -144,7 +144,7 @@ const tr: Dict = {
   statsDaily: "Günlük",
   statsEndless: "Sonsuz",
   rulesEndless: "Günün bayrağını bitirince Sonsuz mod sınırsız pratik bayrak verir. Kaydı günlük serinden ayrı tutulur.",
-  flagCredit: "Bayraklar: country-flag-icons (MIT)",
+  flagCredit: "Bayraklar: flag-icons (MIT)",
   tileCovered: "Karo {n}, kapalı",
   tileOpen: "Karo {n}, açık",
 };
@@ -218,7 +218,7 @@ const de: Dict = {
   statsDaily: "Täglich",
   statsEndless: "Endlos",
   rulesEndless: "Ist die heutige Flagge gelöst, gibt es im Endlos-Modus unbegrenzt Übungsflaggen. Ihre Statistik bleibt von deiner Tagesserie getrennt.",
-  flagCredit: "Flaggen: country-flag-icons (MIT)",
+  flagCredit: "Flaggen: flag-icons (MIT)",
   tileCovered: "Feld {n}, verdeckt",
   tileOpen: "Feld {n}, offen",
 };
@@ -292,7 +292,7 @@ const ru: Dict = {
   statsDaily: "Ежедневно",
   statsEndless: "Без конца",
   rulesEndless: "Когда сегодняшний флаг сыгран, режим без конца даёт сколько угодно тренировочных флагов. Его статистика отдельна от ежедневной серии.",
-  flagCredit: "Флаги: country-flag-icons (MIT)",
+  flagCredit: "Флаги: flag-icons (MIT)",
   tileCovered: "Плитка {n}, закрыта",
   tileOpen: "Плитка {n}, открыта",
 };
@@ -366,7 +366,7 @@ const es: Dict = {
   statsDaily: "Diario",
   statsEndless: "Sin fin",
   rulesEndless: "Cuando terminas la bandera de hoy, el modo sin fin reparte banderas de práctica sin límite. Su historial va aparte de tu racha diaria.",
-  flagCredit: "Banderas: country-flag-icons (MIT)",
+  flagCredit: "Banderas: flag-icons (MIT)",
   tileCovered: "Casilla {n}, tapada",
   tileOpen: "Casilla {n}, destapada",
 };
