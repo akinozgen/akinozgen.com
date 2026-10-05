@@ -1,13 +1,21 @@
 import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { dailyRound, puzzleNumber } from "@vexle/data/server";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "../src/App.tsx";
 import { COUNTRIES, country } from "../src/game/countries.ts";
-import { localDate } from "../src/game/useVexle.ts";
 import { render } from "./helpers.tsx";
 import { TEST_SEED } from "./setup.ts";
 
-const { answer } = await dailyRound(TEST_SEED, puzzleNumber(localDate())!);
+// Day 1, the last under the six-guess rules without a die (dice.test.tsx has
+// the rules after it). Pinned, so the suite means the same thing every day.
+const DAY = "2026-10-04";
+beforeAll(() => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date(`${DAY}T12:00:00`));
+});
+afterAll(() => vi.useRealTimers());
+
+const { answer } = await dailyRound(TEST_SEED, puzzleNumber(DAY)!);
 const wrong = COUNTRIES.filter((c) => c.code !== answer).map((c) => c.names.en);
 
 /** The first list of guesses on the page (a finished round shows it twice, one per layout). */
@@ -136,6 +144,12 @@ describe("vexle", () => {
     const options = within(list).getAllByRole("option").map((option) => option.textContent);
     expect(options[0]).toBe("Argentina");
     expect(options).toContain("Algeria");
+  });
+
+  it("still finds a country through a typo", async () => {
+    render(<App />);
+    fireEvent.change(screen.getByLabelText("Guess a country"), { target: { value: "Estavini" } });
+    expect(await screen.findByRole("button", { name: "Eswatini" })).toBeTruthy();
   });
 
   it("remembers the round across a reload", async () => {
