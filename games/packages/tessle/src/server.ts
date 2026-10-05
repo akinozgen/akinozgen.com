@@ -367,6 +367,48 @@ function polylabel(rings: number[][], precision = 4): Point {
 
 // --- rounds ---
 
+/**
+ * The outline of several pieces put together. Neighbours share their border
+ * point for point, so every edge inside the map turns up twice — once in each
+ * piece — and every edge on the outside once. Keeping the edges seen once
+ * and chaining them end to end gives the silhouette, holes and all.
+ */
+function silhouette(rings: number[][], cx: number, cy: number): number[][] {
+  const key = (x: number, y: number): string => `${x},${y}`;
+  const edgeKey = (a: string, b: string): string => (a < b ? `${a}|${b}` : `${b}|${a}`);
+  const seen = new Map<string, number>();
+  const edges: Array<{ a: string; b: string; ax: number; ay: number }> = [];
+  for (const ring of rings) {
+    for (let i = 0; i < ring.length; i += 2) {
+      const j = (i + 2) % ring.length;
+      const a = key(ring[i], ring[i + 1]);
+      const b = key(ring[j], ring[j + 1]);
+      if (a === b) continue;
+      const k = edgeKey(a, b);
+      seen.set(k, (seen.get(k) ?? 0) + 1);
+      edges.push({ a, b, ax: ring[i], ay: ring[i + 1] });
+    }
+  }
+  const outer = edges.filter(({ a, b }) => seen.get(edgeKey(a, b)) === 1);
+  const from = new Map<string, number[]>();
+  outer.forEach(({ a }, i) => from.set(a, [...(from.get(a) ?? []), i]));
+  const used = new Uint8Array(outer.length);
+  const out: number[][] = [];
+  for (let start = 0; start < outer.length; start++) {
+    if (used[start]) continue;
+    const ring: number[] = [];
+    let at = start;
+    while (at !== -1 && !used[at]) {
+      used[at] = 1;
+      const edge = outer[at];
+      ring.push(round1(edge.ax - cx), round1(edge.ay - cy));
+      at = (from.get(edge.b) ?? []).find((next) => !used[next]) ?? -1;
+    }
+    if (ring.length >= 6) out.push(ring);
+  }
+  return out;
+}
+
 export interface Round {
   /** Region ids, in the order the pieces are sent. */
   ids: string[];
@@ -378,6 +420,10 @@ export interface Round {
   turns: number[];
   /** Pieces that share a border, by index. */
   pairs: Array<[number, number]>;
+  /** Each piece's place in the frame: its centre around the map's own centre. */
+  home: Point[];
+  /** The frame: the finished map's silhouette, around the same centre. */
+  outline: number[][];
 }
 
 /**
@@ -526,10 +572,21 @@ export function cutRound(ids: readonly string[], random: () => number): Round {
   }
   pairs.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
 
-  // The pieces themselves — turned, rounded, labelled — are only needed to
-  // send the puzzle, not to judge a fit, so they wait until asked for.
+  const centres = order.map((i) => cut[i].centre);
+  const meanX = centres.reduce((sum, [x]) => sum + x, 0) / centres.length;
+  const meanY = centres.reduce((sum, [, y]) => sum + y, 0) / centres.length;
+
+  // The pieces themselves — turned, rounded, labelled — and the frame are
+  // only needed to send the puzzle, not to judge a fit, so they wait until
+  // asked for.
   let pieces: Piece[] | null = null;
+  let outline: number[][] | null = null;
   return {
+    get outline(): number[][] {
+      outline ??= silhouette(projected.flat(2), meanX, meanY);
+      return outline;
+    },
+    home: centres.map(([x, y]) => [round2(x - meanX), round2(y - meanY)]),
     ids: order.map((i) => ids[i]),
     get pieces(): Piece[] {
       pieces ??= order.map((i) => {
@@ -539,7 +596,7 @@ export function cutRound(ids: readonly string[], random: () => number): Round {
       });
       return pieces;
     },
-    centres: order.map((i) => cut[i].centre),
+    centres,
     turns: order.map((i) => turns[i]),
     pairs,
   };
@@ -582,12 +639,9 @@ export function endlessRound(seed: string, round: number): Promise<Round> {
 // --- judging ---
 
 function reveal(round: Round): Reveal {
-  const n = round.centres.length;
-  const mx = round.centres.reduce((sum, [x]) => sum + x, 0) / n;
-  const my = round.centres.reduce((sum, [, y]) => sum + y, 0) / n;
   return {
     ids: round.ids,
-    home: round.centres.map(([x, y]) => [round2(x - mx), round2(y - my)]),
+    home: round.home,
     turns: round.turns.map((k) => (STEPS - k) % STEPS),
   };
 }
@@ -603,7 +657,9 @@ export function judgeFit(round: Round, board: readonly PieceState[], moved: Read
   const n = round.ids.length;
   const tolerance = SNAP_PX * Math.min(UNITS_PER_PX.max, Math.max(UNITS_PER_PX.min, unitsPerPx));
   const facing = board.map(({ r }, i) => (round.turns[i] + r) % STEPS);
-  const parent = Array.from({ length: n }, (_, i) => i);
+  // Index n is the frame, drawn at the table's origin, north up.
+  const frame = n;
+  const parent = Array.from({ length: n + 1 }, (_, i) => i);
   const find = (i: number): number => {
     while (parent[i] !== i) {
       parent[i] = parent[parent[i]];
@@ -618,6 +674,13 @@ export function judgeFit(round: Round, board: readonly PieceState[], moved: Read
     const dy = board[j].y - board[i].y - oy;
     if (dx * dx + dy * dy <= tolerance * tolerance) parent[find(i)] = find(j);
   }
+  // A piece north up and near its place drops into the frame.
+  for (let i = 0; i < n; i++) {
+    if (facing[i] !== 0) continue;
+    const dx = board[i].x - round.home[i][0];
+    const dy = board[i].y - round.home[i][1];
+    if (dx * dx + dy * dy <= tolerance * tolerance) parent[find(i)] = find(frame);
+  }
 
   const members = new Map<number, number[]>();
   for (let i = 0; i < n; i++) {
@@ -625,9 +688,14 @@ export function judgeFit(round: Round, board: readonly PieceState[], moved: Read
     if (!members.has(root)) members.set(root, []);
     members.get(root)!.push(i);
   }
+  const framed = find(frame);
+  const placed = members.get(framed) ?? [];
   const groups = [...members.values()].filter((group) => group.length > 1).sort((a, b) => a[0] - b[0]);
   const at: Array<[number, number] | null> = Array.from({ length: n }, () => null);
+  // What is in the frame goes exactly where the frame has it.
+  for (const i of placed) at[i] = [round.home[i][0], round.home[i][1]];
   for (const group of groups) {
+    if (find(group[0]) === framed) continue;
     const anchor = group.find((i) => !moved.has(i)) ?? group[0];
     for (const i of group) {
       const [ox, oy] = turn(
@@ -638,8 +706,8 @@ export function judgeFit(round: Round, board: readonly PieceState[], moved: Read
       at[i] = [round2(board[anchor].x + ox), round2(board[anchor].y + oy)];
     }
   }
-  const solved = groups.length === 1 && groups[0].length === n;
-  return { groups, at, solved, reveal: solved ? reveal(round) : null };
+  const solved = groups.length === 1 && groups[0].length === n || placed.length === n;
+  return { groups, placed, at, solved, reveal: solved ? reveal(round) : null };
 }
 
 const MAX_COORDINATE = 100_000;
@@ -718,6 +786,7 @@ export async function handleTessle(
       const puzzle: Puzzle = {
         ...meta,
         pieces: round.pieces.map(({ rings, label, id }) => (hard ? { rings, label } : { rings, label, id })),
+        outline: round.outline,
       };
       return ok(puzzle);
     }

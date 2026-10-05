@@ -11,6 +11,8 @@ interface Camera {
 
 interface Palette {
   fills: string[];
+  slot: string;
+  slotEdge: string;
   edge: string;
   ink: string;
   halo: string;
@@ -32,6 +34,8 @@ function readPalette(element: HTMLElement): Palette {
   const read = (name: string, fallback: string): string => style.getPropertyValue(name).trim() || fallback;
   return {
     fills: Array.from({ length: FILLS }, (_, i) => read(`--piece-${i + 1}`, "#c9d3dd")),
+    slot: read("--slot", "rgb(61 85 200 / 8%)"),
+    slotEdge: read("--slot-edge", "rgb(61 85 200 / 55%)"),
     edge: read("--piece-edge", "rgb(0 0 0 / 50%)"),
     ink: read("--ink", "#1b1917"),
     halo: read("--label-halo", "#ffffff"),
@@ -99,6 +103,7 @@ export function Board({
     const ctx = context;
 
     const paths = table.shapes.map((shape) => pathOf(shape.rings));
+    const framePath = table.outline.length > 0 ? pathOf(table.outline) : null;
     let palette = readPalette(wrap);
     let width = 0;
     let height = 0;
@@ -195,6 +200,17 @@ export function Board({
         dpr * (width / 2 - camera.x * camera.scale),
         dpr * (height / 2 - camera.y * camera.scale),
       );
+      // The frame: where the finished map goes.
+      if (framePath) {
+        ctx.fillStyle = palette.slot;
+        ctx.fill(framePath, "evenodd");
+        ctx.lineJoin = "round";
+        ctx.lineWidth = 1.6 / camera.scale;
+        ctx.setLineDash([6 / camera.scale, 4 / camera.scale]);
+        ctx.strokeStyle = palette.slotEdge;
+        ctx.stroke(framePath);
+        ctx.setLineDash([]);
+      }
       const lifted = new Set(dragging ?? []);
       const hoverSet = new Set(hovered >= 0 && !dragging ? table.members(hovered) : []);
       for (const i of table.order) {
@@ -308,7 +324,7 @@ export function Board({
       table.finish(table.members(piece));
       table.bringToFront(piece);
       const members = table.turn(piece, direction, performance.now());
-      onActRef.current(members);
+      if (members.length > 0) onActRef.current(members);
       request();
     };
 

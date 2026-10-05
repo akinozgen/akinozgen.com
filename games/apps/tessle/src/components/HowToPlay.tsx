@@ -1,10 +1,11 @@
 import { useLocale } from "../i18n/index.tsx";
 import { Sheet } from "./Sheet.tsx";
 
-/** Three pieces drifting towards each other, one still turned: the game in a picture. */
+/** Two pieces drifting into the outline beside one already in place: the game in a picture. */
 function Demo(): React.ReactElement {
   return (
     <svg viewBox="0 -6 280 136" className="rules__demo" aria-hidden="true">
+      <path className="rules__frame" d="M30 22 L92 16 L150 24 L158 58 L170 92 L96 98 L40 104 L22 72 L34 50 Z" />
       <g className="rules__piece rules__piece--a">
         <path d="M30 22 L92 16 L104 44 L88 70 L96 98 L40 104 L22 72 L34 50 Z" />
       </g>

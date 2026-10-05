@@ -147,7 +147,7 @@ export interface Tessle {
   started: boolean;
   /** Time on the round so far, live. */
   elapsed: () => number;
-  /** Separate things still to fit together. */
+  /** Pieces not yet in the frame. */
   left: number;
   /** Names to print on the pieces, or null while they are hidden. */
   labels: string[] | null;
@@ -261,7 +261,9 @@ export function useTessle(mode: Mode = "daily", active = true): Tessle {
     const id = endless ? `e${saved.round}` : `d${date}`;
     if (tableRound.current === id) return;
     tableRound.current = id;
-    const fresh = new Table(puzzle.pieces, savedRef.current.table);
+    // A puzzle saved before the frame existed waits for it to be fetched.
+    if (!puzzle.outline) return;
+    const fresh = new Table(puzzle.pieces, savedRef.current.table, puzzle.outline);
     // A finished round always opens as the finished map.
     if (savedRef.current.status !== "playing" && savedRef.current.reveal) fresh.settle(savedRef.current.reveal, 0);
     setTable(fresh);
@@ -280,9 +282,9 @@ export function useTessle(mode: Mode = "daily", active = true): Tessle {
           .then((fetched) => {
             const current = savedRef.current;
             if (current.puzzle) {
-              // Asked again for the names: the shapes are the same ones.
-              const pieces = current.puzzle.pieces.map((piece, i) => ({ ...piece, id: fetched.pieces[i]?.id }));
-              store({ ...current, puzzle: { ...current.puzzle, pieces } });
+              // Asked again for the names or the frame: the shapes are the same ones.
+              const pieces = current.puzzle.pieces.map((piece, i) => ({ ...piece, id: piece.id ?? fetched.pieces[i]?.id }));
+              store({ ...current, puzzle: { ...current.puzzle, pieces, outline: fetched.outline } });
             } else {
               store({ ...current, puzzle: fetched });
             }
@@ -302,7 +304,7 @@ export function useTessle(mode: Mode = "daily", active = true): Tessle {
   );
 
   useEffect(() => {
-    if (active && !saved.puzzle) load(hard);
+    if (active && (!saved.puzzle || !saved.puzzle.outline)) load(hard);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, saved.round, saved.puzzle]);
 
@@ -499,7 +501,7 @@ export function useTessle(mode: Mode = "daily", active = true): Tessle {
     moves: saved.moves,
     started: saved.started,
     elapsed,
-    left: table?.clusters ?? puzzle?.pieces.length ?? 0,
+    left: table?.unplaced ?? puzzle?.pieces.length ?? 0,
     labels,
     reveal: saved.reveal ?? null,
     hard,

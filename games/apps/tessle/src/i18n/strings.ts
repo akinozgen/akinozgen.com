@@ -44,13 +44,13 @@ const en = {
   statAverage: "Average",
   statsEmpty: "Finish a round to start your record.",
   rulesAim:
-    "A handful of neighbouring countries, cut out along their borders and scattered across the table, each turned a different way. Put the map back together.",
+    "A handful of neighbouring countries, cut out along their borders and scattered round the outline of the map, each turned a different way. Put every one back in its place.",
   rulesMove: "Moving and turning",
   rulesMoveText:
     "Drag a piece to move it. Right-click turns it 30° clockwise; middle-click (or Shift + right-click) turns it back. On a touch screen, tap a piece to turn it.",
   rulesFit: "Fitting",
   rulesFitText:
-    "Two neighbours click together once they face the same way and lie close to where they belong. Fitted pieces move and turn as one. When every country is in one piece, the map turns north up.",
+    "A piece facing north and close to its place drops into the outline and stays there. Neighbours also click together anywhere once they face the same way and lie close; fitted pieces move and turn as one. Fill the outline to finish.",
   rulesView: "The view",
   rulesViewText: "Drag the empty table to look around. Scroll or pinch to zoom.",
   rulesHard: "Hard mode",
@@ -117,13 +117,13 @@ const tr: Dict = {
   statAverage: "Ortalama",
   statsEmpty: "Kaydın, ilk turu bitirince başlar.",
   rulesAim:
-    "Birkaç komşu ülke sınırlarından kesilip masaya saçılmış, her biri başka yöne dönmüş. Haritayı yeniden birleştir.",
+    "Birkaç komşu ülke sınırlarından kesilip haritanın dış hattının etrafına saçılmış, her biri başka yöne dönmüş. Her birini yerine koy.",
   rulesMove: "Taşımak ve döndürmek",
   rulesMoveText:
     "Parçayı sürükleyerek taşı. Sağ tık parçayı saat yönünde 30° döndürür; orta tık (ya da Shift + sağ tık) geri döndürür. Dokunmatik ekranda parçaya dokunman yeterli.",
   rulesFit: "Birleştirmek",
   rulesFitText:
-    "İki komşu aynı yöne bakıp yerlerine yakın durunca birbirine oturur. Birleşen parçalar birlikte taşınır ve döner. Bütün ülkeler tek parça olunca harita kuzeye döner.",
+    "Kuzeye bakan bir parça yerine yaklaşınca çerçeveye oturur ve orada kalır. Komşular aynı yöne bakıp yan yana gelince çerçeve dışında da birleşir; birleşen parçalar birlikte taşınır ve döner. Çerçeveyi doldurunca harita tamamlanır.",
   rulesView: "Görünüm",
   rulesViewText: "Boş masayı sürükleyerek gezin. Tekerlekle ya da iki parmakla yakınlaştır.",
   rulesHard: "Zor mod",
@@ -186,13 +186,13 @@ const de: Dict = {
   statAverage: "Schnitt",
   statsEmpty: "Beende eine Runde, um deine Statistik zu starten.",
   rulesAim:
-    "Ein paar Nachbarländer, entlang ihrer Grenzen ausgeschnitten und über den Tisch verstreut, jedes anders gedreht. Setz die Karte wieder zusammen.",
+    "Ein paar Nachbarländer, entlang ihrer Grenzen ausgeschnitten und rund um den Umriss der Karte verstreut, jedes anders gedreht. Setz jedes an seinen Platz.",
   rulesMove: "Bewegen und drehen",
   rulesMoveText:
     "Zieh ein Teil, um es zu bewegen. Ein Rechtsklick dreht es um 30° im Uhrzeigersinn, ein Mittelklick (oder Umschalt + Rechtsklick) zurück. Auf dem Touchscreen tippst du das Teil an.",
   rulesFit: "Zusammensetzen",
   rulesFitText:
-    "Zwei Nachbarn rasten ein, sobald sie gleich gedreht sind und nah an ihrem Platz liegen. Zusammengesetzte Teile bewegen und drehen sich gemeinsam. Ist alles ein Stück, dreht sich die Karte nach Norden.",
+    "Ein Teil, das nach Norden zeigt und nah an seinem Platz liegt, rastet im Umriss ein und bleibt dort. Nachbarn rasten auch außerhalb zusammen, sobald sie gleich gedreht sind und nah beieinander liegen; zusammengesetzte Teile bewegen und drehen sich gemeinsam. Ist der Umriss gefüllt, ist die Karte fertig.",
   rulesView: "Die Ansicht",
   rulesViewText: "Zieh den leeren Tisch, um dich umzusehen. Mausrad oder zwei Finger zoomen.",
   rulesHard: "Schwerer Modus",
@@ -256,13 +256,13 @@ const ru: Dict = {
   statAverage: "В среднем",
   statsEmpty: "Завершите раунд, чтобы начать статистику.",
   rulesAim:
-    "Несколько соседних стран вырезаны по границам и разбросаны по столу, каждая повёрнута по-своему. Соберите карту заново.",
+    "Несколько соседних стран вырезаны по границам и разбросаны вокруг контура карты, каждая повёрнута по-своему. Верните каждую на своё место.",
   rulesMove: "Двигать и поворачивать",
   rulesMoveText:
     "Тяните часть, чтобы передвинуть её. Правый клик поворачивает её на 30° по часовой стрелке, средний клик (или Shift + правый клик) — обратно. На сенсорном экране просто коснитесь части.",
   rulesFit: "Сборка",
   rulesFitText:
-    "Два соседа сцепляются, когда повёрнуты одинаково и лежат рядом со своим местом. Собранные части двигаются и вращаются вместе. Когда всё собрано в одно целое, карта поворачивается на север.",
+    "Часть, повёрнутая на север и лежащая рядом со своим местом, встаёт в контур и остаётся там. Соседи сцепляются и вне контура, когда повёрнуты одинаково и лежат рядом; собранные части двигаются и вращаются вместе. Заполните контур — и карта собрана.",
   rulesView: "Обзор",
   rulesViewText: "Тяните пустой стол, чтобы осмотреться. Колесо или два пальца меняют масштаб.",
   rulesHard: "Сложный режим",
@@ -326,13 +326,13 @@ const es: Dict = {
   statAverage: "Media",
   statsEmpty: "Termina una ronda para empezar tu historial.",
   rulesAim:
-    "Unos cuantos países vecinos, recortados por sus fronteras y esparcidos por la mesa, cada uno girado a su manera. Vuelve a armar el mapa.",
+    "Unos cuantos países vecinos, recortados por sus fronteras y esparcidos alrededor del contorno del mapa, cada uno girado a su manera. Devuelve cada uno a su sitio.",
   rulesMove: "Mover y girar",
   rulesMoveText:
     "Arrastra una pieza para moverla. El clic derecho la gira 30° en el sentido del reloj; el clic central (o Mayús + clic derecho) la devuelve. En pantalla táctil, toca la pieza.",
   rulesFit: "Encajar",
   rulesFitText:
-    "Dos vecinos encajan cuando miran hacia el mismo lado y están cerca de su sitio. Las piezas encajadas se mueven y giran juntas. Cuando todo es una sola pieza, el mapa se orienta al norte.",
+    "Una pieza orientada al norte y cerca de su sitio encaja en el contorno y se queda ahí. Los vecinos también encajan fuera de él cuando miran hacia el mismo lado y están juntos; las piezas encajadas se mueven y giran juntas. Llena el contorno para terminar.",
   rulesView: "La vista",
   rulesViewText: "Arrastra la mesa vacía para moverte. Rueda o dos dedos para el zoom.",
   rulesHard: "Modo difícil",

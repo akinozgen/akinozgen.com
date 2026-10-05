@@ -202,6 +202,51 @@ describe("fitting", () => {
     expect(reply.reveal).toBeNull();
   });
 
+  it("drops a piece into the frame when it is north up and near its place", async () => {
+    const reveal = await revealFor();
+    const far = (i: number): PieceState => ({ x: 5000 + i * 3000, y: -5000, r: 0 });
+    const board = reveal.home.map((_, i) => far(i));
+    board[2] = { x: reveal.home[2][0] + 4, y: reveal.home[2][1] - 3, r: reveal.turns[2] };
+    const reply = await fit(board, { m: "2" });
+    expect(reply.placed).toEqual([2]);
+    expect(reply.at[2]).toEqual(reveal.home[2]);
+    expect(reply.groups).toEqual([]);
+    expect(reply.solved).toBe(false);
+    // Turned a step, it stays out.
+    board[2] = { ...board[2], r: (reveal.turns[2] + 1) % STEPS };
+    expect((await fit(board)).placed).toEqual([]);
+  });
+
+  it("calls the map whole when every piece is in the frame", async () => {
+    const reveal = await revealFor();
+    const reply = await fit(solvedBoard(reveal));
+    expect(reply.placed).toHaveLength(reveal.ids.length);
+    expect(reply.solved).toBe(true);
+  });
+
+  it("sends the frame: closed rings round the whole map, fewer edges than the pieces have", async () => {
+    const puzzle = (await call("daily", { date: DAY })).body as Puzzle;
+    expect(puzzle.outline.length).toBeGreaterThan(0);
+    const outlinePoints = puzzle.outline.reduce((sum, ring) => sum + ring.length / 2, 0);
+    const piecePoints = puzzle.pieces.reduce((sum, piece) => sum + piece.rings.reduce((t, ring) => t + ring.length / 2, 0), 0);
+    expect(outlinePoints).toBeLessThan(piecePoints);
+    const reveal = await revealFor();
+    // Each piece's centre sits inside the silhouette, near its place.
+    const inside = (x: number, y: number): boolean => {
+      let odd = false;
+      for (const ring of puzzle.outline) {
+        for (let i = 0, j = ring.length - 2; i < ring.length; j = i, i += 2) {
+          const [xi, yi, xj, yj] = [ring[i], ring[i + 1], ring[j], ring[j + 1]];
+          if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) odd = !odd;
+        }
+      }
+      return odd;
+    };
+    const within = reveal.home.filter(([x, y]) => inside(x, y)).length;
+    expect(within).toBeGreaterThanOrEqual(reveal.ids.length - 1);
+    expect((await call("daily", { date: DAY, hard: "1" })).body).toHaveProperty("outline");
+  });
+
   it("only joins pieces that share a border", async () => {
     const round = await dailyRound(SEED, 3);
     const n = round.ids.length;
@@ -212,7 +257,8 @@ describe("fitting", () => {
     }
     expect(apart).not.toBeNull();
     const reveal = await revealFor();
-    const solved = solvedBoard(reveal);
+    // Away from the frame, which would hold them both.
+    const solved = solvedBoard(reveal, 0, 3000, 3000);
     // Only the two strangers in place; everyone else scattered far apart.
     const board = solved.map((state, i) =>
       i === apart![0] || i === apart![1] ? state : { ...state, x: 5000 + i * 3000, y: -5000 },

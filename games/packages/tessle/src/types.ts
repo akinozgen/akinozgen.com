@@ -38,6 +38,11 @@ export interface Puzzle {
   /** Endless only: the round, as the browser asked for it. */
   round: number | null;
   pieces: Piece[];
+  /**
+   * The finished map's silhouette, north up, around the table's origin:
+   * the frame the pieces go into. Flat rings, filled even-odd.
+   */
+  outline: number[][];
 }
 
 /** Where a piece is on the player's board, and how many steps they have turned it. */
@@ -59,7 +64,9 @@ export interface Reveal {
 export interface FitReply {
   /** Pieces that fit together, in groups of two or more. */
   groups: number[][];
-  /** The exact centre for each piece in a group, null for a loose one. */
+  /** Pieces sitting in their place in the frame, which hold them there. */
+  placed: number[];
+  /** The exact centre for each piece in a group or the frame, null for a loose one. */
   at: Array<[number, number] | null>;
   /** Every piece is in one group. */
   solved: boolean;

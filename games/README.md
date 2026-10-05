@@ -136,9 +136,9 @@ border line and fit without seams.
 
 | Endpoint  | Does                                                                  |
 | --------- | --------------------------------------------------------------------- |
-| `daily`   | Today's pieces, from `HMAC(seed, day)`: each centred on itself, turned a secret number of 30° steps, in shuffled order; names only outside hard mode |
+| `daily`   | Today's pieces, from `HMAC(seed, day)`: each centred on itself, turned a secret number of 30° steps, in shuffled order; names only outside hard mode. Also the frame: the finished map's silhouette, made of the edges only one piece has |
 | `endless` | The same for a random round number the browser picks                  |
-| `fit`     | Takes the whole board (`x,y,turn` per piece) and says which pieces fit — neighbours facing the same way, within snap distance — snapping them exactly into place; once the map is whole it sends the answer |
+| `fit`     | Takes the whole board (`x,y,turn` per piece) and says which pieces fit — neighbours facing the same way, within snap distance, and pieces north up near their place in the frame — snapping them exactly into place; once the map is whole it sends the answer |
 | `reveal`  | Giving up: every piece's name, place and way up                       |
 
 Which pieces border which, where each belongs and which way is north never

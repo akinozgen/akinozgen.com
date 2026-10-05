@@ -38,7 +38,11 @@ export interface SavedTable {
   pieces: PieceState[];
   groups: number[][];
   order: number[];
+  /** Pieces held in the frame. */
+  placed?: number[];
 }
+
+type Box = [number, number, number, number];
 
 const SNAP_MS = 170;
 const TURN_MS = 150;
@@ -123,6 +127,22 @@ function mulberry32(seed: number): () => number {
   };
 }
 
+function boxOf(rings: number[][]): Box {
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const ring of rings) {
+    for (let i = 0; i < ring.length; i += 2) {
+      minX = Math.min(minX, ring[i]);
+      maxX = Math.max(maxX, ring[i]);
+      minY = Math.min(minY, ring[i + 1]);
+      maxY = Math.max(maxY, ring[i + 1]);
+    }
+  }
+  return [minX, minY, maxX, maxY];
+}
+
 export class Table {
   readonly shapes: Shape[];
   state: PieceState[];
@@ -135,14 +155,22 @@ export class Table {
   readonly flashes = new Map<number, number>();
   /** Board units per screen pixel, as the board last drew them: the server's snap distance follows it. */
   unitsPerPx = 1;
-  private placed: boolean;
+  /** The finished map's silhouette, at the table's origin: the frame. */
+  readonly outline: number[][];
+  readonly frame: Box | null;
+  /** Pieces the frame holds: they stay put. */
+  placed: Set<number>;
+  private laidOut: boolean;
   private readonly animations = new Map<number, Animation>();
   private readonly listeners = new Set<() => void>();
 
-  constructor(pieces: Piece[], saved?: SavedTable | null) {
+  constructor(pieces: Piece[], saved?: SavedTable | null, outline: number[][] = []) {
     this.shapes = pieces.map(toShape);
+    this.outline = outline;
+    this.frame = outline.length > 0 ? boxOf(outline) : null;
     const fits = saved && saved.pieces.length === pieces.length;
-    this.placed = !!fits;
+    this.laidOut = !!fits;
+    this.placed = new Set(fits ? (saved.placed ?? []) : []);
     this.state = fits ? saved.pieces.map((p) => ({ ...p })) : pieces.map(() => ({ x: 0, y: 0, r: 0 }));
     this.groups = fits ? saved.groups.map((g) => [...g]) : [];
     this.order = fits && saved.order.length === pieces.length ? [...saved.order] : pieces.map((_, i) => i);
@@ -150,7 +178,7 @@ export class Table {
   }
 
   get isPlaced(): boolean {
-    return this.placed;
+    return this.laidOut;
   }
 
   subscribe(listener: () => void): () => void {
@@ -164,7 +192,12 @@ export class Table {
   }
 
   save(): SavedTable {
-    return { pieces: this.snapshot(), groups: this.groups.map((g) => [...g]), order: [...this.order] };
+    return {
+      pieces: this.snapshot(),
+      groups: this.groups.map((g) => [...g]),
+      order: [...this.order],
+      placed: [...this.placed],
+    };
   }
 
   snapshot(): PieceState[] {
@@ -178,18 +211,26 @@ export class Table {
   layout(aspect: number, seed: number): void {
     const random = mulberry32(seed);
     const reach = this.shapes.map((s) => (s.radius + s.size) / 2);
-    const area = reach.reduce((sum, r) => sum + Math.PI * r * r, 0) * 2.1;
-    const height = Math.sqrt(area / aspect);
-    const width = height * aspect;
+    const frame = this.frame ?? [0, 0, 0, 0];
+    const frameArea = (frame[2] - frame[0]) * (frame[3] - frame[1]);
+    const area = reach.reduce((sum, r) => sum + Math.PI * r * r, 0) * 2.1 + frameArea * 1.3;
+    // A patch shaped like the screen, and never narrower than the frame.
+    let height = Math.sqrt(area / aspect);
+    let width = height * aspect;
+    width = Math.max(width, (frame[2] - frame[0]) * 1.15);
+    height = Math.max(height, (frame[3] - frame[1]) * 1.15);
     const byReach = this.shapes.map((_, i) => i).sort((a, b) => reach[b] - reach[a]);
     const done: number[] = [];
     for (const i of byReach) {
       let best: [number, number] = [0, 0];
       let bestRoom = -Infinity;
-      for (let attempt = 0; attempt < 120; attempt++) {
+      for (let attempt = 0; attempt < 160; attempt++) {
         const x = (random() - 0.5) * Math.max(0, width - reach[i] * 1.4);
         const y = (random() - 0.5) * Math.max(0, height - reach[i] * 1.4);
-        let room = Infinity;
+        // Room to the frame counts like room to another piece: pieces start around it, not in it.
+        const gapX = Math.max(frame[0] - x, 0, x - frame[2]);
+        const gapY = Math.max(frame[1] - y, 0, y - frame[3]);
+        let room = this.frame ? Math.hypot(gapX, gapY) - reach[i] * 0.9 : Infinity;
         for (const j of done) {
           room = Math.min(room, Math.hypot(x - this.state[j].x, y - this.state[j].y) - (reach[i] + reach[j]));
         }
@@ -205,7 +246,8 @@ export class Table {
     this.order = [...byReach];
     this.visual = this.state.map((p) => ({ x: p.x, y: p.y, a: 0 }));
     this.groups = [];
-    this.placed = true;
+    this.placed = new Set();
+    this.laidOut = true;
     this.invalidate();
   }
 
@@ -217,6 +259,16 @@ export class Table {
   /** How many separate things are left to fit together. */
   get clusters(): number {
     return this.shapes.length - this.groups.reduce((sum, group) => sum + group.length - 1, 0);
+  }
+
+  /** Pieces not yet in the frame. */
+  get unplaced(): number {
+    return this.shapes.length - this.placed.size;
+  }
+
+  /** Puts the frame's pieces at the bottom, under anything still loose. */
+  private sinkPlaced(): void {
+    this.order = [...this.order.filter((i) => this.placed.has(i)), ...this.order.filter((i) => !this.placed.has(i))];
   }
 
   bringToFront(piece: number): void {
@@ -255,6 +307,7 @@ export class Table {
 
   /** Turns a piece, and whatever is fitted to it, one step about their middle. */
   turn(piece: number, direction: 1 | -1, now: number): number[] {
+    if (this.placed.has(piece)) return [];
     const members = this.members(piece);
     const xs = members.map((i) => this.state[i].x);
     const ys = members.map((i) => this.state[i].y);
@@ -289,14 +342,30 @@ export class Table {
       parent[find(a)] = find(b);
     };
     for (const group of this.groups) for (const i of group) union(i, group[0]);
+    const movedSince = (i: number): boolean => {
+      const current = this.state[i];
+      const then = sent[i];
+      return !then || current.x !== then.x || current.y !== then.y || current.r !== then.r;
+    };
+
+    const framed = reply.placed ?? [];
+    if (framed.some(movedSince)) {
+      stale.push(...framed);
+    } else {
+      for (const i of framed) {
+        const at = reply.at[i];
+        if (this.placed.has(i) || !at) continue;
+        this.placed.add(i);
+        joined.push(i);
+        this.flashes.set(i, now);
+        this.state[i] = { ...this.state[i], x: at[0], y: at[1] };
+        this.slide(i, { ...this.visual[i], x: at[0], y: at[1] }, now, SNAP_MS);
+      }
+      this.sinkPlaced();
+    }
 
     for (const group of reply.groups) {
-      const moved = group.some((i) => {
-        const current = this.state[i];
-        const then = sent[i];
-        return !then || current.x !== then.x || current.y !== then.y || current.r !== then.r;
-      });
-      if (moved) {
+      if (group.some(movedSince)) {
         stale.push(...group);
         continue;
       }
@@ -309,7 +378,7 @@ export class Table {
       }
       for (const i of group) union(i, group[0]);
       if (isNew) {
-        joined.push(...group);
+        joined.push(...group.filter((i) => !joined.includes(i)));
         for (const i of group) this.flashes.set(i, now);
       }
     }
@@ -333,10 +402,12 @@ export class Table {
     this.finish(all);
     const xs = this.state.map((p) => p.x);
     const ys = this.state.map((p) => p.y);
-    const centre: [number, number] = [
+    const middle: [number, number] = [
       (Math.min(...xs) + Math.max(...xs)) / 2,
       (Math.min(...ys) + Math.max(...ys)) / 2,
     ];
+    // Into the frame, if there is one; otherwise wherever it lies.
+    const centre: [number, number] = this.frame ? [0, 0] : middle;
     const together = this.groups.length === 1 && this.groups[0].length === all.length;
     const swing = together ? shortest(this.state[0].r, reveal.turns[0]) * STEP_DEGREES : 0;
     for (const i of all) {
@@ -348,13 +419,14 @@ export class Table {
       this.animations.set(i, {
         from: { ...this.visual[i] },
         to,
-        pivot: together ? centre : null,
+        pivot: together ? middle : null,
         start: now,
         duration: SETTLE_MS,
       });
       this.state[i] = { x: to.x, y: to.y, r: mod(reveal.turns[i], STEPS) };
     }
     this.groups = [all];
+    this.placed = new Set(all);
     this.invalidate();
   }
 
@@ -407,6 +479,8 @@ export class Table {
     let nearest = slop;
     for (let k = this.order.length - 1; k >= 0; k--) {
       const i = this.order[k];
+      // The frame holds its pieces; the hand passes over them.
+      if (this.placed.has(i)) continue;
       const shape = this.shapes[i];
       const [lx, ly] = this.local(i, x, y);
       if (Math.hypot(lx, ly) > shape.radius + slop) continue;
@@ -423,7 +497,7 @@ export class Table {
   }
 
   /** A piece's outline on the table, as its state has it (not mid-animation). */
-  private outline(piece: number): number[] {
+  private corners(piece: number): number[] {
     const p = this.state[piece];
     const out: number[] = [];
     for (const ring of this.shapes[piece].rings) {
@@ -443,15 +517,24 @@ export class Table {
    */
   touches(moved: number[], distance: number): boolean {
     const mine = new Set(moved.flatMap((i) => this.members(i)));
+    // Anything over the frame might be in its place.
+    if (this.frame) {
+      const [minX, minY, maxX, maxY] = this.frame;
+      for (const m of mine) {
+        const { x, y } = this.state[m];
+        const reach = this.shapes[m].radius + distance;
+        if (x + reach >= minX && x - reach <= maxX && y + reach >= minY && y - reach <= maxY) return true;
+      }
+    }
     const others = this.state.map((_, i) => i).filter((i) => !mine.has(i));
     const reach = distance * distance;
     for (const m of mine) {
-      const a = this.outline(m);
+      const a = this.corners(m);
       for (const o of others) {
         const pm = this.state[m];
         const po = this.state[o];
         if (Math.hypot(pm.x - po.x, pm.y - po.y) > this.shapes[m].radius + this.shapes[o].radius + distance) continue;
-        const b = this.outline(o);
+        const b = this.corners(o);
         for (let i = 0; i < a.length; i += 2) {
           for (let j = 0; j < b.length; j += 2) {
             const dx = a[i] - b[j];
@@ -466,10 +549,7 @@ export class Table {
 
   /** The box round everything as drawn: what the camera frames. */
   bounds(): [number, number, number, number] {
-    let minX = Infinity;
-    let minY = Infinity;
-    let maxX = -Infinity;
-    let maxY = -Infinity;
+    let [minX, minY, maxX, maxY] = this.frame ?? [Infinity, Infinity, -Infinity, -Infinity];
     this.visual.forEach((v, piece) => {
       for (const ring of this.shapes[piece].rings) {
         for (let i = 0; i < ring.length; i += 2) {

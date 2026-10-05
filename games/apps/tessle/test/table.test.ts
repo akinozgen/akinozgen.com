@@ -140,6 +140,33 @@ describe("the table", () => {
     expect(dx).toBeCloseTo(answer.home[1][0] - answer.home[0][0], 6);
   });
 
+  it("lays the pieces out round the frame and holds one once it is in its place", async () => {
+    const { pieces, outline } = await puzzle();
+    const answer = await reveal();
+    const table = new Table(pieces, null, outline);
+    table.layout(1.6, 1);
+    const [minX, minY, maxX, maxY] = table.frame!;
+    const outside = table.state.filter((p) => p.x < minX || p.x > maxX || p.y < minY || p.y > maxY).length;
+    expect(outside).toBeGreaterThanOrEqual(pieces.length - 1);
+
+    table.state[0] = { x: answer.home[0][0] + 3, y: answer.home[0][1] - 2, r: answer.turns[0] };
+    table.visual[0] = { x: table.state[0].x, y: table.state[0].y, a: answer.turns[0] * 30 };
+    expect(table.touches([0], 14)).toBe(true);
+    const sent = table.snapshot();
+    const reply = await fit(sent, [0]);
+    expect(reply.placed).toEqual([0]);
+    table.applyFit(reply, sent, 0);
+    table.tick(1e6);
+    expect(table.placed.has(0)).toBe(true);
+    expect(table.unplaced).toBe(pieces.length - 1);
+    expect(table.state[0]).toMatchObject({ x: answer.home[0][0], y: answer.home[0][1] });
+    // Held: it neither turns nor answers to the hand.
+    expect(table.turn(0, 1, 0)).toEqual([]);
+    const [lx, ly] = turned(pieces[0].label[0], pieces[0].label[1], answer.turns[0] * 30);
+    expect(table.hit(table.state[0].x + lx, table.state[0].y + ly)).not.toBe(0);
+    expect(new Table(pieces, table.save(), outline).placed.has(0)).toBe(true);
+  });
+
   it("saves and restores", async () => {
     const { pieces } = await puzzle();
     const table = new Table(pieces);

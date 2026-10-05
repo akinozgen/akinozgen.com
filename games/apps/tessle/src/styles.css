@@ -34,6 +34,8 @@
   --piece-edge: rgb(27 25 23 / 58%);
   --piece-shadow: rgb(20 40 60 / 32%);
   --label-halo: rgb(255 255 255 / 82%);
+  --slot: rgb(61 85 200 / 7%);
+  --slot-edge: rgb(61 85 200 / 50%);
   --radius: 12px;
   color-scheme: light dark;
 }
@@ -72,6 +74,8 @@
     --piece-edge: rgb(233 230 225 / 62%);
     --piece-shadow: rgb(0 0 0 / 55%);
     --label-halo: rgb(14 22 38 / 80%);
+    --slot: rgb(122 149 255 / 8%);
+    --slot-edge: rgb(122 149 255 / 55%);
   }
 }
 
@@ -1046,6 +1050,14 @@ body {
   max-width: 320px;
   margin: 6px auto 4px;
   overflow: visible;
+}
+
+.rules__frame {
+  fill: var(--slot);
+  stroke: var(--slot-edge);
+  stroke-width: 1.4;
+  stroke-dasharray: 5 4;
+  stroke-linejoin: round;
 }
 
 .rules__piece path {
