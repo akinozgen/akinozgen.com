@@ -96,6 +96,16 @@ back only the tiles earned so far, as data URLs. The answer's code appears only
 once the round is over. It uses the same Worker secret as travelle, prefixed so
 the two games' draws are unrelated.
 
+Which flags can be the answer changed on day 4. Days 1–3 were dealt from
+`data/answers.json` — nearly every flag, territories included — and keep
+their answers. From day 4 the list is `data/answers-v2.json`: countries only
+(UN members, the two observers, Kosovo and Taiwan; Anguilla, Pitcairn and the
+other territories can still be guessed but are never the answer), with
+Africa's flags in a `half` list that comes round every other pass. Within a
+pass continents take turns, and no flag returns within 45 days. Both lists
+are append-only, and appended entries wait for a new era (`ERAS` in
+`server.ts`) starting on a future day.
+
 ## vexle's endless mode
 
 vexle has an endless mode: back-to-back practice rounds with a record

@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 import answersList from "../data/answers.json" with { type: "json" };
+import balanced from "../data/answers-v2.json" with { type: "json" };
 import countries from "../data/countries.json" with { type: "json" };
 import {
   bearing,
@@ -56,6 +57,37 @@ describe("the calendar", () => {
     const codes = new Set((countries as Country[]).map((c) => c.code));
     for (const code of answersList) expect(codes.has(code)).toBe(true);
     expect(new Set(answersList).size).toBe(answersList.length);
+  });
+
+  it("keeps the days already dealt", async () => {
+    // Days 1–3 went out under the old list; the change to it starts on day 4.
+    const dealt = await Promise.all([1, 2, 3].map(async (day) => (await dailyRound(SEED, day)).answer));
+    expect(dealt).toEqual(["BD", "GQ", "GS"]);
+  });
+
+  it("from day 4 deals countries only, Africa at half weight, continents taking turns", async () => {
+    const pool = new Set([...balanced.core, ...balanced.half]);
+    const african = new Set(balanced.half);
+    const seas: Record<string, string> = { MU: "Africa", SC: "Africa", MV: "Asia" };
+    const continent = (code: string): string => seas[code] ?? byCode(code).continent;
+    const days: string[] = [];
+    // Two passes: every core flag twice, every African flag once.
+    const span = balanced.core.length * 2 + balanced.half.length;
+    for (let day = 4; day < 4 + span; day++) days.push((await dailyRound(SEED, day)).answer);
+    expect(days.every((code) => pool.has(code))).toBe(true);
+    expect(new Set(days.filter((code) => african.has(code))).size).toBe(balanced.half.length);
+    expect(days.filter((code) => african.has(code)).length / span).toBeLessThan(0.18);
+    const twice = days.filter((code, i) => i > 0 && continent(code) === continent(days[i - 1])).length;
+    expect(twice).toBeLessThanOrEqual(10);
+  });
+
+  it("lists every answer once, territories never in the new list", () => {
+    const codes = new Set((countries as Country[]).map((c) => c.code));
+    const all = [...balanced.core, ...balanced.half];
+    for (const code of all) expect(codes.has(code)).toBe(true);
+    expect(new Set(all).size).toBe(all.length);
+    for (const territory of ["AI", "PN", "TK", "MS", "GU", "PR", "GL", "HK", "AQ", "EH"]) expect(all).not.toContain(territory);
+    expect(all).toHaveLength(197);
   });
 
   it("opens every tile exactly once", async () => {
@@ -211,7 +243,7 @@ describe("endless", () => {
     // A rule like "never deal today's flag" would be measurable from outside.
     const seen = new Set<string>();
     for (let n = 0; n < 4000; n++) seen.add((await endlessRound(SEED, n)).answer);
-    expect(seen.size).toBe(answersList.length);
+    expect(seen.size).toBe(balanced.core.length + balanced.half.length);
   });
 
   it("rejects a bad round number and runs only with a secret", async () => {

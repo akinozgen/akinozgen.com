@@ -1,4 +1,5 @@
 import answersData from "../data/answers.json" with { type: "json" };
+import balancedData from "../data/answers-v2.json" with { type: "json" };
 import countriesData from "../data/countries.json" with { type: "json" };
 import {
   type Country,
@@ -25,12 +26,25 @@ const COUNTRIES = countriesData as Country[];
 const BY_CODE = new Map(COUNTRIES.map((country) => [country.code, country]));
 
 /**
- * Every flag that can be the answer, in a fixed order. Append-only: the
- * schedule indexes into it, so removing or reordering an entry would move
- * every day's answer, past ones included. Specks with no people (Bouvet,
- * Heard Island…) can be guessed but are not on it.
+ * The flags days 1–3 were dealt from: nearly every flag, territories
+ * included. Frozen, so those days keep their answers.
  */
 const ANSWERS = answersData as string[];
+
+/**
+ * From day 4 the answer is a country: UN members, the two observers, Kosovo
+ * and Taiwan. Territories — Anguilla, Pitcairn, Tokelau and the rest — can
+ * still be guessed but are never the answer. Africa's flags (`half`) each
+ * come round every other pass rather than every pass: dealt at full weight
+ * they were over a quarter of the days.
+ *
+ * Both lists are append-only. An era deals the first `core` and `half`
+ * entries; anything appended waits for a new era starting on a future day,
+ * because a pass of a different length would reshuffle every day it has
+ * dealt, today's included.
+ */
+const BALANCED = balancedData as { core: string[]; half: string[] };
+const ERAS: ReadonlyArray<{ from: number; core: number; half: number }> = [{ from: 4, core: 143, half: 54 }];
 
 /** An answer does not come round again within this many days. */
 const LOOKBACK = 45;
@@ -174,6 +188,101 @@ async function cycleOrder(seed: string, cycle: number): Promise<string[]> {
   return order;
 }
 
+/** Days before the first era: one shuffled pass through the whole old list. */
+async function legacyAnswer(seed: string, number: number): Promise<string> {
+  const index = number - 1;
+  const cycle = Math.floor(index / ANSWERS.length);
+  return (await cycleOrder(seed, cycle))[index - cycle * ANSWERS.length];
+}
+
+/** Mauritius, the Seychelles and the Maldives sit on Natural Earth's "seven seas". */
+const SEAS: Record<string, string> = { MU: "Africa", SC: "Africa", MV: "Asia" };
+const continentOf = (code: string): string => SEAS[code] ?? BY_CODE.get(code)!.continent;
+
+/**
+ * Deals a shuffled pass out day by day. Each day takes the next flag whose
+ * continent has rested long enough — a day for the commonest, up to three
+ * for the rarer ones — and, for the first LOOKBACK days, that the days just
+ * before did not deal. Where nothing qualifies, the rest still have to go.
+ */
+function arrange(pass: string[], before: string[]): string[] {
+  const counts = new Map<string, number>();
+  for (const code of pass) counts.set(continentOf(code), (counts.get(continentOf(code)) ?? 0) + 1);
+  const rest = (continent: string): number =>
+    Math.min(3, Math.max(1, Math.floor(pass.length / counts.get(continent)!) - 2));
+  const recent = new Set(before.slice(-LOOKBACK));
+  const dealt = before.slice(-3);
+  const left = [...pass];
+  const out: string[] = [];
+  while (left.length > 0) {
+    const fresh = (code: string): boolean => out.length >= LOOKBACK || !recent.has(code);
+    const rested = (code: string): boolean => {
+      const continent = continentOf(code);
+      return !dealt.slice(-rest(continent)).some((other) => continentOf(other) === continent);
+    };
+    let next = left.findIndex((code) => fresh(code) && rested(code));
+    if (next < 0) next = left.findIndex(fresh);
+    const [code] = left.splice(Math.max(0, next), 1);
+    out.push(code);
+    dealt.push(code);
+  }
+  return out;
+}
+
+const passes = new Map<string, string[]>();
+
+/**
+ * Pass `pass` of an era: every core flag, and half of Africa's — passes
+ * pair up, each pair dealing every African flag once. Laid out after the
+ * pass before it (or the days before the era), so no flag returns within
+ * LOOKBACK days and a continent rarely comes two days running.
+ */
+async function passOrder(seed: string, era: number, pass: number): Promise<string[]> {
+  const key = `${seed}\u0000${era}\u0000${pass}`;
+  const cached = passes.get(key);
+  if (cached) return cached;
+  const { from, core, half } = ERAS[era];
+  const label = era === 0 ? "" : `${era}:`;
+  const africa = await stream(seed, `vexle:half:${label}${Math.floor(pass / 2)}`);
+  const halves = BALANCED.half.slice(0, half);
+  for (let i = halves.length - 1; i > 0; i--) {
+    const j = Math.floor(africa() * (i + 1));
+    [halves[i], halves[j]] = [halves[j], halves[i]];
+  }
+  const split = Math.ceil(halves.length / 2);
+  const items = [...BALANCED.core.slice(0, core), ...(pass % 2 === 0 ? halves.slice(0, split) : halves.slice(split))];
+  const random = await stream(seed, `vexle:pass:${label}${pass}`);
+  for (let i = items.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [items[i], items[j]] = [items[j], items[i]];
+  }
+  let before: string[];
+  if (pass > 0) before = await passOrder(seed, era, pass - 1);
+  else {
+    // The days just before the era, however they were dealt.
+    before = [];
+    for (let day = Math.max(1, from - LOOKBACK); day < from; day++) before.push((await dailyRound(seed, day)).answer);
+  }
+  const order = arrange(items, before);
+  if (passes.size > 8) passes.clear();
+  passes.set(key, order);
+  return order;
+}
+
+/** Day `number`'s answer in its era: passes alternate between Africa's two halves. */
+async function balancedAnswer(seed: string, number: number): Promise<string> {
+  let era = 0;
+  while (era + 1 < ERAS.length && ERAS[era + 1].from <= number) era++;
+  const { from, core, half } = ERAS[era];
+  const even = core + Math.ceil(half / 2);
+  const pair = core * 2 + half;
+  const index = number - from;
+  const within = index % pair;
+  const second = within >= even;
+  const pass = Math.floor(index / pair) * 2 + (second ? 1 : 0);
+  return (await passOrder(seed, era, pass))[second ? within - even : within];
+}
+
 const memo = new Map<string, { answer: string; order: number[] }>();
 
 /** Day `number`'s answer, and the order its tiles open in. */
@@ -185,9 +294,7 @@ export async function dailyRound(
   const cached = memo.get(cacheKey);
   if (cached) return cached;
 
-  const index = number - 1;
-  const cycle = Math.floor(index / ANSWERS.length);
-  const answer = (await cycleOrder(seed, cycle))[index - cycle * ANSWERS.length];
+  const answer = number < ERAS[0].from ? await legacyAnswer(seed, number) : await balancedAnswer(seed, number);
 
   const shuffle = await stream(seed, `vexle:tiles:${number}`);
   const order = Array.from({ length: TILES }, (_, i) => i);
@@ -212,7 +319,10 @@ export async function dailyRound(
  */
 export async function endlessRound(seed: string, round: number): Promise<{ answer: string; order: number[] }> {
   const random = await stream(seed, `vexle:endless:${round}`);
-  const answer = ANSWERS[Math.floor(random() * ANSWERS.length)];
+  // The latest era's pool, weighted as the daily weights it: Africa at half.
+  const { core, half } = ERAS[ERAS.length - 1];
+  const pick = random() * (core + half / 2);
+  const answer = pick < core ? BALANCED.core[Math.floor(pick)] : BALANCED.half[Math.floor((pick - core) * 2)];
   const order = Array.from({ length: TILES }, (_, i) => i);
   for (let i = order.length - 1; i > 0; i--) {
     const j = Math.floor(random() * (i + 1));
