@@ -6,6 +6,8 @@ The small browser games served under [akinozgen.com/games](https://akinozgen.com
   countries that link a start country to an end country by land.
 - **vexle** — a daily flag game: every guess turns over one tile of the flag,
   and a compass points from your last guess towards the answer.
+- **tessle** — a daily map jigsaw: a handful of neighbouring countries,
+  scattered and turned, to be fitted back together.
 - **Çaylar Belediyeden** (`belediye`) — a card game in Turkish: you run a
   made-up Anatolian town by swiping memos left or right. TypeScript built
   with Vite; see [apps/belediye/README.md](apps/belediye/README.md).
@@ -23,6 +25,8 @@ countries dropped, and a route length you choose.
 | `apps/travelle`  | The game itself — React + Vite                                        |
 | `packages/vexle` | vexle's countries, tile packs and game server                         |
 | `apps/vexle`     | vexle — React + Vite                                                  |
+| `packages/tessle` | tessle's map, groups and game server                               |
+| `apps/tessle`    | tessle — React + Vite                                                 |
 | `apps/belediye`  | Çaylar Belediyeden — TypeScript + Vite                                |
 
 ## Commands
@@ -31,6 +35,7 @@ countries dropped, and a route length you choose.
 pnpm install
 pnpm --filter @travelle/geo build:data      # rebuild the border graph
 pnpm --filter @travelle/geo build:public    # rebuild what the browser may see
+pnpm --filter @tessle/data build:data       # rebuild tessle's pieces and groups (append-only)
 pnpm test                                   # graph + scoring tests
 pnpm typecheck && pnpm lint                 # tsc and ESLint in every app that has them
 pnpm dev                                    # run travelle
@@ -103,3 +108,36 @@ like "never deal today's flag" could be measured from outside by asking for
 thousands of rounds and seeing which answer never turns up, which would
 narrow the daily down to a handful. Instead the page keeps endless closed
 until the day's round is finished, so an honest player can't be spoiled.
+
+## How tessle keeps its answer
+
+`packages/tessle/scripts/build-data.ts` reads travelle's map and writes
+three files: `data/world.json` (every country that can be a piece, its
+landmasses and which of them share a border), `data/groups.json` (the groups
+a round can deal: five to seven neighbours, compact, with no piece more than
+30 times another's size, and no continent holding more than its share —
+Africa at most 22%, Europe 36%) and `data/names.json` (piece names in five
+languages, the only one the browser loads). Outlines are copied untouched
+from travelle's topology-aware geometry, so neighbours share the very same
+border line and fit without seams.
+
+`/api/tessle/*` (`src/pages/api/tessle/[action].ts`, backed by
+`packages/tessle/src/server.ts`) is the only place the answer exists:
+
+| Endpoint  | Does                                                                  |
+| --------- | --------------------------------------------------------------------- |
+| `daily`   | Today's pieces, from `HMAC(seed, day)`: each centred on itself, turned a secret number of 30° steps, in shuffled order; names only outside hard mode |
+| `endless` | The same for a random round number the browser picks                  |
+| `fit`     | Takes the whole board (`x,y,turn` per piece) and says which pieces fit — neighbours facing the same way, within snap distance — snapping them exactly into place; once the map is whole it sends the answer |
+| `reveal`  | Giving up: every piece's name, place and way up                       |
+
+Which pieces border which, where each belongs and which way is north never
+reach the page. Same Worker secret as the other games, prefixed `tessle:`.
+
+`groups.json` is append-only, and the build keeps the published list as it
+is. The daily cycles through a fixed number of groups (`ERAS` in
+`server.ts`): appended groups wait for a new era, starting on a future day,
+because changing the length a pass cycles through would reshuffle every day
+it has dealt, today's included. Within a pass continents take turns: a
+continent rests a day or more (up to three for the rarer ones) before it is
+dealt again, and nothing the previous pass ended on returns within 30 days.

@@ -9,7 +9,15 @@ export interface Game {
 
 /** Everything under /games. The sources live in this repo under games/. */
 export const games: Game[] = [
-
+  {
+    slug: "tessle",
+    name: "tessle",
+    tagline: "piece the map together",
+    description:
+      "A daily map jigsaw. A handful of neighbouring countries, cut along their borders, scattered and turned — drag them, turn them, and fit the map back together.",
+    year: "2026",
+    tags: ["daily", "geography", "five languages"],
+  },
   {
     slug: "vexle",
     name: "vexle",
