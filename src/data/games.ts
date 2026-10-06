@@ -10,6 +10,15 @@ export interface Game {
 /** Everything under /games. The sources live in this repo under games/. */
 export const games: Game[] = [
   {
+    slug: "sizele",
+    name: "sizele",
+    tagline: "the map is lying",
+    description:
+      "A daily size game on the map everyone grew up with — Mercator, which lies. How many Turkeys fit into Greenland? Guess, then watch the country slide across the globe to its true size.",
+    year: "2026",
+    tags: ["daily", "geography", "five languages"],
+  },
+  {
     slug: "tessle",
     name: "tessle",
     tagline: "piece the map together",

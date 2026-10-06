@@ -1,0 +1,20 @@
+{
+  "name": "@sizele/data",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./client": "./src/client.ts",
+    "./server": "./src/server.ts",
+    "./data/*": "./data/*"
+  },
+  "scripts": {
+    "build:data": "node scripts/build-data.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "i18n-iso-countries": "^7.14.0"
+  }
+}

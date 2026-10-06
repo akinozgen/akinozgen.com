@@ -8,6 +8,9 @@ The small browser games served under [akinozgen.com/games](https://akinozgen.com
   and a compass points from your last guess towards the answer.
 - **tessle** — a daily map jigsaw: a handful of neighbouring countries,
   scattered and turned, to be fitted back together.
+- **sizele** — a daily size game: how many Turkeys make a Greenland? Five
+  rounds on a Mercator map, which lies, then each country slides to its
+  true size.
 - **Çaylar Belediyeden** (`belediye`) — a card game in Turkish: you run a
   made-up Anatolian town by swiping memos left or right. TypeScript built
   with Vite; see [apps/belediye/README.md](apps/belediye/README.md).
@@ -27,6 +30,8 @@ countries dropped, and a route length you choose.
 | `apps/vexle`     | vexle — React + Vite                                                  |
 | `packages/tessle` | tessle's map, groups and game server                               |
 | `apps/tessle`    | tessle — React + Vite                                                 |
+| `packages/sizele` | sizele's areas, outlines and game server                            |
+| `apps/sizele`    | sizele — React + Vite                                                 |
 | `apps/belediye`  | Çaylar Belediyeden — TypeScript + Vite                                |
 
 ## Commands
@@ -36,6 +41,7 @@ pnpm install
 pnpm --filter @travelle/geo build:data      # rebuild the border graph
 pnpm --filter @travelle/geo build:public    # rebuild what the browser may see
 pnpm --filter @tessle/data build:data       # rebuild tessle's pieces and groups (append-only)
+pnpm --filter @sizele/data build:data       # rebuild sizele's areas and outlines
 pnpm test                                   # graph + scoring tests
 pnpm typecheck && pnpm lint                 # tsc and ESLint in every app that has them
 pnpm dev                                    # run travelle
@@ -151,3 +157,32 @@ because changing the length a pass cycles through would reshuffle every day
 it has dealt, today's included. Within a pass continents take turns: a
 continent rests a day or more (up to three for the rarer ones) before it is
 dealt again, and nothing the previous pass ended on returns within 30 days.
+
+## How sizele keeps its answer
+
+`packages/sizele/scripts/build-data.ts` reads travelle's map and writes
+`data/countries.json` — every country a round can deal (UN members and the
+like, over 20,000 km², plus Greenland), with its area on the globe, its area
+as Mercator draws it, where it sits and a thinned outline — and
+`data/names.json`, the only file the browser loads. Areas are measured on
+the full-detail outline, on the sphere; the browser only gets the thinned
+one, for drawing.
+
+`/api/sizele/play?d=<date>&g=<guesses>` (`src/pages/api/sizele/[action].ts`,
+backed by `packages/sizele/src/server.ts`) deals the day's five pairs from
+`HMAC(seed, day)`: a familiar unit and any target, a ratio between 1/25 and
+25 and not too even, no country twice, at most two targets from one
+continent, and at least two pairs the map lies about by three times or
+more. The rounds run from the most honest pair to the most misleading.
+Each call carries every guess so far; the server scores them (100 for the
+truth, about 23 at twice or half, on a log scale), hands over the next
+round as two outlines and nothing else, and reveals a pair's true and
+Mercator ratios only once it has been guessed. `e=<number>` plays an
+endless set the same way. Same Worker secret as the other games, prefixed
+`sizele:`.
+
+The schedule draws from `countries.json` by position, so the file is frozen
+once a day has been dealt: editing it would change days already played. A
+change needs an era, as tessle's `ERAS` does. Like the other games the API
+is stateless — it judges whatever guesses it is sent, so scores and streaks
+live in the player's browser and nothing is a leaderboard.
