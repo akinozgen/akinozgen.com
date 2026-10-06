@@ -36,3 +36,9 @@ export const LEGACY_DAYS = 1;
 
 /** Entries in a tile pack: colour tiles, grey tiles, then the whole flag. */
 export const PACK_ENTRIES = TILES * 2 + 1;
+
+/**
+ * Endless deals from a shuffled deck: every core flag and half of Africa's,
+ * so nothing comes round twice until the deck runs out.
+ */
+export const ENDLESS_DECK = 170;

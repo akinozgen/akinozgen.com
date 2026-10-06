@@ -14,7 +14,7 @@ import {
   puzzleNumber,
   type VexleVerdict,
 } from "../src/server.ts";
-import type { Country } from "../src/types.ts";
+import { type Country, ENDLESS_DECK } from "../src/types.ts";
 
 const SEED = "test-seed-not-the-real-one";
 const NOW = new Date("2026-10-10T12:00:00Z");
@@ -244,6 +244,22 @@ describe("endless", () => {
     const seen = new Set<string>();
     for (let n = 0; n < 4000; n++) seen.add((await endlessRound(SEED, n)).answer);
     expect(seen.size).toBe(balanced.core.length + balanced.half.length);
+  });
+
+  it("deals a deck: no flag twice until it runs out, Africa at half", async () => {
+    const { endlessCard } = await import("../src/server.ts");
+    const cards: string[] = [];
+    for (let i = 0; i < ENDLESS_DECK; i++) cards.push((await endlessCard(SEED, 777, i)).answer);
+    expect(new Set(cards).size).toBe(ENDLESS_DECK);
+    expect(cards.filter((code) => balanced.half.includes(code)).length).toBe(ENDLESS_DECK - balanced.core.length);
+    expect(await endlessCard(SEED, 777, 5)).toEqual(await endlessCard(SEED, 777, 5));
+    const other: string[] = [];
+    for (let i = 0; i < 20; i++) other.push((await endlessCard(SEED, 778, i)).answer);
+    expect(other).not.toEqual(cards.slice(0, 20));
+    expect((await call("endless", { e: "777", i: String(ENDLESS_DECK) })).status).toBe(400);
+    expect((await call("endless", { e: "777", i: "-1" })).status).toBe(400);
+    const judged = (await call("endless", { e: "777", i: "3", g: cards[3] })).body as VexleVerdict;
+    expect(judged.status).toBe("won");
   });
 
   it("rejects a bad round number and runs only with a secret", async () => {

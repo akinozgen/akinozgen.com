@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
-import { dailyRound, endlessRound, puzzleNumber } from "@vexle/data/server";
+import { dailyRound, endlessCard, endlessRound, puzzleNumber } from "@vexle/data/server";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { App } from "../src/App.tsx";
 import { COUNTRIES, country } from "../src/game/countries.ts";
@@ -87,5 +87,25 @@ describe("endless", () => {
     expect(rows().length).toBe(0);
     expect(document.querySelectorAll(".tile.is-open").length).toBe(0);
     expect(stats("vexle:endless:v1").round).not.toBe(ROUND);
+    // A round from before the decks moves on to the first card of a new one.
+    expect(stats("vexle:endless:v1").index).toBe(0);
+  });
+
+  it("walks a deck card by card, so a flag doesn't come straight back", async () => {
+    const DECK = 9001;
+    const { answer: card5 } = await endlessCard(TEST_SEED, DECK, 5);
+    localStorage.setItem("vexle:endless:v1", JSON.stringify({ round: DECK, index: 5, guesses: [], hardAll: true }));
+    render(<App />);
+    await guess(country(dailyAnswer).names.en);
+    fireEvent.click(screen.getByRole("button", { name: "Endless" }));
+    await guess(country(card5).names.en);
+    fireEvent.click(await screen.findByRole("button", { name: "Next flag" }));
+    await waitFor(() => expect(stats("vexle:endless:v1")).toMatchObject({ round: DECK, index: 6 }));
+    const { answer: card6 } = await endlessCard(TEST_SEED, DECK, 6);
+    expect(card6).not.toBe(card5);
+    // The round after is judged as card 6: guessing it wins.
+    await guess(country(card6).names.en);
+    expect(await screen.findByRole("button", { name: "Next flag" })).toBeTruthy();
+    expect(stats("vexle:endless-stats:v1").won).toBe(2);
   });
 });

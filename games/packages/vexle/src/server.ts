@@ -3,6 +3,7 @@ import balancedData from "../data/answers-v2.json" with { type: "json" };
 import countriesData from "../data/countries.json" with { type: "json" };
 import {
   type Country,
+  ENDLESS_DECK,
   FREE_TILES,
   LEGACY_DAYS,
   LEGACY_RULES,
@@ -331,6 +332,45 @@ export async function endlessRound(seed: string, round: number): Promise<{ answe
   return { answer, order };
 }
 
+function shuffle<T>(items: T[], random: () => number): T[] {
+  for (let i = items.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [items[i], items[j]] = [items[j], items[i]];
+  }
+  return items;
+}
+
+const decks = new Map<string, string[]>();
+
+/**
+ * One endless deck: the latest era's core flags and half of Africa's,
+ * shuffled by HMAC(secret, deck). The browser picks the deck at random and
+ * plays it card by card, so a flag only returns once the deck is spent.
+ * Like single rounds, a deck steers around nothing — today's flag included.
+ */
+async function endlessDeck(seed: string, deck: number): Promise<string[]> {
+  const key = `${seed}\u0000${deck}`;
+  const cached = decks.get(key);
+  if (cached) return cached;
+  const random = await stream(seed, `vexle:deck:${deck}`);
+  const { core, half } = ERAS[ERAS.length - 1];
+  const africa = shuffle(BALANCED.half.slice(0, half), random).slice(0, ENDLESS_DECK - core);
+  const cards = shuffle([...BALANCED.core.slice(0, core), ...africa], random);
+  if (decks.size >= 16) decks.delete(decks.keys().next().value!);
+  decks.set(key, cards);
+  return cards;
+}
+
+/** Card `index` of endless deck `deck`, and the order its tiles open in. */
+export async function endlessCard(seed: string, deck: number, index: number): Promise<{ answer: string; order: number[] }> {
+  const answer = (await endlessDeck(seed, deck))[index];
+  const order = shuffle(
+    Array.from({ length: TILES }, (_, i) => i),
+    await stream(seed, `vexle:deck:${deck}:${index}`),
+  );
+  return { answer, order };
+}
+
 const RADIUS_KM = 6371;
 const toRad = (deg: number): number => (deg * Math.PI) / 180;
 
@@ -432,7 +472,15 @@ export async function handleVexle(
     if (action === "endless") {
       const number = Number(query.get("e"));
       if (!Number.isInteger(number) || number < 0 || number > 0xffffffff) throw new BadRequest("bad round");
-      round = await endlessRound(seed, number);
+      const card = query.get("i");
+      if (card === null) {
+        // A round from before the decks, still open in someone's tab.
+        round = await endlessRound(seed, number);
+      } else {
+        const index = Number(card);
+        if (!/^\d+$/.test(card) || index >= ENDLESS_DECK) throw new BadRequest("bad card");
+        round = await endlessCard(seed, number, index);
+      }
     } else {
       const day = dayOf(query.get("date") ?? query.get("d"), now);
       if (!day) return fail(404, "that day has not started anywhere yet");

@@ -21,7 +21,20 @@ export function judge(date: string, guesses: readonly string[], hard: boolean): 
   return get("judge", { d: date, g: guesses.join(","), hard: hard ? "1" : undefined });
 }
 
-/** An endless round: the browser's random number, judged against the server's secret. */
-export function judgeEndless(round: number, guesses: readonly string[], hard: boolean): Promise<VexleVerdict> {
-  return get("endless", { e: String(round), g: guesses.join(","), hard: hard ? "1" : undefined });
+/**
+ * An endless round: card `index` of the deck this browser picked at random,
+ * judged against the server's secret. Rounds saved before the decks have no index.
+ */
+export function judgeEndless(
+  round: number,
+  guesses: readonly string[],
+  hard: boolean,
+  index?: number,
+): Promise<VexleVerdict> {
+  return get("endless", {
+    e: String(round),
+    i: index === undefined ? undefined : String(index),
+    g: guesses.join(","),
+    hard: hard ? "1" : undefined,
+  });
 }

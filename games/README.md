@@ -115,9 +115,13 @@ are append-only, and appended entries wait for a new era (`ERAS` in
 ## vexle's endless mode
 
 vexle has an endless mode: back-to-back practice rounds with a record
-of their own, kept apart from the daily streak. A round is a random 32-bit
-number the browser picks; the server turns it into a flag with
-`HMAC(seed, number)`, so the number alone gives nothing away.
+of their own, kept apart from the daily streak. Rounds come from a deck: the
+browser picks a random 32-bit deck number and plays it card by card
+(`/api/vexle/endless?e=<deck>&i=<card>`). The server shuffles the deck —
+every country flag, half of Africa's — with `HMAC(seed, deck)`, so the
+number alone gives nothing away, and no flag comes round twice until all
+170 cards are played. (Drawn independently, as endless first did, a repeat
+was more likely than not within about seventeen rounds.)
 
 Endless deliberately excludes nothing — not even today's answer. A rule
 like "never deal today's flag" could be measured from outside by asking for
