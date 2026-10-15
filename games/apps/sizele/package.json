@@ -12,6 +12,7 @@
     "build:site": "vite build --mode site --outDir ../../../public/games/sizele --emptyOutDir"
   },
   "dependencies": {
+    "@akinozgen/account": "workspace:*",
     "@sizele/data": "workspace:*",
     "@travelle/core": "workspace:*",
     "@travelle/geo": "workspace:*",

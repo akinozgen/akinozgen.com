@@ -1965,3 +1965,9 @@ body {
     padding: 16px 22px 14px;
   }
 }
+
+/* Signed in: how much of the record came from this device's own, before the account. */
+.stats__note {
+  margin: 10px 0 0;
+  text-align: center;
+}

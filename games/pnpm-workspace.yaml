@@ -3,7 +3,10 @@ packages:
   - 'packages/*'
 
 allowBuilds:
+  # firebase's postinstall scripts (a usage notice, protobuf codegen for Firestore): nothing the account sign-in needs.
+  '@firebase/util': false
   better-sqlite3: true
   esbuild: true
   msgpackr-extract: true
+  protobufjs: false
   workerd: true

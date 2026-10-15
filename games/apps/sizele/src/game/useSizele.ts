@@ -1,7 +1,21 @@
+import { RecordConflict, useAccount, usePuzzleRecords } from "@akinozgen/account/client";
 import { readJson, writeJson } from "@travelle/core";
-import { band, ROUNDS, type Result, type RoundInfo, type Verdict } from "@sizele/data/client";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { type GameKey, play, short } from "./api.ts";
+import { band, ROUNDS, type Result, type RoundInfo, type SizeleResult, type Verdict } from "@sizele/data/client";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type GameKey, play, replay, short } from "./api.ts";
+import {
+  countGame,
+  deviceStats,
+  emptyStats,
+  ENDLESS_STATS_KEY,
+  importedStats,
+  movesOf,
+  type Stats,
+  STATS_KEY,
+  statsFromRecords,
+} from "./records.ts";
+
+export { emptyStats, type Stats };
 
 /** Day 1 of sizele. */
 export const EPOCH = "2026-10-06";
@@ -45,34 +59,8 @@ interface SavedGame {
   peeked?: boolean;
 }
 
-export interface Stats {
-  played: number;
-  /** Every day's total added up, for the average. */
-  points: number;
-  best: number;
-  /** Days in a row with a game finished. */
-  streak: number;
-  longest: number;
-  /** Rounds that scored 80 or more. */
-  greats: number;
-  lastNumber: number | null;
-  lastRound?: number | null;
-}
-
-export const emptyStats: Stats = {
-  played: 0,
-  points: 0,
-  best: 0,
-  streak: 0,
-  longest: 0,
-  greats: 0,
-  lastNumber: null,
-};
-
 const GAME_PREFIX = "sizele:game:v1:";
-const STATS_KEY = "sizele:stats:v1";
 const ENDLESS_KEY = "sizele:endless:v1";
-const ENDLESS_STATS_KEY = "sizele:endless-stats:v1";
 const HARD_KEY = "sizele:hard:v1";
 const KEEP_GAMES = 14;
 
@@ -133,7 +121,10 @@ export interface Sizele {
   guess: (ratio: number) => void;
   /** On to the next round once a reveal has been seen. */
   advance: () => void;
+  /** The record: the account's while someone is signed in, the browser's own otherwise. */
   stats: Stats;
+  /** Signed in: how many of the record's games came from this device's record before the account. */
+  imported: number;
   next: () => void;
   draft: number | null;
   setDraft: (ratio: number) => void;
@@ -168,19 +159,49 @@ export function useSizele(mode: Mode = "daily", active = true): Sizele {
   const lastAttempt = useRef<SavedGame | null>(null);
   const savedRef = useRef(saved);
   savedRef.current = saved;
+  const account = useAccount();
+  const signedIn = account.status === "in";
+  // While the account may be signed in, its record decides: answers skip the browser's cache.
+  const maybeSignedIn = account.status !== "out";
+  const records = usePuzzleRecords<SizeleResult>("sizele", deviceStats);
 
   useEffect(prune, []);
 
   const gameKey = (game: SavedGame): GameKey => (endless ? { round: game.round ?? 0 } : { date });
 
+  /**
+   * The game as the account has it, played on another device: its guesses,
+   * and each round's two countries, asked for again without the session.
+   * Hard mode is the page's own and isn't on record, so a game taken up
+   * claims none.
+   */
+  const takeUp = async (from: SavedGame, guesses: number[]): Promise<SavedGame> => {
+    const dealt = await Promise.all(guesses.map((_, i) => replay(gameKey(from), guesses.slice(0, i))));
+    const rounds = dealt.map((verdict, i) => verdict.next ?? from.rounds[i]).filter((round): round is RoundInfo => !!round);
+    return {
+      ...(from.round === undefined ? {} : { round: from.round }),
+      guesses,
+      rounds,
+      showing: Math.min(guesses.length, ROUNDS),
+      hardAll: false,
+      peeked: true,
+    };
+  };
+
+  /**
+   * Asks the server about `next`, and keeps it once it has answered. If the
+   * account has the game further along (played on another device), the page
+   * takes up the guesses on record instead and asks about those.
+   */
   const submit = useCallback(
-    (next: SavedGame) => {
-      if (inFlight.current) return;
+    (next: SavedGame, adopting = false): boolean => {
+      if (inFlight.current) return false;
       inFlight.current = true;
       lastAttempt.current = next;
       setPending(true);
       setFailed(false);
-      play(gameKey(next), next.guesses)
+      let adopted: SavedGame | null = null;
+      play(gameKey(next), next.guesses, maybeSignedIn)
         .then((verdict) => {
           const rounds = [...next.rounds];
           if (verdict.next) rounds[verdict.results.length] = verdict.next;
@@ -189,15 +210,43 @@ export function useSizele(mode: Mode = "daily", active = true): Sizele {
           setSaved(stored);
           writeJson(key, stored);
         })
-        .catch(() => setFailed(true))
+        .catch(async (error: unknown) => {
+          const moves = error instanceof RecordConflict && !adopting ? movesOf(error.moves) : null;
+          if (!moves) {
+            setFailed(true);
+            return;
+          }
+          try {
+            adopted = await takeUp(next, moves.g);
+          } catch {
+            setFailed(true);
+            return;
+          }
+          savedRef.current = adopted;
+          setSaved(adopted);
+          writeJson(key, adopted);
+        })
         .finally(() => {
           inFlight.current = false;
           setPending(false);
+          if (adopted) submitRef.current(adopted, true);
         });
+      return true;
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [key, endless, date],
+    [key, endless, date, maybeSignedIn],
   );
+  const submitRef = useRef(submit);
+  submitRef.current = submit;
+
+  // Signed in, the game is asked about once with what this page has, so a
+  // game played on to elsewhere (or finished there) is taken up here.
+  const asked = useRef<string | null>(null);
+  const asking = signedIn && active ? `${key}\u0000${saved.round}\u0000${account.user?.tag}` : null;
+  useEffect(() => {
+    if (asking === null || pending || asked.current === asking) return;
+    if (submit(savedRef.current)) asked.current = asking;
+  }, [asking, pending, submit]);
 
   // The first pair, or a verdict that never arrived, is asked for once the game is on screen.
   useEffect(() => {
@@ -218,20 +267,31 @@ export function useSizele(mode: Mode = "daily", active = true): Sizele {
       setStats(record);
       return;
     }
-    const streak = endless || record.lastNumber === number - 1 ? record.streak + 1 : 1;
-    const next: Stats = {
-      played: record.played + 1,
-      points: record.points + verdict.total,
-      best: Math.max(record.best, verdict.total),
-      streak,
-      longest: Math.max(record.longest, streak),
-      greats: record.greats + verdict.results.filter((r) => band(r.score) === "great").length,
-      lastNumber: endless ? record.lastNumber : number,
-      lastRound: endless ? (saved.round ?? null) : (record.lastRound ?? null),
-    };
+    const game = { total: verdict.total, greats: verdict.results.filter((r) => band(r.score) === "great").length };
+    const next = countGame(record, game, endless, number, saved.round ?? null);
     setStats(next);
     writeJson(statsKey, next);
   }, [played, verdict, statsKey, endless, number, saved.round]);
+
+  // Signed in, a game that ends here is on the account's record by now: count it.
+  const wasPlaying = useRef(false);
+  const { refresh } = records;
+  useEffect(() => {
+    if (!played) wasPlaying.current = true;
+    else if (wasPlaying.current && signedIn) {
+      wasPlaying.current = false;
+      refresh();
+    }
+  }, [played, signedIn, refresh]);
+
+  // Signed in, the record is the account's, counted from the server's verdicts;
+  // until it arrives, nothing is shown rather than this browser's own.
+  const kind = endless ? "endless" : "daily";
+  const shown = useMemo(() => {
+    if (records.status === "ready") return statsFromRecords(records.plays, records.imported, kind, EPOCH);
+    return records.status === "loading" ? emptyStats : stats;
+  }, [records.status, records.plays, records.imported, kind, stats]);
+  const imported = records.status === "ready" ? (importedStats(records.imported, kind)?.played ?? 0) : 0;
 
   const guess = useCallback(
     (ratio: number) => {
@@ -327,7 +387,8 @@ export function useSizele(mode: Mode = "daily", active = true): Sizele {
     retry,
     guess,
     advance,
-    stats,
+    stats: shown,
+    imported,
     next,
     draft: saved.draft && saved.draft.round === saved.showing ? saved.draft.ratio : null,
     setDraft,

@@ -3,3 +3,4 @@
  * the server, its map or its list of groups.
  */
 export * from "./types.ts";
+export type { TessleMoves, TessleRequest, TessleResult } from "./record.ts";

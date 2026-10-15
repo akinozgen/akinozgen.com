@@ -1,8 +1,10 @@
+import { sessionUser } from "../../../../account/src/server/worker/route.ts";
 import { publicId } from "../../names.ts";
 import { newCode } from "../codes.ts";
-import { MAX_MESSAGE, parseCreate, parseSummaryRequest, PROTOCOL } from "../protocol.ts";
+import { codesOf, type ErrorCode, isSecret, MAX_SUMMARY, PROTOCOL, versionOf } from "../protocol.ts";
 import type { HarfiyenEnv } from "./env.ts";
-import { vapidFrom } from "./room.ts";
+import { forgetRooms, historyOf, roomsOf } from "./records.ts";
+import { NAME_HEADER, PLAYER_HEADER, vapidFrom } from "./room.ts";
 
 export type { HarfiyenEnv } from "./env.ts";
 export { HarfiyenLobby } from "./lobby.ts";
@@ -33,75 +35,85 @@ function originAllowed(request: Request, url: URL): boolean {
   return local(url.hostname) && local(from.hostname);
 }
 
-/** A GET's fields as the JSON body a POST would carry: `v`, `name` and `k` (codes) from the query, the secret from its header. */
-function fromQuery(request: Request, url: URL): string | null {
-  const secret = request.headers.get("X-Harfiyen-Secret");
-  if (!secret) return null;
-  const query = url.searchParams;
-  const codes = query.get("k");
-  return JSON.stringify({
-    v: Number(query.get("v")),
-    secret,
-    ...(query.has("name") ? { name: query.get("name") } : {}),
-    ...(codes !== null ? { codes: codes ? codes.split(",") : [] } : {}),
-  });
+/** A socket turned away before it reaches an object: accepted only to say why, so the page can tell. */
+function refuseSocket(code: ErrorCode): Response {
+  const pair = new WebSocketPair();
+  pair[1].accept();
+  pair[1].send(JSON.stringify({ t: "error", code }));
+  pair[1].close(1000, code);
+  return new Response(null, { status: 101, webSocket: pair[0] });
 }
 
-async function body(request: Request): Promise<string | null> {
-  const text = await request.text();
-  return text.length > MAX_MESSAGE ? null : text;
-}
+/** Rooms an account's list may hold at once: the ones it's playing, and finished ones for a week. */
+const MAX_ROOMS = 40;
 
 /**
- * Everything under /api/harfiyen: new invitations and summaries over HTTP,
- * rooms and the lobby over WebSockets handed straight to their Durable
- * Objects. Cheap checks first, so junk never wakes an object.
+ * Everything under /api/harfiyen: invitations, summaries, history and the
+ * move of an old device's games over HTTP (GETs: the site's firewall lets
+ * nothing else through), rooms and the lobby over WebSockets handed straight
+ * to their Durable Objects. The player is the signed-in account; the room
+ * learns it from headers set here, never from the browser. Cheap checks
+ * first, so junk never wakes an object.
  */
 export async function routeHarfiyen(request: Request, env: HarfiyenEnv): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname.replace(/^\/api\/harfiyen/, "");
-  // A body is read before any answer, even a refusal: one left unread can spoil the connection it came on.
-  // The site's firewall lets only GET through, so the same calls also come as GETs: the device secret
-  // in a header (never in the URL, which ends up in logs), the rest in the query.
-  const text = request.method === "POST" ? await body(request) : request.method === "GET" ? fromQuery(request, url) : null;
   if (env.HARFIYEN_MP === "off") return json({ error: "kapali" }, 503);
+  if (request.method !== "GET") return json({ error: "yok" }, 405);
   // The public half of the push key is public; and browsers send no Origin on a same-origin GET.
-  if (path === "/vapid" && request.method === "GET") {
+  if (path === "/vapid") {
     const keys = vapidFrom(env);
     return keys ? json({ key: (await keys).publicKey }) : json({ error: "yok" }, 404);
   }
   if (!originAllowed(request, url)) return json({ error: "origin" }, 403);
 
-  if (path === "/oda" && (request.method === "POST" || request.method === "GET")) {
-    const create = text === null ? null : parseCreate(text);
-    if (!create) return json({ error: "bozuk" }, 400);
-    if (create.v !== PROTOCOL) return json({ error: "surum" }, 409);
-    const host = await publicId(create.secret);
+  const room = /^\/ws\/oda\/([23456789ABCDEFGHJKMNPQRSTVWXYZ]{6})$/.exec(path);
+  if (room || path === "/ws/lobi") {
+    if (request.headers.get("Upgrade") !== "websocket") return json({ error: "upgrade" }, 426);
+    const user = await sessionUser(request, env);
+    if (!user) return refuseSocket("oturum");
+    const namespace = room ? env.HARFIYEN_ROOM : env.HARFIYEN_LOBBY;
+    const stub = (namespace as DurableObjectNamespace).get(namespace.idFromName(room ? room[1] : "lobi"));
+    const headers = new Headers(request.headers);
+    headers.set(PLAYER_HEADER, user.id);
+    headers.set(NAME_HEADER, encodeURIComponent(user.name ?? ""));
+    return stub.fetch(new Request(request, { headers }));
+  }
+
+  const v = versionOf(url.searchParams);
+  if (v === null) return json({ error: "bozuk" }, 400);
+  if (v !== PROTOCOL) return json({ error: "surum" }, 409);
+  const user = await sessionUser(request, env);
+  if (!user) return json({ error: "oturum" }, 401);
+  const roomOf = (code: string) => env.HARFIYEN_ROOM.get(env.HARFIYEN_ROOM.idFromName(code));
+
+  if (path === "/oda") {
     for (let attempt = 0; attempt < 4; attempt++) {
       const code = newCode(Math.random);
-      const room = env.HARFIYEN_ROOM.get(env.HARFIYEN_ROOM.idFromName(code));
-      if (await room.createInvite(code, host, create.name)) return json({ code }, 201);
+      if (await roomOf(code).createInvite(code, user.id, user.name ?? "")) return json({ code }, 201);
     }
     return json({ error: "limit" }, 503);
   }
 
-  if (path === "/ozet" && (request.method === "POST" || request.method === "GET")) {
-    const ask = text === null ? null : parseSummaryRequest(text);
-    if (!ask) return json({ error: "bozuk" }, 400);
-    if (ask.v !== PROTOCOL) return json({ error: "surum" }, 409);
-    const pub = await publicId(ask.secret);
-    const rooms = await Promise.all(
-      ask.codes.map((code) => env.HARFIYEN_ROOM.get(env.HARFIYEN_ROOM.idFromName(code)).summary(code, pub)),
-    );
+  if (path === "/ozet") {
+    const asked = codesOf(url.searchParams);
+    if (!asked) return json({ error: "bozuk" }, 400);
+    const codes = [...new Set([...asked, ...(await roomsOf(env.DB, user.id, MAX_ROOMS))])].slice(0, MAX_ROOMS + MAX_SUMMARY);
+    const rooms = await Promise.all(codes.map((code) => roomOf(code).summary(code, user.id)));
+    await forgetRooms(env.DB, user.id, rooms.filter((summary) => summary.gone).map((summary) => summary.code));
     return json({ rooms });
   }
 
-  const room = /^\/ws\/oda\/([23456789ABCDEFGHJKMNPQRSTVWXYZ]{6})$/.exec(path);
-  if (room || path === "/ws/lobi") {
-    if (request.headers.get("Upgrade") !== "websocket") return json({ error: "upgrade" }, 426);
-    const namespace = room ? env.HARFIYEN_ROOM : env.HARFIYEN_LOBBY;
-    const stub = (namespace as DurableObjectNamespace).get(namespace.idFromName(room ? room[1] : "lobi"));
-    return stub.fetch(request);
+  if (path === "/gecmis") return json({ history: await historyOf(env.DB, user.id, 50) });
+
+  if (path === "/bagla") {
+    // The secret of the device id this browser played under before accounts, in a header like it always was.
+    const secret = request.headers.get("X-Harfiyen-Secret");
+    const asked = codesOf(url.searchParams);
+    if (!isSecret(secret) || !asked) return json({ error: "bozuk" }, 400);
+    const device = await publicId(secret);
+    const moved = await Promise.all(asked.map(async (code) => ((await roomOf(code).adopt(device, user.id, user.name ?? "")) ? code : null)));
+    return json({ codes: moved.filter((code): code is string => code !== null) });
   }
 
   return json({ error: "yok" }, 404);

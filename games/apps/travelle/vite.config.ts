@@ -35,7 +35,13 @@ function devApi(): Plugin {
 export default defineConfig(({ mode }) => ({
   plugins: [react(), devApi()],
   base: mode === "site" ? "/games/travelle/" : "/",
-  server: { host: true, port: 5177, strictPort: true },
+  server: {
+    host: true,
+    port: 5177,
+    strictPort: true,
+    // The account (signing in, shared by every game) is the dev Worker's: `pnpm --filter @harfiyen/engine dev:mp`, port 8787.
+    proxy: { "/api/hesap": { target: "http://localhost:8787", changeOrigin: false } },
+  },
   preview: { host: true, port: 5178, strictPort: true },
   build: { target: "es2022" },
 }));

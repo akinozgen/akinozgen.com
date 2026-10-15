@@ -12,6 +12,7 @@
     "build:site": "vite build --mode site --outDir ../../../public/games/travelle --emptyOutDir"
   },
   "dependencies": {
+    "@akinozgen/account": "workspace:*",
     "@travelle/core": "workspace:*",
     "@travelle/geo": "workspace:*",
     "d3-geo": "^3.1.1",

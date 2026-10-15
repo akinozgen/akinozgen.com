@@ -67,6 +67,7 @@ const en = {
   statLongest: "Longest",
   statGreats: "Rounds 80+",
   statsEmpty: "No games yet.",
+  importedNote: "Games imported from this device: {n}",
   rulesAim: "Five rounds, two countries each. How many times does the blue one fit into the amber one, by real area?",
   rulesMap: "The catch",
   rulesMapText:
@@ -152,6 +153,7 @@ const tr: Dict = {
   statLongest: "En uzun",
   statGreats: "80+ puanlı tur",
   statsEmpty: "Henüz oyun yok.",
+  importedNote: "{n} oyun bu cihazdan aktarıldı",
   rulesAim: "Beş tur, her turda iki ülke. Gerçek yüzölçümüyle turuncu ülke kaç mavi ülke eder?",
   rulesMap: "Püf noktası",
   rulesMapText:
@@ -234,6 +236,7 @@ const de: Dict = {
   statLongest: "Längste Serie",
   statGreats: "Runden 80+",
   statsEmpty: "Noch keine Spiele.",
+  importedNote: "Von diesem Gerät übernommene Spiele: {n}",
   rulesAim: "Fünf Runden, je zwei Länder. Wie oft passt das blaue Land ins orangefarbene – nach echter Fläche?",
   rulesMap: "Der Haken",
   rulesMapText:
@@ -316,6 +319,7 @@ const ru: Dict = {
   statLongest: "Лучшая серия",
   statGreats: "Раунды на 80+",
   statsEmpty: "Пока нет игр.",
+  importedNote: "Игр перенесено с этого устройства: {n}",
   rulesAim: "Пять раундов, в каждом две страны. Сколько раз синяя страна поместится в оранжевую — по реальной площади?",
   rulesMap: "Подвох",
   rulesMapText:
@@ -398,6 +402,7 @@ const es: Dict = {
   statLongest: "Mejor racha",
   statGreats: "Rondas de 80+",
   statsEmpty: "Aún no hay partidas.",
+  importedNote: "Partidas importadas de este dispositivo: {n}",
   rulesAim: "Cinco rondas, dos países en cada una. ¿Cuántas veces cabe el azul en el naranja, por superficie real?",
   rulesMap: "La trampa",
   rulesMapText:

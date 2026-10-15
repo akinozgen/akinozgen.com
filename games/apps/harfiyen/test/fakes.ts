@@ -10,6 +10,8 @@ import {
   tableToJson,
   viewOf,
 } from "@harfiyen/engine";
+import type { User } from "@akinozgen/account";
+import { refresh } from "@akinozgen/account/client";
 import { act } from "@testing-library/react";
 import type { SocketLike } from "../src/game/socket.ts";
 
@@ -80,31 +82,83 @@ export class FakeSocket implements SocketLike {
   }
 }
 
-type Handler = (body: unknown) => { status?: number; body: unknown };
+type Handler = (body: Record<string, unknown>) => { status?: number; body: unknown };
 
 /**
  * The game's HTTP API as the tests want it: "GET /api/harfiyen/oda" → handler. Unset paths answer 404.
- * A handler gets the request as the server reads it: a GET's query and secret header as one object.
+ * A handler gets the request as the server reads it: the query's version and codes, and the old
+ * device secret when the header carries one. Without a session (`account.user` null) every call but
+ * the push key answers `oturum`, as the Worker does.
  */
 export const api = new Map<string, Handler>();
 
 export function answerApi(method: string, path: string, init?: RequestInit): Response {
   const [route, search = ""] = path.split("?");
+  if (account.user === null && route !== "/api/harfiyen/vapid") return json(401, { error: "oturum" });
   const handler = api.get(`${method} ${route}`);
-  if (!handler) return new Response(JSON.stringify({ error: "yok" }), { status: 404 });
+  if (!handler) return json(404, { error: "yok" });
   const query = new URLSearchParams(search);
   const secret = new Headers(init?.headers).get("X-Harfiyen-Secret");
-  const body =
-    typeof init?.body === "string"
-      ? (JSON.parse(init.body) as unknown)
-      : {
-          v: Number(query.get("v")),
-          secret,
-          ...(query.has("name") ? { name: query.get("name") } : {}),
-          ...(query.has("k") ? { codes: query.get("k") ? query.get("k")!.split(",") : [] } : {}),
-        };
-  const answer = handler(body);
-  return new Response(JSON.stringify(answer.body), { status: answer.status ?? 200 });
+  const answer = handler({
+    v: Number(query.get("v")),
+    ...(query.has("k") ? { codes: query.get("k") ? query.get("k")!.split(",") : [] } : {}),
+    ...(secret ? { secret } : {}),
+  });
+  return json(answer.status ?? 200, answer.body);
+}
+
+const json = (status: number, body: unknown): Response =>
+  new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
+
+/** The signed-in player in the tests: seat 0 in `roomInfo`, as GUEST. */
+export const ME: User = {
+  name: "Sakin Köpek #0007",
+  base: "Sakin Köpek",
+  tag: "0007",
+  chosen: null,
+  email: "oyuncu@example.com",
+  provider: "google.com",
+  createdAt: 1,
+};
+
+/**
+ * The site's account API (games/packages/account), as far as harfiyen uses it: who is signed in,
+ * and a new name. `rename` decides how a name is taken; by default every one is.
+ */
+export const account: {
+  user: User | null;
+  rename: (words: string) => { status?: number; body: unknown } | null;
+  renamed: string[];
+} = { user: ME, rename: () => null, renamed: [] };
+
+export function answerAccount(path: string, init?: RequestInit): Response {
+  const route = path.split("?")[0].replace(/^\/api\/hesap\//, "");
+  if (route === "ben") return json(200, { user: account.user });
+  if (route === "ad") {
+    if (!account.user) return json(401, { error: "oturum" });
+    const words = decodeURIComponent(new Headers(init?.headers).get("X-Hesap-Ad") ?? "");
+    account.renamed.push(words);
+    const refused = account.rename(words);
+    if (refused) return json(refused.status ?? 400, refused.body);
+    const base = words || "Sakin Köpek";
+    account.user = { ...account.user, base, chosen: words || null, name: `${base} #${account.user.tag}` };
+    return json(200, { user: account.user });
+  }
+  return json(404, { error: "yok" });
+}
+
+/** Signs the fake player in (or out, with null) and lets the page's account hear of it. */
+export async function signedInAs(user: User | null): Promise<void> {
+  account.user = user;
+  await act(async () => {
+    await refresh();
+  });
+}
+
+export function resetAccount(): void {
+  account.user = ME;
+  account.rename = () => null;
+  account.renamed = [];
 }
 
 /** A rack as letters ("?" a joker). */

@@ -45,6 +45,7 @@ const en = {
   statFastest: "Fastest",
   statAverage: "Average",
   statsEmpty: "Finish a round to start your record.",
+  importedNote: "Games imported from this device: {n}",
   rulesAim:
     "A handful of neighbouring countries, cut out along their borders and scattered round the outline of the map, each turned a different way. Put every one back in its place.",
   rulesMove: "Moving and turning",
@@ -120,6 +121,7 @@ const tr: Dict = {
   statFastest: "En hızlı",
   statAverage: "Ortalama",
   statsEmpty: "Kaydın, ilk turu bitirince başlar.",
+  importedNote: "{n} oyun bu cihazdan aktarıldı",
   rulesAim:
     "Birkaç komşu ülke sınırlarından kesilip haritanın dış hattının etrafına saçılmış, her biri başka yöne dönmüş. Her birini yerine koy.",
   rulesMove: "Taşımak ve döndürmek",
@@ -191,6 +193,7 @@ const de: Dict = {
   statFastest: "Schnellste",
   statAverage: "Schnitt",
   statsEmpty: "Beende eine Runde, um deine Statistik zu starten.",
+  importedNote: "Von diesem Gerät übernommene Spiele: {n}",
   rulesAim:
     "Ein paar Nachbarländer, entlang ihrer Grenzen ausgeschnitten und rund um den Umriss der Karte verstreut, jedes anders gedreht. Setz jedes an seinen Platz.",
   rulesMove: "Bewegen und drehen",
@@ -263,6 +266,7 @@ const ru: Dict = {
   statFastest: "Быстрее всего",
   statAverage: "В среднем",
   statsEmpty: "Завершите раунд, чтобы начать статистику.",
+  importedNote: "Игр перенесено с этого устройства: {n}",
   rulesAim:
     "Несколько соседних стран вырезаны по границам и разбросаны вокруг контура карты, каждая повёрнута по-своему. Верните каждую на своё место.",
   rulesMove: "Двигать и поворачивать",
@@ -335,6 +339,7 @@ const es: Dict = {
   statFastest: "Más rápido",
   statAverage: "Media",
   statsEmpty: "Termina una ronda para empezar tu historial.",
+  importedNote: "Partidas importadas de este dispositivo: {n}",
   rulesAim:
     "Unos cuantos países vecinos, recortados por sus fronteras y esparcidos alrededor del contorno del mapa, cada uno girado a su manera. Devuelve cada uno a su sitio.",
   rulesMove: "Mover y girar",

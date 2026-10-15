@@ -1,3 +1,4 @@
+import { AccountButton } from "@akinozgen/account/client";
 import { readJson, writeJson } from "@travelle/core";
 import { useEffect, useMemo, useState } from "react";
 import { Board } from "./components/Board.tsx";
@@ -147,6 +148,7 @@ export function App(): React.ReactElement {
           ))}
         </nav>
         <nav className="topbar__tools">
+          <AccountButton />
           <LanguagePicker />
           <ThemeToggle />
           <button type="button" className="icon-button" aria-label={t("stats")} onClick={() => setSheet("stats")}>
@@ -289,7 +291,7 @@ export function App(): React.ReactElement {
                   onNext={mode === "endless" ? game.next : undefined}
                 />
                 <div className="panel__stats">
-                  <StatsView stats={game.stats} />
+                  <StatsView stats={game.stats} imported={game.imported} />
                 </div>
               </>
             )}
@@ -306,9 +308,9 @@ export function App(): React.ReactElement {
       {sheet === "stats" && (
         <Sheet title={t("stats")} onClose={closeSheet}>
           <h3>{t("statsDaily")}</h3>
-          <StatsView stats={daily.stats} />
+          <StatsView stats={daily.stats} imported={daily.imported} />
           <h3>{t("statsEndless")}</h3>
-          <StatsView stats={practice.stats} />
+          <StatsView stats={practice.stats} imported={practice.imported} />
         </Sheet>
       )}
     </div>

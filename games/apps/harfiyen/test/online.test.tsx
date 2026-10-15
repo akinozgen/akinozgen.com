@@ -2,7 +2,8 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "../src/App.tsx";
 import { loadLexicons } from "../src/game/lexicons.ts";
-import { api, FakeSocket, GUEST, HOST, roomInfo, summary, tableFor } from "./fakes.ts";
+import { PROTOCOL } from "@harfiyen/engine";
+import { account, api, FakeSocket, GUEST, HOST, roomInfo, summary, tableFor } from "./fakes.ts";
 
 beforeAll(async () => {
   await loadLexicons();
@@ -32,11 +33,11 @@ function roomSocket(): FakeSocket {
 }
 
 describe("the online hub", () => {
-  it("shows who you are and, with no games yet, how online play works", async () => {
+  it("shows who you are — the account's name — and, with no games yet, how online play works", async () => {
     at("#/cevrimici");
-    expect(await screen.findByRole("textbox", { name: "Adın" })).toBeTruthy();
-    expect(screen.getByText(/^#\d{4}$/)).toBeTruthy();
-    expect(screen.getByText("Bu cihazdaki adın")).toBeTruthy();
+    expect(((await screen.findByRole("textbox", { name: "Adın" })) as HTMLInputElement).value).toBe("Sakin Köpek");
+    expect(screen.getByText("#0007")).toBeTruthy();
+    expect(screen.getByText("Hesabındaki adın")).toBeTruthy();
     expect(screen.getByText(/sırayla oynanır, süre yok: hamleni yap, kapat, sıra sana gelince devam et/)).toBeTruthy();
   });
 
@@ -79,7 +80,7 @@ describe("the online hub", () => {
       fireEvent.click(screen.getByRole("button", { name: /Rastgele rakip/ }));
       const lobby = FakeSocket.to("/ws/lobi")[0];
       lobby.accept();
-      expect(lobby.sent[0]).toMatchObject({ t: "seek", v: 1 });
+      expect(lobby.sent[0]).toEqual({ t: "seek", v: PROTOCOL });
       lobby.receive({ t: "waiting", seekers: 3 });
       expect(screen.getByText("Rakip aranıyor…")).toBeTruthy();
       expect(screen.getByText("Şu an 3 kişi arıyor")).toBeTruthy();
@@ -116,7 +117,8 @@ describe("the online hub", () => {
     at("#/cevrimici");
     fireEvent.click(await screen.findByRole("button", { name: /Arkadaşını çağır/ }));
     await waitFor(() => expect(window.location.hash).toBe("#/oda/K7Q2XM"));
-    expect(asked).toMatchObject({ v: 1, secret: expect.stringMatching(/^[0-9a-f]{32}$/) });
+    // The account comes from the session cookie: nothing names the player.
+    expect(asked).toEqual({ v: PROTOCOL });
   });
 
   it("says so when the invitation can't be made", async () => {
@@ -126,34 +128,44 @@ describe("the online hub", () => {
     expect(await screen.findByText("Çevrimiçi oyun şu an kapalı. Biraz sonra yeniden dene.")).toBeTruthy();
   });
 
-  it("lets the name's words be changed, checked, rolled at random, or put back", async () => {
+  it("changes the account's name: typed words are checked, then the server has the last word", async () => {
     at("#/cevrimici");
     const field = (await screen.findByRole("textbox", { name: "Adın" })) as HTMLInputElement;
-    const original = field.value;
     fireEvent.change(field, { target: { value: "  Ayşe   Teyze " } });
     fireEvent.keyDown(field, { key: "Enter" });
     fireEvent.blur(field);
-    expect(JSON.parse(localStorage.getItem("harfiyen:name:v1")!)).toBe("Ayşe Teyze");
+    await waitFor(() => expect(screen.getByText("Hesabındaki adın")).toBeTruthy());
     expect(field.value).toBe("Ayşe Teyze");
+    expect(account.renamed).toEqual(["Ayşe Teyze"]);
 
+    // Too short is said here, without asking.
     fireEvent.change(field, { target: { value: "x" } });
     fireEvent.blur(field);
     expect(screen.getByRole("alert").textContent).toBe("Ad en az 2 harf olmalı.");
-    expect(JSON.parse(localStorage.getItem("harfiyen:name:v1")!)).toBe("Ayşe Teyze");
+    expect(account.renamed).toHaveLength(1);
     fireEvent.change(field, { target: { value: "x" } });
     fireEvent.keyDown(field, { key: "Escape" });
     fireEvent.blur(field);
     expect(field.value).toBe("Ayşe Teyze");
 
-    fireEvent.click(screen.getByRole("button", { name: "Rastgele ad" }));
-    expect(field.value).not.toBe("Ayşe Teyze");
-    expect(field.value.split(" ").length).toBeGreaterThanOrEqual(2);
+    // A name the server turns down.
+    account.rename = () => ({ status: 400, body: { error: "ad" } });
+    fireEvent.change(field, { target: { value: "Kötü Ad" } });
+    fireEvent.blur(field);
+    expect((await screen.findByRole("alert")).textContent).toBe("Bu ad kullanılamaz.");
+    account.rename = () => null;
 
-    // Emptied, the device's own words come back.
+    // The dice: two words at random, saved at once.
+    fireEvent.click(screen.getByRole("button", { name: "Rastgele ad" }));
+    await waitFor(() => expect(account.renamed).toHaveLength(3));
+    expect(account.renamed[2].split(" ").length).toBeGreaterThanOrEqual(2);
+    await waitFor(() => expect(field.value).toBe(account.renamed[2]));
+
+    // Emptied, the account's default words come back.
     fireEvent.change(field, { target: { value: "" } });
     fireEvent.blur(field);
-    expect(localStorage.getItem("harfiyen:name:v1")).toBeNull();
-    expect(field.value).toBe(original);
+    await waitFor(() => expect(field.value).toBe("Sakin Köpek"));
+    expect(account.renamed.at(-1)).toBe("");
   });
 });
 

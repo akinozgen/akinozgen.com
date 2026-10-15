@@ -1,8 +1,11 @@
 import { clock, type Stats } from "../game/useTessle.ts";
 import { useLocale } from "../i18n/index.tsx";
 
-/** The record: totals, then how fast the solves have been. */
-export function StatsView({ stats }: { stats: Stats }): React.ReactElement {
+/**
+ * The record: totals, then how fast the solves have been. `imported`: signed
+ * in, how many of the rounds came from this device's record before the account.
+ */
+export function StatsView({ stats, imported = 0 }: { stats: Stats; imported?: number }): React.ReactElement {
   const { t } = useLocale();
   const rate = stats.played > 0 ? Math.round((stats.won / stats.played) * 100) : 0;
   const average = stats.won > 0 ? clock(stats.totalTime / stats.won) : "–";
@@ -40,6 +43,7 @@ export function StatsView({ stats }: { stats: Stats }): React.ReactElement {
           </div>
         </dl>
       )}
+      {imported > 0 && <p className="muted stats__note">{t("importedNote", { n: imported })}</p>}
     </div>
   );
 }

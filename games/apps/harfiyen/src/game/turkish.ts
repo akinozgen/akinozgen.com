@@ -1,4 +1,4 @@
-import { splitName } from "./identity.ts";
+import { splitName } from "./names.ts";
 
 const FRONT = new Set(["e", "i", "ö", "ü"]);
 const VOWELS = new Set(["a", "e", "ı", "i", "o", "ö", "u", "ü"]);

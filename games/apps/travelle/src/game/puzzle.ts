@@ -19,8 +19,10 @@ export interface Puzzle {
   shortest: number;
   /** Total guesses allowed: the shortest solution plus the published allowance. */
   budget: number;
-  /** Endless only: what the server needs back to judge the round. */
+  /** Endless only: what the server needs back to judge the round… */
   key?: string;
+  /** …and the number it was drawn with. */
+  draw?: number;
 }
 
 /** Today's puzzle number, counted in the player's own timezone. */
@@ -62,5 +64,6 @@ export function fromEndless(
     shortest: endless.shortest,
     budget: endless.budget,
     key: endless.key,
+    draw: seed,
   };
 }

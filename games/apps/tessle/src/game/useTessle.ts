@@ -1,8 +1,22 @@
+import { RecordConflict, useAccount, usePuzzleRecords } from "@akinozgen/account/client";
 import { readJson, writeJson } from "@travelle/core";
-import { type Puzzle, type Reveal, SNAP_PX, UNITS_PER_PX } from "@tessle/data/client";
+import { type Puzzle, type Reveal, SNAP_PX, type TessleMoves, type TessleResult, UNITS_PER_PX } from "@tessle/data/client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { askFit, fetchPuzzle, fetchReveal, type RoundKey } from "./api.ts";
+import { askFit, boardOf, boardText, fetchPuzzle, fetchReveal, type Mark, type RoundKey } from "./api.ts";
+import {
+  countRound,
+  deviceStats,
+  emptyStats,
+  ENDLESS_STATS_KEY,
+  importedStats,
+  movesOf,
+  type Stats,
+  STATS_KEY,
+  statsFromRecords,
+} from "./records.ts";
 import { type SavedTable, Table } from "./table.ts";
+
+export { emptyStats, type Stats };
 
 /** Day 1 of tessle. */
 export const EPOCH = "2026-10-05";
@@ -44,40 +58,14 @@ interface SavedGame {
   reveal?: Reveal;
   /** Played with hard mode on from the first move, and never switched off. */
   hardAll: boolean;
+  /** Signed in: boards the server has judged for this round, as far as this page has seen… */
+  checks?: number;
+  /** …and the last of them, as it was sent (api.ts `boardText`). */
+  judged?: string;
 }
-
-export interface Stats {
-  played: number;
-  won: number;
-  streak: number;
-  best: number;
-  hardWins: number;
-  /** Fastest solve, in milliseconds. */
-  fastest: number | null;
-  /** Every solve's time added up, for the average. */
-  totalTime: number;
-  lastNumber: number | null;
-  lastWon: number | null;
-  /** Endless only: the last round counted. */
-  lastRound?: number | null;
-}
-
-export const emptyStats: Stats = {
-  played: 0,
-  won: 0,
-  streak: 0,
-  best: 0,
-  hardWins: 0,
-  fastest: null,
-  totalTime: 0,
-  lastNumber: null,
-  lastWon: null,
-};
 
 const GAME_PREFIX = "tessle:game:v1:";
-const STATS_KEY = "tessle:stats:v1";
 const ENDLESS_KEY = "tessle:endless:v1";
-const ENDLESS_STATS_KEY = "tessle:endless-stats:v1";
 const HARD_KEY = "tessle:hard:v1";
 const KEEP_GAMES = 14;
 
@@ -145,7 +133,7 @@ export interface Tessle {
   status: Status;
   moves: number;
   started: boolean;
-  /** Time on the round so far, live. */
+  /** Time on the round so far, live; once it is over and on the account's record, the server's. */
   elapsed: () => number;
   /** Pieces not yet in the frame. */
   left: number;
@@ -159,7 +147,10 @@ export interface Tessle {
   loading: boolean;
   failed: boolean;
   retry: () => void;
+  /** The record: the account's while someone is signed in, the browser's own otherwise. */
   stats: Stats;
+  /** Signed in: how many of the record's rounds came from this device's record before the account. */
+  imported: number;
   /** The board reports a move or a turn of these pieces: either costs one move. */
   act: (pieces: number[]) => void;
   giveUp: () => void;
@@ -191,6 +182,11 @@ export function useTessle(mode: Mode = "daily", active = true): Tessle {
   const savedRef = useRef(saved);
   savedRef.current = saved;
   const lastFailure = useRef<(() => void) | null>(null);
+  const account = useAccount();
+  const signedIn = account.status === "in";
+  // While the account may be signed in, its record decides: answers skip the browser's cache.
+  const maybeSignedIn = account.status !== "out";
+  const records = usePuzzleRecords<TessleResult>("tessle", deviceStats);
 
   const roundKey: RoundKey = useMemo(
     () => (endless ? { round: saved.round ?? 0 } : { date }),
@@ -251,6 +247,10 @@ export function useTessle(mode: Mode = "daily", active = true): Tessle {
   const puzzle = saved.puzzle ?? null;
   const [table, setTable] = useState<Table | null>(null);
   const tableRound = useRef<string | null>(null);
+  /** Bumped when the board is replaced by the one on the account's record: the table is built again. */
+  const [layout, setLayout] = useState(0);
+  /** Counts the tables built, so the record is asked about with each new one. */
+  const [built, setBuilt] = useState(0);
 
   useEffect(() => {
     if (!puzzle) {
@@ -258,7 +258,7 @@ export function useTessle(mode: Mode = "daily", active = true): Tessle {
       tableRound.current = null;
       return;
     }
-    const id = endless ? `e${saved.round}` : `d${date}`;
+    const id = `${endless ? `e${saved.round}` : `d${date}`}:${layout}`;
     if (tableRound.current === id) return;
     tableRound.current = id;
     // A puzzle saved before the frame existed waits for it to be fetched.
@@ -267,7 +267,8 @@ export function useTessle(mode: Mode = "daily", active = true): Tessle {
     // A finished round always opens as the finished map.
     if (savedRef.current.status !== "playing" && savedRef.current.reveal) fresh.settle(savedRef.current.reveal, 0);
     setTable(fresh);
-  }, [puzzle, endless, saved.round, date]);
+    setBuilt((n) => n + 1);
+  }, [puzzle, endless, saved.round, date, layout]);
 
   const loadingPuzzle = useRef(false);
   const load = useCallback(
@@ -338,23 +339,56 @@ export function useTessle(mode: Mode = "daily", active = true): Tessle {
       setStats(record);
       return;
     }
-    const won = saved.status === "won";
-    const streak = won ? (endless || record.lastWon === number - 1 ? record.streak + 1 : 1) : 0;
-    const next: Stats = {
-      played: record.played + 1,
-      won: record.won + (won ? 1 : 0),
-      streak,
-      best: Math.max(record.best, streak),
-      hardWins: record.hardWins + (won && saved.hardAll ? 1 : 0),
-      fastest: won ? Math.min(record.fastest ?? Infinity, saved.elapsed) : record.fastest,
-      totalTime: record.totalTime + (won ? saved.elapsed : 0),
-      lastNumber: endless ? record.lastNumber : number,
-      lastWon: endless ? record.lastWon : won ? number : record.lastWon,
-      lastRound: endless ? (saved.round ?? null) : (record.lastRound ?? null),
-    };
+    const round = { won: saved.status === "won", ms: saved.elapsed, hard: saved.hardAll };
+    const next = countRound(record, round, endless, number, saved.round ?? null);
     setStats(next);
     writeJson(statsKey, next);
   }, [saved.status, saved.elapsed, saved.hardAll, saved.round, number, endless, statsKey]);
+
+  // Signed in, a round that ends here is on the account's record by now: count it.
+  const wasPlaying = useRef(false);
+  const { refresh } = records;
+  useEffect(() => {
+    if (saved.status === "playing") wasPlaying.current = true;
+    else if (wasPlaying.current && signedIn) {
+      wasPlaying.current = false;
+      refresh();
+    }
+  }, [saved.status, signedIn, refresh]);
+
+  // Signed in, the record is the account's, counted from the server's verdicts
+  // and times; until it arrives, nothing is shown rather than this browser's own.
+  const kind = endless ? "endless" : "daily";
+  const shown = useMemo(() => {
+    if (records.status === "ready") return statsFromRecords(records.plays, records.imported, kind, EPOCH);
+    return records.status === "loading" ? emptyStats : stats;
+  }, [records.status, records.plays, records.imported, kind, stats]);
+  const imported = records.status === "ready" ? (importedStats(records.imported, kind)?.played ?? 0) : 0;
+  // A finished round's time, signed in, is the server's too: the end card says what the record says.
+  const recorded = records.status === "ready" ? records.plays.find((play) => play.puzzle === (endless ? `e:${saved.round}` : `d:${date}`)) : undefined;
+  const recordedMs = recorded ? Math.max(0, recorded.finishedAt - recorded.startedAt) : null;
+  const shownElapsed = useCallback(
+    (): number => (savedRef.current.status !== "playing" && recordedMs !== null ? recordedMs : elapsed()),
+    [recordedMs, elapsed],
+  );
+
+  // --- the account's record ---
+
+  /** What the page tells the server with a board while someone may be signed in. */
+  const mark = useCallback((): Mark | undefined => {
+    if (!maybeSignedIn) return undefined;
+    const current = savedRef.current;
+    return { checks: current.checks ?? 0, hard: current.started ? current.hardAll : hard };
+  }, [maybeSignedIn, hard]);
+
+  /** The record after the server has judged `board`: a board unlike the last one is one more check. */
+  const judgedAfter = (board: string): Pick<SavedGame, "checks" | "judged"> => {
+    const current = savedRef.current;
+    return board === current.judged ? {} : { checks: (current.checks ?? 0) + 1, judged: board };
+  };
+
+  /** Asks again once the page has taken up the record: bumped by `adopt`. */
+  const [caughtUp, setCaughtUp] = useState(0);
 
   // --- asking the server what fits ---
   const fitQueue = useRef({ busy: false, dirty: false, moved: new Set<number>(), lastAt: 0, timer: 0, failures: 0 });
@@ -372,11 +406,12 @@ export function useTessle(mode: Mode = "daily", active = true): Tessle {
     }
     const moved = [...queue.moved];
     const sent = table.snapshot();
+    const board = boardText(sent);
     queue.dirty = false;
     queue.moved.clear();
     queue.busy = true;
     queue.lastAt = Date.now();
-    askFit(roundKey, sent, moved, table.unitsPerPx)
+    askFit(roundKey, board, moved, table.unitsPerPx, mark(), maybeSignedIn)
       .then((reply) => {
         const { stale } = table.applyFit(reply, sent, performance.now());
         queue.failures = 0;
@@ -385,10 +420,15 @@ export function useTessle(mode: Mode = "daily", active = true): Tessle {
           queue.dirty = true;
         }
         setFailed(false);
-        store({ ...savedRef.current, table: table.save(), elapsed: bank() });
+        store({ ...savedRef.current, table: table.save(), elapsed: bank(), ...judgedAfter(board) });
         if (reply.solved && reply.reveal) finish("won", reply.reveal);
       })
-      .catch(() => {
+      .catch((error: unknown) => {
+        const moves = error instanceof RecordConflict ? movesOf(error.moves) : null;
+        if (moves) {
+          adoptRef.current(moves);
+          return;
+        }
         for (const i of moved) queue.moved.add(i);
         queue.dirty = true;
         queue.lastAt = Date.now() + RETRY_MS;
@@ -401,9 +441,102 @@ export function useTessle(mode: Mode = "daily", active = true): Tessle {
         setVersion((v) => v + 1);
         pump();
       });
-  }, [table, roundKey, store, bank, finish]);
+  }, [table, roundKey, store, bank, finish, mark, maybeSignedIn]);
 
   useEffect(() => () => window.clearTimeout(fitQueue.current.timer), []);
+
+  /**
+   * The account has this round further along than the page (played on
+   * another device, or finished there): the page takes up the board on
+   * record, and asks about it again. A round given up there is given up here.
+   */
+  const adopt = useCallback(
+    (moves: TessleMoves) => {
+      const current = savedRef.current;
+      const queue = fitQueue.current;
+      queue.dirty = false;
+      queue.moved.clear();
+      window.clearTimeout(queue.timer);
+      const pieces = moves.board && current.puzzle ? boardOf(moves.board, current.puzzle.pieces.length) : null;
+      const caught: SavedGame = {
+        ...current,
+        status: "playing",
+        reveal: undefined,
+        checks: moves.checks,
+        judged: moves.board,
+        started: current.started || pieces !== null,
+        hardAll: moves.board !== "" ? moves.hard : current.hardAll,
+      };
+      if (moves.gaveUp) {
+        store(caught);
+        fetchReveal(roundKey, { checks: moves.checks, hard: caught.hardAll }, true)
+          .then((reveal) => finish("lost", reveal))
+          .catch(() => setFailed(true));
+        return;
+      }
+      store(caught);
+      if (pieces) {
+        // A new table from the board on record; it is asked about once it is up.
+        store({ ...caught, table: { pieces, groups: [], order: current.table?.order ?? pieces.map((_, i) => i), placed: [] } });
+        tableRound.current = null;
+        setLayout((n) => n + 1);
+      } else {
+        setCaughtUp((n) => n + 1);
+      }
+    },
+    [roundKey, store, finish],
+  );
+  const adoptRef = useRef(adopt);
+  adoptRef.current = adopt;
+
+  // Signed in, the round is asked about once the table is up, with what this
+  // page has: a round played on to elsewhere (or finished there) is taken up
+  // here, and one played here before signing in goes on the record.
+  const asked = useRef<string | null>(null);
+  const asking =
+    signedIn && active && table ? `${endless ? saved.round : date}\u0000${account.user?.tag}\u0000${built}\u0000${caughtUp}` : null;
+  useEffect(() => {
+    if (asking === null || asked.current === asking || !table) return;
+    const queue = fitQueue.current;
+    if (queue.busy) {
+      // A fit in flight answers for the round as well; ask once it is back.
+      const timer = window.setTimeout(() => setCaughtUp((n) => n + 1), FIT_GAP_MS);
+      return () => window.clearTimeout(timer);
+    }
+    asked.current = asking;
+    const current = savedRef.current;
+    if (current.status === "lost") {
+      // Given up here: the record hears of it too (a finished round answers the same again).
+      fetchReveal(roundKey, mark(), true).catch((error: unknown) => {
+        const moves = error instanceof RecordConflict ? movesOf(error.moves) : null;
+        if (moves) adopt(moves);
+      });
+      return;
+    }
+    const sent = table.snapshot();
+    const board = current.status === "won" && current.judged ? current.judged : current.started ? boardText(sent) : null;
+    queue.busy = true;
+    askFit(roundKey, board, [], table.unitsPerPx, mark(), true)
+      .then((reply) => {
+        if (board === null) return;
+        if (savedRef.current.status === "playing") {
+          table.applyFit(reply, sent, performance.now());
+          store({ ...savedRef.current, table: table.save(), ...judgedAfter(board) });
+          if (reply.solved && reply.reveal) finish("won", reply.reveal);
+        } else {
+          store({ ...savedRef.current, ...judgedAfter(board) });
+        }
+      })
+      .catch((error: unknown) => {
+        const moves = error instanceof RecordConflict ? movesOf(error.moves) : null;
+        if (moves) adopt(moves);
+      })
+      .finally(() => {
+        queue.busy = false;
+        pump();
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [asking, table]);
 
   const act = useCallback(
     (pieces: number[]) => {
@@ -438,16 +571,22 @@ export function useTessle(mode: Mode = "daily", active = true): Tessle {
     setLoading(true);
     setFailed(false);
     const attempt = (): void => {
-      fetchReveal(roundKey)
+      fetchReveal(roundKey, mark(), maybeSignedIn)
         .then((reveal) => finish("lost", reveal))
-        .catch(() => {
+        .catch((error: unknown) => {
+          const moves = error instanceof RecordConflict ? movesOf(error.moves) : null;
+          if (moves) {
+            // Behind the record: the page catches up first, and the player decides again.
+            adopt(moves);
+            return;
+          }
           lastFailure.current = attempt;
           setFailed(true);
         })
         .finally(() => setLoading(false));
     };
     attempt();
-  }, [roundKey, finish, loading]);
+  }, [roundKey, finish, loading, mark, maybeSignedIn, adopt]);
 
   const retry = useCallback(() => {
     if (lastFailure.current) {
@@ -500,7 +639,7 @@ export function useTessle(mode: Mode = "daily", active = true): Tessle {
     status: saved.status,
     moves: saved.moves,
     started: saved.started,
-    elapsed,
+    elapsed: shownElapsed,
     left: table?.unplaced ?? puzzle?.pieces.length ?? 0,
     labels,
     reveal: saved.reveal ?? null,
@@ -510,7 +649,8 @@ export function useTessle(mode: Mode = "daily", active = true): Tessle {
     loading,
     failed,
     retry,
-    stats,
+    stats: shown,
+    imported,
     act,
     giveUp,
     next,

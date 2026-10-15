@@ -1,4 +1,4 @@
-import { hueOf, initials } from "../game/identity.ts";
+import { hueOf, initials } from "../game/names.ts";
 
 /** A player's badge: two letters of their name on a colour of its own. Without a name, an empty seat. */
 export function Monogram({ name, size = "md" }: { name: string | null; size?: "sm" | "md" | "lg" }): React.ReactElement {

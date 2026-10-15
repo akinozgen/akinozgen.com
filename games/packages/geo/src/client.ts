@@ -14,3 +14,4 @@ export type {
   Status,
   Verdict,
 } from "./server/api.ts";
+export type { TravelleMoves, TravelleResult } from "./server/record.ts";

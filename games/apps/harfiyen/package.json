@@ -12,6 +12,7 @@
     "build:site": "vite build --mode site --outDir ../../../public/games/harfiyen --emptyOutDir"
   },
   "dependencies": {
+    "@akinozgen/account": "workspace:*",
     "@harfiyen/engine": "workspace:*",
     "@travelle/core": "workspace:*",
     "react": "^19.3.0",

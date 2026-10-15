@@ -2,8 +2,11 @@ import { MAX_GUESSES } from "@vexle/data/client";
 import type { Stats } from "../game/useVexle.ts";
 import { useLocale } from "../i18n/index.tsx";
 
-/** The record: totals, then a bar per number of guesses. */
-export function StatsView({ stats, today }: { stats: Stats; today?: number }): React.ReactElement {
+/**
+ * The record: totals, then a bar per number of guesses. `imported`: signed
+ * in, how many of the rounds came from this device's record before the account.
+ */
+export function StatsView({ stats, today, imported = 0 }: { stats: Stats; today?: number; imported?: number }): React.ReactElement {
   const { t } = useLocale();
   const rate = stats.played > 0 ? Math.round((stats.won / stats.played) * 100) : 0;
   const top = Math.max(1, ...stats.distribution);
@@ -48,6 +51,7 @@ export function StatsView({ stats, today }: { stats: Stats; today?: number }): R
           })}
         </ol>
       )}
+      {imported > 0 && <p className="muted stats__note">{t("importedNote", { n: imported })}</p>}
     </div>
   );
 }

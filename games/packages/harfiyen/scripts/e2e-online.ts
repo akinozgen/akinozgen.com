@@ -1,17 +1,23 @@
 /**
  * Online play end to end, against a running Worker (the dev one by default):
- * an invitation taken by a second device, a whole game played by two
+ * an invitation taken by a second account, a whole game played by two
  * computer players through real sockets, a nudge, the chat, a stale action,
- * a reconnect, the summary, and two seekers paired by the lobby.
+ * a reconnect, the summary and history, and two seekers paired by the lobby.
+ * Players are throwaway accounts: Firebase users made through its REST API,
+ * signed in to the Worker, and deleted again at the end.
  *
  *   pnpm --filter @harfiyen/engine dev:mp            # in one terminal
- *   node scripts/e2e-online.ts [http://localhost:8787 | https://akinozgen.com]
+ *   node scripts/e2e-online.ts [http://localhost:8787]
+ *
+ * Throwaway addresses aren't verified, and only the dev Worker lets an
+ * unverified address in (ACCOUNT_ALLOW_UNVERIFIED): this runs against the
+ * dev Worker, not the site.
  */
 import { readFileSync } from "node:fs";
 import { chooseMove } from "../src/bot.ts";
 import { type Game, newGame } from "../src/game.ts";
 import { Lexicon } from "../src/lexicon.ts";
-import { newSecret } from "../src/names.ts";
+import { FIREBASE_CONFIG } from "../../account/src/config.ts";
 import { PROTOCOL, type RoomMessage, toWire } from "../src/server/protocol.ts";
 import { type Table, tableFromJson } from "../src/view.ts";
 
@@ -21,14 +27,60 @@ const origin = new URL(base).hostname === "localhost" ? "http://localhost:5187" 
 const words = Lexicon.parse(readFileSync(new URL("../data/yaygin.txt", import.meta.url), "utf8"));
 void newGame;
 
+/** A throwaway account: a Firebase user, signed in to the Worker; `cookie` is its session. */
+interface Account {
+  cookie: string;
+  tag: string;
+  remove: () => Promise<void>;
+}
+
+const made: Account[] = [];
+
+async function account(name?: string): Promise<Account> {
+  const identity = "https://identitytoolkit.googleapis.com/v1/accounts";
+  const firebase = async (action: string, body: object) => {
+    const response = await fetch(`${identity}:${action}?key=${FIREBASE_CONFIG.apiKey}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Referer: `${origin}/` },
+      body: JSON.stringify(body),
+    });
+    const json = (await response.json()) as Record<string, unknown>;
+    if (!response.ok) throw new Error(`firebase ${action}: ${JSON.stringify(json.error)}`);
+    return json;
+  };
+  const user = await firebase("signUp", { email: `e2e-${crypto.randomUUID().slice(0, 8)}@example.com`, password: crypto.randomUUID(), returnSecureToken: true });
+  const signIn = await fetch(`${base}/api/hesap/giris`, { headers: { Origin: origin, "X-Hesap": "1", Authorization: `Bearer ${user.idToken}` } });
+  const signedIn = (await signIn.json()) as { user?: { tag: string } };
+  const cookie = signIn.headers.get("Set-Cookie")?.split(";")[0];
+  if (!cookie || !signedIn.user) throw new Error(`sign-in failed: ${signIn.status}`);
+  const call = (path: string) => fetch(`${base}/api/hesap/${path}`, { headers: { Origin: origin, "X-Hesap": "1", Cookie: cookie } });
+  if (name) await (await fetch(`${base}/api/hesap/ad`, { headers: { Origin: origin, "X-Hesap": "1", Cookie: cookie, "X-Hesap-Ad": encodeURIComponent(name) } })).text();
+  const result: Account = {
+    cookie,
+    tag: signedIn.user.tag,
+    remove: async () => {
+      await (await call("sil")).text();
+      await firebase("delete", { idToken: user.idToken });
+    },
+  };
+  made.push(result);
+  return result;
+}
+
+/** Renames an account, as its page would. */
+async function rename(who: Account, name: string): Promise<void> {
+  await (await fetch(`${base}/api/hesap/ad`, { headers: { Origin: origin, "X-Hesap": "1", Cookie: who.cookie, "X-Hesap-Ad": encodeURIComponent(name) } })).text();
+}
+
 /**
- * A call as the browser makes it — a GET, the secret in a header, the rest
+ * A call as the browser makes it — a GET with the session cookie, the rest
  * in the query (the site's firewall lets nothing else through) — its body
  * read in full (an unread one can spoil the next request on the connection).
  */
-async function post(path: string, body: { v: number; secret: string; name?: string; codes?: string[] }): Promise<{ status: number; json: () => Promise<unknown> }> {
-  const query = new URLSearchParams({ v: String(body.v), ...(body.name ? { name: body.name } : {}), ...(body.codes ? { k: body.codes.join(",") } : {}) });
-  const response = await fetch(`${base}/api/harfiyen/${path}?${query}`, { headers: { Origin: origin, "X-Harfiyen-Secret": body.secret } });
+async function get(path: string, who: Account | null, query: Record<string, string> = {}): Promise<{ status: number; json: () => Promise<unknown> }> {
+  const response = await fetch(`${base}/api/harfiyen/${path}?${new URLSearchParams({ v: String(PROTOCOL), ...query })}`, {
+    headers: { Origin: origin, ...(who ? { Cookie: who.cookie } : {}) },
+  });
   const text = await response.text();
   return { status: response.status, json: async () => JSON.parse(text) };
 }
@@ -40,15 +92,15 @@ class Client {
   messages: RoomMessage[] = [];
   private waiters: Array<() => void> = [];
   readonly label: string;
-  readonly secret: string;
-  constructor(label: string, secret = newSecret()) {
+  readonly who: Account | null;
+  constructor(label: string, who: Account | null) {
     this.label = label;
-    this.secret = secret;
+    this.who = who;
   }
 
   async open(path: string): Promise<void> {
     const url = `${base.replace(/^http/, "ws")}/api/harfiyen/${path}`;
-    this.ws = new WebSocket(url, { headers: { Origin: origin } } as never);
+    this.ws = new WebSocket(url, { headers: { Origin: origin, ...(this.who ? { Cookie: this.who.cookie } : {}) } } as never);
     this.ws.onmessage = (event) => {
       if (String(event.data) === "pong") return;
       const message = JSON.parse(String(event.data)) as RoomMessage;
@@ -114,29 +166,29 @@ function asGame(table: Table): Game {
 
 async function invitationAndGame(): Promise<void> {
   console.log("invitation, join, a whole game");
-  const a = new Client("A");
-  const b = new Client("B");
-  const created = await post("oda", { v: PROTOCOL, secret: a.secret, name: "Akın" });
-  check(created.status === 201, `POST /oda → 201 (got ${created.status})`);
+  const accountA = await account("Akın");
+  const accountB = await account();
+  const a = new Client("A", accountA);
+  const b = new Client("B", accountB);
+  const created = await get("oda", accountA);
+  check(created.status === 201, `GET /oda → 201 (got ${created.status})`);
   const { code } = (await created.json()) as { code: string };
 
   await a.open(`ws/oda/${code}`);
-  a.send({ t: "hello", v: PROTOCOL, secret: a.secret });
+  a.send({ t: "hello", v: PROTOCOL });
   await a.until((m) => m.t === "room", "A's room");
   check(a.last!.room.phase === "waiting" && a.last!.room.you !== null && a.last!.table === null, "host waits, no table yet");
 
   await b.open(`ws/oda/${code}`);
-  b.send({ t: "hello", v: PROTOCOL, secret: b.secret });
+  b.send({ t: "hello", v: PROTOCOL });
   await b.until((m) => m.t === "room", "B's room");
   check(b.last!.room.you === null && b.last!.room.host === a.last!.room.you, "visitor sees the host, has no seat");
-  check(b.last!.room.seats[b.last!.room.host!]!.name.startsWith("Akın #"), "the host's chosen name shows");
-  b.send({ t: "hello", v: PROTOCOL, secret: b.secret, name: "Orospu" });
-  await b.until((m) => m.t === "room", "B's hello again");
+  check(b.last!.room.seats[b.last!.room.host!]!.name === `Akın #${accountA.tag}`, "the host's account name shows");
   const startFrom = a.messages.length;
   b.send({ t: "join" });
   await b.until((m) => m.t === "room" && m.room.phase === "playing", "game start (B)");
   const bSeat = b.last!.room.you!;
-  check(!b.last!.room.seats[bSeat]!.name.includes("Orospu"), "an unfit name falls back to the device's own");
+  check(b.last!.room.seats[bSeat]!.name.endsWith(`#${accountB.tag}`), "the guest sits under its account");
   await a.until((m) => m.t === "room" && m.room.phase === "playing", "game start (A)", 5000, startFrom);
   check(a.table()!.rack.length === 7 && b.table()!.rack.length === 7, "both racks dealt");
   check(!JSON.stringify(a.messages).includes('"bag"') && !JSON.stringify(b.messages).includes('"bag"'), "no bag on the wire");
@@ -189,10 +241,12 @@ async function invitationAndGame(): Promise<void> {
   // A reconnect mid-game gets the same table back.
   b.close();
   await a.until((m) => m.t === "room" && m.room.seats[1 - (a.last!.room.you ?? 0)]?.online === false, "presence: B away");
-  const bAgain = new Client("B2", b.secret);
+  // Meanwhile B renamed the account; the room takes the new name when B is back.
+  await rename(accountB, "Bilge Baykuş");
+  const bAgain = new Client("B2", accountB);
   const mark = a.messages.length;
   await bAgain.open(`ws/oda/${code}`);
-  bAgain.send({ t: "hello", v: PROTOCOL, secret: b.secret, name: "Bilge Baykuş" });
+  bAgain.send({ t: "hello", v: PROTOCOL });
   await bAgain.until((m) => m.t === "room", "B back");
   check(bAgain.table()!.rack.join() === b.table()!.rack.join(), "reconnect: same rack back");
   const history = await bAgain.until((m) => m.t === "chat", "the chat after a reconnect", 5000, 0);
@@ -227,9 +281,16 @@ async function invitationAndGame(): Promise<void> {
   check(turns > 15, `a whole game: ${turns} turns, ${a.table()!.scores.join("–")}`);
   check(Array.isArray((a.last!.table as Table).finalRacks), "racks revealed at the end");
 
-  const summary = await post("ozet", { v: PROTOCOL, secret: a.secret, codes: [code, "ZZZZZZ"] });
+  const summary = await get("ozet", accountA, { k: "ZZZZZZ" });
   const { rooms } = (await summary.json()) as { rooms: Array<{ code: string; phase?: string; gone?: boolean }> };
-  check(rooms[0].phase === "over" && rooms[1].gone === true, "summary: this room over, a made-up one gone");
+  check(rooms.find((r) => r.code === "ZZZZZZ")?.gone === true, "summary: a made-up room is gone");
+  check(rooms.find((r) => r.code === code)?.phase === "over", "summary: the account's own list has this room, over, unasked");
+
+  // Both accounts keep the result.
+  const histories = await Promise.all([accountA, accountB].map(async (who) => ((await (await get("gecmis", who)).json()) as { history: { played: number; won: number; lost: number; drawn: number; games: { code: string; you: number; them: number }[] } }).history));
+  const [ha, hb] = histories;
+  check(ha!.played === 1 && hb!.played === 1 && ha!.won + ha!.lost + ha!.drawn === 1, `history: one game each (A ${ha!.won}-${ha!.lost}-${ha!.drawn})`);
+  check(ha!.games[0]?.code === code && ha!.games[0].you === hb!.games[0]?.them && ha!.games[0].them === hb!.games[0]?.you, "history: the same score from both sides");
 
   a.send({ t: "rematch" });
   bAgain.send({ t: "rematch" });
@@ -241,20 +302,22 @@ async function invitationAndGame(): Promise<void> {
 
 async function lobby(): Promise<void> {
   console.log("lobby");
-  const x = new Client("X");
-  const y = new Client("Y");
+  const accountX = await account();
+  const accountY = await account();
+  const x = new Client("X", accountX);
+  const y = new Client("Y", accountY);
   await x.open("ws/lobi");
-  x.send({ t: "seek", v: PROTOCOL, secret: x.secret });
+  x.send({ t: "seek", v: PROTOCOL });
   const waiting = await x.until((m) => (m as { t: string }).t === "waiting", "waiting");
   check((waiting as unknown as { seekers: number }).seekers >= 1, "first seeker waits");
   await y.open("ws/lobi");
-  y.send({ t: "seek", v: PROTOCOL, secret: y.secret });
+  y.send({ t: "seek", v: PROTOCOL });
   const mx = (await x.until((m) => (m as { t: string }).t === "matched", "X matched")) as unknown as { code: string };
   const my = (await y.until((m) => (m as { t: string }).t === "matched", "Y matched")) as unknown as { code: string };
   check(mx.code === my.code, `paired into room ${mx.code}`);
-  const xr = new Client("XR", x.secret);
+  const xr = new Client("XR", accountX);
   await xr.open(`ws/oda/${mx.code}`);
-  xr.send({ t: "hello", v: PROTOCOL, secret: x.secret });
+  xr.send({ t: "hello", v: PROTOCOL });
   await xr.until((m) => m.t === "room" && m.room.phase === "playing", "matched room playing");
   check(xr.last!.room.you !== null, "seated in the matched room");
   xr.close();
@@ -262,22 +325,33 @@ async function lobby(): Promise<void> {
 
 async function junk(): Promise<void> {
   console.log("junk");
-  const bad = await fetch(`${base}/api/harfiyen/oda?v=1`, { headers: { "X-Harfiyen-Secret": newSecret() } });
+  const someone = made[0]!;
+  const bad = await fetch(`${base}/api/harfiyen/oda?v=${PROTOCOL}`, { headers: { Cookie: someone.cookie } });
   await bad.text();
   check(bad.status === 403, "no Origin → 403");
-  const malformed = await post("oda", { v: PROTOCOL, secret: "nope" });
-  check(malformed.status === 400, `bad secret → 400 (got ${malformed.status} ${JSON.stringify(await malformed.json().catch(() => null))})`);
-  const old = await post("oda", { v: 0, secret: newSecret() });
+  check((await get("oda", null)).status === 401, "no session → 401");
+  check((await get("oda", { ...someone, cookie: `__Host-oturum=${"A".repeat(43)}` })).status === 401, "a made-up session → 401");
+  const old = await fetch(`${base}/api/harfiyen/oda?v=1`, { headers: { Origin: origin, Cookie: someone.cookie } });
+  await old.text();
   check(old.status === 409, "old version → 409");
-  const nobody = new Client("N");
+  const stranger = new Client("S", null);
+  await stranger.open("ws/oda/ZZZZZZ");
+  await stranger.until((m) => m.t === "error" && m.code === "oturum", "a socket without a session → oturum", 5000, 0);
+  check(true, "a socket without a session is told to sign in");
+  const nobody = new Client("N", someone);
   await nobody.open("ws/oda/ZZZZZZ");
-  nobody.send({ t: "hello", v: PROTOCOL, secret: nobody.secret });
+  nobody.send({ t: "hello", v: PROTOCOL });
   await nobody.until((m) => m.t === "error" && m.code === "yok", "unknown room → yok");
   check(true, "unknown room answered 'yok'");
 }
 
-await invitationAndGame();
-await lobby();
-await junk();
-console.log("all good");
+try {
+  await invitationAndGame();
+  await lobby();
+  await junk();
+  console.log("all good");
+} finally {
+  await Promise.all(made.map((who) => who.remove()));
+  console.log(`deleted ${made.length} throwaway accounts`);
+}
 process.exit(0);

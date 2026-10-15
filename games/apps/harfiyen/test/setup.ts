@@ -1,12 +1,14 @@
 import { readFileSync } from "node:fs";
 import { basename, resolve } from "node:path";
+import { refresh, resetAccountCache } from "@akinozgen/account/client";
 import { cleanup } from "@testing-library/react";
-import { afterEach, vi } from "vitest";
-import { resetIdentityCache } from "../src/game/identity.ts";
+import { afterEach, beforeEach, vi } from "vitest";
+import { resetHistoryCache } from "../src/game/history.ts";
 import { resetMyGamesCache } from "../src/game/myGames.ts";
 import { resetPushCache } from "../src/game/push.ts";
+import { resetSessionCache } from "../src/game/session.ts";
 import { resetSoundCache } from "../src/game/sound.ts";
-import { answerApi, api, FakeSocket } from "./fakes.ts";
+import { answerAccount, answerApi, api, FakeSocket, resetAccount } from "./fakes.ts";
 
 /** The word lists come from disk instead of the network; tests run from the app's folder. */
 const DATA = resolve(process.cwd(), "../../packages/harfiyen/data");
@@ -15,6 +17,8 @@ vi.stubGlobal("fetch", async (input: string | URL, init?: RequestInit) => {
   // The game's server, as each test sets it up.
   const path = String(input).replace(/^https?:\/\/[^/]+/, "");
   if (path.startsWith("/api/harfiyen/")) return answerApi(init?.method ?? "GET", path, init);
+  // The site's accounts, as each test sets them up.
+  if (path.startsWith("/api/hesap/")) return answerAccount(path, init);
   const name = basename(String(input).split("?")[0]);
   try {
     return new Response(readFileSync(resolve(DATA, name), "utf8"), { status: 200 });
@@ -36,13 +40,21 @@ vi.stubGlobal(
 // No test talks to a real server: sockets are the tests' fakes.
 vi.stubGlobal("WebSocket", FakeSocket);
 
+// Online play goes with an account: each test starts signed in, its page already knowing who.
+beforeEach(async () => {
+  resetAccount();
+  await refresh();
+});
+
 afterEach(() => {
   cleanup();
   localStorage.clear();
   sessionStorage.clear();
   FakeSocket.all = [];
   api.clear();
-  resetIdentityCache();
+  resetAccountCache();
+  resetSessionCache();
+  resetHistoryCache();
   resetMyGamesCache();
   resetPushCache();
   resetSoundCache();

@@ -5,22 +5,26 @@ export type { PushSub } from "./webpush.ts";
 
 /**
  * What browsers and the server say to each other, in JSON. A version
- * travels with the first message; a browser running older code is told to
- * reload rather than misunderstood.
+ * travels with every call and the first message; a browser running older
+ * code is told to reload rather than misunderstood.
  *
- *   GET  /api/harfiyen/oda?v&name                        → {code}          a new invitation
- *   GET  /api/harfiyen/ozet?v&k=CODE,CODE (≤20)          → {rooms: Summary[]}
- *        (the device secret in the X-Harfiyen-Secret header; POST with a JSON body works too,
- *        but the site's firewall lets only GET through)
+ *   GET  /api/harfiyen/oda?v                             → {code}          a new invitation
+ *   GET  /api/harfiyen/ozet?v&k=CODE,CODE (≤20)          → {rooms: Summary[]}  the account's rooms and these
+ *   GET  /api/harfiyen/gecmis?v                          → {history: History}  the account's finished games
+ *   GET  /api/harfiyen/bagla?v&k=CODE,…   + X-Harfiyen-Secret
+ *                                                        → {codes}         rooms this browser's old device id
+ *                                                                          played in, moved to the account
  *   GET  /api/harfiyen/vapid                             → {key}           for PushManager.subscribe
  *   WS   /api/harfiyen/ws/oda/:code    RoomRequest ⇄ RoomMessage
  *   WS   /api/harfiyen/ws/lobi         LobbyRequest ⇄ LobbyMessage
  *
- * The device secret goes in a header, a body or a first message, never in
- * a URL (URLs end up in logs). Every message from a browser is checked here
- * before anything acts on it.
+ * Who is calling is the signed-in account (games/packages/account): the
+ * Worker reads the session cookie and hands the account to the room, so no
+ * message names a player. Playing online needs an account; without one,
+ * calls answer `oturum` (401), sockets an `oturum` error. Every message
+ * from a browser is checked here before anything acts on it.
  */
-export const PROTOCOL = 1;
+export const PROTOCOL = 2;
 
 /** Largest message the server will read. */
 export const MAX_MESSAGE = 4096;
@@ -70,6 +74,8 @@ export interface ChatLine {
 }
 
 export type ErrorCode =
+  /** Not signed in: online play needs an account. */
+  | "oturum"
   /** No such room, or it has been cleared away. */
   | "yok"
   /** Both seats are taken. */
@@ -92,7 +98,8 @@ export type WirePlacement = [square: number, letter: number, joker: 0 | 1];
 
 export type RoomRequest =
   /** `name` is the name the player chose, cleaned by the server; without one the device's default stands. */
-  | { t: "hello"; v: number; secret: string; name?: string }
+  /** The first message on a socket. The player is the session's account. */
+  | { t: "hello"; v: number }
   /** Take the free seat of an invitation. */
   | { t: "join" }
   /** `n` is the number of turns the browser has seen: an action meant for an older table is ignored. */
@@ -132,7 +139,7 @@ export type RoomMessage =
   | { t: "sayRefused"; wait: number }
   | { t: "error"; code: ErrorCode };
 
-export type LobbyRequest = { t: "seek"; v: number; secret: string; name?: string };
+export type LobbyRequest = { t: "seek"; v: number };
 
 export type LobbyMessage =
   /** Still looking; `seekers` counts everyone looking right now, this browser included. */
@@ -160,12 +167,35 @@ export type Summary =
       updatedAt: number;
     };
 
+export type PastOutcome = "won" | "lost" | "draw" | "abandoned";
+
+/** A finished online game, as its player's history keeps it. */
+export interface PastGame {
+  code: string;
+  /** Which game in the room: rematches count up. */
+  gameNo: number;
+  /** The other player's name when the game ended. */
+  opponent: string | null;
+  you: number;
+  them: number;
+  outcome: PastOutcome;
+  endedAt: number;
+}
+
+/** An account's online record: the totals, and the latest games, newest first. */
+export interface History {
+  played: number;
+  won: number;
+  lost: number;
+  drawn: number;
+  games: PastGame[];
+}
+
 const SECRET = /^[0-9a-f]{32}$/;
 const isInt = (x: unknown, min: number, max: number): x is number =>
   typeof x === "number" && Number.isInteger(x) && x >= min && x <= max;
-const isSecret = (x: unknown): x is string => typeof x === "string" && SECRET.test(x);
-/** A name as sent: any short string, cleaned later; anything else is dropped. */
-const nameOf = (x: unknown): { name?: string } => (typeof x === "string" && x.length <= 64 ? { name: x } : {});
+/** An old device secret, as `bagla` takes it. */
+export const isSecret = (x: unknown): x is string => typeof x === "string" && SECRET.test(x);
 
 function parse(raw: string | ArrayBuffer): Record<string, unknown> | null {
   if (typeof raw !== "string" || raw.length > MAX_MESSAGE) return null;
@@ -183,7 +213,7 @@ export function parseRoomRequest(raw: string | ArrayBuffer): RoomRequest | null 
   if (!m) return null;
   switch (m.t) {
     case "hello":
-      return isInt(m.v, 0, 1_000_000) && isSecret(m.secret) ? { t: "hello", v: m.v, secret: m.secret, ...nameOf(m.name) } : null;
+      return isInt(m.v, 0, 1_000_000) ? { t: "hello", v: m.v } : null;
     case "join":
     case "resign":
     case "rematch":
@@ -227,25 +257,24 @@ export function parseRoomRequest(raw: string | ArrayBuffer): RoomRequest | null 
 
 export function parseLobbyRequest(raw: string | ArrayBuffer): LobbyRequest | null {
   const m = parse(raw);
-  return m && m.t === "seek" && isInt(m.v, 0, 1_000_000) && isSecret(m.secret)
-    ? { t: "seek", v: m.v, secret: m.secret, ...nameOf(m.name) }
-    : null;
+  return m && m.t === "seek" && isInt(m.v, 0, 1_000_000) ? { t: "seek", v: m.v } : null;
 }
 
-/** The body of a new invitation: `{v, secret, name?}`. */
-export function parseCreate(raw: string): { v: number; secret: string; name?: string } | null {
-  const m = parse(raw);
-  return m && isInt(m.v, 0, 1_000_000) && isSecret(m.secret) ? { v: m.v, secret: m.secret, ...nameOf(m.name) } : null;
+/** The version a call's query carries (`v`); null if it carries none. */
+export function versionOf(query: URLSearchParams): number | null {
+  const v = Number(query.get("v"));
+  return query.has("v") && isInt(v, 0, 1_000_000) ? v : null;
 }
 
 const CODE = /^[23456789ABCDEFGHJKMNPQRSTVWXYZ]{6}$/;
 
-/** The body of a summary request: `{v, secret, codes}`, codes deduplicated. */
-export function parseSummaryRequest(raw: string): { v: number; secret: string; codes: string[] } | null {
-  const m = parse(raw);
-  if (!m || !isInt(m.v, 0, 1_000_000) || !isSecret(m.secret) || !Array.isArray(m.codes)) return null;
-  if (m.codes.length > MAX_SUMMARY || !m.codes.every((code) => typeof code === "string" && CODE.test(code))) return null;
-  return { v: m.v, secret: m.secret, codes: [...new Set(m.codes as string[])] };
+/** The room codes a query lists (`k`, comma-separated, at most MAX_SUMMARY), deduplicated; null if any isn't one. */
+export function codesOf(query: URLSearchParams): string[] | null {
+  const raw = query.get("k");
+  if (!raw) return [];
+  const codes = raw.split(",");
+  if (codes.length > MAX_SUMMARY || !codes.every((code) => CODE.test(code))) return null;
+  return [...new Set(codes)];
 }
 
 /** A placement from the wire, for the engine. */

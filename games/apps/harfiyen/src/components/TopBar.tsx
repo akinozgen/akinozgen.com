@@ -1,3 +1,4 @@
+import { AccountButton } from "@akinozgen/account/client";
 import { currentTheme, onThemeChange, type Theme, toggleTheme } from "@travelle/core";
 import { useEffect, useState } from "react";
 import { setSoundOn, useSoundOn } from "../game/sound.ts";
@@ -7,8 +8,9 @@ export type Section = "bot" | "online";
 
 /**
  * The bar across the top, as in every game of the family: the name, the
- * switch between playing the computer and playing people, and the tools of
- * whichever is on screen.
+ * switch between playing the computer and playing people, the account, and
+ * the tools of whichever is on screen. On a phone the account steps down
+ * beside the switch, so the name and the tools keep one line.
  */
 export function TopBar({
   section,
@@ -48,6 +50,9 @@ export function TopBar({
           )}
         </a>
       </nav>
+      <div className="topbar__account">
+        <AccountButton />
+      </div>
       <nav className="topbar__tools" aria-label="Araçlar">
         {children}
         <SoundToggle />

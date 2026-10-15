@@ -6,21 +6,22 @@ import { seeded } from "../src/rng.ts";
 import { CODE_PATTERN, newCode, normalizeCode } from "../src/server/codes.ts";
 import {
   CHAT_MAX,
+  codesOf,
+  isSecret,
   MAX_MESSAGE,
   MAX_SUMMARY,
-  parseCreate,
   parseLobbyRequest,
   parseRoomRequest,
-  parseSummaryRequest,
   PROTOCOL,
+  versionOf,
 } from "../src/server/protocol.ts";
 
-const secret = "0123456789abcdef0123456789abcdef";
 const room = (value: unknown) => parseRoomRequest(JSON.stringify(value));
 
 describe("room requests", () => {
   it("take well-formed messages", () => {
-    expect(room({ t: "hello", v: PROTOCOL, secret })).toEqual({ t: "hello", v: PROTOCOL, secret });
+    // The player is the session's account: whatever a hello says about identity is dropped.
+    expect(room({ t: "hello", v: PROTOCOL, secret: "0123456789abcdef0123456789abcdef", name: "x" })).toEqual({ t: "hello", v: PROTOCOL });
     expect(room({ t: "play", n: 3, p: [[112, 5, 0], [113, 14, 1]] })).toEqual({ t: "play", n: 3, p: [[112, 5, 0], [113, 14, 1]] });
     expect(room({ t: "swap", n: 0, tiles: [3, 29] })).toEqual({ t: "swap", n: 0, tiles: [3, 29] });
     expect(room({ t: "pass", n: 7 })).toEqual({ t: "pass", n: 7 });
@@ -40,8 +41,8 @@ describe("room requests", () => {
       "not json",
       "[]",
       "null",
-      { t: "hello", v: PROTOCOL, secret: "short" },
-      { t: "hello", v: PROTOCOL, secret: secret.toUpperCase() },
+      { t: "hello" },
+      { t: "hello", v: "2" },
       { t: "play", n: 0, p: [] },
       { t: "play", n: 0, p: [[225, 0, 0]] },
       { t: "play", n: 0, p: [[0, 29, 0]] },
@@ -66,14 +67,19 @@ describe("room requests", () => {
 
 describe("other requests", () => {
   it("are checked the same way", () => {
-    expect(parseLobbyRequest(JSON.stringify({ t: "seek", v: 1, secret }))).toEqual({ t: "seek", v: 1, secret });
-    expect(parseLobbyRequest(JSON.stringify({ t: "seek", v: 1 }))).toBeNull();
-    expect(parseCreate(JSON.stringify({ v: 1, secret }))).toEqual({ v: 1, secret });
-    expect(parseCreate("{}")).toBeNull();
-    expect(parseSummaryRequest(JSON.stringify({ v: 1, secret, codes: ["K7Q2XM", "K7Q2XM"] }))).toEqual({ v: 1, secret, codes: ["K7Q2XM"] });
-    expect(parseSummaryRequest(JSON.stringify({ v: 1, secret, codes: ["k7q2xm"] }))).toBeNull();
+    expect(parseLobbyRequest(JSON.stringify({ t: "seek", v: 2, secret: "0123456789abcdef0123456789abcdef" }))).toEqual({ t: "seek", v: 2 });
+    expect(parseLobbyRequest(JSON.stringify({ t: "seek" }))).toBeNull();
+    const query = (text: string) => new URLSearchParams(text);
+    expect(versionOf(query("v=2"))).toBe(2);
+    expect(versionOf(query(""))).toBeNull();
+    expect(versionOf(query("v=x"))).toBeNull();
+    expect(codesOf(query("v=2&k=K7Q2XM,K7Q2XM"))).toEqual(["K7Q2XM"]);
+    expect(codesOf(query("v=2"))).toEqual([]);
+    expect(codesOf(query("k=k7q2xm"))).toBeNull();
     const many = Array.from({ length: MAX_SUMMARY + 1 }, (_, i) => newCode(seeded(`c${i}`)));
-    expect(parseSummaryRequest(JSON.stringify({ v: 1, secret, codes: many }))).toBeNull();
+    expect(codesOf(query(`k=${many.join(",")}`))).toBeNull();
+    expect(isSecret("0123456789abcdef0123456789abcdef")).toBe(true);
+    expect(isSecret("0123456789ABCDEF0123456789ABCDEF")).toBe(false);
   });
 });
 

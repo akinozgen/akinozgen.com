@@ -4,6 +4,7 @@ import { App } from "./App.tsx";
 import { followThemeColor } from "./components/ThemeToggle.tsx";
 import { LocaleProvider } from "./i18n/index.tsx";
 import "./styles.css";
+import "@akinozgen/account/client.css";
 
 followThemeColor();
 

@@ -14,10 +14,10 @@ import {
 } from "@harfiyen/engine";
 import { readJson, writeJson } from "@travelle/core";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { deviceSecret, nameField, subscribeName } from "./identity.ts";
 import type { Lexicons } from "./lexicons.ts";
 import { forgetGame, rememberGame, summaryOf } from "./myGames.ts";
 import { pushMessage, subscribePush } from "./push.ts";
+import { sessionLost } from "./session.ts";
 import { HIDDEN_GRACE, type Link, type LinkState, openLink, type SocketConstructor, socketUrl } from "./socket.ts";
 import { playPop, playTing } from "./sound.ts";
 import { arrange, type PlayApi, useHand } from "./useHand.ts";
@@ -168,12 +168,18 @@ export interface OnlineGame extends PlayApi {
  * A game with another person, held by the server: the room's socket, the
  * table it sends, and the same hand as against the computer. The browser
  * only ever has its own rack; every move goes to the server, which answers
- * with the new table for both players or says why not.
+ * with the new table for both players or says why not. The player is the
+ * signed-in account; a socket that finds no session says `oturum`, and the
+ * online screens offer the sign-in.
  */
 export function useOnlineGame(
   code: string,
   lexicons: Lexicons | null,
-  options: { WebSocket?: SocketConstructor } = {},
+  options: {
+    /** The account's name: a new one reaches the room on a fresh line, since the room takes the name a line opens with. */
+    name?: string;
+    WebSocket?: SocketConstructor;
+  } = {},
 ): OnlineGame {
   const [room, setRoom] = useState<RoomInfo | null>(null);
   const [table, setTable] = useState<Table | null>(null);
@@ -192,11 +198,11 @@ export function useOnlineGame(
   const seenRef = useRef(seenId);
   const link = useRef<Link | null>(null);
   const WebSocketImpl = options.WebSocket;
+  const name = options.name;
 
   useEffect(() => {
-    const secret = deviceSecret();
-    const greeting = () => ({ t: "hello", v: PROTOCOL, secret, ...nameField() });
-    // Once seated, each connection says where this device's notices go (the server ignores a repeat).
+    const greeting = () => ({ t: "hello", v: PROTOCOL });
+    // Once seated, each connection says where this browser's notices go (the server ignores a repeat).
     let seated = false;
     let told = false;
     // The table as last seen on this line: a move by the other side since then rings. A line's
@@ -298,22 +304,20 @@ export function useOnlineGame(
               forgetRack(code);
               forgetSeen(code);
             }
+            if (message.code === "oturum") sessionLost();
             break;
         }
       },
     });
     link.current = opened;
-    // A new name reaches the room with a fresh greeting.
-    const unsubscribe = subscribeName(() => opened.send(greeting()));
     // Notices turned on or off while the room is open.
     const unsubscribePush = subscribePush(() => seated && tellPush());
     return () => {
-      unsubscribe();
       unsubscribePush();
       opened.close();
       link.current = null;
     };
-  }, [code, WebSocketImpl]);
+  }, [code, WebSocketImpl, name]);
 
   const seat = room?.you ?? (room?.host === null || room?.host === undefined ? 0 : 1 - room.host);
   const shown = useMemo(() => table ?? emptyTable(seat), [table, seat]);

@@ -12,7 +12,9 @@
 		// served from assets, and a miss gets 404.html. Without these two, each
 		// miss - mostly bots probing for .env and wp-login.php - ran the Worker
 		// and counted against its daily quota.
-		"run_worker_first": ["/api/*"],
+		// /__/auth/* is Firebase's sign-in helper, passed through to Firebase (see
+		// games/packages/account/src/server/worker/proxy.ts).
+		"run_worker_first": ["/api/*", "/__/*"],
 		"not_found_handling": "404-page"
 	},
 	// Game data too big or too numerous for git: vexle's tile packs.
@@ -20,6 +22,16 @@
 		{
 			"binding": "GAME_ASSETS",
 			"bucket_name": "akinozgen-games"
+		}
+	],
+	// Accounts shared by every game (games/packages/account), and what they keep.
+	// Tables come from migrations/: `npx wrangler d1 migrations apply akinozgen-hesap --remote`.
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "akinozgen-hesap",
+			"database_id": "01763c06-ee0b-4e8a-b574-63f1a1814e7d",
+			"migrations_dir": "migrations"
 		}
 	],
 	"observability": {

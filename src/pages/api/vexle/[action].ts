@@ -1,11 +1,14 @@
 import type { APIRoute } from "astro";
 import { env } from "cloudflare:workers";
+import { vexleRules } from "../../../../games/packages/vexle/src/record.ts";
 import { handleVexle } from "../../../../games/packages/vexle/src/server.ts";
+import { recordedReply, send } from "../../../lib/plays.ts";
 
 /**
  * vexle's game server: which flag is today's, how each guess scores, and
  * which tiles have been earned. The tile packs live in the akinozgen-games
  * R2 bucket, bound to this Worker; only this code knows which one is today's.
+ * A signed-in player's rounds are kept as they are judged (src/lib/plays.ts).
  */
 export const prerender = false;
 
@@ -22,10 +25,11 @@ const packs = new Map<string, Uint8Array>();
 interface Env {
   TRAVELLE_SEED?: string;
   GAME_ASSETS: Bucket;
+  DB?: D1Database;
 }
 
-export const GET: APIRoute = async ({ params, url }) => {
-  const { TRAVELLE_SEED, GAME_ASSETS } = env as unknown as Env;
+export const GET: APIRoute = async ({ params, url, request }) => {
+  const { TRAVELLE_SEED, GAME_ASSETS, DB } = env as unknown as Env;
   // One secret serves both games; the labels inside keep their streams apart.
   const seed = TRAVELLE_SEED && `vexle:${TRAVELLE_SEED}`;
   const loadPack = async (code: string): Promise<Uint8Array> => {
@@ -39,11 +43,11 @@ export const GET: APIRoute = async ({ params, url }) => {
     return pack;
   };
   try {
-    const reply = await handleVexle(params.action ?? "", url.searchParams, seed, loadPack);
-    return Response.json(reply.body, {
-      status: reply.status,
-      headers: { "Cache-Control": reply.cache, "X-Content-Type-Options": "nosniff" },
-    });
+    const action = params.action ?? "";
+    const reply = await recordedReply("vexle", request, { DB }, vexleRules(action, url.searchParams), url.searchParams, (query) =>
+      handleVexle(action, query, seed, loadPack),
+    );
+    return send(reply);
   } catch (error) {
     console.error("vexle api", error);
     return Response.json({ error: "internal error" }, { status: 500, headers: { "Cache-Control": "no-store" } });

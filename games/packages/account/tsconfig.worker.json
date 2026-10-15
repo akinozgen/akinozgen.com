@@ -1,0 +1,14 @@
+{
+  // The Worker side, checked against the Workers runtime's types (made by
+  // `wrangler types` for harfiyen's dev Worker, which serves these routes in
+  // development) instead of the DOM's.
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2023"],
+    "noUncheckedIndexedAccess": false,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "types": []
+  },
+  "include": ["src/server/worker", "../harfiyen/dev/worker-configuration.d.ts"]
+}

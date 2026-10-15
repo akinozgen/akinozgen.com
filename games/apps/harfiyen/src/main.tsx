@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import { App } from "./App.tsx";
 import { unlockAudioOnGesture } from "./game/sound.ts";
 import "./styles.css";
+import "@akinozgen/account/client.css";
 
 /** The browser's bar takes the page's colour: the chosen theme's, or each scheme's own while following the system. */
 const BAR: Record<Theme, string> = { light: "#dbe5ec", dark: "#0e1626" };

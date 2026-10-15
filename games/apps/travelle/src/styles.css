@@ -548,6 +548,11 @@ body {
     display: none;
   }
 
+  /* Close enough that the tools still fit beside the name on a 390px phone. */
+  .topbar__tools {
+    gap: 6px;
+  }
+
   .modes {
     order: 3;
   }
@@ -1398,4 +1403,10 @@ body {
   background: none;
   border: 0;
   cursor: pointer;
+}
+
+/* Signed in: how much of the record came from this device's own, before the account. */
+.stats__note {
+  margin: 10px 0 0;
+  text-align: center;
 }

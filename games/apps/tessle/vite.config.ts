@@ -29,7 +29,13 @@ function devApi(): Plugin {
 export default defineConfig(({ mode }) => ({
   plugins: [react(), devApi()],
   base: mode === "site" ? "/games/tessle/" : "/",
-  server: { host: true, port: 5181, strictPort: true },
+  server: {
+    host: true,
+    port: 5181,
+    strictPort: true,
+    // The account (signing in, shared by every game) is the dev Worker's: `pnpm --filter @harfiyen/engine dev:mp`, port 8787.
+    proxy: { "/api/hesap": { target: "http://localhost:8787", changeOrigin: false } },
+  },
   preview: { host: true, port: 5182, strictPort: true },
   build: { target: "es2022" },
 }));

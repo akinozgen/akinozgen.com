@@ -317,7 +317,13 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
+}
+
+/* The account's round button, first of the tools on a wide screen. */
+.topbar__account {
+  display: flex;
+  margin-left: auto;
 }
 
 .brand {
@@ -3901,6 +3907,138 @@ a.button {
   opacity: 0.88;
 }
 
+/* The hub's main column: the games under way, then the record of finished ones. */
+.hub__main {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.hub__main > .hub-card {
+  animation-delay: 110ms;
+}
+
+.hub__main > .hub-card + .hub-card {
+  animation-delay: 170ms;
+}
+
+/* The record below it fills the column: the list keeps to its own height. */
+.hub__main > .games {
+  min-height: 0;
+}
+
+/* The record: the totals, then the latest games, which are rows to read rather than links. */
+.history {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.history__totals {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.history__totals .is-won dd {
+  color: var(--win-text);
+}
+
+.history__totals .is-lost dd {
+  color: var(--wrong);
+}
+
+.history .group__title {
+  margin: 4px 0 -6px;
+}
+
+.history__note {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+.history__loading {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.history__loading .history__skeleton-grid {
+  height: 64px;
+  border-radius: 12px;
+}
+
+/* The narrowest phones: the four totals two by two, each label whole. */
+@media (max-width: 350px) {
+  .history__totals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.row--past {
+  padding-block: 8px;
+  cursor: default;
+}
+
+.row--past .row__score {
+  font-size: 15px;
+}
+
+.row--past.row--won,
+.row--past.row--lost,
+.row--past.row--draw {
+  opacity: 1;
+}
+
+.row--past:hover {
+  background: var(--well);
+  border-color: transparent;
+}
+
+.row--past:active {
+  transform: none;
+}
+
+.history__more {
+  align-self: center;
+  font-size: 13.5px;
+  font-weight: 650;
+}
+
+/* Signed out: one card in the middle, offering the sign-in that online play goes with. */
+.signin__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.signin__tiles {
+  margin: 4px 0 18px;
+}
+
+.signin__room {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 16px;
+}
+
+.signin .gone__title {
+  text-wrap: balance;
+}
+
+.signin .gone__text {
+  max-width: 36ch;
+  text-wrap: balance;
+}
+
+.signin .gone__actions {
+  width: 100%;
+}
+
 /* --- online room --- */
 
 /* The invitation, the seat to take, a closed game: a card where the rack would be. */
@@ -4271,7 +4409,10 @@ a.button {
 /*
  * The switch between the computer and people on a phone: no room for it
  * beside the name and the tools, so it takes a slim row of its own under
- * them. On its side the phone is wide enough to keep it in the middle.
+ * them, with the account at its end — who you are beside what you play,
+ * and one round button fewer on the line above. On its side the phone is
+ * wide enough to keep the switch in the middle and the account with the
+ * tools.
  */
 @media (max-width: 880px) {
   .topbar {
@@ -4283,7 +4424,8 @@ a.button {
     position: static;
     order: 3;
     display: flex;
-    flex: 1 0 100%;
+    /* Too wide for the first line, with room left for the account beside it. */
+    flex: 1 0 calc(100% - 52px);
     transform: none;
     box-shadow: none;
   }
@@ -4292,6 +4434,11 @@ a.button {
     flex: 1;
     justify-content: center;
     height: 30px;
+  }
+
+  .topbar__account {
+    order: 4;
+    margin-left: 0;
   }
 }
 
@@ -4308,6 +4455,66 @@ a.button {
 
   .modes__tab {
     flex: none;
+  }
+
+  .topbar__account {
+    order: 0;
+    margin-left: auto;
+  }
+}
+
+/*
+ * A narrow phone on its side: the switch in the very middle would run into
+ * the tools, so it takes the middle of the room between the name and them,
+ * and everything goes a size down.
+ */
+@media (orientation: landscape) and (max-height: 520px) and (min-width: 600px) and (max-width: 779px) {
+  .topbar {
+    column-gap: 4px;
+  }
+
+  .modes {
+    position: static;
+    order: 0;
+    transform: none;
+    margin-inline: auto;
+  }
+
+  .modes__tab {
+    padding: 0 12px;
+  }
+
+  .topbar__account {
+    margin-left: 0;
+  }
+
+  .brand {
+    gap: 7px;
+  }
+
+  .brand__mark {
+    width: 26px;
+    height: 26px;
+  }
+
+  .brand__name {
+    font-size: 24px;
+  }
+
+  .topbar__tools {
+    gap: 4px;
+  }
+
+  .icon-button {
+    width: 34px;
+    height: 34px;
+  }
+}
+
+/* A short window just wider than a phone: the page narrows with the board, and the tagline would meet the switch. */
+@media (min-width: 881px) and (max-width: 1080px) and (max-height: 791px) {
+  .brand__tag {
+    display: none;
   }
 }
 
@@ -4554,12 +4761,8 @@ a.button {
   padding-inline: 10px;
 }
 
-/* The narrowest phones: four round tools and the name still share one line. */
-@media (max-width: 400px) {
-  .topbar {
-    column-gap: 8px;
-  }
-
+/* Phones: the name and up to five round tools share one line (the account is on the next, beside the switch). */
+@media (max-width: 420px) {
   .brand {
     gap: 7px;
   }
@@ -4574,7 +4777,7 @@ a.button {
   }
 
   .topbar__tools {
-    gap: 6px;
+    gap: 4px;
   }
 
   .icon-button {
@@ -4763,7 +4966,7 @@ a.button {
   color: var(--accent);
 }
 
-/* The narrowest phones: five round tools and the name, still one line. */
+/* The narrowest phones: still the name and five round tools on one line. */
 @media (max-width: 350px) {
   .brand {
     gap: 6px;

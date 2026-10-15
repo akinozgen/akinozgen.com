@@ -1,25 +1,31 @@
-import { MAX_SUMMARY, PROTOCOL, type RoomInfo, type Summary, type Table } from "@harfiyen/engine";
+import { MAX_SUMMARY, type RoomInfo, type Summary, type Table } from "@harfiyen/engine";
 import { readJson, writeJson } from "@travelle/core";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
-import type { Identity } from "./identity.ts";
+import { ApiError, callApi } from "./api.ts";
+import { moveDeviceGames } from "./device.ts";
+import { ownerOf, type Session } from "./session.ts";
 
 /**
- * The online rooms this device plays in, kept in this browser: the server
- * has no accounts to list them by. Each one keeps the last summary heard —
- * from the server's summary endpoint, or from the room itself while it's
- * open — so the list shows at once and is brought up to date behind it.
+ * The online rooms the signed-in account plays in. The server keeps the
+ * list, the same on every device; this browser keeps a copy, each room with
+ * the last summary heard — from the server's summary endpoint, or from the
+ * room itself while it's open — so the list shows at once and is brought up
+ * to date behind it. The copy says whose it is: another account signing in
+ * here starts from an empty one.
  */
 
 export type LiveSummary = Exclude<Summary, { gone: true }>;
 
 export interface MyGame {
   code: string;
-  /** When this device first had it. */
+  /** When this browser first had it. */
   added: number;
   summary: LiveSummary | null;
 }
 
 const KEY = "harfiyen:online:v1";
+/** Which account the copy belongs to (see `ownerOf`); none for a list from before accounts. */
+const OWNER_KEY = "harfiyen:online-owner:v1";
 /** Finished games kept for the list; older ones are let go. */
 export const KEEP_OVER = 10;
 /** How often the list is refreshed while it's on screen. */
@@ -35,26 +41,47 @@ function read(): MyGame[] {
   );
 }
 
-let cache: MyGame[] | null = null;
-const listeners = new Set<() => void>();
+function readOwner(): string | null {
+  const owner = readJson<unknown>(OWNER_KEY);
+  return typeof owner === "string" ? owner : null;
+}
 
-function snapshot(): MyGame[] {
-  cache ??= read();
+interface Stored {
+  owner: string | null;
+  games: MyGame[];
+}
+
+let cache: Stored | null = null;
+const listeners = new Set<() => void>();
+const NONE: MyGame[] = [];
+
+function snapshot(): Stored {
+  cache ??= { owner: readOwner(), games: read() };
   return cache;
 }
 
-function write(next: MyGame[]): void {
-  cache = prune(next);
-  writeJson(KEY, cache);
+function write(games: MyGame[], owner: string | null = snapshot().owner): void {
+  cache = { owner, games: prune(games) };
+  writeJson(KEY, cache.games);
+  if (owner !== null) writeJson(OWNER_KEY, owner);
   for (const listener of listeners) listener();
+}
+
+/**
+ * The copy becomes `owner`'s: one from before accounts is kept (its rooms
+ * are about to move over), another account's is emptied.
+ */
+function claim(owner: string): void {
+  const { owner: was, games } = snapshot();
+  if (was !== owner) write(was === null ? games : [], owner);
 }
 
 function subscribe(listener: () => void): () => void {
   listeners.add(listener);
   // Another tab changed the list.
   const onStorage = (event: StorageEvent): void => {
-    if (event.key !== KEY && event.key !== null) return;
-    cache = read();
+    if (event.key !== KEY && event.key !== OWNER_KEY && event.key !== null) return;
+    cache = null;
     listener();
   };
   window.addEventListener("storage", onStorage);
@@ -80,7 +107,7 @@ export function prune(games: MyGame[]): MyGame[] {
 
 /** Adds a room to the list, or updates what's known of it. */
 export function rememberGame(code: string, summary: LiveSummary | null = null, now: number = Date.now()): void {
-  const games = snapshot();
+  const games = snapshot().games;
   const at = games.findIndex((g) => g.code === code);
   if (at === -1) {
     write([...games, { code, added: now, summary }]);
@@ -94,7 +121,7 @@ export function rememberGame(code: string, summary: LiveSummary | null = null, n
 }
 
 export function forgetGame(code: string): void {
-  const games = snapshot();
+  const games = snapshot().games;
   if (games.some((g) => g.code === code)) write(games.filter((g) => g.code !== code));
 }
 
@@ -116,16 +143,25 @@ export function summaryOf(room: RoomInfo, table: Table | null): LiveSummary {
   };
 }
 
-/** The list with the server's news in it: summaries replace older ones, rooms that are gone go. */
-export function mergeSummaries(games: MyGame[], summaries: readonly Summary[]): MyGame[] {
+/**
+ * The list with the server's news in it: summaries replace older ones;
+ * rooms that are gone, or where the account has no seat, go; the account's
+ * rooms this browser didn't know of (played on another device) come in.
+ */
+export function mergeSummaries(games: MyGame[], summaries: readonly Summary[], now: number = Date.now()): MyGame[] {
   const news = new Map(summaries.map((s) => [s.code, s]));
-  return games.flatMap((game) => {
+  const kept = games.flatMap((game) => {
     const fresh = news.get(game.code);
     if (!fresh) return [game];
-    if (fresh.gone) return [];
+    if (fresh.gone || fresh.you === null) return [];
     if (game.summary && game.summary.updatedAt > fresh.updatedAt) return [game];
     return [{ ...game, summary: fresh }];
   });
+  const known = new Set(games.map((game) => game.code));
+  const added = [...news.values()].flatMap((fresh): MyGame[] =>
+    fresh.gone || fresh.you === null || known.has(fresh.code) ? [] : [{ code: fresh.code, added: now, summary: fresh }],
+  );
+  return [...kept, ...added];
 }
 
 export const isYourTurn = (s: LiveSummary | null): boolean =>
@@ -156,53 +192,68 @@ export function groupGames(games: readonly MyGame[]): GameGroups {
   return groups;
 }
 
-/** Asks the server about some rooms, twenty at a time. */
-export async function fetchSummaries(secret: string, codes: readonly string[]): Promise<Summary[]> {
+/**
+ * The account's rooms and these, from the server: the codes twenty at a
+ * time, in the query; the account comes from the session cookie.
+ */
+export async function fetchSummaries(codes: readonly string[]): Promise<Summary[]> {
   const out: Summary[] = [];
-  for (let i = 0; i < codes.length; i += MAX_SUMMARY) {
-    // A GET, as the site's firewall wants; the secret in a header, the codes in the query.
-    const query = new URLSearchParams({ v: String(PROTOCOL), k: codes.slice(i, i + MAX_SUMMARY).join(",") });
-    const response = await fetch(`/api/harfiyen/ozet?${query}`, { headers: { "X-Harfiyen-Secret": secret } });
-    if (!response.ok) throw new Error(`summary answered ${response.status}`);
-    const body = (await response.json()) as { rooms?: Summary[] };
-    if (Array.isArray(body.rooms)) out.push(...body.rooms);
-  }
+  let i = 0;
+  do {
+    const asked = codes.slice(i, i + MAX_SUMMARY);
+    const body = await callApi<{ rooms?: unknown }>("ozet", asked.length > 0 ? { k: asked.join(",") } : {});
+    if (Array.isArray(body.rooms)) out.push(...(body.rooms as Summary[]));
+    i += MAX_SUMMARY;
+  } while (i < codes.length);
   return out;
 }
 
 export interface MyGamesApi {
+  /** The signed-in account's games; none while nobody is. */
   games: MyGame[];
   /** Games where it's this player's turn, for the badge. */
   waiting: number;
   /** The last refresh didn't reach the server. */
   stale: boolean;
+  /** How many of the old device's games just moved to the account; 0 until some do. */
+  moved: number;
   refresh: () => Promise<void>;
 }
 
 /**
  * The list of games, refreshed from the server on mount, when the tab comes
- * back, and — while `poll` (the list is on screen) — every minute.
+ * back, and — while `poll` (the list is on screen) — every minute. The
+ * first refresh after signing in on a browser that played before accounts
+ * moves that device's games over first (see device.ts).
  */
-export function useMyGames(identity: Identity | null, poll = false): MyGamesApi {
-  const games = useSyncExternalStore(subscribe, snapshot, snapshot);
+export function useMyGames(session: Session, poll = false): MyGamesApi {
+  const stored = useSyncExternalStore(subscribe, snapshot, snapshot);
+  const owner = session.status === "in" && session.user ? ownerOf(session.user) : null;
   const [stale, setStale] = useState(false);
-  const secret = identity?.secret ?? null;
+  const [moved, setMoved] = useState(0);
   const busy = useRef(false);
 
+  // Another account's copy is never shown; it goes when this one's arrives.
+  const games = owner !== null && (stored.owner === owner || stored.owner === null) ? stored.games : NONE;
+
   const refresh = useCallback(async () => {
-    const codes = snapshot().map((g) => g.code);
-    if (!secret || codes.length === 0 || busy.current) return;
+    if (owner === null || busy.current) return;
     busy.current = true;
     try {
-      const summaries = await fetchSummaries(secret, codes);
-      write(mergeSummaries(snapshot(), summaries));
+      claim(owner);
+      const done = await moveDeviceGames(snapshot().games.map((g) => g.code));
+      if (done.length > 0) setMoved(done.length);
+      const summaries = await fetchSummaries(snapshot().games.map((g) => g.code));
+      // Someone else signed in while this was on its way: their list isn't this one.
+      if (snapshot().owner === owner) write(mergeSummaries(snapshot().games, summaries));
       setStale(false);
-    } catch {
-      setStale(true);
+    } catch (error) {
+      // A session that's gone shows as the sign-in, not as a list that's behind.
+      if (!(error instanceof ApiError && error.code === "oturum")) setStale(true);
     } finally {
       busy.current = false;
     }
-  }, [secret]);
+  }, [owner]);
 
   useEffect(() => {
     void refresh();
@@ -224,5 +275,5 @@ export function useMyGames(identity: Identity | null, poll = false): MyGamesApi 
     return () => clearInterval(timer);
   }, [poll, refresh]);
 
-  return { games, waiting: waitingOn(games), stale, refresh };
+  return { games, waiting: waitingOn(games), stale: owner !== null && stale, moved, refresh };
 }

@@ -1,39 +1,31 @@
-import { CODE_PATTERN, cleanName, encode, NAME_MAX, NAME_MIN, PROTOCOL, randomName, VALUES } from "@harfiyen/engine";
-import { useEffect, useRef, useState } from "react";
+import type { User } from "@akinozgen/account";
+import { useAccount } from "@akinozgen/account/client";
+import { CODE_PATTERN, cleanName, encode, NAME_MAX, NAME_MIN, VALUES } from "@harfiyen/engine";
+import { randomName } from "@harfiyen/engine/name-words";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { HistoryCard } from "../components/History.tsx";
 import { Monogram } from "../components/Monogram.tsx";
 import { PushOffer, PushStatus } from "../components/PushOffer.tsx";
+import { SignInCard } from "../components/SignIn.tsx";
 import { Tile } from "../components/Tile.tsx";
 import { RulesIcon, TopBar } from "../components/TopBar.tsx";
-import { deviceSecret, type Identity, nameField, setChosenName, splitName } from "../game/identity.ts";
+import { ApiError, callApi } from "../game/api.ts";
+import { useHistory } from "../game/history.ts";
 import { groupGames, isYourTurn, type MyGame, type MyGamesApi, rememberGame } from "../game/myGames.ts";
+import { splitName } from "../game/names.ts";
 import { go } from "../game/route.ts";
+import { ownerOf, type Session } from "../game/session.ts";
 import { reloadForNewVersion } from "../game/socket.ts";
 import { ago } from "../game/turkish.ts";
 import { FALLBACK_AFTER, type Seek, useSeek } from "../game/useSeek.ts";
 import type { SocketConstructor } from "../game/socket.ts";
 
-class InviteError extends Error {
-  constructor(readonly code: string) {
-    super(code);
-  }
-}
-
-/** A new invitation: the server makes the room and seats this device in it. */
-export async function createInvite(secret: string): Promise<string> {
-  let response: Response;
-  try {
-    // A GET: the site's firewall lets nothing else through. The secret goes in a header, never the URL.
-    const query = new URLSearchParams({ v: String(PROTOCOL), ...nameField() });
-    response = await fetch(`/api/harfiyen/oda?${query}`, { headers: { "X-Harfiyen-Secret": secret } });
-  } catch {
-    throw new InviteError("ag");
-  }
-  const body = (await response.json().catch(() => null)) as { code?: unknown; error?: unknown } | null;
-  if (response.ok && typeof body?.code === "string" && CODE_PATTERN.test(body.code)) {
-    rememberGame(body.code);
-    return body.code;
-  }
-  throw new InviteError(typeof body?.error === "string" ? body.error : "ag");
+/** A new invitation: the server makes the room and seats the signed-in account in it. */
+export async function createInvite(): Promise<string> {
+  const body = await callApi<{ code?: unknown }>("oda");
+  if (typeof body.code !== "string" || !CODE_PATTERN.test(body.code)) throw new ApiError("bozuk", 200);
+  rememberGame(body.code);
+  return body.code;
 }
 
 function inviteProblem(code: string): string {
@@ -42,21 +34,45 @@ function inviteProblem(code: string): string {
   return "Davet oluşturulamadı. Bağlantını kontrol edip yeniden dene.";
 }
 
-/** The online games: who you are here, a way into a new game, and the games under way. */
+/**
+ * The online games. Signed in: who you are, a way into a new game, the
+ * games under way and the record of finished ones. Signed out: the card
+ * that offers the sign-in, since online play goes with an account.
+ */
 export function OnlineHub({
-  identity,
+  session,
   games,
   onRules,
   waiting,
   WebSocket,
 }: {
-  identity: Identity | null;
+  session: Session;
   games: MyGamesApi;
   onRules: () => void;
   waiting: number;
   /** For tests. */
   WebSocket?: SocketConstructor;
 }): React.ReactElement {
+  return (
+    <>
+      <TopBar section="online" waiting={waiting}>
+        <button type="button" className="icon-button" aria-label="Nasıl oynanır" title="Nasıl oynanır" onClick={onRules}>
+          <RulesIcon />
+        </button>
+      </TopBar>
+      {session.status === "in" && session.user ? (
+        <Hub key={ownerOf(session.user)} user={session.user} games={games} WebSocket={WebSocket} />
+      ) : session.status === "out" ? (
+        <SignInCard />
+      ) : (
+        // Asking who is signed in: a moment, with nothing on screen to jump about.
+        <main className="hub" aria-busy="true" />
+      )}
+    </>
+  );
+}
+
+function Hub({ user, games, WebSocket }: { user: User; games: MyGamesApi; WebSocket?: SocketConstructor }): React.ReactElement {
   const [creating, setCreating] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const seek = useSeek(
@@ -67,16 +83,37 @@ export function OnlineHub({
     { WebSocket },
   );
 
+  // Relative times move on while the page is open.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // The record is asked for again once a game in the list has ended since.
+  const ended = useMemo(
+    () =>
+      games.games
+        .filter((game) => game.summary?.phase === "over")
+        .map((game) => `${game.code}:${game.summary!.updatedAt}`)
+        .sort()
+        .join(","),
+    [games.games],
+  );
+  const history = useHistory(ownerOf(user), ended);
+  useEffect(() => setNow(Date.now()), [games.games, history.history]);
+
   const invite = async (): Promise<void> => {
     seek.stop();
     setProblem(null);
     setCreating(true);
     try {
-      const code = await createInvite(deviceSecret());
+      const code = await createInvite();
       go(`#/oda/${code}`);
     } catch (error) {
-      const code = error instanceof InviteError ? error.code : "ag";
-      setProblem(inviteProblem(code));
+      const code = error instanceof ApiError ? error.code : "ag";
+      // A session that's gone: the sign-in takes the screen.
+      if (code !== "oturum") setProblem(inviteProblem(code));
       if (code === "surum") reloadForNewVersion();
     } finally {
       setCreating(false);
@@ -84,67 +121,55 @@ export function OnlineHub({
   };
 
   return (
-    <>
-      <TopBar section="online" waiting={waiting}>
-        <button type="button" className="icon-button" aria-label="Nasıl oynanır" title="Nasıl oynanır" onClick={onRules}>
-          <RulesIcon />
-        </button>
-      </TopBar>
+    <main className="hub">
+      <div className="hub__side">
+        <Me user={user} offered={games.games.length > 0} />
+        <section className="hub-card start" aria-label="Yeni oyun">
+          {seek.searching ? (
+            <Searching seek={seek} creating={creating} onInvite={invite} />
+          ) : (
+            <>
+              <h2 className="panel__title">Yeni oyun</h2>
+              <button type="button" className="start__option start__option--primary" onClick={seek.start}>
+                <span className="start__icon" aria-hidden="true">
+                  <DiceIcon />
+                </span>
+                <span className="start__text">
+                  <strong>Rastgele rakip</strong>
+                  <small>Şu an arayan biriyle eşleş</small>
+                </span>
+                <Chevron />
+              </button>
+              <button type="button" className="start__option" onClick={invite} disabled={creating}>
+                <span className="start__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M10 14a4.5 4.5 0 0 0 6.4 0l3.2-3.2a4.5 4.5 0 0 0-6.4-6.4l-1 1" />
+                    <path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3.2 3.2a4.5 4.5 0 0 0 6.4 6.4l1-1" />
+                  </svg>
+                </span>
+                <span className="start__text">
+                  <strong>{creating ? "Davet hazırlanıyor…" : "Arkadaşını çağır"}</strong>
+                  <small>Link oluştur, istediğine gönder</small>
+                </span>
+                <Chevron />
+              </button>
+            </>
+          )}
+          {problem && (
+            <p className="hub__problem" role="alert">
+              {problem}
+            </p>
+          )}
+        </section>
+        {games.games.length > 0 && <PushOffer />}
+        <p className="hub__fine muted">Oyunların ve geçmişin hesabında saklanır; başka bir cihazda giriş yapınca da seni bekler.</p>
+      </div>
 
-      <main className="hub">
-        <div className="hub__side">
-          <Me identity={identity} offered={games.games.length > 0} />
-          <section className="hub-card start" aria-label="Yeni oyun">
-            {seek.searching ? (
-              <Searching seek={seek} creating={creating} onInvite={invite} />
-            ) : (
-              <>
-                <h2 className="panel__title">Yeni oyun</h2>
-                <button type="button" className="start__option start__option--primary" onClick={seek.start}>
-                  <span className="start__icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24">
-                      <rect x="3.5" y="3.5" width="17" height="17" rx="4" />
-                      <circle cx="8.5" cy="8.5" r="1.3" />
-                      <circle cx="15.5" cy="15.5" r="1.3" />
-                      <circle cx="15.5" cy="8.5" r="1.3" />
-                      <circle cx="8.5" cy="15.5" r="1.3" />
-                      <circle cx="12" cy="12" r="1.3" />
-                    </svg>
-                  </span>
-                  <span className="start__text">
-                    <strong>Rastgele rakip</strong>
-                    <small>Şu an arayan biriyle eşleş</small>
-                  </span>
-                  <Chevron />
-                </button>
-                <button type="button" className="start__option" onClick={invite} disabled={creating}>
-                  <span className="start__icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24">
-                      <path d="M10 14a4.5 4.5 0 0 0 6.4 0l3.2-3.2a4.5 4.5 0 0 0-6.4-6.4l-1 1" />
-                      <path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3.2 3.2a4.5 4.5 0 0 0 6.4 6.4l1-1" />
-                    </svg>
-                  </span>
-                  <span className="start__text">
-                    <strong>{creating ? "Davet hazırlanıyor…" : "Arkadaşını çağır"}</strong>
-                    <small>Link oluştur, istediğine gönder</small>
-                  </span>
-                  <Chevron />
-                </button>
-              </>
-            )}
-            {problem && (
-              <p className="hub__problem" role="alert">
-                {problem}
-              </p>
-            )}
-          </section>
-          {games.games.length > 0 && <PushOffer />}
-          <p className="hub__fine muted">Hesap yok: adın ve oyun listen bu tarayıcıda saklanır.</p>
-        </div>
-
-        <Games games={games} />
-      </main>
-    </>
+      <div className="hub__main">
+        <Games games={games} now={now} />
+        <HistoryCard state={history} now={now} />
+      </div>
+    </main>
   );
 }
 
@@ -156,13 +181,15 @@ function Chevron(): React.ReactElement {
   );
 }
 
+const NAME_REFUSED = "Bu ad kullanılamaz.";
+
 /** Why a name won't do, in a few words. */
 function nameProblem(text: string): string {
   const length = [...text].length;
   if (length < NAME_MIN) return `Ad en az ${NAME_MIN} harf olmalı.`;
   if (length > NAME_MAX) return `Ad en çok ${NAME_MAX} harf olabilir.`;
   if (!/^[\p{L}\p{N} .'\-]+$/u.test(text) || !/\p{L}/u.test(text)) return "Adda harf, rakam ve boşluk olabilir.";
-  return "Bu ad olmaz; başka bir ad dene.";
+  return NAME_REFUSED;
 }
 
 function DiceIcon(): React.ReactElement {
@@ -178,45 +205,44 @@ function DiceIcon(): React.ReactElement {
   );
 }
 
-/** Who you are here: the badge, the name — the words yours to change, the number fixed — and notices. */
-function Me({ identity, offered }: { identity: Identity | null; offered: boolean }): React.ReactElement {
+/**
+ * Who you are online: the badge and the account's name — the words yours
+ * to change, typed or rolled, the number fixed — and notices. The name is
+ * the account's, the same in every game.
+ */
+function Me({ user, offered }: { user: User; offered: boolean }): React.ReactElement {
+  const account = useAccount();
   const [draft, setDraft] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [rolled, setRolled] = useState(0);
   const dropping = useRef(false);
 
-  if (!identity) {
-    return (
-      <section className="hub-card me is-loading" aria-label="Adın" aria-busy="true">
-        <span className="monogram monogram--lg monogram--empty" aria-hidden="true" />
-        <div className="me__text">
-          <span className="skeleton-line" style={{ width: "62%" }} />
-          <span className="skeleton-line skeleton-line--thin" style={{ width: "38%" }} />
-        </div>
-      </section>
-    );
-  }
-
-  const value = draft ?? identity.base;
-  const save = (text: string): void => {
+  const value = draft ?? user.base;
+  /** Checked here for what's plain to see; the server has the last word. An empty name puts the default back. */
+  const save = async (text: string): Promise<void> => {
     const typed = text.replace(/\s+/g, " ").trim();
-    if (typed === "" || typed === identity.fallback) {
-      setChosenName(null);
-    } else {
-      const clean = cleanName(typed);
-      if (!clean) {
-        setProblem(nameProblem(typed));
-        return;
-      }
-      setChosenName(clean);
+    if (typed === user.base) {
+      setDraft(null);
+      setProblem(null);
+      return;
     }
-    setDraft(null);
+    if (typed !== "" && !cleanName(typed)) {
+      setProblem(nameProblem(typed));
+      return;
+    }
     setProblem(null);
+    setSaving(true);
+    const error = await account.rename(typed);
+    setSaving(false);
+    if (!error) setDraft(null);
+    // Signed out meanwhile: the sign-in takes the screen.
+    else if (error !== "oturum") setProblem(error === "ad" ? NAME_REFUSED : "Ad kaydedilemedi. Bağlantını kontrol edip yeniden dene.");
   };
 
   return (
     <section className="hub-card me" aria-label="Adın">
-      <Monogram name={draft === null ? identity.name : `${value} #${identity.tag}`} size="lg" />
+      <Monogram name={draft === null ? user.name : `${value} #${user.tag}`} size="lg" />
       <div className="me__text">
         <div className={`me__name${problem ? " is-bad" : ""}`}>
           <input
@@ -224,7 +250,6 @@ function Me({ identity, offered }: { identity: Identity | null; offered: boolean
             value={value}
             size={Math.max(3, [...value].length + 1)}
             maxLength={NAME_MAX + 8}
-            placeholder={identity.fallback}
             title="Adını değiştirmek için yaz"
             aria-label="Adın"
             aria-invalid={problem !== null}
@@ -233,6 +258,7 @@ function Me({ identity, offered }: { identity: Identity | null; offered: boolean
             autoComplete="off"
             autoCapitalize="words"
             enterKeyHint="done"
+            readOnly={saving}
             onChange={(event) => {
               setDraft(event.target.value);
               setProblem(null);
@@ -248,21 +274,22 @@ function Me({ identity, offered }: { identity: Identity | null; offered: boolean
             }}
             onBlur={() => {
               if (dropping.current) dropping.current = false;
-              else if (draft !== null) save(draft);
+              else if (draft !== null && !saving) void save(draft);
             }}
           />
-          <span className="me__number">#{identity.tag}</span>
+          <span className="me__number">#{user.tag}</span>
           <button
             type="button"
             className="me__dice"
             aria-label="Rastgele ad"
             title="Rastgele ad"
+            disabled={saving}
             style={{ rotate: `${rolled * 90}deg` }}
             onClick={() => {
+              const words = randomName();
               setRolled((n) => n + 1);
-              setChosenName(randomName());
-              setDraft(null);
-              setProblem(null);
+              setDraft(words);
+              void save(words);
             }}
           >
             <DiceIcon />
@@ -273,7 +300,7 @@ function Me({ identity, offered }: { identity: Identity | null; offered: boolean
             {problem}
           </p>
         ) : (
-          <p className="me__caption">Bu cihazdaki adın</p>
+          <p className="me__caption">{saving ? "Kaydediliyor…" : "Hesabındaki adın"}</p>
         )}
         <PushStatus offered={offered} />
       </div>
@@ -328,18 +355,11 @@ function Searching({ seek, creating, onInvite }: { seek: Seek; creating: boolean
 
 const TILES = "sıra".split("").map((c) => encode(c)![0]);
 
-function Games({ games }: { games: MyGamesApi }): React.ReactElement {
+function Games({ games, now }: { games: MyGamesApi; now: number }): React.ReactElement {
   const groups = groupGames(games.games);
   const active = groups.yours.length + groups.theirs.length + groups.invites.length;
   const [showOver, setShowOver] = useState<boolean | null>(null);
   const overOpen = showOver ?? active === 0;
-  // Relative times move on while the page is open.
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 30_000);
-    return () => clearInterval(timer);
-  }, []);
-  useEffect(() => setNow(Date.now()), [games.games]);
 
   return (
     <section className="hub-card games" aria-labelledby="games-title">

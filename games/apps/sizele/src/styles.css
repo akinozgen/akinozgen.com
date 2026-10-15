@@ -1930,3 +1930,9 @@ body {
 .hard__hint {
   font-size: 13.5px;
 }
+
+/* Signed in: how much of the record came from this device's own, before the account. */
+.stats__note {
+  margin: 10px 0 0;
+  text-align: center;
+}

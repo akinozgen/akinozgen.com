@@ -1,3 +1,4 @@
+import { PROTOCOL } from "@harfiyen/engine";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import {
@@ -11,9 +12,11 @@ import {
   useMyGames,
   waitingOn,
 } from "../src/game/myGames.ts";
-import { api, roomInfo, summary, tableFor } from "./fakes.ts";
+import type { Session } from "../src/game/session.ts";
+import { api, ME, roomInfo, summary, tableFor } from "./fakes.ts";
 
-const IDENTITY = { secret: "0123456789abcdef0123456789abcdef", pub: "ab", tag: "0001", base: "Ali", fallback: "Ali", chosen: null, name: "Ali #0001" };
+const SESSION: Session = { status: "in", user: ME };
+const OTHER: Session = { status: "in", user: { ...ME, tag: "0042", name: "Cesur Tukan #0042", base: "Cesur Tukan", createdAt: 2 } };
 
 const game = (code: string, changes: Parameters<typeof summary>[1] = {}, added = 0): MyGame => {
   const s = summary(code, changes);
@@ -21,16 +24,33 @@ const game = (code: string, changes: Parameters<typeof summary>[1] = {}, added =
 };
 
 describe("the list of games", () => {
-  it("takes the server's newer summaries, keeps a newer one of its own, and drops rooms that are gone", () => {
-    const games = [game("AAAAAA", { updatedAt: 10 }), game("BBBBBB", { updatedAt: 50, scores: [1, 1] }), game("CCCCCC"), game("DDDDDD")];
+  it("takes the server's newer summaries, keeps a newer one of its own, and drops rooms that are gone or not the account's", () => {
+    const games = [
+      game("AAAAAA", { updatedAt: 10 }),
+      game("BBBBBB", { updatedAt: 50, scores: [1, 1] }),
+      game("CCCCCC"),
+      game("DDDDDD"),
+      game("EEEEEE"),
+    ];
     const merged = mergeSummaries(games, [
       summary("AAAAAA", { updatedAt: 20, scores: [40, 2] }),
       summary("BBBBBB", { updatedAt: 40, scores: [9, 9] }),
       { code: "CCCCCC", gone: true },
+      summary("EEEEEE", { you: null }),
     ]);
     expect(merged.map((g) => g.code)).toEqual(["AAAAAA", "BBBBBB", "DDDDDD"]);
     expect(merged[0].summary?.scores).toEqual([40, 2]);
     expect(merged[1].summary?.scores).toEqual([1, 1]);
+  });
+
+  it("adds the account's rooms this browser didn't know of: played on another device", () => {
+    const merged = mergeSummaries(
+      [game("AAAAAA")],
+      [summary("AAAAAA"), summary("FFFFFF", { you: 1, turn: 1 }), summary("FFFFFF", { you: 1, turn: 1 }), { code: "GGGGGG", gone: true }],
+      77,
+    );
+    expect(merged.map((g) => g.code)).toEqual(["AAAAAA", "FFFFFF"]);
+    expect(merged[1]).toMatchObject({ added: 77, summary: { you: 1, turn: 1 } });
   });
 
   it("counts the games waiting on this player, for the badge", () => {
@@ -88,9 +108,10 @@ describe("the list of games", () => {
       asked.push(body);
       return { body: { rooms: [summary("AAAAAA", { turn: 0 }), { code: "BBBBBB", gone: true }] } };
     });
-    const { result } = renderHook(() => useMyGames(IDENTITY));
+    const { result } = renderHook(() => useMyGames(SESSION));
     await waitFor(() => expect(result.current.games.map((g) => g.code)).toEqual(["AAAAAA"]));
-    expect(asked[0]).toEqual({ v: 1, secret: IDENTITY.secret, codes: ["AAAAAA", "BBBBBB"] });
+    // The codes in the query; the account comes from the session cookie, no secret travels.
+    expect(asked[0]).toEqual({ v: PROTOCOL, codes: ["AAAAAA", "BBBBBB"] });
     expect(result.current.waiting).toBe(1);
 
     Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "visible" });
@@ -103,9 +124,48 @@ describe("the list of games", () => {
   it("keeps what it had when the server can't be reached", async () => {
     rememberGame("AAAAAA", summary("AAAAAA", { turn: 0 }) as never);
     api.set("GET /api/harfiyen/ozet", () => ({ status: 503, body: { error: "kapali" } }));
-    const { result } = renderHook(() => useMyGames(IDENTITY));
+    const { result } = renderHook(() => useMyGames(SESSION));
     await waitFor(() => expect(result.current.stale).toBe(true));
     expect(result.current.games).toHaveLength(1);
     expect(result.current.waiting).toBe(1);
+  });
+
+  it("asks the server even with nothing here, and takes in the rooms it lists", async () => {
+    const asked: unknown[] = [];
+    api.set("GET /api/harfiyen/ozet", (body) => {
+      asked.push(body);
+      return { body: { rooms: [summary("HHHHHH", { you: 0, turn: 0 })] } };
+    });
+    const { result } = renderHook(() => useMyGames(SESSION));
+    await waitFor(() => expect(result.current.games.map((g) => g.code)).toEqual(["HHHHHH"]));
+    expect(asked).toEqual([{ v: PROTOCOL }]);
+    expect(result.current.waiting).toBe(1);
+  });
+
+  it("shows nothing and asks nothing while nobody is signed in", async () => {
+    rememberGame("AAAAAA", summary("AAAAAA", { turn: 0 }) as never);
+    let asked = 0;
+    api.set("GET /api/harfiyen/ozet", () => {
+      asked++;
+      return { body: { rooms: [] } };
+    });
+    const { result } = renderHook(() => useMyGames({ status: "out", user: null }));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(result.current.games).toEqual([]);
+    expect(result.current.waiting).toBe(0);
+    expect(asked).toBe(0);
+  });
+
+  it("never shows another account's list: a different player signing in here starts from an empty one", async () => {
+    api.set("GET /api/harfiyen/ozet", () => ({ body: { rooms: [] } }));
+    const first = renderHook(() => useMyGames(SESSION));
+    await waitFor(() => expect(localStorage.getItem("harfiyen:online-owner:v1")).not.toBeNull());
+    act(() => rememberGame("AAAAAA", summary("AAAAAA", { turn: 0 }) as never));
+    expect(first.result.current.games).toHaveLength(1);
+    first.unmount();
+
+    const second = renderHook(() => useMyGames(OTHER));
+    expect(second.result.current.games).toEqual([]);
+    await waitFor(() => expect(JSON.parse(localStorage.getItem("harfiyen:online:v1")!)).toEqual([]));
   });
 });

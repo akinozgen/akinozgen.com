@@ -15,7 +15,10 @@ export default defineConfig(({ mode }) => ({
     host: true,
     port: 5187,
     strictPort: true,
-    proxy: { "/api/harfiyen": { target: "http://localhost:8787", ws: true, changeOrigin: false } },
+    proxy: {
+      "/api/harfiyen": { target: "http://localhost:8787", ws: true, changeOrigin: false },
+      "/api/hesap": { target: "http://localhost:8787", changeOrigin: false },
+    },
   },
   preview: { host: true, port: 5188, strictPort: true },
   build: { target: "es2022" },

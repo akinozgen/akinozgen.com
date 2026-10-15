@@ -12,6 +12,7 @@
     "build:site": "vite build --mode site --outDir ../../../public/games/tessle --emptyOutDir"
   },
   "dependencies": {
+    "@akinozgen/account": "workspace:*",
     "@travelle/core": "workspace:*",
     "@tessle/data": "workspace:*",
     "react": "^19.3.0",

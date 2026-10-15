@@ -16,7 +16,7 @@ function link(final?: Parameters<typeof openLink>[0]["final"], hiddenGrace?: () 
   return openLink<{ t: string }>({
     hiddenGrace,
     url: "ws://test/api/harfiyen/ws/oda/K7Q2XM",
-    greeting: () => ({ t: "hello", v: 1, secret: "s" }),
+    greeting: () => ({ t: "hello", v: 2 }),
     onMessage: (m) => messages.push(m),
     onState: (s) => states.push(s),
     WebSocket: FakeSocket,
@@ -44,7 +44,7 @@ describe("the socket", () => {
     const socket = FakeSocket.last();
     expect(l.send({ t: "join" })).toBe(false);
     socket.accept();
-    expect(socket.sent[0]).toEqual({ t: "hello", v: 1, secret: "s" });
+    expect(socket.sent[0]).toEqual({ t: "hello", v: 2 });
     expect(l.send({ t: "join" })).toBe(true);
     expect(socket.sent[1]).toEqual({ t: "join" });
     expect(states).toEqual(["connecting", "open"]);

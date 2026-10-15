@@ -793,6 +793,11 @@ export async function handleTessle(
     if (action === "reveal") return ok(reveal(round));
 
     const count = round.ids.length;
+    // No board: a page opening the round asks where it stands, before anything is on it.
+    if (!query.get("p")) {
+      const empty: FitReply = { groups: [], placed: [], at: Array.from({ length: count }, () => null), solved: false, reveal: null };
+      return ok(empty);
+    }
     const board = parseBoard(query.get("p"), count);
     const moved = parseMoved(query.get("m"), count);
     const u = Number(query.get("u"));

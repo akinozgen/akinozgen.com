@@ -1,7 +1,6 @@
 import { PROTOCOL, SIZE } from "@harfiyen/engine";
 import { act, renderHook } from "@testing-library/react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
-import { deviceSecret, setChosenName } from "../src/game/identity.ts";
 import { type Lexicons, loadLexicons } from "../src/game/lexicons.ts";
 import { page } from "../src/game/socket.ts";
 import { useOnlineGame } from "../src/game/useOnlineGame.ts";
@@ -23,18 +22,24 @@ function start() {
 }
 
 describe("an online game", () => {
-  it("greets the room first, with the device's secret and no name of its own", () => {
+  it("greets the room first with the protocol's version alone: the player is the session's account", () => {
     const { socket } = start();
     expect(socket.url).toMatch(/\/api\/harfiyen\/ws\/oda\/K7Q2XM$/);
-    expect(socket.sent[0]).toEqual({ t: "hello", v: PROTOCOL, secret: deviceSecret() });
+    expect(socket.sent[0]).toEqual({ t: "hello", v: PROTOCOL });
   });
 
-  it("sends the chosen name in the greeting, and greets again when it changes", () => {
-    setChosenName("Ayşe");
-    const { socket } = start();
-    expect(socket.sent[0]).toMatchObject({ t: "hello", name: "Ayşe" });
-    act(() => setChosenName("Ayşe Teyze"));
-    expect(socket.of("hello").map((m) => m.name)).toEqual(["Ayşe", "Ayşe Teyze"]);
+  it("opens a fresh line when the account's name changes, since the room takes the name a line opens with", () => {
+    const hook = renderHook(({ name }) => useOnlineGame("K7Q2XM", lexicons, { name }), { initialProps: { name: "Ayşe #0007" } });
+    const first = FakeSocket.last();
+    first.accept();
+    hook.rerender({ name: "Ayşe #0007" });
+    expect(FakeSocket.all).toHaveLength(1);
+    hook.rerender({ name: "Ayşe Teyze #0007" });
+    expect(first.closed).toBe(true);
+    const second = FakeSocket.last();
+    expect(second).not.toBe(first);
+    second.accept();
+    expect(second.sent[0]).toEqual({ t: "hello", v: PROTOCOL });
   });
 
   it("shows the server's table: its own rack, whose turn", () => {

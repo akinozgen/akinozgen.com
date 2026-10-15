@@ -1,0 +1,895 @@
+/*
+ * The account button and sheet, the same in every game. Built only on the
+ * tokens all the games define (--bg --surface --line --ink --ink-soft
+ * --accent --wrong --panel --panel-line --panel-shadow), so each game's
+ * light and dark themes carry over; the few colours of its own follow the
+ * family's three theme selectors. The button itself wears the game's own
+ * .icon-button.
+ */
+
+:root {
+  --account-solid: var(--panel-solid, var(--surface));
+  --account-well: color-mix(in srgb, var(--ink-soft) 8%, transparent);
+  --account-field: color-mix(in srgb, var(--ink-soft) 5%, var(--account-solid));
+  /* What stands up from a well: the chosen half of the switch, the dice. */
+  --account-raised: var(--account-solid);
+  --account-on-accent: #ffffff;
+  --account-on-danger: #ffffff;
+  --account-scrim: rgb(16 20 28 / 46%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --account-field: color-mix(in srgb, #000 22%, var(--account-solid));
+    --account-raised: color-mix(in srgb, #fff 9%, var(--account-solid));
+    --account-on-accent: #0b1020;
+    --account-on-danger: #160b0b;
+    --account-scrim: rgb(0 0 0 / 60%);
+  }
+}
+
+:root[data-theme="dark"] {
+  --account-field: color-mix(in srgb, #000 22%, var(--account-solid));
+  --account-raised: color-mix(in srgb, #fff 9%, var(--account-solid));
+  --account-on-accent: #0b1020;
+  --account-on-danger: #160b0b;
+  --account-scrim: rgb(0 0 0 / 60%);
+}
+
+/* --- in the top bar --- */
+
+.account-button--in {
+  padding: 0;
+}
+
+.account-button--in:hover {
+  box-shadow:
+    var(--panel-shadow),
+    0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.account-button[aria-busy="true"] svg {
+  opacity: 0.55;
+}
+
+/* --- the badge --- */
+
+.account-avatar {
+  --account-hue: 225;
+  flex: none;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  line-height: 1;
+  color: #fff;
+  background: linear-gradient(150deg, hsl(var(--account-hue) 68% 62%), hsl(calc(var(--account-hue) + 28) 58% 45%));
+  border-radius: 50%;
+  box-shadow:
+    inset 0 -2px 0 rgb(0 0 0 / 14%),
+    inset 0 1px 0 rgb(255 255 255 / 32%);
+  user-select: none;
+}
+
+.account-avatar--sm {
+  width: calc(100% - 6px);
+  height: calc(100% - 6px);
+  font-size: 14px;
+}
+
+.account-avatar--lg {
+  width: 64px;
+  height: 64px;
+  font-size: 27px;
+  box-shadow:
+    inset 0 -2px 0 rgb(0 0 0 / 14%),
+    inset 0 1px 0 rgb(255 255 255 / 32%),
+    0 4px 12px hsl(var(--account-hue) 50% 30% / 24%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .account-avatar {
+    color: #0d1118;
+    background: linear-gradient(150deg, hsl(var(--account-hue) 62% 70%), hsl(calc(var(--account-hue) + 28) 52% 56%));
+  }
+}
+
+:root[data-theme="dark"] .account-avatar {
+  color: #0d1118;
+  background: linear-gradient(150deg, hsl(var(--account-hue) 62% 70%), hsl(calc(var(--account-hue) + 28) 52% 56%));
+}
+
+/* --- the sheet --- */
+
+.account-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  /* The track never grows past the screen for a long address or name inside. */
+  grid-template-columns: minmax(0, 1fr);
+  place-items: center;
+  padding: 16px;
+  background: var(--account-scrim);
+  animation: account-fade 160ms ease-out both;
+}
+
+.account-sheet {
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 440px);
+  min-width: 0;
+  max-height: calc(100dvh - 32px);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.5;
+  text-align: left;
+  background: var(--account-solid);
+  border: 1px solid var(--panel-line);
+  border-radius: 20px;
+  box-shadow: 0 24px 70px rgb(0 0 0 / 32%);
+  outline: none;
+  animation: account-rise 240ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+.account-sheet *,
+.account-sheet *::before,
+.account-sheet *::after {
+  box-sizing: border-box;
+}
+
+.account-sheet__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 14px 14px 22px;
+  border-bottom: 1px solid var(--line);
+}
+
+.account-sheet__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+.account-sheet__close {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  color: var(--ink-soft);
+  background: none;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition:
+    color 150ms ease,
+    background 150ms ease;
+}
+
+.account-sheet__close:hover {
+  color: var(--ink);
+  background: var(--account-well);
+}
+
+.account-sheet__close svg,
+.account-back svg,
+.account-password__toggle svg,
+.account-verify__icon svg,
+.account-who__icon svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.account-sheet__body {
+  padding: 20px 22px 22px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.account-signin,
+.account-reset,
+.account-verify,
+.account-profile,
+.account-delete,
+.account-form,
+.account-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.account-sheet p {
+  margin: 0;
+}
+
+.account-lead {
+  color: var(--ink-soft);
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+
+.account-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 120px;
+  justify-content: center;
+  color: var(--ink-soft);
+}
+
+/* --- buttons --- */
+
+.account-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 10px 16px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.2;
+  color: var(--ink);
+  background: var(--account-solid);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  cursor: pointer;
+  transition:
+    transform 90ms ease,
+    background 150ms ease,
+    border-color 150ms ease,
+    opacity 150ms ease;
+}
+
+.account-btn:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+}
+
+.account-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.account-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.account-btn[aria-busy="true"]:disabled {
+  opacity: 0.8;
+}
+
+.account-btn--primary {
+  color: var(--account-on-accent);
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.account-btn--primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 88%, #000);
+  border-color: color-mix(in srgb, var(--accent) 88%, #000);
+}
+
+.account-btn--danger {
+  color: var(--account-on-danger);
+  background: var(--wrong);
+  border-color: var(--wrong);
+}
+
+.account-btn--danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--wrong) 88%, #000);
+  border-color: color-mix(in srgb, var(--wrong) 88%, #000);
+}
+
+.account-btn--quiet-danger {
+  color: var(--wrong);
+  background: none;
+  border-color: transparent;
+}
+
+.account-btn--quiet-danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--wrong) 9%, transparent);
+  border-color: transparent;
+}
+
+/* Google's own look for its button: white, its "G" in colour, dark grey text. */
+.account-google {
+  width: 100%;
+  min-height: 50px;
+  color: #1f1f1f;
+  background: #ffffff;
+  border-color: #dadce0;
+  box-shadow: 0 1px 2px rgb(60 64 67 / 10%);
+}
+
+.account-google:hover:not(:disabled) {
+  background: #f7f9fc;
+  border-color: #c4c9d0;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .account-google {
+    border-color: #ffffff;
+    box-shadow: none;
+  }
+}
+
+:root[data-theme="dark"] .account-google {
+  border-color: #ffffff;
+  box-shadow: none;
+}
+
+.account-google__mark {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+
+.account-google .account-spinner {
+  color: #5f6368;
+}
+
+.account-link {
+  padding: 0;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.account-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.account-back {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: -6px;
+  padding: 6px 10px 6px 4px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  background: none;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.account-back:hover {
+  color: var(--ink);
+  background: var(--account-well);
+}
+
+.account-spinner {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: account-spin 700ms linear infinite;
+}
+
+/* --- signing in --- */
+
+.account-or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.account-or::before,
+.account-or::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.account-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  padding: 3px;
+  background: var(--account-well);
+  border-radius: 12px;
+}
+
+.account-switch__tab {
+  height: 34px;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--ink-soft);
+  background: none;
+  border: 0;
+  border-radius: 9px;
+  cursor: pointer;
+  transition:
+    color 150ms ease,
+    background 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.account-switch__tab:hover:not(.is-on) {
+  color: var(--ink);
+}
+
+.account-switch__tab.is-on {
+  color: var(--ink);
+  background: var(--account-raised);
+  box-shadow:
+    0 1px 3px rgb(0 0 0 / 10%),
+    0 0 0 1px var(--panel-line);
+}
+
+.account-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.account-field__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.account-field__label {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--ink);
+}
+
+.account-field__hint {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.account-input {
+  width: 100%;
+  height: 46px;
+  padding: 0 14px;
+  font: inherit;
+  /* 16px: phones don't zoom into it. */
+  font-size: 16px;
+  color: var(--ink);
+  background: var(--account-field);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.account-input:hover {
+  border-color: color-mix(in srgb, var(--ink-soft) 40%, var(--line));
+}
+
+.account-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.account-password {
+  position: relative;
+}
+
+.account-password .account-input {
+  padding-right: 48px;
+}
+
+.account-password__toggle {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  color: var(--ink-soft);
+  background: none;
+  border: 0;
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+.account-password__toggle:hover {
+  color: var(--ink);
+  background: var(--account-well);
+}
+
+.account-form .account-btn--primary {
+  margin-top: 4px;
+}
+
+.account-message {
+  padding: 10px 12px;
+  font-size: 14px;
+  line-height: 1.45;
+  border-radius: 10px;
+}
+
+.account-message--error {
+  color: var(--wrong);
+  background: color-mix(in srgb, var(--wrong) 10%, transparent);
+}
+
+.account-message--info {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--accent) 11%, transparent);
+}
+
+.account-fine {
+  padding-top: 14px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  border-top: 1px solid var(--line);
+}
+
+.account-fine a {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.account-fine a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* --- the email check --- */
+
+.account-verify__icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-radius: 14px;
+}
+
+.account-verify__icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.account-verify__text {
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.account-verify__text strong {
+  overflow-wrap: anywhere;
+}
+
+.account-verify__hint {
+  margin-top: -6px !important;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+/* --- signed in --- */
+
+.account-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--account-well);
+  border-radius: 16px;
+}
+
+/* The name as a heading under the badge, the words editable in place, the number fixed, the dice beside them. */
+.account-me {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 22px 16px 16px;
+  text-align: center;
+}
+
+.account-me__text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+}
+
+.account-me__name {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 2px 6px;
+  max-width: 100%;
+  min-width: 0;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+/* The words read as a heading and edit in place: a line under them says they can. */
+.account-me__input {
+  flex: 0 1 auto;
+  min-width: 2ch;
+  max-width: 100%;
+  field-sizing: content;
+  margin: 0;
+  padding: 1px 4px;
+  font: inherit;
+  letter-spacing: inherit;
+  color: var(--ink);
+  text-align: center;
+  text-overflow: ellipsis;
+  background: none;
+  border: 0;
+  border-radius: 6px;
+  box-shadow: inset 0 -1.5px 0 color-mix(in srgb, var(--ink-soft) 30%, transparent);
+  transition:
+    background 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.account-me__input:hover {
+  box-shadow: inset 0 -1.5px 0 color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+.account-me__input:focus {
+  outline: none;
+  background: var(--account-raised);
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.account-me__input:disabled {
+  opacity: 0.6;
+}
+
+.account-me__name.is-bad .account-me__input {
+  box-shadow: inset 0 -2px 0 var(--wrong);
+}
+
+.account-me__number {
+  color: var(--ink-soft);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.account-me__dice {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin-left: 2px;
+  padding: 0;
+  color: var(--accent);
+  background: var(--account-raised);
+  border: 0;
+  border-radius: 10px;
+  box-shadow: 0 0 0 1px var(--panel-line);
+  cursor: pointer;
+  transition:
+    rotate 320ms cubic-bezier(0.3, 1.4, 0.5, 1),
+    background 150ms ease;
+}
+
+.account-me__dice:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 12%, var(--account-raised));
+}
+
+.account-me__dice svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linejoin: round;
+}
+
+.account-me__dice circle {
+  fill: currentColor;
+  stroke: none;
+}
+
+.account-me__caption,
+.account-me__problem {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.account-me__caption {
+  color: var(--ink-soft);
+}
+
+.account-me__problem {
+  font-weight: 600;
+  color: var(--wrong);
+}
+
+.account-who {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px 14px;
+  border-top: 1px solid var(--line);
+}
+
+.account-who__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  color: var(--ink-soft);
+  background: var(--account-raised);
+  border-radius: 10px;
+  box-shadow: 0 0 0 1px var(--panel-line);
+}
+
+.account-who__icon .account-google__mark {
+  width: 18px;
+  height: 18px;
+}
+
+.account-who__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.account-who__email {
+  overflow: hidden;
+  font-size: 14.5px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-who__how {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.account-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.account-actions > .account-btn {
+  flex: 1;
+}
+
+/* --- deleting --- */
+
+.account-warning {
+  padding: 12px 14px;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--wrong) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--wrong) 28%, transparent);
+  border-radius: 12px;
+}
+
+.account-warning strong {
+  color: var(--wrong);
+}
+
+/* --- a phone: the whole screen --- */
+
+@media (max-width: 599px) {
+  .account-overlay {
+    padding: 0;
+    place-items: stretch;
+  }
+
+  .account-sheet {
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    animation-name: account-up;
+  }
+
+  .account-sheet__head {
+    padding-top: max(10px, env(safe-area-inset-top));
+    padding-left: 18px;
+    padding-right: 10px;
+  }
+
+  .account-sheet__body {
+    padding: 20px 18px max(24px, env(safe-area-inset-bottom));
+  }
+
+  .account-me {
+    padding: 20px 14px 14px;
+  }
+
+  .account-me .account-avatar--lg {
+    width: 56px;
+    height: 56px;
+    font-size: 24px;
+  }
+
+  .account-me__name {
+    font-size: 19px;
+  }
+
+  .account-who {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+}
+
+@keyframes account-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes account-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+}
+
+@keyframes account-up {
+  from {
+    opacity: 0.6;
+    transform: translateY(24px);
+  }
+}
+
+@keyframes account-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .account-overlay,
+  .account-sheet {
+    animation: none;
+  }
+
+  .account-me__dice {
+    transition: none;
+  }
+}

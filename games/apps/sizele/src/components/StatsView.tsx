@@ -1,7 +1,8 @@
 import type { Stats } from "../game/useSizele.ts";
 import { useLocale } from "../i18n/index.tsx";
 
-export function StatsView({ stats }: { stats: Stats }): React.ReactElement {
+/** The record. `imported`: signed in, how many of the games came from this device's record before the account. */
+export function StatsView({ stats, imported = 0 }: { stats: Stats; imported?: number }): React.ReactElement {
   const { t } = useLocale();
   const average = stats.played > 0 ? Math.round(stats.points / stats.played) : 0;
   return (
@@ -24,6 +25,7 @@ export function StatsView({ stats }: { stats: Stats }): React.ReactElement {
         ))}
       </dl>
       {stats.played === 0 && <p className="muted">{t("statsEmpty")}</p>}
+      {imported > 0 && <p className="muted stats__note">{t("importedNote", { n: imported })}</p>}
     </div>
   );
 }

@@ -103,6 +103,7 @@ export function EndPanel({
           <dd>{stats.bestStreak}</dd>
         </div>
       </dl>
+      {game.imported > 0 && <p className="muted stats__note">{t("importedNote", { n: game.imported })}</p>}
     </section>
   );
 }

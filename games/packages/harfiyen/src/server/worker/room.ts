@@ -1,5 +1,5 @@
 import { DurableObject } from "cloudflare:workers";
-import { publicId } from "../../names.ts";
+import { cleanName } from "../../names.ts";
 import { freshSeed } from "../../rng.ts";
 import { canChat, type Chat, chatFor, emptyChat, mute, pushDue, pushed, say } from "../chat.ts";
 import { parseRoomRequest, PROTOCOL, type RoomMessage, type RoomRequest, type Summary } from "../protocol.ts";
@@ -11,6 +11,7 @@ import {
   IDLE_TTL,
   INVITE_TTL,
   nameAt,
+  OVER_TTL,
   noticesFor,
   onAlarm,
   rename,
@@ -21,6 +22,7 @@ import {
 } from "../room.ts";
 import { type Notice, type PushSub, pushRequest, vapidKeys } from "../webpush.ts";
 import type { HarfiyenEnv } from "./env.ts";
+import { recordResult, rememberRoom } from "./records.ts";
 import { lexicon } from "./words.ts";
 
 /** Who the push services hear from (RFC 8292's subject). */
@@ -34,11 +36,30 @@ export function vapidFrom(env: HarfiyenEnv): Promise<{ privateKey: CryptoKey; pu
   return vapid;
 }
 
+/** The headers the router hands a room the signed-in account in; a browser's own are never passed on. */
+export const PLAYER_HEADER = "X-Harfiyen-Player";
+export const NAME_HEADER = "X-Harfiyen-Name";
+
+/** The account the router says is behind a socket: its id, and its own words for a name ("" for the default). */
+export function playerOf(request: Request): { pub: string; name: string } | null {
+  const pub = request.headers.get(PLAYER_HEADER);
+  if (!pub || !/^[0-9a-f]{64}$/.test(pub)) return null;
+  let name = "";
+  try {
+    name = decodeURIComponent(request.headers.get(NAME_HEADER) ?? "");
+  } catch {
+    // a name that doesn't decode is no name
+  }
+  return { pub, name };
+}
+
 /** Kept on each socket, so it survives the object sleeping between messages. */
 interface Attachment {
-  /** The device behind the socket, once it has said hello. */
+  /** The account behind the socket, once it has said hello. */
   pub: string | null;
-  /** The name its hello gave, for taking a seat. */
+  /** The account, as the router named it when the socket opened. */
+  who: { pub: string; name: string };
+  /** The account's own words for a name, for taking a seat. */
   name?: string;
   /** Messages in the current window, for the rate limit. */
   count: number;
@@ -104,6 +125,7 @@ export class HarfiyenRoom extends DurableObject<HarfiyenEnv> {
     const room = createInvite(code, host, this.deps(), name);
     await this.store(room);
     await this.ctx.storage.setAlarm(room.createdAt + INVITE_TTL);
+    this.record(rememberRoom(this.env.DB, room, Date.now()));
     return true;
   }
 
@@ -113,7 +135,34 @@ export class HarfiyenRoom extends DurableObject<HarfiyenEnv> {
     const room = createMatched(code, players, this.deps(), names);
     await this.store(room);
     await this.ctx.storage.setAlarm(room.updatedAt + IDLE_TTL);
+    this.record(rememberRoom(this.env.DB, room, Date.now()));
     return true;
+  }
+
+  /**
+   * An account takes over the seat an old device id held in this room (the
+   * player signed in on that browser and moved their games over). False if
+   * the device has no seat here, or the account already has one.
+   */
+  async adopt(from: string, to: string, name: string): Promise<boolean> {
+    const room = await this.load();
+    if (!room) return false;
+    const seat = room.seats.indexOf(from);
+    if (seat === -1 || room.seats.includes(to)) return false;
+    const seats = [...room.seats];
+    const names = [...(room.names ?? [null, null])];
+    seats[seat] = to;
+    names[seat] = cleanName(name);
+    const next: Room = { ...room, seats, names };
+    await this.store(next);
+    this.record(rememberRoom(this.env.DB, next, Date.now()));
+    this.broadcast(next);
+    return true;
+  }
+
+  /** A write to the accounts' database, in the background: a missed record never holds up or breaks a game. */
+  private record(write: Promise<void>): void {
+    this.ctx.waitUntil(write.catch(() => undefined));
   }
 
   async summary(code: string, pub: string): Promise<Summary> {
@@ -122,10 +171,12 @@ export class HarfiyenRoom extends DurableObject<HarfiyenEnv> {
 
   async fetch(request: Request): Promise<Response> {
     if (request.headers.get("Upgrade") !== "websocket") return new Response("upgrade required", { status: 426 });
+    const who = playerOf(request);
+    if (!who) return new Response("no player", { status: 401 });
     if (this.ctx.getWebSockets().length >= MAX_SOCKETS) return new Response("too many connections", { status: 429 });
     const pair = new WebSocketPair();
     this.ctx.acceptWebSocket(pair[1]);
-    pair[1].serializeAttachment({ pub: null, count: 0, window: Date.now() } satisfies Attachment);
+    pair[1].serializeAttachment({ pub: null, who, count: 0, window: Date.now() } satisfies Attachment);
     return new Response(null, { status: 101, webSocket: pair[0] });
   }
 
@@ -161,11 +212,11 @@ export class HarfiyenRoom extends DurableObject<HarfiyenEnv> {
         ws.close(1000, "surum");
         return;
       }
-      attachment.pub = await publicId(request.secret);
-      attachment.name = request.name;
+      attachment.pub = attachment.who.pub;
+      attachment.name = attachment.who.name;
       ws.serializeAttachment(attachment);
       // A player who changed their name since: the room takes the new one.
-      const renamed = rename(room, attachment.pub, request.name);
+      const renamed = rename(room, attachment.pub, attachment.name);
       if (renamed) await this.store(renamed);
       // The newcomer gets the room; the others learn they're here.
       this.broadcast(renamed ?? room);
@@ -187,6 +238,14 @@ export class HarfiyenRoom extends DurableObject<HarfiyenEnv> {
     if (outcome.changed) {
       await this.store(outcome.room);
       if (outcome.room) this.notify(room, outcome.room);
+      if (outcome.room && outcome.room.seats.some((pub, i) => pub !== room.seats[i])) {
+        this.record(rememberRoom(this.env.DB, outcome.room, Date.now()));
+      }
+      if (outcome.room?.phase === "over" && room.phase !== "over") {
+        this.record(recordResult(this.env.DB, outcome.room, Date.now()));
+        // A finished room is cleared a week after the game ended, not when the idle clock would have run out.
+        await this.ctx.storage.setAlarm(outcome.room.updatedAt + OVER_TTL);
+      }
       if (!outcome.room) {
         for (const socket of this.ctx.getWebSockets()) {
           send(socket, { t: "error", code: "iptal" });
@@ -274,6 +333,7 @@ export class HarfiyenRoom extends DurableObject<HarfiyenEnv> {
     }
     const result = onAlarm(room, Date.now());
     if (result.changed) await this.store(result.room);
+    if (result.room?.phase === "over" && room.phase !== "over") this.record(recordResult(this.env.DB, result.room, Date.now()));
     if (!result.room) {
       for (const socket of this.ctx.getWebSockets()) {
         send(socket, { t: "error", code: "yok" });

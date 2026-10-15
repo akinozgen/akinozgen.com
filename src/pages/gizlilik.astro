@@ -1,0 +1,1504 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const EFFECTIVE = "15 Ekim 2026";
+
+const toc = [
+  ["veri-sorumlusu", "Veri sorumlusu"],
+  ["ozet", "Kısaca"],
+  ["kapsam", "Kapsam"],
+  ["veriler", "İşlenen veriler, amaçlar ve hukuki sebepler"],
+  ["yontem", "Toplama yöntemi"],
+  ["aktarim", "Aktarım ve hizmet sağlayıcılar"],
+  ["yurt-disi", "Yurt dışına aktarım"],
+  ["saklama", "Saklama süreleri"],
+  ["silme", "Hesabın silinmesi"],
+  ["cerezler", "Çerezler ve tarayıcı depolaması"],
+  ["guvenlik", "Güvenlik"],
+  ["otomatik", "Profil çıkarma ve otomatik işlemler"],
+  ["haklar", "Haklarınız"],
+  ["basvuru", "Başvuru yolu ve şikâyet"],
+  ["cocuklar", "Çocuklar"],
+  ["degisiklikler", "Değişiklikler"],
+  ["yururluk", "Yürürlük"],
+] as const;
+
+const n = (id: (typeof toc)[number][0]): string => String(toc.findIndex(([key]) => key === id) + 1).padStart(2, "0");
+---
+
+<BaseLayout
+  title="Gizlilik ve Kişisel Veriler — Akın Özgen"
+  description="akinozgen.com ve oyunlarında hangi kişisel verilerin hangi amaçla ve hukuki sebeple işlendiği, nerede ve ne kadar saklandığı, KVKK kapsamındaki haklarınız ve başvuru yolu."
+  lang="tr"
+>
+  <header class="bar">
+    <a class="bar-name" href="/">Akın Özgen</a>
+    <nav class="bar-links">
+      <a href="/games/">← Oyunlar</a>
+    </nav>
+  </header>
+
+  <main class="page-shell">
+    <article class="doc">
+      <header class="intro">
+        <p class="eyebrow">KVKK aydınlatma metni</p>
+        <h1>Gizlilik</h1>
+        <p class="lede">
+          Bu metin, akinozgen.com'u ve sitedeki oyunları kullanırken kişisel verilerinizin nasıl işlendiğini 6698
+          sayılı Kişisel Verilerin Korunması Kanunu'nun (“Kanun”) 10. maddesi ve Aydınlatma Yükümlülüğünün Yerine
+          Getirilmesinde Uyulacak Usul ve Esaslar Hakkında Tebliğ uyarınca açıklar. Sitenin gerçekte yaptığını
+          anlatır: burada yazmayan bir işleme yapılmaz.
+        </p>
+        <ul class="meta">
+          <li>Yürürlük: {EFFECTIVE}</li>
+          <li>Sürüm 1</li>
+          <li><a href="#english" hreflang="en">Summary in English ↓</a></li>
+        </ul>
+      </header>
+
+      <nav class="toc" aria-labelledby="toc-title">
+        <h2 id="toc-title">İçindekiler</h2>
+        <ol>
+          {
+            toc.map(([id, label]) => (
+              <li>
+                <a href={`#${id}`}>
+                  <span class="toc-n">{n(id)}</span>
+                  {label}
+                </a>
+              </li>
+            ))
+          }
+        </ol>
+      </nav>
+
+      <section id="veri-sorumlusu">
+        <h2><span class="n">{n("veri-sorumlusu")}</span>Veri sorumlusu</h2>
+        <p>
+          Kişisel verileriniz bakımından veri sorumlusu, siteyi kişisel olarak işleten gerçek kişi Akın Özgen'dir.
+          Sitenin arkasında bir şirket yoktur; veri sorumlusu temsilcisi atanmamıştır.
+        </p>
+        <dl class="facts">
+          <div>
+            <dt>Veri sorumlusu</dt>
+            <dd>Akın Özgen (gerçek kişi)</dd>
+          </div>
+          <div>
+            <dt>E-posta</dt>
+            <dd><a href="mailto:akinozgen@protonmail.com">akinozgen@protonmail.com</a></dd>
+          </div>
+          <div>
+            <dt>İnternet sitesi</dt>
+            <dd>akinozgen.com</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section id="ozet">
+        <h2><span class="n">{n("ozet")}</span>Kısaca</h2>
+        <div class="summary">
+          <div class="card">
+            <h3>Hesap açmadan</h3>
+            <ul>
+              <li>
+                Oyunlar hesapsız oynanır (harfiyen'in çevrimiçi modu hariç). Ayarlarınız, ilerlemeniz ve
+                istatistikleriniz yalnızca tarayıcınızda (localStorage) durur.
+              </li>
+              <li>
+                Günlük bulmacalarda doğru cevap sunucuda durduğu için her tahmin değerlendirilmek üzere sunucuya gider.
+                Giriş yapmadıysanız sunucu tahminlerinizi saklamaz.
+              </li>
+              <li>
+                Her istek Cloudflare'in ağından geçer ve Cloudflare IP adresinizi işler. Sitenin sunucusuna gelen
+                isteklerin kayıtları 3 gün tutulur.
+              </li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Hesap açınca <span class="tag">isteğe bağlı</span></h3>
+            <ul>
+              <li>
+                Hesap yalnızca kayıtlarınızı cihazlar arasında taşımak ve harfiyen'i çevrimiçi oynamak için gerekir.
+              </li>
+              <li>
+                Saklananlar: e-posta adresiniz, giriş yönteminiz, oyun adınız, oyun kayıtlarınız ve oturum bilgisi.
+              </li>
+              <li>Giriş Google Firebase ile yapılır; şifreniz bu sitenin sunucusuna hiç ulaşmaz.</li>
+              <li>Hesabınızı oyunlardaki hesap penceresinden istediğiniz an silebilirsiniz.</li>
+            </ul>
+          </div>
+          <div class="card card--never">
+            <h3>Hiçbir zaman</h3>
+            <ul>
+              <li>Reklam, ziyaretçi analizi aracı ya da izleme çerezi yoktur.</li>
+              <li>Profil çıkarılmaz; veriler satılmaz, reklam veya pazarlama için kullanılmaz ya da paylaşılmaz.</li>
+              <li>Tek çerez, giriş yaptığınızda yerleştirilen oturum çerezidir.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="kapsam">
+        <h2><span class="n">{n("kapsam")}</span>Kapsam</h2>
+        <p>
+          Bu metin akinozgen.com alan adındaki sayfaları ve <code>/games/</code> altındaki oyunları kapsar:
+          travelle, vexle, tessle ve sizele (günlük bulmacalar ve sonsuz mod), harfiyen (bilgisayara karşı ya da
+          çevrimiçi başka oyunculara karşı oynanan kelime oyunu) ve Çaylar Belediyeden (tek kişilik kart oyunu).
+          İlgili kişiler; siteyi ziyaret edenler, oyun oynayanlar, hesap açanlar ve veri sorumlusuna yazanlardır.
+        </p>
+        <ul class="plain">
+          <li>
+            <strong>Tamamen tarayıcıda çalışanlar:</strong> Çaylar Belediyeden ve harfiyen'in bilgisayara karşı modu
+            oyun verisini sunucuya göndermez. Çaylar Belediyeden yalnızca seslendirme dosyalarını
+            assets.akinozgen.com'dan (Cloudflare) indirir.
+          </li>
+          <li>
+            <strong>Sunucuya soranlar:</strong> günlük bulmacalar, cevabı tarayıcıya göndermeden her tahmini
+            sunucuda değerlendirir.
+          </li>
+          <li><strong>Hesap gerektiren:</strong> harfiyen'in çevrimiçi modu.</li>
+        </ul>
+        <p>
+          Oyunlardaki bazı bağlantılar (Vikipedi, Google Haritalar, harfiyen davetini WhatsApp ile paylaşma) yalnızca
+          tıkladığınızda o siteyi açar; tıklanmadan hiçbir şey yüklenmez. Açılan sitelerde o sitelerin kendi gizlilik
+          koşulları geçerlidir.
+        </p>
+      </section>
+
+      <section id="veriler" class="wide">
+        <h2><span class="n">{n("veriler")}</span>İşlenen veriler, amaçlar ve hukuki sebepler</h2>
+        <p>
+          Aşağıdaki tablo her veri kategorisinin neyi içerdiğini, nasıl toplandığını, hangi amaçla işlendiğini ve
+          Kanun'un 5. maddesinin ikinci fıkrasındaki hangi hukuki sebebe dayandığını gösterir. Özel nitelikli kişisel
+          veri (Kanun m.6) işlenmez. Bu sitenin sunucusu gerçek adınızı, kimlik numaranızı, telefonunuzu, konumunuzu
+          ya da ödeme bilgisi istemez ve saklamaz (Google ile girişte Firebase'in tuttukları için
+          <a href="#aktarim">§06</a>).
+        </p>
+
+        <div class="table-wrap">
+          <table class="data data--legal">
+            <thead>
+              <tr>
+                <th scope="col">Kategori</th>
+                <th scope="col">İşlenen veriler</th>
+                <th scope="col">Toplama yöntemi</th>
+                <th scope="col">Amaç</th>
+                <th scope="col">Hukuki sebep</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">Teknik bağlantı kayıtları <span class="who">herkes</span></th>
+                <td data-label="Veriler">
+                  IP adresi; istenen sayfa ya da uygulama adresi, sorgu bilgisiyle birlikte (sitenin uygulama arayüzü
+                  bulmaca tahminlerini ve ad değişikliklerini adresin içinde taşır); istek zamanı, yöntemi ve yanıt
+                  kodu; tarayıcının gönderdiği teknik başlıklar.
+                </td>
+                <td data-label="Toplama">Siteye her bağlantıda, Cloudflare'in ağı üzerinden otomatik olarak.</td>
+                <td data-label="Amaç">
+                  Sitenin iletilmesi ve çalışması; saldırıların ve kötüye kullanımın önlenmesi; hataların bulunması.
+                </td>
+                <td data-label="Hukuki sebep"><span class="nb">m.5/2-f</span></td>
+              </tr>
+              <tr>
+                <th scope="row">Hesap bilgileri</th>
+                <td data-label="Veriler">
+                  E-posta adresi; giriş yöntemi (Google ya da e-posta ve şifre); Firebase kullanıcı kimliği; sunucunun
+                  hesaba verdiği rastgele iç kimlik (oyunlardaki “#1234” numarası bundan türetilir); hesabın açılış
+                  tarihi; son kullanım tarihi (günde en fazla bir kez güncellenir).
+                </td>
+                <td data-label="Toplama">
+                  Hesap açarken. E-posta, giriş yöntemi ve Firebase kimliği, girişte Firebase'in verdiği imzalı kimlik
+                  belgesinden okunur; diğerleri sunucuda oluşur.
+                </td>
+                <td data-label="Amaç">
+                  Hesabın kurulması ve giriş; hesabın her cihazda tanınması; silme gibi taleplerde hesabın
+                  doğrulanması; hesap güvenliği.
+                </td>
+                <td data-label="Hukuki sebep"><span class="nb">m.5/2-c</span>; son kullanım tarihi için ayrıca <span class="nb">m.5/2-f</span></td>
+              </tr>
+              <tr>
+                <th scope="row">Oyun adı</th>
+                <td data-label="Veriler">
+                  Seçtiğiniz ad (2–24 karakter) ya da seçmezseniz hesap kimliğinden türetilen iki sözcüklü varsayılan
+                  ad; yanında değişmeyen dört haneli numara (ör. “Neşeli Kirpi #4821”). Gerçek adınızı kullanmanız
+                  gerekmez.
+                </td>
+                <td data-label="Toplama">Hesap penceresinde sizin yazmanızla ya da otomatik olarak.</td>
+                <td data-label="Amaç">
+                  Oyunlarda ve çevrimiçi maçta rakibinize görünmeniz; uygunsuz adların reddedilmesi.
+                </td>
+                <td data-label="Hukuki sebep"><span class="nb">m.5/2-c</span>; ad filtresi için <span class="nb">m.5/2-f</span></td>
+              </tr>
+              <tr>
+                <th scope="row">Oturum bilgileri</th>
+                <td data-label="Veriler">
+                  Oturum kimliğinin SHA-256 özeti (kimliğin kendisi yalnızca tarayıcınızdaki çerezdedir); oturumun
+                  açılış, son kullanım ve bitiş zamanları.
+                </td>
+                <td data-label="Toplama">Girişte sunucu tarafından oluşturulur.</td>
+                <td data-label="Amaç">Girişli kalmanız; oturumların güvenli yönetimi.</td>
+                <td data-label="Hukuki sebep"><span class="nb">m.5/2-c</span>, <span class="nb">m.5/2-f</span></td>
+              </tr>
+              <tr>
+                <th scope="row">Günlük bulmaca kayıtları <span class="who">giriş yapmışken</span></th>
+                <td data-label="Veriler">
+                  Her bulmacada yaptığınız hamleler (tahminler) ve sunucunun verdiği sonuç; başlama ve bitiş zamanı.
+                  İlk girişte, cihazınızın o güne kadar tuttuğu istatistiklerin bir kopyası (oyun başına bir kez,
+                  “cihazdan aktarıldı” olarak işaretli).
+                </td>
+                <td data-label="Toplama">Oynarken otomatik olarak; aktarılan istatistikler tarayıcınızdan.</td>
+                <td data-label="Amaç">
+                  Kayıtlarınızın ve istatistiklerinizin her cihazda sizinle gelmesi; sonuçların sunucunun kararına
+                  dayanması.
+                </td>
+                <td data-label="Hukuki sebep"><span class="nb">m.5/2-c</span></td>
+              </tr>
+              <tr>
+                <th scope="row">harfiyen maç kayıtları</th>
+                <td data-label="Veriler">
+                  Oynadığınız odaların kodları; biten her oyun için rakibin o anki görünen adı, iki tarafın puanı,
+                  sonuç (kazanma, kaybetme, beraberlik, terk) ve bitiş zamanı.
+                </td>
+                <td data-label="Toplama">Çevrimiçi oynarken otomatik olarak.</td>
+                <td data-label="Amaç">Oyun listenizin her cihazda aynı olması; maç geçmişiniz ve istatistikleriniz.</td>
+                <td data-label="Hukuki sebep"><span class="nb">m.5/2-c</span></td>
+              </tr>
+              <tr>
+                <th scope="row">harfiyen oda içeriği</th>
+                <td data-label="Veriler">
+                  Oyunun kendisi (taşlar, hamleler, puanlar); iki oyuncunun hesap kimliği ve görünen adı; sohbet
+                  satırları (odada en son 50 satır, sunucunun filtrelediği hâliyle: uygunsuz kelimeler yıldızlanır,
+                  bağlantılar çıkarılır); sessize alma tercihi; dürtmeler; rövanş istekleri. Rakibinizin odayı o an
+                  açık tutup tutmadığı anlık gösterilir, saklanmaz.
+                </td>
+                <td data-label="Toplama">Oynarken ve sohbete yazarken.</td>
+                <td data-label="Amaç">
+                  Çevrimiçi oyunun ve sohbetin yürütülmesi; oyuncuların uygunsuz içerikten ve aşırı mesajdan
+                  korunması.
+                </td>
+                <td data-label="Hukuki sebep"><span class="nb">m.5/2-c</span>; filtre ve hız sınırları için <span class="nb">m.5/2-f</span></td>
+              </tr>
+              <tr>
+                <th scope="row">Bildirim aboneliği <span class="who">yalnızca izin verirseniz</span></th>
+                <td data-label="Veriler">
+                  Tarayıcınızın bildirim (push) aboneliği: tarayıcı üreticisinin bildirim servisindeki adres ve
+                  şifreleme anahtarları.
+                </td>
+                <td data-label="Toplama">
+                  Bildirimleri açtığınızda tarayıcınız oluşturur; oynadığınız odalara iletilir.
+                </td>
+                <td data-label="Amaç">
+                  Sayfa kapalıyken sıranın size geldiğini, rakibinizin dürttüğünü ya da yazdığını, oyunun bittiğini
+                  haber vermek.
+                </td>
+                <td data-label="Hukuki sebep"><span class="nb">m.5/2-c</span> (sizin açtığınız özellik)</td>
+              </tr>
+              <tr>
+                <th scope="row">Başvuru ve yazışmalar</th>
+                <td data-label="Veriler">
+                  E-posta adresiniz ve yazdıklarınız; Kanun kapsamındaki başvurularda Başvuru Tebliği'nin istediği
+                  bilgiler (bkz. <a href="#basvuru">§14</a>).
+                </td>
+                <td data-label="Toplama">Sizin gönderdiğiniz e-posta ya da yazıyla.</td>
+                <td data-label="Amaç">Talebinizi cevaplamak; cevaplandığını ispat edebilmek.</td>
+                <td data-label="Hukuki sebep"><span class="nb">m.5/2-ç</span> (<span class="nb">Kanun m.13</span>), <span class="nb">m.5/2-e</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <dl class="legend">
+          <div>
+            <dt>m.5/2-c</dt>
+            <dd>
+              Bir sözleşmenin kurulması veya ifasıyla doğrudan doğruya ilgili olması kaydıyla, sözleşmenin taraflarına
+              ait kişisel verilerin işlenmesinin gerekli olması. Hesap açtığınızda ve bir özelliği kullandığınızda, bu
+              ücretsiz hizmeti size sunabilmek için gereken veriler bu sebebe dayanır.
+            </dd>
+          </div>
+          <div>
+            <dt>m.5/2-ç</dt>
+            <dd>Veri sorumlusunun hukuki yükümlülüğünü yerine getirebilmesi için zorunlu olması.</dd>
+          </div>
+          <div>
+            <dt>m.5/2-e</dt>
+            <dd>Bir hakkın tesisi, kullanılması veya korunması için veri işlemenin zorunlu olması.</dd>
+          </div>
+          <div>
+            <dt>m.5/2-f</dt>
+            <dd>
+              İlgili kişinin temel hak ve özgürlüklerine zarar vermemek kaydıyla, veri sorumlusunun meşru menfaatleri
+              için veri işlenmesinin zorunlu olması. Burada meşru menfaat; sitenin güvenli ve kesintisiz çalışması ile
+              diğer oyuncuların korunmasıdır.
+            </dd>
+          </div>
+        </dl>
+        <p>
+          Bu metindeki işlemelerin hiçbiri açık rızanıza dayanmaz; bu nedenle sizden ayrıca açık rıza istenmez.
+          Sitenin kendi kodu IP adresinizi okumaz ve saklamaz.
+        </p>
+      </section>
+
+      <section id="yontem">
+        <h2><span class="n">{n("yontem")}</span>Toplama yöntemi</h2>
+        <p>Kişisel veriler tamamen otomatik yollarla, elektronik ortamda toplanır:</p>
+        <ul class="plain">
+          <li>
+            <strong>Sizden:</strong> hesap penceresindeki giriş formu, oyun adınız, oyundaki hamleleriniz, sohbete
+            yazdıklarınız, bildirimlere izin verdiğinizde tarayıcınızın oluşturduğu abonelik ve e-postalarınız.
+          </li>
+          <li>
+            <strong>Google Firebase'den:</strong> giriş tamamlandığında Firebase'in verdiği imzalı kimlik belgesi
+            (ID token). Sunucu, belgenin Google'ın yayımladığı anahtarlarla imzalandığını doğrular ve içinden yalnızca
+            Firebase kullanıcı kimliğini, e-posta adresini, adresin doğrulanıp doğrulanmadığını, giriş yöntemini ve
+            giriş zamanını okur. Belgenin kendisi saklanmaz. Belge, Google ile girişte adınız ve profil fotoğrafınızın
+            bağlantısı gibi başka bilgiler de içerebilir; bunlar okunmaz ve saklanmaz.
+          </li>
+          <li>
+            <strong>Tarayıcınızdan:</strong> ilk girişte cihazınızın kaydettiği istatistikler; hesaplardan önce
+            harfiyen'i çevrimiçi oynadıysanız, o oyunları hesabınıza taşımak için tarayıcınızdaki cihaz anahtarı.
+          </li>
+          <li>
+            <strong>Cloudflare'in ağından:</strong> siteye her bağlantıda IP adresi ve isteğin teknik bilgileri.
+          </li>
+        </ul>
+      </section>
+
+      <section id="aktarim" class="wide">
+        <h2><span class="n">{n("aktarim")}</span>Aktarım ve hizmet sağlayıcılar</h2>
+        <p>
+          Kişisel verileriniz satılmaz; reklam veya pazarlama amacıyla kimseyle paylaşılmaz. Site, çalışmak için
+          aşağıdaki hizmet sağlayıcıları kullanır. Cloudflare, Google Firebase ve Proton, verileri veri sorumlusu
+          adına işleyen veri işleyenlerdir. Google Fonts ve bildirim servisleri ise tarayıcınızın doğrudan bağlandığı,
+          sağlayıcının kendi koşullarıyla işlettiği servislerdir.
+        </p>
+
+        <div class="table-wrap">
+          <table class="data">
+            <thead>
+              <tr>
+                <th scope="col">Alıcı</th>
+                <th scope="col">Ne için</th>
+                <th scope="col">Aldığı veya gördüğü veriler</th>
+                <th scope="col">Konum</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">Cloudflare, Inc.</th>
+                <td data-label="Ne için">
+                  Barındırma, ağ ve güvenlik (güvenlik duvarı, saldırı koruması); sitenin sunucu kodu; hesap
+                  veritabanı (D1); çevrimiçi odalar (Durable Objects); sunucu kayıtları (Workers Logs); dosya deposu
+                  (R2).
+                </td>
+                <td data-label="Veriler">
+                  Siteye gelen bütün istekler, IP adresi dahil; sunucunun sakladığı bütün hesap, oyun ve oda verileri.
+                </td>
+                <td data-label="Konum">
+                  Cloudflare'in dünya genelindeki ağı. Hesap veritabanı için tercih edilen bölge Doğu Avrupa'dır;
+                  Cloudflare bunu garanti etmez. Bir oda, onu ilk açan bağlantıya yakın bir veri merkezinde oluşur.
+                  Cloudflare kendi kayıtlarını ağırlıkla ABD'de ve Avrupa Ekonomik Alanı'nda tutar.
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Google LLC: Firebase Authentication</th>
+                <td data-label="Ne için">
+                  Giriş: hesap oluşturma, şifre doğrulama, Google ile giriş, doğrulama ve şifre sıfırlama
+                  e-postalarının gönderilmesi. Firebase yalnızca giriş penceresini açtığınızda yüklenir; giriş
+                  tamamlanıp site kendi oturumunu açınca sayfa Firebase'den hemen çıkış yapar. Firebase'in giriş
+                  yardımcısı sayfaları bu sitenin adresi üzerinden Firebase'den getirilir; bu sırada sitenin çerezi
+                  Firebase'e iletilmez.
+                </td>
+                <td data-label="Veriler">
+                  E-posta adresi; şifrenin özeti (hash); giriş yöntemi; Google ile girişte Google hesabınızdaki ad ve
+                  profil fotoğrafı bağlantısı; hesabın oluşturulma ve son giriş zamanları; kötüye kullanımı önlemek
+                  için IP adresi ve tarayıcı bilgisi. Giriş sırasında tarayıcınız Google'ın sunucularına doğrudan
+                  bağlanır.
+                </td>
+                <td data-label="Konum">ABD. Google'a göre Firebase Authentication yalnızca ABD'deki veri merkezlerinde çalışır.</td>
+              </tr>
+              <tr>
+                <th scope="row">Google LLC: Google Fonts</th>
+                <td data-label="Ne için">
+                  Sitenin kendi sayfalarında (ana sayfa, oyun listesi, bu sayfa) kullanılan yazı tipinin yüklenmesi.
+                  Oyunların kendisi Google Fonts kullanmaz.
+                </td>
+                <td data-label="Veriler">
+                  Sayfa açıldığında tarayıcınızın gönderdiği IP adresi, tarayıcı bilgisi ve sayfa adresi. Google, bu
+                  servisin çerez kullanmadığını belirtir.
+                </td>
+                <td data-label="Konum">ABD ve Google'ın küresel ağı</td>
+              </tr>
+              <tr>
+                <th scope="row">Tarayıcınızın bildirim servisi</th>
+                <td data-label="Ne için">
+                  Yalnızca harfiyen bildirimlerine izin verdiyseniz, bildirimin tarayıcınıza ulaştırılması. Servis,
+                  sitenin değil tarayıcınızın üreticisinindir: Chrome, Brave ve Android için Google (Firebase Cloud
+                  Messaging), Firefox için Mozilla, Safari için Apple, Edge için Microsoft.
+                </td>
+                <td data-label="Veriler">
+                  Bildirimin içeriği yalnızca sizin tarayıcınızın çözebileceği şekilde şifrelenir (RFC 8291); servis
+                  içeriği göremez. Servis; abonelik adresini, gönderim zamanını ve boyutunu, gönderen sitenin kimliğini
+                  (akinozgen.com) ve bildirimlerin birbirinin yerine geçmesi için oda kodundan türetilen kısa bir
+                  etiketi görür.
+                </td>
+                <td data-label="Konum">Servis sağlayıcının ülkesi; çoğunlukla ABD</td>
+              </tr>
+              <tr>
+                <th scope="row">Proton AG</th>
+                <td data-label="Ne için">akinozgen@protonmail.com adresine gönderdiğiniz e-postaların alınması ve saklanması.</td>
+                <td data-label="Veriler">E-posta adresiniz ve yazdıklarınız.</td>
+                <td data-label="Konum">İsviçre</td>
+              </tr>
+              <tr>
+                <th scope="row">Rakibiniz</th>
+                <td data-label="Ne için">harfiyen'de birlikte oynadığınız diğer oyuncu.</td>
+                <td data-label="Veriler">
+                  Görünen adınız, hamleleriniz ve puanınız, sohbet satırlarınız (sizi sessize almadıysa), dürtmeleriniz,
+                  rövanş isteğiniz ve odayı o an açık tutup tutmadığınız. E-posta adresiniz ve hesap kimliğiniz
+                  gösterilmez.
+                </td>
+                <td data-label="Konum">—</td>
+              </tr>
+              <tr>
+                <th scope="row">Yetkili kamu kurum ve kuruluşları, yargı mercileri</th>
+                <td data-label="Ne için">
+                  Yalnızca hukuken zorunlu olduğunda ve usulüne uygun bir talep üzerine (m.5/2-ç, Kanun m.8).
+                </td>
+                <td data-label="Veriler">Talep edilen ve verilmesi zorunlu olan bilgiler.</td>
+                <td data-label="Konum">Türkiye</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Google ile giriş Google'ın kendi sayfasında yapılır; Google hesabınızla ilgili işlemler Google'ın gizlilik
+          politikasına tabidir. Sağlayıcıların kendi koşulları:
+          <a href="https://www.cloudflare.com/privacypolicy/" rel="noopener">Cloudflare</a>,
+          <a href="https://firebase.google.com/support/privacy" rel="noopener">Firebase</a>,
+          <a href="https://policies.google.com/privacy" rel="noopener">Google</a>,
+          <a href="https://proton.me/legal/privacy" rel="noopener">Proton</a>.
+        </p>
+      </section>
+
+      <section id="yurt-disi">
+        <h2><span class="n">{n("yurt-disi")}</span>Yurt dışına aktarım</h2>
+        <p>
+          <a href="#aktarim">§06</a>'daki sağlayıcıların sunucuları Türkiye dışındadır; bu nedenle
+          kişisel verileriniz yurt dışına aktarılır. Aktarılan veriler: hesap, oturum, oyun ve oda verileri ile
+          teknik bağlantı kayıtları (Cloudflare); giriş bilgileri (Google Firebase); yazı tipi yüklenirken IP adresi
+          ve tarayıcı bilgisi (Google Fonts); bildirim aboneliği ve şifreli bildirimler (bildirim servisleri);
+          e-postalar (Proton).
+        </p>
+        <p>
+          Kanun'un 7499 sayılı Kanun'la değiştirilen ve 1 Haziran 2024'ten beri yürürlükte olan 9. maddesi, yurt
+          dışına aktarımı önce Kişisel Verileri Koruma Kurulu'nun yeterlilik kararına, bu yoksa standart sözleşme
+          gibi uygun güvencelere bağlar. Açık rıza artık yalnızca arızi, yani düzenli olmayan ve süreklilik arz
+          etmeyen aktarımlar için bir dayanaktır. Bu metnin yürürlük tarihi itibarıyla durum şudur:
+        </p>
+        <ul class="plain">
+          <li>Kurul, bu sağlayıcıların bulunduğu ülkeler için yeterlilik kararı vermemiştir.</li>
+          <li>
+            Kurul'un ilan ettiği standart sözleşme bu sağlayıcılarla imzalanmamış ve Kişisel Verileri Koruma
+            Kurumu'na bildirilmemiştir.
+          </li>
+          <li>
+            Sağlayıcıların kendi standart koşulları ve gizlilik politikaları geçerlidir; bunlar Kanun'un 9.
+            maddesindeki standart sözleşmenin yerini tutmaz.
+          </li>
+          <li>
+            Aktarım için sizden açık rıza istenmez: sürekli bir barındırma hizmeti söz konusu olduğundan açık rıza bu
+            aktarım için uygun bir dayanak değildir.
+          </li>
+        </ul>
+        <p>
+          Hesap açmazsanız sitenin veritabanında hakkınızda bir kayıt tutulmaz; ancak siteyi açmak bile isteğinizin Cloudflare'in
+          ağından geçmesini gerektirir. Bu konudaki durum değiştiğinde bu bölüm güncellenir.
+        </p>
+      </section>
+
+      <section id="saklama" class="wide">
+        <h2><span class="n">{n("saklama")}</span>Saklama süreleri</h2>
+        <p>
+          Kişisel veriler işlendikleri amaç için gerekli olan süre kadar saklanır (Kanun m.4/2-d) ve süre sonunda
+          silinir.
+        </p>
+        <div class="table-wrap">
+          <table class="data data--3">
+            <thead>
+              <tr>
+                <th scope="col">Veri</th>
+                <th scope="col">Saklama süresi</th>
+                <th scope="col">Süre sonunda ya da ayrıca</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">Hesap bilgileri, oyun adı, bulmaca kayıtları, aktarılan istatistikler, harfiyen maç geçmişi</th>
+                <td data-label="Süre">Hesabınızı silene kadar.</td>
+                <td data-label="Ayrıca">
+                  Hesap silindiğinde hemen silinir (<a href="#silme">§09</a>). Uzun süre kullanılmayan
+                  hesaplar şu an otomatik olarak silinmez.
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Oturum</th>
+                <td data-label="Süre">
+                  Çerez, girişten 180 gün sonra tarayıcınızdan kendiliğinden silinir. Sunucudaki kayıt son
+                  kullanımdan 180 gün sonra geçersiz olur.
+                </td>
+                <td data-label="Ayrıca">
+                  Çıkış yaptığınızda o oturumun kaydı hemen silinir. Süresi dolmuş oturum kayıtları şu an ayrıca
+                  temizlenmez; hesapla birlikte silinir.
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">harfiyen oda listesi</th>
+                <td data-label="Süre">Oda silinene kadar.</td>
+                <td data-label="Ayrıca">Silinen oda, oyun listeniz bir sonraki açılışta listenizden de çıkar.</td>
+              </tr>
+              <tr>
+                <th scope="row">harfiyen oda içeriği (oyun, adlar, sohbet, bildirim abonelikleri)</th>
+                <td data-label="Süre">
+                  Cevapsız davet: 7 gün. 30 gün boyunca hamle yapılmayan oyun kapanır ve 7 gün sonra silinir. Biten
+                  oyunun odası, son işlemden (oyunun bitişi ya da rövanş isteği) en az 7, en geç 30 gün sonra
+                  silinir; silme, odanın bir sonraki zamanlanmış kontrolünde yapılır.
+                </td>
+                <td data-label="Ayrıca">Oda bütün içeriğiyle birlikte silinir.</td>
+              </tr>
+              <tr>
+                <th scope="row">Bildirim aboneliği</th>
+                <td data-label="Süre">Odanın ömrü kadar.</td>
+                <td data-label="Ayrıca">
+                  Bildirimleri kapattığınızda tarayıcınız aboneliği iptal eder; odalar onu bir sonraki bağlantınızda ya
+                  da bildirim servisi aboneliğin geçersiz olduğunu bildirdiğinde siler.
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Sunucu kayıtları (Cloudflare Workers Logs)</th>
+                <td data-label="Süre">3 gün.</td>
+                <td data-label="Ayrıca">
+                  Otomatik olarak silinir. Yalnızca sitenin uygulama arayüzüne ve giriş yardımcısına gelen istekler
+                  kaydedilir; sayfa ve dosya istekleri bu kayıtlara girmez.
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Cloudflare'in kendi ağ ve güvenlik kayıtları</th>
+                <td data-label="Süre">Cloudflare'in kendi saklama kurallarına göre.</td>
+                <td data-label="Ayrıca">—</td>
+              </tr>
+              <tr>
+                <th scope="row">Firebase giriş bilgileri</th>
+                <td data-label="Süre">
+                  Firebase kullanıcı kaydı silinene kadar. Google'a göre, silindikten sonra canlı ve yedek
+                  sistemlerden 180 gün içinde kaldırılır; IP adresleri birkaç hafta tutulur.
+                </td>
+                <td data-label="Ayrıca">
+                  E-posta ve şifreyle kayıt olup adresinizi doğrulamazsanız Firebase'de kullanıcı kaydı oluşur ama bu
+                  sitede hesap açılmaz. Bu kayıt şu an otomatik silinmez; silinmesini e-postayla isteyebilirsiniz.
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Yedekler</th>
+                <td data-label="Süre">
+                  Hesap veritabanı Cloudflare D1'in geri yükleme özelliğiyle (Time Travel) son 7 güne geri
+                  döndürülebilir. Cloudflare'in belgelerine göre oda verileri 30 güne kadar geri yüklenebilir.
+                </td>
+                <td data-label="Ayrıca">Bu sürelerden sonra silinen veri geri getirilemez.</td>
+              </tr>
+              <tr>
+                <th scope="row">E-posta yazışmaları</th>
+                <td data-label="Süre">Talebin cevaplandığını ispat etmek için gerektiği sürece.</td>
+                <td data-label="Ayrıca">—</td>
+              </tr>
+              <tr>
+                <th scope="row">Tarayıcınızdaki veriler</th>
+                <td data-label="Süre">
+                  localStorage: siz silene kadar. sessionStorage: sekme kapanınca.
+                </td>
+                <td data-label="Ayrıca">Ayrıntılar <a href="#cerezler">§10</a>'da.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="silme">
+        <h2><span class="n">{n("silme")}</span>Hesabın silinmesi</h2>
+        <p>
+          Herhangi bir oyunda hesap penceresini açıp “Hesabı sil”e basın. Onay için bir kez daha giriş yapmanız
+          (Google ile ya da şifrenizle) istenir. Ardından:
+        </p>
+        <ol class="steps">
+          <li>
+            Bu sitenin veritabanından hesap kaydınız, oturumlarınız, harfiyen oda listeniz ve maç geçmişiniz,
+            bulmaca kayıtlarınız ve aktarılan istatistikleriniz tek işlemde silinir; tarayıcınızdaki oturum çerezi
+            silinir.
+          </li>
+          <li>
+            Ardından tarayıcınız Firebase'deki kullanıcı kaydınızı siler. Bu adım bağlantı kopması gibi bir nedenle
+            başarısız olursa Firebase kaydı kalabilir; bildirmeniz hâlinde elle silinir.
+          </li>
+        </ol>
+        <p>Silme işleminin kapsamadıkları:</p>
+        <ul class="plain">
+          <li>
+            Oynadığınız çevrimiçi odalar kendi ömürleri dolana kadar durur (<a href="#saklama">§08</a>),
+            hesap kimliğiniz ve adınız da o odalarda kalır;
+            bu süre içinde rakibiniz o odada adınızı ve sohbet satırlarınızı görmeye devam edebilir.
+          </li>
+          <li>
+            Rakibinizin maç geçmişinde, sizinle oynadığı oyunun satırında o anki görünen adınız (ör. “Neşeli Kirpi
+            #4821”) kalır. Bu satır rakibinizin hesabına aittir ve onun hesabı durdukça durur. Hesabınız silindikten
+            sonra bu ad hiçbir hesapla ilişkilendirilemez.
+          </li>
+          <li>
+            Cihazınızdaki oyun verileri sizin tarayıcınızdadır; tarayıcınızın site verilerini silme ayarından
+            silebilirsiniz.
+          </li>
+          <li>
+            Silinen veriler, <a href="#saklama">§08</a>'deki yedekleme süresi boyunca Cloudflare'in geri
+            yükleme olanağında kalır. Bir arıza nedeniyle veritabanı geri yüklenirse, geri yükleme noktasından sonra
+            silinmiş hesaplar yeniden silinir.
+          </li>
+        </ul>
+      </section>
+
+      <section id="cerezler" class="wide">
+        <h2><span class="n">{n("cerezler")}</span>Çerezler ve tarayıcı depolaması</h2>
+        <p>
+          Site tek bir çerez kullanır: giriş yaptığınızda yerleştirilen ve oturumu sürdürmek için kesinlikle gerekli
+          olan oturum çerezi. Analiz, reklam ya da izleme çerezi yoktur; bu nedenle çerez onayı istenmez.
+        </p>
+        <div class="table-wrap">
+          <table class="data">
+            <thead>
+              <tr>
+                <th scope="col">Çerez</th>
+                <th scope="col">Ne işe yarar</th>
+                <th scope="col">Süre</th>
+                <th scope="col">Özellikler</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row"><code>__Host-oturum</code></th>
+                <td data-label="Ne işe yarar">
+                  Girişli oturumunuzu tanır. İçinde yalnızca rastgele bir oturum kimliği vardır; hesap bilgisi yoktur.
+                </td>
+                <td data-label="Süre">Girişten itibaren 180 gün ya da çıkış yapana kadar.</td>
+                <td data-label="Özellikler">
+                  Yalnızca akinozgen.com ve yalnızca HTTPS; HttpOnly (sayfa kodu okuyamaz); SameSite=Strict (başka
+                  sitelerin başlattığı isteklerle gönderilmez).
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Cloudflare, bir isteği şüpheli bulup doğrulama sayfası gösterirse, doğrulamayı geçtiğinizi hatırlamak için
+          kendi güvenlik çerezini (<code>cf_clearance</code>) yerleştirebilir; bu, Cloudflare'in güvenlik hizmetinin
+          parçasıdır ve site bu çerezi okumaz. Cloudflare ayrıca tarayıcılardan, siteye bağlanırken yaşanan ağ
+          hatalarını kendisine raporlamalarını ister (Network Error Logging); bu raporlar yalnızca bağlantı hatası
+          olduğunda gönderilir ve bir çerez değildir.
+        </p>
+        <p>Oyunlar, ayarlarınızı ve ilerlemenizi sizin cihazınızda, tarayıcının kendi depolarında tutar:</p>
+        <div class="table-wrap">
+          <table class="data data--3">
+            <thead>
+              <tr>
+                <th scope="col">Depo</th>
+                <th scope="col">İçerik</th>
+                <th scope="col">Ne zaman silinir</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">localStorage</th>
+                <td data-label="İçerik">
+                  Tema tercihi; her oyunun ayarları, süren oyunları, ilerlemesi ve istatistikleri; harfiyen'de ses ve
+                  bildirim tercihi ile bildirim aboneliğinin bir kopyası; hesaplardan önce harfiyen'i çevrimiçi
+                  oynadıysanız o tarayıcıya özgü rastgele bir cihaz anahtarı ve o zamanki oyun adınız; Çaylar
+                  Belediyeden oyununun kayıtları.
+                </td>
+                <td data-label="Silinme">
+                  Siz tarayıcının site verilerini silene kadar. Günlük bulmacalar eski günlerin kayıtlarını kendileri
+                  temizler.
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">sessionStorage</th>
+                <td data-label="İçerik">
+                  Hesabın o sekmede hemen gösterilebilmesi için adınız, e-posta adresiniz ve giriş yönteminizin geçici
+                  bir kopyası; Google'a yönlendirilerek girişte dönüş işareti; harfiyen'in yeniden yükleme işareti.
+                </td>
+                <td data-label="Silinme">Sekme kapanınca.</td>
+              </tr>
+              <tr>
+                <th scope="row">IndexedDB</th>
+                <td data-label="İçerik">
+                  Firebase'in giriş sırasında tuttuğu oturum. E-posta doğrulamasını beklerken doğrulama tamamlanana ya
+                  da vazgeçene kadar durur.
+                </td>
+                <td data-label="Silinme">
+                  Girişten hemen sonra Firebase'den çıkış yapılınca (boş bir veritabanı kalabilir).
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Service worker ve önbellek</th>
+                <td data-label="İçerik">
+                  harfiyen: bildirimleri göstermek için küçük bir service worker (yalnızca bildirimleri açarsanız).
+                  Çaylar Belediyeden: ana ekrana eklenmiş uygulama olarak açıldığında çevrimdışı çalışmak için oyun
+                  dosyalarının önbelleği.
+                </td>
+                <td data-label="Silinme">Siz tarayıcının site verilerini silene kadar.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Bu depolardakiler sitenin sunucusuna gönderilmez; iki istisna vardır: ilk girişte bir kez aktarılan
+          istatistikler ve eski harfiyen oyunlarını hesabınıza taşımak için gönderilen cihaz anahtarı.
+        </p>
+      </section>
+
+      <section id="guvenlik">
+        <h2><span class="n">{n("guvenlik")}</span>Güvenlik</h2>
+        <p>Kanun'un 12. maddesi kapsamında alınan teknik ve idari tedbirler şunlardır:</p>
+        <ul class="plain">
+          <li>Siteye yalnızca HTTPS ile bağlanılır.</li>
+          <li>
+            Oturum kimliği 256 bit rastgeledir ve çerezde durur; çerez HttpOnly, Secure ve SameSite=Strict'tir.
+            Veritabanında kimliğin yalnızca SHA-256 özeti tutulur; veritabanının bir kopyası bir oturum açmaya yetmez.
+          </li>
+          <li>Şifreniz yalnızca Firebase'e gider; bu sitenin sunucusu şifrenizi hiçbir zaman almaz ve saklamaz.</li>
+          <li>
+            Firebase'in verdiği kimlik belgeleri sunucuda Google'ın yayımladığı anahtarlarla doğrulanır. Yeni oturum
+            yalnızca son 10 dakika içinde yapılmış bir girişle açılabilir. E-posta ve şifreyle girişte e-posta
+            adresinin doğrulanmış olması şarttır.
+          </li>
+          <li>
+            Hesap ve çevrimiçi oyun arayüzleri yalnızca sitenin kendi sayfalarından gelen istekleri kabul eder.
+            Çevrimiçi oyunda mesaj ve sohbet hızı sınırlandırılır.
+          </li>
+          <li>Hesabın silinmesi için yeniden giriş yapılması gerekir.</li>
+          <li>Hesap veritabanı Cloudflare tarafından durağan hâlde AES-256 ile şifrelenir.</li>
+          <li>Verilere erişim yalnızca veri sorumlusuna açıktır; başka çalışan ya da yetkili yoktur.</li>
+        </ul>
+        <p>
+          Hiçbir sistem tamamen güvenli değildir. Kişisel verilerin kanuni olmayan yollarla başkalarınca elde
+          edildiği öğrenilirse, Kanun'un 12. maddesinin beşinci fıkrası uyarınca en kısa sürede size ve Kurul'a
+          bildirilir.
+        </p>
+      </section>
+
+      <section id="otomatik">
+        <h2><span class="n">{n("otomatik")}</span>Profil çıkarma ve otomatik işlemler</h2>
+        <p>
+          Profil çıkarılmaz; kişiselleştirilmiş reklam ya da öneri yapılmaz. Hukuki sonuç doğuran otomatik karar
+          alınmaz. Bazı işlemler ise otomatiktir: oyun adlarında ve sohbet satırlarında uygunsuz kelimelerin
+          filtrelenmesi (adın reddedilmesi, kelimenin yıldızlanması, bağlantının çıkarılması), hız sınırları ve
+          çevrimiçi eşleştirme (en uzun süredir bekleyen oyuncuyla). Filtrenin size karşı hatalı çalıştığını
+          düşünüyorsanız yazabilirsiniz; Kanun'un 11. maddesinin (g) bendindeki itiraz hakkınız saklıdır.
+        </p>
+      </section>
+
+      <section id="haklar">
+        <h2><span class="n">{n("haklar")}</span>Haklarınız</h2>
+        <p>Kanun'un 11. maddesi uyarınca veri sorumlusuna başvurarak kendinizle ilgili:</p>
+        <ol class="rights">
+          <li>kişisel veri işlenip işlenmediğini öğrenme,</li>
+          <li>işlenmişse buna ilişkin bilgi talep etme,</li>
+          <li>işlenme amacını ve bunların amacına uygun kullanılıp kullanılmadığını öğrenme,</li>
+          <li>yurt içinde veya yurt dışında kişisel verilerin aktarıldığı üçüncü kişileri bilme,</li>
+          <li>eksik veya yanlış işlenmişse düzeltilmesini isteme,</li>
+          <li>Kanun'un 7. maddesindeki şartlar çerçevesinde silinmesini veya yok edilmesini isteme,</li>
+          <li>düzeltme ve silme işlemlerinin, verilerin aktarıldığı üçüncü kişilere bildirilmesini isteme,</li>
+          <li>
+            işlenen verilerin münhasıran otomatik sistemlerle analiz edilmesi suretiyle aleyhinize bir sonuç
+            ortaya çıkmasına itiraz etme,
+          </li>
+          <li>kanuna aykırı işleme sebebiyle zarara uğramanız hâlinde zararın giderilmesini talep etme</li>
+        </ol>
+        <p>haklarına sahipsiniz.</p>
+        <p class="note">
+          Bazılarını başvuru yapmadan, hemen kendiniz yapabilirsiniz: oyun adınızı değiştirmek, çıkış yapmak ve
+          hesabınızı silmek için hesap penceresini; bildirimleri kapatmak için harfiyen'i; cihazınızdaki oyun
+          verilerini silmek için tarayıcınızın site verileri ayarını kullanın.
+        </p>
+      </section>
+
+      <section id="basvuru">
+        <h2><span class="n">{n("basvuru")}</span>Başvuru yolu ve şikâyet</h2>
+        <p>
+          Haklarınızı kullanmak için Veri Sorumlusuna Başvuru Usul ve Esasları Hakkında Tebliğ'e uygun olarak şu
+          yollardan biriyle başvurabilirsiniz:
+        </p>
+        <ul class="plain">
+          <li>
+            <strong>Kayıtlı e-posta adresinizden:</strong> hesabınızda kayıtlı e-posta adresinden
+            <a href="mailto:akinozgen@protonmail.com">akinozgen@protonmail.com</a> adresine yazarak. Hesabınızla
+            ilgili talepler için en kolay yol budur; talebiniz hesabınızla bu adres üzerinden eşleştirilir.
+          </li>
+          <li>
+            <strong>Güvenli elektronik imza veya mobil imza ile:</strong> imzalı başvurunuzu aynı adrese göndererek.
+          </li>
+          <li>
+            <strong>Yazılı olarak:</strong> ıslak imzalı dilekçeyle. Posta adresini öğrenmek için önce e-posta ile
+            yazmanız yeterlidir.
+          </li>
+        </ul>
+        <p>
+          Tebliğ'e göre başvuruda ad ve soyad (yazılı başvuruda imza), Türkiye Cumhuriyeti vatandaşları için T.C.
+          kimlik numarası (yabancılar için uyruk, pasaport numarası veya varsa kimlik numarası), tebligata esas
+          yerleşim yeri veya iş yeri adresi, varsa bildirime esas e-posta adresi, telefon ve faks numarası ile talep
+          konusu bulunmalıdır. Bu bilgiler yalnızca başvurunuzu cevaplamak için kullanılır. Hesabınızla ilgili basit
+          talepler (ör. Firebase kaydının silinmesi) hesabınızın e-posta adresinden yazmanız üzerine bunlar olmadan
+          da yerine getirilir.
+        </p>
+        <p>
+          Başvurunuz, talebin niteliğine göre en kısa sürede ve en geç <strong>30 gün</strong> içinde
+          <strong>ücretsiz</strong> olarak sonuçlandırılır (Kanun m.13). Talep kabul edilir ya da gerekçesi
+          açıklanarak reddedilir; cevap yazılı olarak veya elektronik ortamda bildirilir.
+        </p>
+        <p>
+          Başvurunuz reddedilirse, cevabı yetersiz bulursanız ya da süresinde cevap verilmezse, cevabı öğrendiğiniz
+          tarihten itibaren 30 gün ve her hâlde başvuru tarihinden itibaren 60 gün içinde Kişisel Verileri Koruma
+          Kurulu'na şikâyette bulunabilirsiniz (Kanun m.14). Şikâyet için önce veri sorumlusuna başvurmuş olmanız
+          gerekir. Kurum: <a href="https://www.kvkk.gov.tr/" rel="noopener">kvkk.gov.tr</a>.
+        </p>
+      </section>
+
+      <section id="cocuklar">
+        <h2><span class="n">{n("cocuklar")}</span>Çocuklar</h2>
+        <p>
+          Site ve oyunlar çocuklara yönelik olarak tasarlanmamıştır, ancak herkese açıktır. Hesap açarken yaş
+          sorulmaz ve doğrulanmaz. 13 yaşından küçüklerin hesap açmaması, 18 yaşından küçüklerin ise hesabı
+          velilerinin bilgisiyle açması rica edilir. Hesapsız oynanan oyunlar sitenin veritabanında kişiye ait kayıt tutmaz.
+          Çocuğunun hesap açtığını fark eden bir veli, hesabın silinmesini <a href="#basvuru">§14</a>'teki
+          yollarla isteyebilir.
+        </p>
+      </section>
+
+      <section id="degisiklikler">
+        <h2><span class="n">{n("degisiklikler")}</span>Değişiklikler</h2>
+        <p>
+          Sitenin kişisel verileri işleme biçimi değiştiğinde bu metin güncellenir; sürüm numarası ve yürürlük tarihi
+          değiştirilir. Kişisel veriler yeni bir amaçla işlenecekse, bu amaç işleme başlamadan önce bu sayfada
+          açıklanır.
+        </p>
+      </section>
+
+      <section id="yururluk">
+        <h2><span class="n">{n("yururluk")}</span>Yürürlük</h2>
+        <p>Bu metin {EFFECTIVE} tarihinde yürürlüğe girmiştir (sürüm 1).</p>
+      </section>
+
+      <section id="english" class="english" lang="en">
+        <h2>Summary in English</h2>
+        <p>
+          This is a summary of the privacy notice above, which is given under Turkey's Personal Data Protection Law
+          No. 6698 (KVKK). The Turkish text is the authoritative version.
+        </p>
+        <ul class="plain">
+          <li>
+            <strong>Controller:</strong> Akın Özgen, a private individual, reachable at
+            <a href="mailto:akinozgen@protonmail.com">akinozgen@protonmail.com</a>.
+          </li>
+          <li>
+            <strong>Without an account</strong> the site's database keeps nothing about you. Games keep settings, progress
+            and statistics in your browser's localStorage. Daily puzzles send each guess to the server to be judged;
+            the guesses of players who are not signed in are not stored. Every request passes through Cloudflare,
+            which processes your IP address; the site's server logs are kept for 3 days. The site's own pages (not
+            the games) load a font from Google Fonts, which gives Google your IP address.
+          </li>
+          <li>
+            <strong>An account is optional</strong>, needed only to keep your records across devices and to play
+            harfiyen online. Sign-in is handled by Google Firebase Authentication (USA); your password never reaches
+            this site's server. The server stores your email address, sign-in method, Firebase user id, a random
+            account id, your display name, account dates, a hash of your session id, your puzzle moves and results, a
+            one-time copy of your device's statistics, and your harfiyen rooms and results.
+          </li>
+          <li>
+            <strong>harfiyen online rooms</strong> hold the game, both players' display names, the last 50 chat
+            lines (filtered) and, only if you turn notifications on, your browser's push subscription. An unanswered
+            invitation is deleted after 7 days; a game left idle for 30 days is closed and deleted 7 days later; the
+            room of a finished game is deleted 7 to 30 days after its last activity.
+          </li>
+          <li>
+            <strong>One cookie</strong>, <code>__Host-oturum</code>, strictly necessary for the session. No
+            analytics, ads, tracking, profiling or sale of data.
+          </li>
+          <li>
+            <strong>Data is processed outside Turkey</strong> (Cloudflare, Google, browser push services, Proton). The
+            Turkish authority has issued no adequacy decision for these countries, and no KVKK standard contract has
+            been signed with these providers.
+          </li>
+          <li>
+            <strong>Delete your account</strong> at any time from the account window in any game (“Hesabı sil”). To
+            exercise your rights under KVKK article 11, write from your account's email address; requests are
+            answered within 30 days, free of charge. You may complain to the Turkish Personal Data Protection Board
+            (<a href="https://www.kvkk.gov.tr/" rel="noopener">kvkk.gov.tr</a>).
+          </li>
+          <li>Effective 15 October 2026 (version 1).</li>
+        </ul>
+      </section>
+    </article>
+  </main>
+</BaseLayout>
+
+<style>
+  .bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2rem;
+    height: 52px;
+    background: rgba(10, 9, 8, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .bar-name {
+    font-family: "Syne", system-ui, sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .bar-links a {
+    font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    transition: color 0.15s;
+  }
+
+  .bar-links a:hover {
+    color: var(--text);
+  }
+
+  /* ── document ── */
+
+  .doc {
+    max-width: 960px;
+    --mono: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, monospace;
+  }
+
+  .intro {
+    padding: 2rem 0 2.5rem;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 2.5rem;
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1rem;
+  }
+
+  .intro h1 {
+    font-family: "Syne", system-ui, sans-serif;
+    font-size: clamp(2.5rem, 8vw, 4.5rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+
+  .lede {
+    margin-top: 1.25rem;
+    max-width: 68ch;
+    color: var(--muted);
+    line-height: 1.65;
+  }
+
+  .meta {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+  }
+
+  .meta li {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.3rem 0.75rem;
+  }
+
+  .meta a {
+    color: var(--accent);
+  }
+
+  /* ── table of contents ── */
+
+  .toc {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem 1.4rem;
+    margin-bottom: 3.5rem;
+    background: rgba(237, 232, 224, 0.02);
+  }
+
+  .toc h2 {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-bottom: 0.9rem;
+  }
+
+  .toc ol {
+    list-style: none;
+    columns: 2;
+    column-gap: 2.5rem;
+  }
+
+  .toc li {
+    break-inside: avoid;
+  }
+
+  .toc a {
+    display: flex;
+    gap: 0.75rem;
+    align-items: baseline;
+    padding: 0.3rem 0;
+    color: var(--muted);
+    line-height: 1.4;
+    transition: color 0.15s;
+  }
+
+  .toc a:hover {
+    color: var(--text);
+  }
+
+  .toc-n {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+  }
+
+  /* ── sections ── */
+
+  section {
+    max-width: 70ch;
+    margin-bottom: 3.25rem;
+    scroll-margin-top: 76px;
+  }
+
+  section.wide {
+    max-width: none;
+  }
+
+  section.wide > p {
+    max-width: 70ch;
+  }
+
+  h2 {
+    font-family: "Syne", system-ui, sans-serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+  }
+
+  h2 .n {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+
+  h3 {
+    font-family: "Syne", system-ui, sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  p,
+  li,
+  dd,
+  td {
+    color: var(--muted);
+    line-height: 1.65;
+  }
+
+  section > p + p,
+  section > p + ul,
+  section > ul + p,
+  section > div + p,
+  section > dl + p,
+  section > ol + p,
+  section > p + ol,
+  section > p + div,
+  section > p + dl {
+    margin-top: 1rem;
+  }
+
+  strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  a {
+    color: var(--accent);
+  }
+
+  a:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  code {
+    font-family: var(--mono);
+    font-size: 0.88em;
+    color: var(--text);
+  }
+
+  ul.plain {
+    display: grid;
+    gap: 0.6rem;
+    padding-left: 1.25rem;
+  }
+
+  ul.plain li::marker {
+    color: var(--dim);
+  }
+
+  ol.steps,
+  ol.rights {
+    display: grid;
+    gap: 0.5rem;
+    padding-left: 1.5rem;
+  }
+
+  ol.rights {
+    list-style: lower-alpha;
+  }
+
+  ol.steps li::marker,
+  ol.rights li::marker {
+    font-family: var(--mono);
+    font-size: 0.85em;
+    color: var(--accent);
+  }
+
+  .note {
+    border-left: 2px solid var(--accent);
+    padding: 0.25rem 0 0.25rem 1rem;
+  }
+
+  /* ── controller facts ── */
+
+  .facts {
+    display: grid;
+    gap: 0;
+    margin-top: 1.25rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .facts div {
+    display: grid;
+    grid-template-columns: 11rem 1fr;
+    gap: 1rem;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .facts dt {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--dim);
+    padding-top: 0.2rem;
+  }
+
+  .facts dd {
+    color: var(--text);
+  }
+
+  /* ── summary cards ── */
+
+  #ozet {
+    max-width: none;
+  }
+
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .card {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 1.25rem 1.25rem 1.4rem;
+    background: rgba(237, 232, 224, 0.02);
+  }
+
+  .card ul {
+    display: grid;
+    gap: 0.6rem;
+    padding-left: 1.1rem;
+    font-size: 0.95rem;
+  }
+
+  .card li::marker {
+    color: var(--dim);
+  }
+
+  .card--never {
+    border-color: rgba(245, 158, 11, 0.25);
+    background: rgba(245, 158, 11, 0.04);
+  }
+
+  .tag,
+  .who {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    font-weight: 400;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--dim);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.1rem 0.5rem;
+    white-space: nowrap;
+  }
+
+  .who {
+    display: inline-block;
+    margin-top: 0.4rem;
+  }
+
+  /* ── tables ── */
+
+  .table-wrap {
+    margin-top: 1.5rem;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  table.data {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+
+  table.data thead th {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    font-weight: 400;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--dim);
+    text-align: left;
+    padding: 0.85rem 1rem;
+    background: rgba(237, 232, 224, 0.03);
+    border-bottom: 1px solid var(--line);
+  }
+
+  table.data tbody th,
+  table.data td {
+    text-align: left;
+    vertical-align: top;
+    padding: 1rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  table.data tbody tr:last-child th,
+  table.data tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  table.data tbody th {
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.45;
+    width: 16%;
+  }
+
+  table.data.data--3 tbody th {
+    width: 26%;
+  }
+
+  table.data--legal td:last-child {
+    color: var(--text);
+    min-width: 8.5rem;
+  }
+
+  table.data--legal td:nth-of-type(1) {
+    width: 28%;
+  }
+
+  table.data--legal td:nth-of-type(2) {
+    width: 19%;
+  }
+
+  table.data--legal td:nth-of-type(3) {
+    width: 21%;
+  }
+
+  .nb {
+    white-space: nowrap;
+  }
+
+  /* ── legend ── */
+
+  .legend {
+    display: grid;
+    gap: 0.6rem;
+    margin-top: 1.5rem;
+    max-width: 70ch;
+    font-size: 0.9rem;
+  }
+
+  .legend div {
+    display: grid;
+    grid-template-columns: 5.5rem 1fr;
+    gap: 0.75rem;
+  }
+
+  .legend dt {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    color: var(--accent);
+    padding-top: 0.15rem;
+  }
+
+  /* ── english ── */
+
+  .english {
+    margin-top: 4.5rem;
+    padding-top: 2.5rem;
+    border-top: 1px solid var(--line);
+  }
+
+  /* ── narrow screens ── */
+
+  @media (max-width: 760px) {
+    .bar {
+      padding: 0 1rem;
+    }
+
+    .intro {
+      padding-top: 0.5rem;
+    }
+
+    .toc {
+      padding: 1rem 1.1rem 1.1rem;
+    }
+
+    .toc ol {
+      columns: 1;
+    }
+
+    .summary {
+      grid-template-columns: 1fr;
+    }
+
+    .facts div {
+      grid-template-columns: 1fr;
+      gap: 0.2rem;
+    }
+
+    h2 {
+      font-size: 1.2rem;
+    }
+
+    .table-wrap {
+      border: none;
+      border-radius: 0;
+      overflow: visible;
+    }
+
+    table.data,
+    table.data tbody,
+    table.data tr,
+    table.data th,
+    table.data td {
+      display: block;
+      width: auto;
+    }
+
+    table.data thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+
+    table.data tbody tr {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 1rem 1rem 0.4rem;
+      margin-bottom: 0.75rem;
+      background: rgba(237, 232, 224, 0.02);
+    }
+
+    table.data tbody th,
+    table.data.data--3 tbody th {
+      width: auto;
+      padding: 0 0 0.6rem;
+      border-bottom: 1px solid var(--line);
+      font-family: "Syne", system-ui, sans-serif;
+      font-size: 1rem;
+    }
+
+    table.data td {
+      padding: 0.6rem 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    table.data tbody tr td:last-child {
+      border-bottom: none;
+    }
+
+    table.data td::before {
+      content: attr(data-label);
+      display: block;
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 0.2rem;
+    }
+
+    .legend div {
+      grid-template-columns: 1fr;
+      gap: 0.1rem;
+    }
+  }
+</style>

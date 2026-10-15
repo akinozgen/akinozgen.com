@@ -1,3 +1,4 @@
+import { AccountButton } from "@akinozgen/account/client";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Board, EmptyBoard } from "./components/Board.tsx";
 import { EndlessSettings } from "./components/EndlessSettings.tsx";
@@ -7,13 +8,13 @@ import { LanguagePicker } from "./components/LanguagePicker.tsx";
 import { ThemeToggle } from "./components/ThemeToggle.tsx";
 import { useLocale } from "./i18n/index.tsx";
 import { useDaily } from "./game/daily.ts";
+import { DAILY_STATS_KEY } from "./game/records.ts";
 import { PLAYABLE } from "./game/regions.ts";
 import { useGame, type Round } from "./game/useGame.ts";
 
 const MODES = ["daily", "endless"] as const;
 type Mode = (typeof MODES)[number];
 
-const DAILY_STATS_KEY = "travle:stats:v1";
 const EVERYWHERE = PLAYABLE.map((region) => region.id);
 function readMode(): Mode {
   const hash = window.location.hash.replace(/^#\/?/, "");
@@ -104,6 +105,7 @@ export function App(): React.ReactElement {
         ))}
       </nav>
       <div className="topbar__tools">
+        <AccountButton />
         {mode === "endless" && (
           <button type="button" className="chip" onClick={() => setShowSetup(true)}>
             <span aria-hidden="true">⚙</span>

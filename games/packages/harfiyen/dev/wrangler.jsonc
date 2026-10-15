@@ -12,5 +12,15 @@
 		]
 	},
 	"migrations": [{ "tag": "harfiyen-v1", "new_sqlite_classes": ["HarfiyenRoom", "HarfiyenLobby"] }],
-	"vars": { "HARFIYEN_MP": "on" }
+	"vars": { "HARFIYEN_MP": "on" },
+	// Accounts (games/packages/account), on a local copy of the site's database:
+	// `npx wrangler d1 migrations apply akinozgen-hesap --local -c dev/wrangler.jsonc`.
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "akinozgen-hesap",
+			"database_id": "01763c06-ee0b-4e8a-b574-63f1a1814e7d",
+			"migrations_dir": "../../../../migrations"
+		}
+	]
 }

@@ -3,3 +3,4 @@
  * the server, its areas or its schedule.
  */
 export * from "./types.ts";
+export type { SizeleMoves, SizeleResult } from "./record.ts";

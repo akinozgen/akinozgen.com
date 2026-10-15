@@ -1,8 +1,9 @@
+import type { AccountEnv } from "../../../../account/src/server/worker/route.ts";
 import type { HarfiyenLobby } from "./lobby.ts";
 import type { HarfiyenRoom } from "./room.ts";
 
-/** What harfiyen needs from the Worker's environment. */
-export interface HarfiyenEnv {
+/** What harfiyen needs from the Worker's environment: its objects, and the accounts players sign in with. */
+export interface HarfiyenEnv extends AccountEnv {
   HARFIYEN_ROOM: DurableObjectNamespace<HarfiyenRoom>;
   HARFIYEN_LOBBY: DurableObjectNamespace<HarfiyenLobby>;
   /** "off" closes online play without a deploy of code. */

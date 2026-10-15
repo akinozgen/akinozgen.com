@@ -1,6 +1,6 @@
 import { type ErrorCode, type LobbyMessage, PROTOCOL } from "@harfiyen/engine";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { deviceSecret, nameField } from "./identity.ts";
+import { sessionLost } from "./session.ts";
 import { type Link, type LinkState, openLink, type SocketConstructor, socketUrl } from "./socket.ts";
 
 /** After this long without a partner, the other ways to play are offered beside the search. */
@@ -8,7 +8,7 @@ export const FALLBACK_AFTER = 20_000;
 
 export interface Seek {
   searching: boolean;
-  /** Everyone looking right now, this device included; null until the lobby says. */
+  /** Everyone looking right now, this player included; null until the lobby says. */
   seekers: number | null;
   /** Seconds since the search began. */
   elapsed: number;
@@ -44,15 +44,14 @@ export function useSeek(onMatched: (code: string) => void, options: { WebSocket?
 
   const start = useCallback(() => {
     if (link.current) return;
-    const secret = deviceSecret();
     setError(null);
     setSeekers(null);
     setElapsed(0);
     setSearching(true);
     link.current = openLink<LobbyMessage>({
       url: socketUrl("/api/harfiyen/ws/lobi"),
-      greeting: () => ({ t: "seek", v: PROTOCOL, secret, ...nameField() }),
-      final: ["surum", "kapali"],
+      greeting: () => ({ t: "seek", v: PROTOCOL }),
+      final: ["surum", "kapali", "oturum"],
       WebSocket: WebSocketImpl,
       onState: setConnection,
       onMessage: (message) => {
@@ -64,10 +63,11 @@ export function useSeek(onMatched: (code: string) => void, options: { WebSocket?
           matched.current(message.code);
         } else if (message.t === "error") {
           setError(message.code);
-          if (message.code === "surum" || message.code === "kapali") {
+          if (message.code === "surum" || message.code === "kapali" || message.code === "oturum") {
             link.current = null;
             setSearching(false);
           }
+          if (message.code === "oturum") sessionLost();
         }
       },
     });

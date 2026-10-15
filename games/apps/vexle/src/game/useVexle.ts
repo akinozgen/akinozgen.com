@@ -1,7 +1,21 @@
+import { RecordConflict, useAccount, usePuzzleRecords } from "@akinozgen/account/client";
 import { readJson, writeJson } from "@travelle/core";
-import { ENDLESS_DECK, MAX_GUESSES, type Status, TILES, type VexleVerdict } from "@vexle/data/client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { ENDLESS_DECK, MAX_GUESSES, type Status, TILES, type VexleResult, type VexleVerdict } from "@vexle/data/client";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { judge, judgeEndless } from "./api.ts";
+import {
+  countRound,
+  deviceStats,
+  emptyStats,
+  ENDLESS_STATS_KEY,
+  importedStats,
+  movesOf,
+  type Stats,
+  STATS_KEY,
+  statsFromRecords,
+} from "./records.ts";
+
+export { emptyStats, type Stats };
 
 /** Day 1 of vexle. */
 export const EPOCH = "2026-10-04";
@@ -45,37 +59,8 @@ interface SavedGame {
   verdict?: VexleVerdict;
 }
 
-export interface Stats {
-  played: number;
-  won: number;
-  streak: number;
-  best: number;
-  hardWins: number;
-  /** Wins by number of guesses, index 0 = first try. */
-  distribution: number[];
-  /** The last puzzle recorded, so a round is counted once. */
-  lastNumber: number | null;
-  lastWon: number | null;
-  /** Endless only: the last round counted, as "deck:card" (a bare number before the decks). */
-  lastRound?: number | string | null;
-}
-
-export const emptyStats: Stats = {
-  played: 0,
-  won: 0,
-  streak: 0,
-  best: 0,
-  hardWins: 0,
-  // Six slots: day 1 allowed six guesses, and its wins are kept.
-  distribution: Array.from({ length: 6 }, () => 0),
-  lastNumber: null,
-  lastWon: null,
-};
-
 const GAME_PREFIX = "vexle:game:v1:";
-const STATS_KEY = "vexle:stats:v1";
 const ENDLESS_KEY = "vexle:endless:v1";
-const ENDLESS_STATS_KEY = "vexle:endless-stats:v1";
 
 /** A fresh endless round: 32 random bits, meaningless without the server's secret. */
 function freshRound(): number {
@@ -136,7 +121,10 @@ export interface Vexle {
   /** The die is waiting to be rolled: its tile is held back until then. */
   needsRoll: boolean;
   roll: () => void;
+  /** The record: the account's while someone is signed in, the browser's own otherwise. */
   stats: Stats;
+  /** Signed in: how many of the record's rounds came from this device's record before the account. */
+  imported: number;
   guess: (code: string) => "accepted" | "duplicate" | "busy";
   setHard: (hard: boolean) => void;
   retry: () => void;
@@ -166,30 +154,67 @@ export function useVexle(mode: Mode = "daily", active = true): Vexle {
   const [failed, setFailed] = useState(false);
   const inFlight = useRef(false);
   const lastAttempt = useRef<{ next: SavedGame; hard: boolean } | null>(null);
+  const savedRef = useRef(saved);
+  savedRef.current = saved;
+  const account = useAccount();
+  const signedIn = account.status === "in";
+  // While the account may be signed in, its record decides: answers skip the browser's cache.
+  const maybeSignedIn = account.status !== "out";
+  const records = usePuzzleRecords<VexleResult>("vexle", deviceStats);
 
   useEffect(prune, []);
 
+  /**
+   * Asks the server about `next`, and keeps it once it has answered. If the
+   * account has the round further along (played on another device), the
+   * page takes up the guesses on record instead and asks about those.
+   */
   const submit = useCallback(
-    (next: SavedGame, withHard: boolean) => {
-      if (inFlight.current) return;
+    (next: SavedGame, withHard: boolean, adopting = false): boolean => {
+      if (inFlight.current) return false;
       inFlight.current = true;
       lastAttempt.current = { next, hard: withHard };
       setPending(true);
       setFailed(false);
-      (endless ? judgeEndless(next.round ?? 0, next.guesses, withHard, next.index) : judge(date, next.guesses, withHard))
+      let adopted: SavedGame | null = null;
+      (endless
+        ? judgeEndless(next.round ?? 0, next.guesses, withHard, next.index, maybeSignedIn)
+        : judge(date, next.guesses, withHard, maybeSignedIn)
+      )
         .then((verdict) => {
           const stored = { ...next, verdict, verdictHard: withHard };
+          savedRef.current = stored;
           setSaved(stored);
           writeJson(key, stored);
         })
-        .catch(() => setFailed(true))
+        .catch((error: unknown) => {
+          const moves = error instanceof RecordConflict && !adopting ? movesOf(error.moves) : null;
+          if (!moves) {
+            setFailed(true);
+            return;
+          }
+          const { verdict: _, verdictHard: __, ...kept } = next;
+          adopted = {
+            ...kept,
+            guesses: moves.g,
+            hardAll: moves.g.length > 0 ? moves.hard : next.hardAll,
+            rolled: next.rolled || moves.g.length > 0,
+          };
+          savedRef.current = adopted;
+          setSaved(adopted);
+          writeJson(key, adopted);
+        })
         .finally(() => {
           inFlight.current = false;
           setPending(false);
+          if (adopted) submitRef.current(adopted, withHard, true);
         });
+      return true;
     },
-    [date, key, endless],
+    [date, key, endless, maybeSignedIn],
   );
+  const submitRef = useRef(submit);
+  submitRef.current = submit;
 
   // The round's opening state (the die's tile), or a verdict that never
   // arrived, is asked for once the round is on screen.
@@ -199,6 +224,16 @@ export function useVexle(mode: Mode = "daily", active = true): Vexle {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, saved.round, saved.index]);
+
+  // Signed in, the round is asked about once with what this page has, so a
+  // round played on to elsewhere (or finished there) is taken up here.
+  const asked = useRef<string | null>(null);
+  const asking = signedIn && active ? `${key}\u0000${saved.round}:${saved.index}\u0000${account.user?.tag}` : null;
+  useEffect(() => {
+    if (asking === null || pending || asked.current === asking) return;
+    if (submit(savedRef.current, hard)) asked.current = asking;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [asking, pending, submit]);
 
   // Verdicts saved before the die existed carry no rules: they were day 1's.
   const verdict =
@@ -217,26 +252,32 @@ export function useVexle(mode: Mode = "daily", active = true): Vexle {
       setStats(stats);
       return;
     }
-    const won = status === "won";
-    const tries = saved.guesses.length;
     // A daily streak is consecutive days; an endless run is consecutive rounds solved.
-    const streak = won ? (endless || stats.lastWon === number - 1 ? stats.streak + 1 : 1) : 0;
-    const distribution = [...stats.distribution];
-    if (won) distribution[tries - 1] = (distribution[tries - 1] ?? 0) + 1;
-    const next: Stats = {
-      played: stats.played + 1,
-      won: stats.won + (won ? 1 : 0),
-      streak,
-      best: Math.max(stats.best, streak),
-      hardWins: stats.hardWins + (won && saved.hardAll ? 1 : 0),
-      distribution,
-      lastNumber: endless ? stats.lastNumber : number,
-      lastWon: endless ? stats.lastWon : won ? number : stats.lastWon,
-      lastRound: endless ? roundKey(saved) : (stats.lastRound ?? null),
-    };
+    const round = { won: status === "won", guesses: saved.guesses.length, hard: saved.hardAll };
+    const next = countRound(stats, round, endless, number, roundKey(saved));
     setStats(next);
     writeJson(statsKey, next);
   }, [status, number, saved.guesses.length, saved.hardAll, saved.round, saved.index, endless, statsKey]);
+
+  // Signed in, a round that ends here is on the account's record by now: count it.
+  const wasPlaying = useRef(false);
+  const { refresh } = records;
+  useEffect(() => {
+    if (status === "playing") wasPlaying.current = true;
+    else if (wasPlaying.current && signedIn) {
+      wasPlaying.current = false;
+      refresh();
+    }
+  }, [status, signedIn, refresh]);
+
+  // Signed in, the record is the account's, counted from the server's verdicts;
+  // until it arrives, nothing is shown rather than this browser's own.
+  const kind = endless ? "endless" : "daily";
+  const shown = useMemo(() => {
+    if (records.status === "ready") return statsFromRecords(records.plays, records.imported, kind, EPOCH);
+    return records.status === "loading" ? emptyStats : stats;
+  }, [records.status, records.plays, records.imported, kind, stats]);
+  const imported = records.status === "ready" ? (importedStats(records.imported, kind)?.played ?? 0) : 0;
 
   const guess = useCallback(
     (code: string) => {
@@ -327,7 +368,8 @@ export function useVexle(mode: Mode = "daily", active = true): Vexle {
     limit: verdict?.limit ?? MAX_GUESSES,
     needsRoll,
     roll,
-    stats,
+    stats: shown,
+    imported,
     guess,
     setHard,
     retry,

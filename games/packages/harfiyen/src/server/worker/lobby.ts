@@ -1,14 +1,14 @@
 import { DurableObject } from "cloudflare:workers";
-import { publicId } from "../../names.ts";
 import { newCode } from "../codes.ts";
 import { type LobbyMessage, parseLobbyRequest, PROTOCOL } from "../protocol.ts";
 import type { HarfiyenEnv } from "./env.ts";
+import { playerOf } from "./room.ts";
 
 interface Seeker {
-  /** The device, once it has asked for a game. */
+  /** The account, once it has asked for a game. */
   pub: string | null;
-  /** The name it goes by, as sent; the room cleans it. */
-  name?: string;
+  /** The account, as the router named it when the socket opened. */
+  who: { pub: string; name: string };
   since: number;
 }
 
@@ -30,10 +30,12 @@ export class HarfiyenLobby extends DurableObject<HarfiyenEnv> {
 
   async fetch(request: Request): Promise<Response> {
     if (request.headers.get("Upgrade") !== "websocket") return new Response("upgrade required", { status: 426 });
+    const who = playerOf(request);
+    if (!who) return new Response("no player", { status: 401 });
     if (this.ctx.getWebSockets().length >= MAX_SEEKERS) return new Response("lobby full", { status: 429 });
     const pair = new WebSocketPair();
     this.ctx.acceptWebSocket(pair[1]);
-    pair[1].serializeAttachment({ pub: null, since: Date.now() } satisfies Seeker);
+    pair[1].serializeAttachment({ pub: null, who, since: Date.now() } satisfies Seeker);
     return new Response(null, { status: 101, webSocket: pair[0] });
   }
 
@@ -50,8 +52,8 @@ export class HarfiyenLobby extends DurableObject<HarfiyenEnv> {
       ws.close(1000, "surum");
       return;
     }
-    const pub = await publicId(request.secret);
-    ws.serializeAttachment({ pub, name: request.name, since: Date.now() } satisfies Seeker);
+    const pub = seeker.who.pub;
+    ws.serializeAttachment({ ...seeker, pub, since: Date.now() } satisfies Seeker);
 
     // The longest-waiting other device, if any.
     const partner = this.ctx
@@ -68,7 +70,7 @@ export class HarfiyenLobby extends DurableObject<HarfiyenEnv> {
     for (let attempt = 0; attempt < 4; attempt++) {
       const code = newCode(Math.random);
       const room = this.env.HARFIYEN_ROOM.get(this.env.HARFIYEN_ROOM.idFromName(code));
-      if (await room.createMatched(code, [partner.seeker.pub!, pub], [partner.seeker.name, request.name])) {
+      if (await room.createMatched(code, [partner.seeker.pub!, pub], [partner.seeker.who.name, seeker.who.name])) {
         for (const socket of [partner.ws, ws]) {
           send(socket, { t: "matched", code });
           socket.close(1000, "matched");

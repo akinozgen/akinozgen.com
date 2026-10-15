@@ -2,8 +2,8 @@ import type { ErrorCode } from "@harfiyen/engine";
 
 /**
  * One WebSocket to the game server that keeps itself up: it greets the
- * server first (the device secret travels in that first message, never in
- * the URL), tries again after a drop — 1, 2, 4 … 30 seconds apart, with a
+ * server first (the player is the session's account, which the Worker reads
+ * from the cookie the socket opens with), tries again after a drop — 1, 2, 4 … 30 seconds apart, with a
  * little jitter so a server restart isn't met by everyone at once — and
  * straight away when the network or the tab comes back. A ping every 30
  * seconds keeps it warm and finds a line that died quietly. It gives up
@@ -60,8 +60,8 @@ export const PONG_WITHIN = 10_000;
 export const MAX_DELAY = 30_000;
 export const HIDDEN_GRACE = 30_000;
 
-/** Errors that end a room's link: no such room, it's full, the invitation was withdrawn, play is off. */
-export const ROOM_FINAL: readonly ErrorCode[] = ["yok", "dolu", "iptal", "kapali", "surum"];
+/** Errors that end a room's link: no such room, it's full, the invitation was withdrawn, play is off, nobody is signed in. */
+export const ROOM_FINAL: readonly ErrorCode[] = ["yok", "dolu", "iptal", "kapali", "surum", "oturum"];
 
 /** The wait before attempt `n` (0 for the first retry): 1, 2, 4 … 30 s, plus up to a second. */
 export function backoff(attempt: number, random: () => number = Math.random): number {

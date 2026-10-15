@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { render } from "./helpers.tsx";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { App } from "../src/App.tsx";
@@ -47,8 +47,10 @@ describe("the game page", () => {
     await renderApp();
 
     expect(screen.getByRole("heading", { name: "travelle" })).toBeTruthy();
-    expect(screen.getByText(graph.region(puzzle.start).names.en)).toBeTruthy();
-    expect(screen.getByText(graph.region(puzzle.end).names.en)).toBeTruthy();
+    // In the prompt: once the map has loaded, its markers carry the names too.
+    const prompt = document.querySelector<HTMLElement>(".prompt")!;
+    expect(within(prompt).getByText(graph.region(puzzle.start).names.en)).toBeTruthy();
+    expect(within(prompt).getByText(graph.region(puzzle.end).names.en)).toBeTruthy();
     expect(screen.getByText(`Guess 1 of ${puzzle.budget}`)).toBeTruthy();
 
     // The map loads its geometry lazily, then turns the globe to face the

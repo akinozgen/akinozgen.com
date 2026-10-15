@@ -7,10 +7,12 @@ import { GiveUp } from "../components/GiveUp.tsx";
 import { Monogram } from "../components/Monogram.tsx";
 import { onlinePlayers } from "../components/players.tsx";
 import { PushOffer } from "../components/PushOffer.tsx";
+import { SignInCard } from "../components/SignIn.tsx";
 import { RulesIcon, TopBar } from "../components/TopBar.tsx";
-import { splitName } from "../game/identity.ts";
 import type { Lexicons } from "../game/lexicons.ts";
+import { splitName } from "../game/names.ts";
 import { go } from "../game/route.ts";
+import { ownerOf, useSession } from "../game/session.ts";
 import type { SocketConstructor } from "../game/socket.ts";
 import { playNudge } from "../game/sound.ts";
 import { locative } from "../game/turkish.ts";
@@ -55,17 +57,7 @@ function useWide(): boolean {
 /** Errors that leave nothing to show of the room. */
 const ENDINGS: readonly ErrorCode[] = ["yok", "iptal", "dolu", "kapali", "surum"];
 
-/** One online game by its code: the invitation, the game, its end and a rematch. */
-export function OnlineRoom({
-  code,
-  lexicons,
-  failed,
-  onRetry,
-  onRules,
-  blocked,
-  waiting,
-  WebSocket,
-}: {
+interface RoomProps {
   code: string;
   lexicons: Lexicons | null;
   failed: boolean;
@@ -75,8 +67,49 @@ export function OnlineRoom({
   waiting: number;
   /** For tests. */
   WebSocket?: SocketConstructor;
-}): React.ReactElement {
-  const api = useOnlineGame(code, lexicons, { WebSocket });
+}
+
+/**
+ * One online game by its code: the invitation, the game, its end and a
+ * rematch. Online play goes with an account: opened signed out, the room
+ * offers the sign-in instead, and opens by itself once someone signs in.
+ */
+export function OnlineRoom(props: RoomProps): React.ReactElement {
+  const session = useSession();
+  if (session.status === "in" && session.user) {
+    // Another account signing in here gets a room of its own: nothing of the last one's carries over.
+    return <LiveRoom key={ownerOf(session.user)} name={session.user.name} {...props} />;
+  }
+  return (
+    <>
+      <RoomTop waiting={props.waiting} onRules={props.onRules} />
+      {session.status === "out" ? <SignInCard code={props.code} /> : <RoomLoading code={props.code} connection="connecting" />}
+    </>
+  );
+}
+
+/** The top bar in a room: the chat (once there is one), the way back to the list, the rules. */
+function RoomTop({ waiting, onRules, chat }: { waiting: number; onRules: () => void; chat?: React.ReactNode }): React.ReactElement {
+  return (
+    <TopBar section="online" waiting={waiting}>
+      {chat}
+      <a className="icon-button" href={HUB} aria-label="Oyunların" title="Oyunların">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M9 6h11M9 12h11M9 18h11" />
+          <circle cx="4.5" cy="6" r="1" />
+          <circle cx="4.5" cy="12" r="1" />
+          <circle cx="4.5" cy="18" r="1" />
+        </svg>
+      </a>
+      <button type="button" className="icon-button" aria-label="Nasıl oynanır" title="Nasıl oynanır" onClick={onRules}>
+        <RulesIcon />
+      </button>
+    </TopBar>
+  );
+}
+
+function LiveRoom({ code, lexicons, failed, onRetry, onRules, blocked, waiting, WebSocket, name }: RoomProps & { name: string }): React.ReactElement {
+  const api = useOnlineGame(code, lexicons, { name, WebSocket });
   const { room, error } = api;
 
   // A nudge or a chat line blinks the title of a tab in the background.
@@ -102,20 +135,11 @@ export function OnlineRoom({
   }, [wide]);
 
   const top = (
-    <TopBar section="online" waiting={waiting}>
-      {api.chat.open && <ChatButton unread={api.chat.unread} open={chatOpen} onToggle={() => showChat(!chatOpen)} />}
-      <a className="icon-button" href={HUB} aria-label="Oyunların" title="Oyunların">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M9 6h11M9 12h11M9 18h11" />
-          <circle cx="4.5" cy="6" r="1" />
-          <circle cx="4.5" cy="12" r="1" />
-          <circle cx="4.5" cy="18" r="1" />
-        </svg>
-      </a>
-      <button type="button" className="icon-button" aria-label="Nasıl oynanır" title="Nasıl oynanır" onClick={onRules}>
-        <RulesIcon />
-      </button>
-    </TopBar>
+    <RoomTop
+      waiting={waiting}
+      onRules={onRules}
+      chat={api.chat.open && <ChatButton unread={api.chat.unread} open={chatOpen} onToggle={() => showChat(!chatOpen)} />}
+    />
   );
 
   // Seated in a game that has begun: nobody else may take a seat, so a visitor here has come too late.
