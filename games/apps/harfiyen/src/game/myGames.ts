@@ -160,11 +160,9 @@ export function groupGames(games: readonly MyGame[]): GameGroups {
 export async function fetchSummaries(secret: string, codes: readonly string[]): Promise<Summary[]> {
   const out: Summary[] = [];
   for (let i = 0; i < codes.length; i += MAX_SUMMARY) {
-    const response = await fetch("/api/harfiyen/ozet", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ v: PROTOCOL, secret, codes: codes.slice(i, i + MAX_SUMMARY) }),
-    });
+    // A GET, as the site's firewall wants; the secret in a header, the codes in the query.
+    const query = new URLSearchParams({ v: String(PROTOCOL), k: codes.slice(i, i + MAX_SUMMARY).join(",") });
+    const response = await fetch(`/api/harfiyen/ozet?${query}`, { headers: { "X-Harfiyen-Secret": secret } });
     if (!response.ok) throw new Error(`summary answered ${response.status}`);
     const body = (await response.json()) as { rooms?: Summary[] };
     if (Array.isArray(body.rooms)) out.push(...body.rooms);

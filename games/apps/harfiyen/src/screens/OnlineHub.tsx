@@ -22,11 +22,9 @@ class InviteError extends Error {
 export async function createInvite(secret: string): Promise<string> {
   let response: Response;
   try {
-    response = await fetch("/api/harfiyen/oda", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ v: PROTOCOL, secret, ...nameField() }),
-    });
+    // A GET: the site's firewall lets nothing else through. The secret goes in a header, never the URL.
+    const query = new URLSearchParams({ v: String(PROTOCOL), ...nameField() });
+    response = await fetch(`/api/harfiyen/oda?${query}`, { headers: { "X-Harfiyen-Secret": secret } });
   } catch {
     throw new InviteError("ag");
   }

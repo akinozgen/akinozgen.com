@@ -14,12 +14,14 @@ const json = (body: unknown, status = 200): Response =>
 
 /**
  * Only pages of this site may talk to the game: the Origin must be this
- * host. In development the page (Vite) and the Worker run on different
- * local ports, so any local origin is fine there.
+ * host, or — for a same-origin GET, which carries no Origin — the browser
+ * must say the request came from this site. In development the page (Vite)
+ * and the Worker run on different local ports, so any local origin is fine
+ * there.
  */
 function originAllowed(request: Request, url: URL): boolean {
   const origin = request.headers.get("Origin");
-  if (!origin) return false;
+  if (!origin) return request.headers.get("Sec-Fetch-Site") === "same-origin";
   let from: URL;
   try {
     from = new URL(origin);
@@ -29,6 +31,20 @@ function originAllowed(request: Request, url: URL): boolean {
   if (from.host === url.host) return true;
   const local = (host: string): boolean => host === "localhost" || host === "127.0.0.1" || host.startsWith("192.168.");
   return local(url.hostname) && local(from.hostname);
+}
+
+/** A GET's fields as the JSON body a POST would carry: `v`, `name` and `k` (codes) from the query, the secret from its header. */
+function fromQuery(request: Request, url: URL): string | null {
+  const secret = request.headers.get("X-Harfiyen-Secret");
+  if (!secret) return null;
+  const query = url.searchParams;
+  const codes = query.get("k");
+  return JSON.stringify({
+    v: Number(query.get("v")),
+    secret,
+    ...(query.has("name") ? { name: query.get("name") } : {}),
+    ...(codes !== null ? { codes: codes ? codes.split(",") : [] } : {}),
+  });
 }
 
 async function body(request: Request): Promise<string | null> {
@@ -45,7 +61,9 @@ export async function routeHarfiyen(request: Request, env: HarfiyenEnv): Promise
   const url = new URL(request.url);
   const path = url.pathname.replace(/^\/api\/harfiyen/, "");
   // A body is read before any answer, even a refusal: one left unread can spoil the connection it came on.
-  const text = request.method === "POST" ? await body(request) : null;
+  // The site's firewall lets only GET through, so the same calls also come as GETs: the device secret
+  // in a header (never in the URL, which ends up in logs), the rest in the query.
+  const text = request.method === "POST" ? await body(request) : request.method === "GET" ? fromQuery(request, url) : null;
   if (env.HARFIYEN_MP === "off") return json({ error: "kapali" }, 503);
   // The public half of the push key is public; and browsers send no Origin on a same-origin GET.
   if (path === "/vapid" && request.method === "GET") {
@@ -54,7 +72,7 @@ export async function routeHarfiyen(request: Request, env: HarfiyenEnv): Promise
   }
   if (!originAllowed(request, url)) return json({ error: "origin" }, 403);
 
-  if (path === "/oda" && request.method === "POST") {
+  if (path === "/oda" && (request.method === "POST" || request.method === "GET")) {
     const create = text === null ? null : parseCreate(text);
     if (!create) return json({ error: "bozuk" }, 400);
     if (create.v !== PROTOCOL) return json({ error: "surum" }, 409);
@@ -67,7 +85,7 @@ export async function routeHarfiyen(request: Request, env: HarfiyenEnv): Promise
     return json({ error: "limit" }, 503);
   }
 
-  if (path === "/ozet" && request.method === "POST") {
+  if (path === "/ozet" && (request.method === "POST" || request.method === "GET")) {
     const ask = text === null ? null : parseSummaryRequest(text);
     if (!ask) return json({ error: "bozuk" }, 400);
     if (ask.v !== PROTOCOL) return json({ error: "surum" }, 409);

@@ -21,9 +21,14 @@ const origin = new URL(base).hostname === "localhost" ? "http://localhost:5187" 
 const words = Lexicon.parse(readFileSync(new URL("../data/yaygin.txt", import.meta.url), "utf8"));
 void newGame;
 
-/** A POST, its body read in full (an unread body can spoil the next request on the same connection). */
-async function post(path: string, body: unknown): Promise<{ status: number; json: () => Promise<unknown> }> {
-  const response = await fetch(`${base}/api/harfiyen/${path}`, { method: "POST", headers: { Origin: origin }, body: JSON.stringify(body) });
+/**
+ * A call as the browser makes it — a GET, the secret in a header, the rest
+ * in the query (the site's firewall lets nothing else through) — its body
+ * read in full (an unread one can spoil the next request on the connection).
+ */
+async function post(path: string, body: { v: number; secret: string; name?: string; codes?: string[] }): Promise<{ status: number; json: () => Promise<unknown> }> {
+  const query = new URLSearchParams({ v: String(body.v), ...(body.name ? { name: body.name } : {}), ...(body.codes ? { k: body.codes.join(",") } : {}) });
+  const response = await fetch(`${base}/api/harfiyen/${path}?${query}`, { headers: { Origin: origin, "X-Harfiyen-Secret": body.secret } });
   const text = await response.text();
   return { status: response.status, json: async () => JSON.parse(text) };
 }
@@ -216,7 +221,7 @@ async function lobby(): Promise<void> {
 
 async function junk(): Promise<void> {
   console.log("junk");
-  const bad = await fetch(`${base}/api/harfiyen/oda`, { method: "POST", body: "{}" });
+  const bad = await fetch(`${base}/api/harfiyen/oda?v=1`, { headers: { "X-Harfiyen-Secret": newSecret() } });
   await bad.text();
   check(bad.status === 403, "no Origin → 403");
   const malformed = await post("oda", { v: PROTOCOL, secret: "nope" });

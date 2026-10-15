@@ -8,14 +8,16 @@ export type { PushSub } from "./webpush.ts";
  * travels with the first message; a browser running older code is told to
  * reload rather than misunderstood.
  *
- *   POST /api/harfiyen/oda    {v, secret, name?}         → {code}          a new invitation
- *   POST /api/harfiyen/ozet   {v, secret, codes[≤20]}    → {rooms: Summary[]}
+ *   GET  /api/harfiyen/oda?v&name                        → {code}          a new invitation
+ *   GET  /api/harfiyen/ozet?v&k=CODE,CODE (≤20)          → {rooms: Summary[]}
+ *        (the device secret in the X-Harfiyen-Secret header; POST with a JSON body works too,
+ *        but the site's firewall lets only GET through)
  *   GET  /api/harfiyen/vapid                             → {key}           for PushManager.subscribe
  *   WS   /api/harfiyen/ws/oda/:code    RoomRequest ⇄ RoomMessage
  *   WS   /api/harfiyen/ws/lobi         LobbyRequest ⇄ LobbyMessage
  *
- * The device secret goes in bodies and first messages, never in a URL
- * (URLs end up in logs). Every message from a browser is checked here
+ * The device secret goes in a header, a body or a first message, never in
+ * a URL (URLs end up in logs). Every message from a browser is checked here
  * before anything acts on it.
  */
 export const PROTOCOL = 1;

@@ -82,13 +82,27 @@ export class FakeSocket implements SocketLike {
 
 type Handler = (body: unknown) => { status?: number; body: unknown };
 
-/** The game's HTTP API as the tests want it: "POST /api/harfiyen/oda" → handler. Unset paths answer 404. */
+/**
+ * The game's HTTP API as the tests want it: "GET /api/harfiyen/oda" → handler. Unset paths answer 404.
+ * A handler gets the request as the server reads it: a GET's query and secret header as one object.
+ */
 export const api = new Map<string, Handler>();
 
 export function answerApi(method: string, path: string, init?: RequestInit): Response {
-  const handler = api.get(`${method} ${path}`);
+  const [route, search = ""] = path.split("?");
+  const handler = api.get(`${method} ${route}`);
   if (!handler) return new Response(JSON.stringify({ error: "yok" }), { status: 404 });
-  const body = typeof init?.body === "string" ? (JSON.parse(init.body) as unknown) : null;
+  const query = new URLSearchParams(search);
+  const secret = new Headers(init?.headers).get("X-Harfiyen-Secret");
+  const body =
+    typeof init?.body === "string"
+      ? (JSON.parse(init.body) as unknown)
+      : {
+          v: Number(query.get("v")),
+          secret,
+          ...(query.has("name") ? { name: query.get("name") } : {}),
+          ...(query.has("k") ? { codes: query.get("k") ? query.get("k")!.split(",") : [] } : {}),
+        };
   const answer = handler(body);
   return new Response(JSON.stringify(answer.body), { status: answer.status ?? 200 });
 }

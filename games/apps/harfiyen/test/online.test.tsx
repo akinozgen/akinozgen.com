@@ -45,7 +45,7 @@ describe("the online hub", () => {
       "harfiyen:online:v1",
       JSON.stringify(["AAAAAA", "BBBBBB", "CCCCCC", "DDDDDD"].map((code) => ({ code, added: Date.now(), summary: null }))),
     );
-    api.set("POST /api/harfiyen/ozet", () => ({
+    api.set("GET /api/harfiyen/ozet", () => ({
       body: {
         rooms: [
           summary("AAAAAA", { you: 0, turn: 0, scores: [120, 98] }),
@@ -109,7 +109,7 @@ describe("the online hub", () => {
 
   it("makes an invitation and goes to it", async () => {
     let asked: unknown = null;
-    api.set("POST /api/harfiyen/oda", (body) => {
+    api.set("GET /api/harfiyen/oda", (body) => {
       asked = body;
       return { status: 201, body: { code: "K7Q2XM" } };
     });
@@ -120,7 +120,7 @@ describe("the online hub", () => {
   });
 
   it("says so when the invitation can't be made", async () => {
-    api.set("POST /api/harfiyen/oda", () => ({ status: 503, body: { error: "kapali" } }));
+    api.set("GET /api/harfiyen/oda", () => ({ status: 503, body: { error: "kapali" } }));
     at("#/cevrimici");
     fireEvent.click(await screen.findByRole("button", { name: /Arkadaşını çağır/ }));
     expect(await screen.findByText("Çevrimiçi oyun şu an kapalı. Biraz sonra yeniden dene.")).toBeTruthy();

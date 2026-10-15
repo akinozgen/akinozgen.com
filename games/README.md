@@ -241,15 +241,17 @@ handler) with two Durable Objects from `packages/harfiyen/src/server/worker`:
 
 | Endpoint | Does |
 | -------- | ---- |
-| `POST /api/harfiyen/oda` | A new invitation; answers its code, for a link `…/games/harfiyen/#/oda/CODE` |
-| `POST /api/harfiyen/ozet` | Up to 20 rooms summed up for the list of games, without opening them |
+| `GET /api/harfiyen/oda` | A new invitation; answers its code, for a link `…/games/harfiyen/#/oda/CODE` |
+| `GET /api/harfiyen/ozet` | Up to 20 rooms summed up for the list of games, without opening them |
 | `WS /api/harfiyen/ws/oda/CODE` | The room: hello, join, play, swap, pass, resign, rematch |
 | `WS /api/harfiyen/ws/lobi` | Looking for an opponent |
 | `GET /api/harfiyen/vapid` | The public key browsers subscribe to push with |
 
 Messages and their checks are in `src/server/protocol.ts`; the room's
 logic is plain functions in `src/server/room.ts`, tested without Cloudflare.
-The device secret never travels in a URL. Requests must come from a page of
+The device secret never travels in a URL: it goes in a header (the two
+HTTP calls are GETs, since the site's firewall lets nothing else through)
+or in a socket's first message. Requests must come from a page of
 this site (`Origin`), and `HARFIYEN_MP = "off"` in `wrangler.jsonc` closes
 online play without a code change. Everything stays inside the Workers Free
 plan: past a daily limit requests fail until the next day; nothing is

@@ -84,7 +84,7 @@ describe("the list of games", () => {
     rememberGame("AAAAAA");
     rememberGame("BBBBBB");
     const asked: unknown[] = [];
-    api.set("POST /api/harfiyen/ozet", (body) => {
+    api.set("GET /api/harfiyen/ozet", (body) => {
       asked.push(body);
       return { body: { rooms: [summary("AAAAAA", { turn: 0 }), { code: "BBBBBB", gone: true }] } };
     });
@@ -102,7 +102,7 @@ describe("the list of games", () => {
 
   it("keeps what it had when the server can't be reached", async () => {
     rememberGame("AAAAAA", summary("AAAAAA", { turn: 0 }) as never);
-    api.set("POST /api/harfiyen/ozet", () => ({ status: 503, body: { error: "kapali" } }));
+    api.set("GET /api/harfiyen/ozet", () => ({ status: 503, body: { error: "kapali" } }));
     const { result } = renderHook(() => useMyGames(IDENTITY));
     await waitFor(() => expect(result.current.stale).toBe(true));
     expect(result.current.games).toHaveLength(1);
