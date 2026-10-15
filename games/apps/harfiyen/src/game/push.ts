@@ -128,7 +128,14 @@ function asSub(json: PushSubscriptionJSON): PushSub | null {
 const sameKey = (a: ArrayBuffer | null | undefined, b: Uint8Array): boolean =>
   !!a && a.byteLength === b.length && new Uint8Array(a).every((byte, i) => byte === b[i]);
 
-export type EnableResult = "on" | "denied" | "failed";
+/** "brave": Brave, which ships with the push service switched off; the player has to switch it on. */
+export type EnableResult = "on" | "denied" | "failed" | "brave";
+
+let lastError: string | null = null;
+/** What went wrong the last time notices wouldn't turn on, as the browser put it. */
+export const pushError = (): string | null => lastError;
+
+const isBrave = (): boolean => typeof (env.navigator() as { brave?: unknown } | null)?.brave === "object";
 
 /**
  * Turns notices on. Called straight from a tap: the permission prompt
@@ -146,7 +153,11 @@ export async function enablePush(): Promise<EnableResult> {
     write({ ...snapshot() });
     return permission === "denied" ? "denied" : "failed";
   }
-  if (!key) return "failed";
+  if (!key) {
+    lastError = "Sunucudan bildirim anahtarı alınamadı.";
+    return "failed";
+  }
+  lastError = null;
   try {
     const reg = await registration();
     const server = fromBase64Url(key);
@@ -158,11 +169,16 @@ export async function enablePush(): Promise<EnableResult> {
     }
     current ??= await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: server });
     const sub = asSub(current.toJSON());
-    if (!sub) return "failed";
+    if (!sub) {
+      lastError = "Tarayıcı eksik bir abonelik verdi.";
+      return "failed";
+    }
     write({ sub });
     return "on";
-  } catch {
-    return "failed";
+  } catch (error) {
+    lastError = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+    // Brave turns its push service off by default, and subscribing fails with a bare "push service error".
+    return isBrave() ? "brave" : "failed";
   }
 }
 

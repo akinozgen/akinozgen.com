@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { disablePush, type EnableResult, enablePush, snoozePush, usePush } from "../game/push.ts";
+import { disablePush, type EnableResult, enablePush, snoozePush, usePush, pushError } from "../game/push.ts";
+
+/** Brave sends notices through Google's push service and ships with it switched off. */
+const BRAVE =
+  "Brave'de bildirim servisi kapalı geliyor. Ayarlar → Gizlilik ve güvenlik bölümünde \u201cUse Google services for push messaging\u201d (anlık mesajlar için Google hizmetleri) seçeneğini aç, Brave'i yeniden başlat, sonra tekrar dene.";
 
 function BellIcon(): React.ReactElement {
   return (
@@ -50,9 +54,11 @@ export function PushOffer({ invite = false, compact = false }: { invite?: boolea
   const text =
     push.support === "install"
       ? INSTALL
-      : result === "failed"
-        ? "Bildirimler açılamadı. Biraz sonra yeniden dene."
-        : compact
+      : result === "brave"
+        ? BRAVE
+        : result === "failed"
+          ? `Bildirimler açılamadı${pushError() ? ` (${pushError()})` : ""}. Biraz sonra yeniden dene.`
+          : compact
           ? null
           : invite
             ? "Arkadaşın katılınca da haber veririz; sayfayı kapatsan bile."
@@ -85,7 +91,7 @@ export function PushOffer({ invite = false, compact = false }: { invite?: boolea
 export function PushStatus({ offered = false }: { offered?: boolean }): React.ReactElement | null {
   const push = usePush();
   const [asking, setAsking] = useState(false);
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState<EnableResult | null>(null);
   if (!push.available || push.support === "none") return null;
   // The card already asks; one question at a time.
   if (offered && !push.on && !push.snoozed && push.permission !== "denied") return null;
@@ -104,7 +110,12 @@ export function PushStatus({ offered = false }: { offered?: boolean }): React.Re
   } else if (push.permission === "denied") {
     text = "Bildirimler tarayıcıda engelli; site ayarlarından izin verebilirsin.";
   } else {
-    text = failed ? "Bildirimler açılamadı." : "Bildirimler kapalı";
+    text =
+      failed === "brave"
+        ? BRAVE
+        : failed === "failed"
+          ? `Bildirimler açılamadı${pushError() ? ` (${pushError()})` : ""}.`
+          : "Bildirimler kapalı";
     action = (
       <button
         type="button"
@@ -113,7 +124,7 @@ export function PushStatus({ offered = false }: { offered?: boolean }): React.Re
         onClick={async () => {
           setAsking(true);
           const result = await enablePush();
-          setFailed(result === "failed");
+          setFailed(result === "on" ? null : result);
           setAsking(false);
         }}
       >
