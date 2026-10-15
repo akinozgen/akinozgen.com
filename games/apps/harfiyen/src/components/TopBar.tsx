@@ -1,5 +1,6 @@
 import { currentTheme, onThemeChange, type Theme, toggleTheme } from "@travelle/core";
 import { useEffect, useState } from "react";
+import { setSoundOn, useSoundOn } from "../game/sound.ts";
 
 /** Which part of harfiyen is on screen: a game against the computer, or games with people. */
 export type Section = "bot" | "online";
@@ -49,6 +50,7 @@ export function TopBar({
       </nav>
       <nav className="topbar__tools" aria-label="Araçlar">
         {children}
+        <SoundToggle />
         <ThemeToggle />
       </nav>
     </header>
@@ -108,6 +110,20 @@ export function ThemeToggle(): React.ReactElement {
           <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" />
         </svg>
       )}
+    </button>
+  );
+}
+
+/** The game's sounds on or off, remembered in this browser. */
+export function SoundToggle(): React.ReactElement {
+  const on = useSoundOn();
+  const label = on ? "Sesi kapat" : "Sesi aç";
+  return (
+    <button type="button" className="icon-button" aria-label={label} title={label} aria-pressed={!on} onClick={() => setSoundOn(!on)}>
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" />
+        {on ? <path d="M15.5 9.2a4 4 0 0 1 0 5.6M18.3 6.5a7.8 7.8 0 0 1 0 11" /> : <path d="m16 9.5 5 5M21 9.5l-5 5" />}
+      </svg>
     </button>
   );
 }

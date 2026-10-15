@@ -18,6 +18,7 @@ import type { Lexicons } from "./lexicons.ts";
 import { forgetGame, rememberGame, summaryOf } from "./myGames.ts";
 import { pushMessage, subscribePush } from "./push.ts";
 import { HIDDEN_GRACE, type Link, type LinkState, openLink, type SocketConstructor, socketUrl } from "./socket.ts";
+import { playTing } from "./sound.ts";
 import { arrange, type PlayApi, useHand } from "./useHand.ts";
 
 /** How long an action may go unanswered before the buttons come back. */
@@ -71,6 +72,15 @@ export function forgetRack(code: string): void {
 
 export type Connection = LinkState;
 
+/** How long a player waits between nudges, as the server counts it. */
+export const NUDGE_GAP = 30_000;
+
+/** A nudge that arrived: which seat sent it; `id` tells one from the next. */
+export interface Nudge {
+  id: number;
+  from: number;
+}
+
 export interface OnlineGame extends PlayApi {
   room: RoomInfo | null;
   /** A game has been dealt to this player: `table` is theirs, not the empty one. */
@@ -80,6 +90,14 @@ export interface OnlineGame extends PlayApi {
   join: () => void;
   rematch: () => void;
   cancel: () => void;
+  /** Nudges this player has left this game. */
+  nudgesLeft: number;
+  /** When the next nudge may go (ms since the epoch); 0 for now. */
+  nudgeAfter: number;
+  /** Nudges the other player, whose turn it is. */
+  nudge: () => void;
+  /** The last nudge this player got, if any. */
+  nudged: Nudge | null;
 }
 
 /**
@@ -100,6 +118,8 @@ export function useOnlineGame(
   const [refusal, setRefusal] = useState<Refusal | null>(null);
   /** The turn count an action was sent at, until the server answers it. */
   const [pending, setPending] = useState<number | null>(null);
+  const [nudgeAfter, setNudgeAfter] = useState(0);
+  const [nudged, setNudged] = useState<Nudge | null>(null);
   const link = useRef<Link | null>(null);
   const WebSocketImpl = options.WebSocket;
 
@@ -109,6 +129,9 @@ export function useOnlineGame(
     // Once seated, each connection says where this device's notices go (the server ignores a repeat).
     let seated = false;
     let told = false;
+    // The table as last seen on this line: a move by the other side since then rings. A line's
+    // first state (a reconnect) and a resend of the same state don't.
+    let seen: { id: string; length: number } | null = null;
     const tellPush = (): void => {
       const message = pushMessage();
       if (message) opened.send(message);
@@ -123,7 +146,10 @@ export function useOnlineGame(
       hiddenGrace: () => (pushMessage()?.sub ? HIDDEN_GRACE : Number.POSITIVE_INFINITY),
       onState: (state) => {
         setConnection(state);
-        if (state === "connecting") told = false;
+        if (state === "connecting") {
+          told = false;
+          seen = null;
+        }
         // Whatever was on its way is lost with the line; the state sent on reconnecting says what landed.
         if (state !== "open") setPending(null);
       },
@@ -131,6 +157,11 @@ export function useOnlineGame(
         switch (message.t) {
           case "room": {
             const next = message.table === null ? null : tableFromJson(message.table);
+            if (next) {
+              const last = next.log[next.log.length - 1];
+              if (seen && seen.id === next.id && next.log.length > seen.length && last && last.player !== next.seat) playTing();
+              seen = { id: next.id, length: next.log.length };
+            }
             setRoom(message.room);
             setTable(next);
             setError(null);
@@ -152,6 +183,12 @@ export function useOnlineGame(
           case "refused":
             setPending(null);
             setRefusal(message.refusal);
+            break;
+          case "nudge":
+            setNudged({ id: Date.now(), from: message.from });
+            break;
+          case "nudgeRefused":
+            setNudgeAfter(message.wait > 0 ? Date.now() + message.wait : 0);
             break;
           case "error":
             setError(message.code);
@@ -258,6 +295,14 @@ export function useOnlineGame(
     }
   }, [code]);
 
+  const nudgesLeft = room && room.you !== null ? (room.nudges?.[room.you] ?? 0) : 0;
+  const theirTurn = playing && table.turn !== table.seat;
+  /** The wait starts when it goes; should the server count otherwise, its refusal says how long. */
+  const nudge = useCallback(() => {
+    if (!theirTurn || nudgesLeft <= 0 || Date.now() < nudgeAfter) return;
+    if (link.current?.send({ t: "nudge" })) setNudgeAfter(Date.now() + NUDGE_GAP);
+  }, [theirTurn, nudgesLeft, nudgeAfter]);
+
   return {
     ...hand,
     table: shown,
@@ -275,5 +320,9 @@ export function useOnlineGame(
     join,
     rematch,
     cancel,
+    nudgesLeft,
+    nudgeAfter,
+    nudge,
+    nudged,
   };
 }

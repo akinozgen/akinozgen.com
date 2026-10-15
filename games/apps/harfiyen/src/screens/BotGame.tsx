@@ -9,7 +9,8 @@ import { useStats } from "../components/stats.ts";
 import { StatsView } from "../components/StatsView.tsx";
 import { ChartIcon, PlusIcon, RulesIcon, TopBar } from "../components/TopBar.tsx";
 import type { Lexicons } from "../game/lexicons.ts";
-import { useGame } from "../game/useGame.ts";
+import { useTingOnTheirMove } from "../game/sound.ts";
+import { HUMAN, useGame } from "../game/useGame.ts";
 import { Dots, GameScreen } from "./GameScreen.tsx";
 
 /** A game against the computer: the screen, its level and board, its record. */
@@ -33,6 +34,7 @@ export function BotGame({
   const api = useGame(lexicons);
   const { table } = api;
   const stats = useStats(table, api.level);
+  useTingOnTheirMove(table, HUMAN);
   const [sheet, setSheet] = useState<"new" | "stats" | null>(null);
   const [preset, setPreset] = useState<Level | null>(null);
   const close = (): void => {

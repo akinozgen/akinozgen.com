@@ -277,3 +277,33 @@ describe("names in a room", () => {
     expect(rename(renamed, C, "Kimse")).toBeNull();
   });
 });
+
+describe("nudges", () => {
+  it("go to the player whose turn it is, five a game, thirty seconds apart", () => {
+    const d = deps("nudge");
+    let room = createMatched("Q9TR4K", [A, B], d);
+    const game = loadGame(room.game!)!;
+    const mover = room.seats[game.turn]!;
+    const waiter = room.seats[1 - game.turn]!;
+    // The one who has the move has nobody to nudge.
+    expect(handle(room, mover, { t: "nudge" }, d).changed).toBe(false);
+    const first = handle(room, waiter, { t: "nudge" }, d);
+    expect(first).toMatchObject({ changed: true, broadcast: true, nudge: game.turn });
+    room = first.room!;
+    const info = stateFor(room, waiter, both);
+    expect(info.t === "room" && info.room.nudges[1 - game.turn]).toBe(4);
+    // Too soon.
+    expect(handle(room, waiter, { t: "nudge" }, d).reply).toMatchObject({ t: "nudgeRefused", left: 4, wait: 30_000 });
+    for (let i = 0; i < 4; i++) {
+      d.tick(30_000);
+      room = handle(room, waiter, { t: "nudge" }, d).room!;
+    }
+    d.tick(30_000);
+    expect(handle(room, waiter, { t: "nudge" }, d).reply).toMatchObject({ t: "nudgeRefused", left: 0 });
+    // A new game brings them back.
+    room = handle(room, A, { t: "resign" }, d).room!;
+    room = handle(handle(room, A, { t: "rematch" }, d).room!, B, { t: "rematch" }, d).room!;
+    const again = stateFor(room, A, both);
+    expect(again.t === "room" && again.room.nudges).toEqual([5, 5]);
+  });
+});

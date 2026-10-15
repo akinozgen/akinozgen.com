@@ -49,6 +49,8 @@ export interface RoomInfo {
   gameNo: number;
   /** Which seats have asked for a rematch. */
   rematch: boolean[];
+  /** Nudges each seat has left this game. */
+  nudges: number[];
   /** Nobody moved for a month and the game was closed without a result. */
   abandoned?: boolean;
   updatedAt: number;
@@ -89,13 +91,19 @@ export type RoomRequest =
   /** The host withdraws an invitation nobody has taken. */
   | { t: "cancel" }
   /** Where to send this seat's notices while it's away; null to stop. Sent after each hello. */
-  | { t: "push"; sub: PushSub | null };
+  | { t: "push"; sub: PushSub | null }
+  /** Nudge the other player, whose turn it is: a few a game, not too often. */
+  | { t: "nudge" };
 
 export type RoomMessage =
   /** The room, and — for a seated player once a game has begun — their table (see `tableToJson`). */
   | { t: "room"; room: RoomInfo; table: unknown | null }
   /** An action the rules turned down; the table is unchanged. */
   | { t: "refused"; n: number; refusal: Refusal }
+  /** The other player nudged this one: shake, ring, look. */
+  | { t: "nudge"; from: number }
+  /** A nudge that couldn't go: none left, or too soon after the last; `wait` ms until the next may. */
+  | { t: "nudgeRefused"; left: number; wait: number }
   | { t: "error"; code: ErrorCode };
 
 export type LobbyRequest = { t: "seek"; v: number; secret: string; name?: string };
@@ -154,6 +162,7 @@ export function parseRoomRequest(raw: string | ArrayBuffer): RoomRequest | null 
     case "resign":
     case "rematch":
     case "cancel":
+    case "nudge":
       return { t: m.t };
     case "play": {
       if (!isInt(m.n, 0, 10_000) || !Array.isArray(m.p) || m.p.length < 1 || m.p.length > 7) return null;

@@ -159,7 +159,8 @@ describe("an online game", () => {
     // …but again after a reconnect.
     vi.useFakeTimers();
     socket.drop();
-    act(() => vi.advanceTimersByTime(1000));
+    // The first retry comes within two seconds: one, plus up to a second of jitter.
+    act(() => vi.advanceTimersByTime(2000));
     vi.useRealTimers();
     const again = FakeSocket.last();
     again.accept();

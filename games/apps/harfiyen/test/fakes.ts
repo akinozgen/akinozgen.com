@@ -137,6 +137,7 @@ export function roomInfo(changes: Partial<RoomInfo> = {}): RoomInfo {
     host: null,
     gameNo: 1,
     rematch: [false, false],
+    nudges: [5, 5],
     updatedAt: 1_000,
     ...changes,
   };

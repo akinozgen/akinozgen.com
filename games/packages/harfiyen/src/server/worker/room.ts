@@ -9,6 +9,7 @@ import {
   handle,
   IDLE_TTL,
   INVITE_TTL,
+  nameAt,
   noticesFor,
   onAlarm,
   rename,
@@ -175,6 +176,7 @@ export class HarfiyenRoom extends DurableObject<HarfiyenEnv> {
     const current = outcome.room ?? room;
     if (outcome.broadcast) this.broadcast(current);
     else if (outcome.resend) send(ws, stateFor(current, attachment.pub, this.online(current)));
+    if (outcome.nudge !== undefined) this.nudge(current, outcome.nudge);
   }
 
   async webSocketClose(ws: WebSocket): Promise<void> {
@@ -213,6 +215,18 @@ export class HarfiyenRoom extends DurableObject<HarfiyenEnv> {
     }
     if (result.next !== null) await this.ctx.storage.setAlarm(result.next);
     if (result.changed) this.broadcast(result.room);
+  }
+
+  /** A nudge: a shake on every screen the seat has open, or — if it has none — a push. */
+  private nudge(room: Room, seat: number): void {
+    const target = room.seats[seat];
+    const sockets = this.ctx.getWebSockets().filter((ws) => (ws.deserializeAttachment() as Attachment).pub === target);
+    for (const ws of sockets) send(ws, { t: "nudge", from: 1 - seat });
+    const sub = room.push?.[seat];
+    if (sockets.length === 0 && sub && this.env.HARFIYEN_VAPID) {
+      const notice = { title: "Dürtüldün", body: `${nameAt(room, 1 - seat) ?? "Rakibin"} seni dürttü. Sıra sende.`, url: `#/oda/${room.code}`, tag: room.code };
+      this.ctx.waitUntil(this.push(seat, sub, notice));
+    }
   }
 
   /** Tells the players who aren't here what changed, by push, if they asked for notices. */

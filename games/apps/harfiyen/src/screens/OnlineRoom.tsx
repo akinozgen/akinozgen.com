@@ -1,5 +1,6 @@
 import type { ErrorCode } from "@harfiyen/engine";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { GiveUp } from "../components/GiveUp.tsx";
 import { Monogram } from "../components/Monogram.tsx";
 import { onlinePlayers } from "../components/players.tsx";
@@ -9,12 +10,16 @@ import { splitName } from "../game/identity.ts";
 import type { Lexicons } from "../game/lexicons.ts";
 import { go } from "../game/route.ts";
 import type { SocketConstructor } from "../game/socket.ts";
+import { playNudge } from "../game/sound.ts";
 import { locative } from "../game/turkish.ts";
-import { type OnlineGame, useOnlineGame } from "../game/useOnlineGame.ts";
+import { type Nudge, type OnlineGame, useOnlineGame } from "../game/useOnlineGame.ts";
 import { Dots, GameScreen } from "./GameScreen.tsx";
 
 const HUB = "#/cevrimici";
 const TURN_TITLE = "(Sıra sende) harfiyen";
+const NUDGE_TITLE = "(Dürtüldün!) harfiyen";
+/** How long the page shakes for a nudge; the class comes off after. */
+export const SHAKE_MS = 650;
 
 /** Errors that leave nothing to show of the room. */
 const ENDINGS: readonly ErrorCode[] = ["yok", "iptal", "dolu", "kapali", "surum"];
@@ -42,7 +47,7 @@ export function OnlineRoom({
 }): React.ReactElement {
   const api = useOnlineGame(code, lexicons, { WebSocket });
   const { room, error } = api;
-  useTurnTitle(api.yourTurn);
+  useTurnTitle(api.yourTurn, api.nudged);
 
   const top = (
     <TopBar section="online" waiting={waiting}>
@@ -145,8 +150,31 @@ function RoomGame({
   const mine = room.rematch[me] ?? false;
   const theirs = room.rematch[them] ?? false;
 
+  // A nudge from the other side: the page shakes, the phone buzzes, a knock sounds, and a word says who.
+  const [toast, setToast] = useState<string | null>(null);
+  const nudged = api.nudged;
+  useEffect(() => {
+    if (!nudged) return;
+    shakePage();
+    navigator.vibrate?.([120, 60, 120]);
+    playNudge();
+    const from = room.seats[nudged.from]?.name;
+    setToast(`${from ? splitName(from).base : "Rakibin"} seni dürttü!`);
+    const timer = setTimeout(() => setToast(null), 3500);
+    return () => clearTimeout(timer);
+    // Once per nudge; the room's names don't change it.
+  }, [nudged]);
+
   return (
     <div className={`room room--${room.phase}`}>
+      {toast &&
+        createPortal(
+          <div className="toast" role="status" aria-live="assertive">
+            <NudgeIcon />
+            {toast}
+          </div>,
+          document.body,
+        )}
       <GameScreen
         api={api}
         lexicons={lexicons}
@@ -156,8 +184,11 @@ function RoomGame({
         blocked={blocked}
         meta={meta}
         waitingStatus={
-          <span>
-            Sıra {other ? locative(other) : "rakibinde"}. Kapatabilirsin; oyun seni bekler.
+          <span className="status__waiting">
+            <span>Sıra {other ? locative(other) : "rakibinde"}. Kapatabilirsin; oyun seni bekler.</span>
+            {room.phase === "playing" && (
+              <NudgeButton left={api.nudgesLeft} after={api.nudgeAfter} open={open} onNudge={api.nudge} />
+            )}
           </span>
         }
         notice={
@@ -205,10 +236,82 @@ function useLater(flag: boolean, ms: number): boolean {
   return later;
 }
 
-/** While it's the player's turn and the tab is in the background, its title says so. */
-function useTurnTitle(yourTurn: boolean): void {
+let shakeTimer: ReturnType<typeof setTimeout> | undefined;
+
+/** Shakes the whole page once (a flash instead, for those who'd rather nothing moved). */
+export function shakePage(): void {
+  const root = document.querySelector<HTMLElement>(".app");
+  if (!root) return;
+  root.classList.remove("is-nudged");
+  // Read the layout so taking the class off and on again restarts the animation.
+  void root.offsetWidth;
+  root.classList.add("is-nudged");
+  clearTimeout(shakeTimer);
+  shakeTimer = setTimeout(() => root.classList.remove("is-nudged"), SHAKE_MS);
+}
+
+function NudgeIcon(): React.ReactElement {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="8" y="3.5" width="8" height="17" rx="2" />
+      <path d="M4.5 8.5v7M19.5 8.5v7M2 10.5v3M22 10.5v3" />
+    </svg>
+  );
+}
+
+/** The time, ticking each second while `running`. */
+function useNow(running: boolean): number {
+  const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    const before = document.title === TURN_TITLE ? "harfiyen" : document.title;
+    setNow(Date.now());
+    if (!running) return;
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [running]);
+  return now;
+}
+
+/** "Dürt": a few a game, one every half minute, only while the other side has the move. */
+function NudgeButton({ left, after, open, onNudge }: { left: number; after: number; open: boolean; onNudge: () => void }): React.ReactElement {
+  const now = useNow(after > Date.now());
+  const wait = Math.max(0, Math.ceil((after - now) / 1000));
+  const label = left === 0 ? "Dürt, bu oyunda hakkın kalmadı" : wait > 0 ? "Dürt, biraz bekle" : `Dürt, ${left} hakkın kaldı`;
+  return (
+    <button type="button" className="nudge-button" onClick={onNudge} disabled={!open || left === 0 || wait > 0} aria-label={label} title={label}>
+      <NudgeIcon />
+      Dürt
+      <span className={`nudge-button__count${wait > 0 ? " is-waiting" : ""}`} aria-hidden="true">
+        {wait > 0 ? `${wait} sn` : left}
+      </span>
+    </button>
+  );
+}
+
+/**
+ * While it's the player's turn and the tab is in the background, its title
+ * says so; after a nudge it blinks until the tab is looked at.
+ */
+function useTurnTitle(yourTurn: boolean, nudged: Nudge | null): void {
+  useEffect(() => {
+    if (!nudged || document.visibilityState !== "hidden") return;
+    let blink = true;
+    document.title = NUDGE_TITLE;
+    const timer = setInterval(() => {
+      blink = !blink;
+      document.title = blink ? NUDGE_TITLE : TURN_TITLE;
+    }, 1000);
+    // Seen: the blinking stops; the title below puts the usual one back.
+    const stop = (): void => {
+      if (document.visibilityState === "visible") clearInterval(timer);
+    };
+    document.addEventListener("visibilitychange", stop);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", stop);
+    };
+  }, [nudged]);
+  useEffect(() => {
+    const before = document.title === TURN_TITLE || document.title === NUDGE_TITLE ? "harfiyen" : document.title;
     const update = (): void => {
       document.title = yourTurn && document.visibilityState === "hidden" ? TURN_TITLE : before;
     };

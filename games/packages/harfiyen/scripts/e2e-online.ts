@@ -141,6 +141,15 @@ async function invitationAndGame(): Promise<void> {
   check(!JSON.stringify(a.messages).includes('"bag"') && !JSON.stringify(b.messages).includes('"bag"'), "no bag on the wire");
   check(a.last!.room.seats.every((s) => s?.online), "both shown online");
 
+  // A nudge reaches the player whose turn it is.
+  const toMove = a.table()!.turn === a.last!.room.you ? a : b;
+  const nudger = toMove === a ? b : a;
+  const sent = nudger.messages.length;
+  nudger.send({ t: "nudge" });
+  await toMove.until((m) => (m as { t: string }).t === "nudge", "a nudge");
+  await nudger.until((m) => m.t === "room" && m.room.nudges[m.room.you!] === 4, "a nudge counted", 5000, sent);
+  check(true, "a nudge shakes the other player, four left");
+
   // An action for an older table is dropped and the state resent.
   const mover = a.table()!.turn === a.last!.room.you ? a : b;
   mover.send({ t: "pass", n: 99 });

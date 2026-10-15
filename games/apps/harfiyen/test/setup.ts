@@ -5,6 +5,7 @@ import { afterEach, vi } from "vitest";
 import { resetIdentityCache } from "../src/game/identity.ts";
 import { resetMyGamesCache } from "../src/game/myGames.ts";
 import { resetPushCache } from "../src/game/push.ts";
+import { resetSoundCache } from "../src/game/sound.ts";
 import { answerApi, api, FakeSocket } from "./fakes.ts";
 
 /** The word lists come from disk instead of the network; tests run from the app's folder. */
@@ -44,4 +45,5 @@ afterEach(() => {
   resetIdentityCache();
   resetMyGamesCache();
   resetPushCache();
+  resetSoundCache();
 });

@@ -2,6 +2,7 @@ import { onThemeChange, readThemeChoice, type Theme } from "@travelle/core";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App.tsx";
+import { unlockAudioOnGesture } from "./game/sound.ts";
 import "./styles.css";
 
 /** The browser's bar takes the page's colour: the chosen theme's, or each scheme's own while following the system. */
@@ -15,6 +16,7 @@ function syncThemeColor(): void {
 }
 syncThemeColor();
 onThemeChange(syncThemeColor);
+unlockAudioOnGesture();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

@@ -38,7 +38,15 @@ export interface Room {
   abandoned?: boolean;
   /** Where to send each seat's notices while it's away. */
   push?: (PushSub | null)[];
+  /** Nudges each seat has used this game, and when each last nudged. */
+  nudged?: number[];
+  nudgedAt?: number[];
 }
+
+/** Nudges a player gets per game. */
+export const NUDGES = 5;
+/** How long a player waits between nudges. */
+export const NUDGE_GAP = 30_000;
 
 const DAY = 86_400_000;
 /** An invitation nobody answers is cleared after a week. */
@@ -69,13 +77,26 @@ export interface Outcome {
   reply?: RoomMessage;
   /** The sender's view is out of date: send them the current state. */
   resend?: boolean;
+  /** The sender nudged this seat. */
+  nudge?: number;
 }
 
 function start(room: Room, deps: Deps, first: number): Room {
   const seed = deps.seed();
   const game = newGame(seed, makeRules(seed, "klasik"), TILE_SET, 2, first);
   const now = deps.now();
-  return { ...room, phase: "playing", game: saveGame(game), gameNo: room.gameNo + 1, rematch: [false, false], updatedAt: now, host: null, abandoned: undefined };
+  return {
+    ...room,
+    phase: "playing",
+    game: saveGame(game),
+    gameNo: room.gameNo + 1,
+    rematch: [false, false],
+    nudged: [0, 0],
+    nudgedAt: [0, 0],
+    updatedAt: now,
+    host: null,
+    abandoned: undefined,
+  };
 }
 
 /** A new invitation: the host takes a seat chosen at random, the other waits for whoever opens the link. */
@@ -145,6 +166,7 @@ export function roomInfo(room: Room, pub: string | null, online: readonly boolea
     host: room.phase === "waiting" ? room.host : null,
     gameNo: room.gameNo,
     rematch: [...room.rematch],
+    nudges: room.seats.map((_, i) => NUDGES - (room.nudged?.[i] ?? 0)),
     ...(room.abandoned ? { abandoned: true } : {}),
     updatedAt: room.updatedAt,
   };
@@ -212,6 +234,18 @@ export function handle(
     case "cancel": {
       if (room.phase !== "waiting" || seat === null || seat !== room.host) return unchanged(room);
       return { room: null, changed: true, broadcast: true };
+    }
+    case "nudge": {
+      const game = gameOf(room);
+      if (seat === null || room.phase !== "playing" || !game || game.turn === seat) return unchanged(room);
+      const used = room.nudged?.[seat] ?? 0;
+      const wait = Math.max(0, (room.nudgedAt?.[seat] ?? 0) + NUDGE_GAP - now);
+      if (used >= NUDGES || wait > 0) return unchanged(room, { t: "nudgeRefused", left: NUDGES - used, wait });
+      const nudged = [...(room.nudged ?? [0, 0])];
+      const nudgedAt = [...(room.nudgedAt ?? [0, 0])];
+      nudged[seat] = used + 1;
+      nudgedAt[seat] = now;
+      return { room: { ...room, nudged, nudgedAt }, changed: true, broadcast: true, nudge: 1 - seat };
     }
     case "push": {
       if (seat === null) return unchanged(room);
