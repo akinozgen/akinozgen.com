@@ -72,7 +72,7 @@ describe("the game page", () => {
 
   it("spins when dragged and offers a way back", async () => {
     await renderApp();
-    const svg = document.querySelector("svg")!;
+    const svg = document.querySelector(".map svg")!;
     await waitFor(() => expect(document.querySelectorAll(".shape").length).toBe(2));
 
     const before = document.querySelector(".shape")?.getAttribute("d");

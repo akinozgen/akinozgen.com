@@ -1,3 +1,4 @@
+import { onThemeChange } from "@travelle/core";
 import { useEffect, useRef } from "react";
 import { FLASH_MS, type Table, turned } from "../game/table.ts";
 
@@ -293,12 +294,10 @@ export function Board({
     const observer = new ResizeObserver(resize);
     observer.observe(wrap);
 
-    const scheme = window.matchMedia?.("(prefers-color-scheme: dark)");
-    const onScheme = (): void => {
+    const stopTheme = onThemeChange(() => {
       palette = readPalette(wrap);
       request();
-    };
-    scheme?.addEventListener?.("change", onScheme);
+    });
 
     // --- pointers ---
     const pointers = new Map<number, { x: number; y: number }>();
@@ -480,7 +479,7 @@ export function Board({
 
     return () => {
       observer.disconnect();
-      scheme?.removeEventListener?.("change", onScheme);
+      stopTheme();
       canvas.removeEventListener("pointerdown", onDown);
       canvas.removeEventListener("pointermove", onMove);
       canvas.removeEventListener("pointerup", onUp);

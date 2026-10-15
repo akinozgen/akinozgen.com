@@ -1,8 +1,11 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App.tsx";
+import { followThemeColor } from "./components/ThemeToggle.tsx";
 import { LocaleProvider } from "./i18n/index.tsx";
 import "./styles.css";
+
+followThemeColor();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

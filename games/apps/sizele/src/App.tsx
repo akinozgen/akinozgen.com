@@ -10,6 +10,7 @@ import { MapView } from "./components/MapView.tsx";
 import { ratioText } from "./game/ratio.ts";
 import { Sheet } from "./components/Sheet.tsx";
 import { StatsView } from "./components/StatsView.tsx";
+import { ThemeToggle } from "./components/ThemeToggle.tsx";
 import { type Mode, playDate, useSizele } from "./game/useSizele.ts";
 import { useLocale } from "./i18n/index.tsx";
 
@@ -97,6 +98,7 @@ export function App(): React.ReactElement {
         </nav>
         <nav className="topbar__tools">
           <LanguagePicker />
+          <ThemeToggle />
           <button type="button" className="icon-button" aria-label={t("stats")} onClick={() => setSheet("stats")}>
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M5 20V11M12 20V5M19 20v-6" />

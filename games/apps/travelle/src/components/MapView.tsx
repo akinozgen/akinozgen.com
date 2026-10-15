@@ -1,3 +1,4 @@
+import { onThemeChange } from "@travelle/core";
 import { geoCentroid, geoGraticule, geoPath } from "d3-geo";
 import type { Feature, FeatureCollection, MultiPolygon } from "geojson";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -196,9 +197,7 @@ export function MapView({
     if (!element) return;
     const refresh = (): void => setPalette(readPalette(element));
     refresh();
-    const scheme = window.matchMedia?.("(prefers-color-scheme: dark)");
-    scheme?.addEventListener?.("change", refresh);
-    return () => scheme?.removeEventListener?.("change", refresh);
+    return onThemeChange(refresh);
   }, []);
 
   // Measure the map and the free window inside it. Both drive the framing.

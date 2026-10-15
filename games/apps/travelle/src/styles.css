@@ -30,8 +30,10 @@
   color-scheme: light dark;
 }
 
+/* Dark: by the system unless the player picked light, or by the player's pick.
+   The two copies below must stay identical. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #131519;
     --surface: #181b22;
     --line: #2e333b;
@@ -60,6 +62,41 @@
     --panel-line: color-mix(in srgb, #fff 9%, transparent);
     --panel-shadow: 0 18px 50px rgb(0 0 0 / 45%), 0 2px 6px rgb(0 0 0 / 25%);
   }
+}
+
+:root[data-theme="dark"] {
+  --bg: #131519;
+  --surface: #181b22;
+  --line: #2e333b;
+  --ink: #e9e6e1;
+  --ink-soft: #9aa0a8;
+  --accent: #7a95ff;
+  --start: #b294ff;
+  --end: #45dcef;
+  --chain: #4fca6a;
+  --closer: #8fd99f;
+  --detour: #f0a344;
+  --wrong: #ef6a5d;
+  --hint: #c3cad3;
+  --space: #0b1220;
+  --space-far: #03050a;
+  --ocean: #123247;
+  --ocean-lit: #2a5873;
+  --ocean-deep: #071723;
+  --graticule: #2c5269;
+  --world-border: #5d849b;
+  --glow: rgba(90, 160, 255, 0.42);
+  --glow-fade: rgba(90, 160, 255, 0);
+  --shade: rgba(0, 0, 0, 0.45);
+  --stars: 1;
+  --panel: color-mix(in srgb, var(--surface) 78%, transparent);
+  --panel-line: color-mix(in srgb, #fff 9%, transparent);
+  --panel-shadow: 0 18px 50px rgb(0 0 0 / 45%), 0 2px 6px rgb(0 0 0 / 25%);
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
 }
 
 * {
@@ -324,7 +361,8 @@ body {
 }
 
 .chip,
-.lang__select {
+.lang__select,
+.icon-button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -347,9 +385,30 @@ body {
   padding: 0 10px;
 }
 
+.icon-button {
+  justify-content: center;
+  width: 36px;
+  padding: 0;
+}
+
+.icon-button svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .chip:hover,
-.lang__select:hover {
+.lang__select:hover,
+.icon-button:hover {
   color: var(--accent);
+}
+
+.icon-button:active {
+  transform: scale(0.96);
 }
 
 .modes {
@@ -498,6 +557,11 @@ body {
     height: 32px;
     padding: 0 11px;
     font-size: 12px;
+  }
+
+  .icon-button {
+    width: 32px;
+    height: 32px;
   }
 
   .prompt {

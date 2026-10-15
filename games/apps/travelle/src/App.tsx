@@ -4,6 +4,7 @@ import { EndlessSettings } from "./components/EndlessSettings.tsx";
 import { HowToPlay } from "./components/HowToPlay.tsx";
 import { ENDLESS_STATS_KEY, useEndless } from "./game/endless.ts";
 import { LanguagePicker } from "./components/LanguagePicker.tsx";
+import { ThemeToggle } from "./components/ThemeToggle.tsx";
 import { useLocale } from "./i18n/index.tsx";
 import { useDaily } from "./game/daily.ts";
 import { PLAYABLE } from "./game/regions.ts";
@@ -110,6 +111,7 @@ export function App(): React.ReactElement {
           </button>
         )}
         <LanguagePicker />
+        <ThemeToggle />
         <button type="button" className="chip" onClick={() => setShowRules(true)}>
           {t("rules")}
         </button>

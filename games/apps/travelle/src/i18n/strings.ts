@@ -107,6 +107,8 @@ const en = {
     "Endless — puzzle after puzzle on a map you set up yourself. Switch continents off, drop individual countries, and pick how long the route should be.",
   gotIt: "Got it",
   language: "Language",
+  themeDark: "Dark theme",
+  themeLight: "Light theme",
 };
 
 export type Dict = typeof en;
@@ -218,6 +220,8 @@ const tr: Dict = {
     "Sonsuz — kendi kurduğun harita üzerinde arka arkaya bulmaca. Kıtaları kapat, tek tek ülke çıkar, rotanın uzunluğunu seç.",
   gotIt: "Anladım",
   language: "Dil",
+  themeDark: "Koyu tema",
+  themeLight: "Açık tema",
 };
 
 const de: Dict = {
@@ -326,6 +330,8 @@ const de: Dict = {
     "Endlos — Rätsel für Rätsel auf einer Karte, die du selbst einrichtest. Kontinente abschalten, einzelne Länder streichen, Routenlänge wählen.",
   gotIt: "Verstanden",
   language: "Sprache",
+  themeDark: "Dunkles Design",
+  themeLight: "Helles Design",
 };
 
 const es: Dict = {
@@ -434,6 +440,8 @@ const es: Dict = {
     "Sin fin: puzle tras puzle en un mapa que configuras tú. Apaga continentes, quita países sueltos y elige la longitud de la ruta.",
   gotIt: "Entendido",
   language: "Idioma",
+  themeDark: "Tema oscuro",
+  themeLight: "Tema claro",
 };
 
 const fr: Dict = {
@@ -542,6 +550,8 @@ const fr: Dict = {
     "Sans fin — énigme après énigme sur une carte que vous réglez. Coupez des continents, retirez des pays, choisissez la longueur.",
   gotIt: "Compris",
   language: "Langue",
+  themeDark: "Thème sombre",
+  themeLight: "Thème clair",
 };
 
 export const STRINGS: Record<Language, Dict> = { en, tr, de, es, fr };
