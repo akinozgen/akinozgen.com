@@ -145,7 +145,8 @@ export async function pushRequest(
       // Turn-based: a notice is still worth having a day later.
       TTL: "86400",
       Urgency: "normal",
-      Topic: notice.tag.slice(0, 32),
+      // A topic is at most 32 characters of the URL-safe base64 alphabet (RFC 8030); push services turn away anything else.
+      Topic: notice.tag.replace(/[^A-Za-z0-9_-]/g, "-").slice(0, 32),
     },
     body,
   };

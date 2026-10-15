@@ -132,11 +132,12 @@ async function invitationAndGame(): Promise<void> {
   check(b.last!.room.seats[b.last!.room.host!]!.name.startsWith("Akın #"), "the host's chosen name shows");
   b.send({ t: "hello", v: PROTOCOL, secret: b.secret, name: "Orospu" });
   await b.until((m) => m.t === "room", "B's hello again");
+  const startFrom = a.messages.length;
   b.send({ t: "join" });
   await b.until((m) => m.t === "room" && m.room.phase === "playing", "game start (B)");
   const bSeat = b.last!.room.you!;
   check(!b.last!.room.seats[bSeat]!.name.includes("Orospu"), "an unfit name falls back to the device's own");
-  await a.until((m) => m.t === "room" && m.room.phase === "playing", "game start (A)");
+  await a.until((m) => m.t === "room" && m.room.phase === "playing", "game start (A)", 5000, startFrom);
   check(a.table()!.rack.length === 7 && b.table()!.rack.length === 7, "both racks dealt");
   check(!JSON.stringify(a.messages).includes('"bag"') && !JSON.stringify(b.messages).includes('"bag"'), "no bag on the wire");
   check(a.last!.room.seats.every((s) => s?.online), "both shown online");

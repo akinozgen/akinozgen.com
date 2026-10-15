@@ -93,6 +93,11 @@ describe("web push", () => {
     );
     expect(ok).toBe(true);
     expect(await decrypt(init.body as Bytes, ua)).toContain('"tag":"K7Q2XM"');
+    expect(headers.Topic).toBe("K7Q2XM");
+    // The notice keeps its tag; the topic keeps to the characters push services take.
+    const chat = await pushRequest(ua.sub, { title: "t", body: "b", url: "#/oda/K7Q2XM", tag: "K7Q2XM:sohbet" }, keys, "https://akinozgen.com", now);
+    expect((chat.headers as Record<string, string>).Topic).toBe("K7Q2XM-sohbet");
+    expect(await decrypt(chat.body as Bytes, ua)).toContain('"tag":"K7Q2XM:sohbet"');
   });
 
   it("only takes subscriptions that look like a browser's", async () => {
