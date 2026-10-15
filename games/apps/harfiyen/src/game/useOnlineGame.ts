@@ -1,4 +1,5 @@
 import {
+  type ChatLine,
   emptyBoard,
   type ErrorCode,
   makeRules,
@@ -18,7 +19,7 @@ import type { Lexicons } from "./lexicons.ts";
 import { forgetGame, rememberGame, summaryOf } from "./myGames.ts";
 import { pushMessage, subscribePush } from "./push.ts";
 import { HIDDEN_GRACE, type Link, type LinkState, openLink, type SocketConstructor, socketUrl } from "./socket.ts";
-import { playTing } from "./sound.ts";
+import { playPop, playTing } from "./sound.ts";
 import { arrange, type PlayApi, useHand } from "./useHand.ts";
 
 /** How long an action may go unanswered before the buttons come back. */
@@ -70,6 +71,68 @@ export function forgetRack(code: string): void {
   writeJson(RACKS_KEY, all);
 }
 
+const CHAT_SEEN_KEY = "harfiyen:chat-seen:v1";
+/** Chat lines kept on screen; the server sends the last 50 on each connection. */
+const CHAT_KEEP = 100;
+/** Rooms whose last line seen is remembered, the most recently read last. */
+const KEEP_SEEN = 50;
+
+/** The newest chat line the player has seen in a room; 0 for none. */
+function seenIn(code: string): number {
+  const id = readJson<Record<string, number>>(CHAT_SEEN_KEY)?.[code];
+  return typeof id === "number" && Number.isFinite(id) ? id : 0;
+}
+
+function saveSeen(code: string, id: number): void {
+  const stored = readJson<Record<string, number>>(CHAT_SEEN_KEY);
+  const all = stored && typeof stored === "object" && !Array.isArray(stored) ? stored : {};
+  delete all[code];
+  const kept = Object.entries(all).slice(-(KEEP_SEEN - 1));
+  writeJson(CHAT_SEEN_KEY, Object.fromEntries([...kept, [code, id]]));
+}
+
+function forgetSeen(code: string): void {
+  const all = readJson<Record<string, number>>(CHAT_SEEN_KEY);
+  if (!all || typeof all !== "object" || !(code in all)) return;
+  delete all[code];
+  writeJson(CHAT_SEEN_KEY, all);
+}
+
+/** Lines by id, oldest first, each once, the newest `CHAT_KEEP`. */
+function tidyLines(lines: readonly ChatLine[]): ChatLine[] {
+  const byId = new Map(lines.map((line) => [line.id, line]));
+  return [...byId.values()].sort((a, b) => a.id - b.id).slice(-CHAT_KEEP);
+}
+
+/** A chat line the server turned down: too soon (`until`, ms since the epoch), or nothing left of it (`until` 0). */
+export interface SayRefusal {
+  /** Tells one refusal from the next. */
+  id: number;
+  until: number;
+}
+
+/** The room's chat, as this player has it. */
+export interface Chat {
+  /** Chat is possible here: this browser has a seat and both seats are taken. */
+  open: boolean;
+  /** The lines so far, oldest first; while muted, the other player's are left out. */
+  lines: ChatLine[];
+  /** This player has hidden the other's lines. */
+  muted: boolean;
+  /** The other player's lines this player hasn't seen yet. */
+  unread: number;
+  /** The other player's newest line, once it arrives with the room open (never one from the history). */
+  heard: ChatLine | null;
+  /** The last line that didn't go, until the next one does. */
+  refused: SayRefusal | null;
+  /** Sends a line, typed or ready-made; false if it couldn't go. */
+  say: (text: string) => boolean;
+  /** Hides the other player's lines, here and in notices, or shows them again. */
+  mute: (on: boolean) => void;
+  /** The player has seen the chat up to line `id`. */
+  see: (id: number) => void;
+}
+
 export type Connection = LinkState;
 
 /** How long a player waits between nudges, as the server counts it. */
@@ -98,6 +161,7 @@ export interface OnlineGame extends PlayApi {
   nudge: () => void;
   /** The last nudge this player got, if any. */
   nudged: Nudge | null;
+  chat: Chat;
 }
 
 /**
@@ -120,6 +184,12 @@ export function useOnlineGame(
   const [pending, setPending] = useState<number | null>(null);
   const [nudgeAfter, setNudgeAfter] = useState(0);
   const [nudged, setNudged] = useState<Nudge | null>(null);
+  const [lines, setLines] = useState<ChatLine[]>([]);
+  const [muted, setMuted] = useState(false);
+  const [heard, setHeard] = useState<ChatLine | null>(null);
+  const [sayRefused, setSayRefused] = useState<SayRefusal | null>(null);
+  const [seenId, setSeenId] = useState(() => seenIn(code));
+  const seenRef = useRef(seenId);
   const link = useRef<Link | null>(null);
   const WebSocketImpl = options.WebSocket;
 
@@ -132,6 +202,10 @@ export function useOnlineGame(
     // The table as last seen on this line: a move by the other side since then rings. A line's
     // first state (a reconnect) and a resend of the same state don't.
     let seen: { id: string; length: number } | null = null;
+    // This browser's seat, to tell its own chat lines from the other's; and the lines already here.
+    let seat: number | null = null;
+    const known = new Set<number>();
+    let refusals = 0;
     const tellPush = (): void => {
       const message = pushMessage();
       if (message) opened.send(message);
@@ -170,7 +244,8 @@ export function useOnlineGame(
                 ? null
                 : sent,
             );
-            seated = message.room.you !== null;
+            seat = message.room.you;
+            seated = seat !== null;
             if (seated) {
               rememberGame(code, summaryOf(message.room, next));
               if (!told) {
@@ -190,12 +265,38 @@ export function useOnlineGame(
           case "nudgeRefused":
             setNudgeAfter(message.wait > 0 ? Date.now() + message.wait : 0);
             break;
+          // The whole chat, on each connection and after muting: it replaces what's here, quietly.
+          case "chat":
+            known.clear();
+            for (const line of message.lines) known.add(line.id);
+            setLines(tidyLines(message.lines));
+            setMuted(message.muted);
+            break;
+          // One new line: the player's own coming back (from this tab or another), or the other's, which pops.
+          case "said": {
+            const line = message.line;
+            if (known.has(line.id)) break;
+            known.add(line.id);
+            setLines((all) => tidyLines([...all, line]));
+            if (line.from === seat) {
+              setSayRefused(null);
+            } else {
+              setHeard(line);
+              playPop();
+            }
+            break;
+          }
+          case "sayRefused":
+            refusals += 1;
+            setSayRefused({ id: refusals, until: message.wait > 0 ? Date.now() + message.wait : 0 });
+            break;
           case "error":
             setError(message.code);
             setPending(null);
             if (message.code === "yok" || message.code === "iptal") {
               forgetGame(code);
               forgetRack(code);
+              forgetSeen(code);
             }
             break;
         }
@@ -303,6 +404,45 @@ export function useOnlineGame(
     if (link.current?.send({ t: "nudge" })) setNudgeAfter(Date.now() + NUDGE_GAP);
   }, [theirTurn, nudgesLeft, nudgeAfter]);
 
+  const me = room?.you ?? null;
+  const chatOpen = me !== null && room !== null && room.phase !== "waiting";
+  const unread = me === null ? 0 : lines.filter((line) => line.from !== me && line.id > seenId).length;
+
+  /** A line goes as typed, trimmed; the server cleans it and sends it back to both sides. */
+  const say = useCallback(
+    (text: string): boolean => {
+      const line = text.trim();
+      if (!chatOpen || !line || (sayRefused && sayRefused.until > Date.now())) return false;
+      if (!link.current?.send({ t: "say", text: line })) return false;
+      setSayRefused(null);
+      return true;
+    },
+    [chatOpen, sayRefused],
+  );
+
+  /** The server answers with the whole chat again, as the new setting has it. */
+  const mute = useCallback(
+    (on: boolean) => {
+      if (chatOpen) link.current?.send({ t: "mute", on });
+    },
+    [chatOpen],
+  );
+
+  const see = useCallback(
+    (id: number) => {
+      if (id <= seenRef.current) return;
+      seenRef.current = id;
+      saveSeen(code, id);
+      setSeenId(id);
+    },
+    [code],
+  );
+
+  const chat = useMemo<Chat>(
+    () => ({ open: chatOpen, lines, muted, unread, heard, refused: sayRefused, say, mute, see }),
+    [chatOpen, lines, muted, unread, heard, sayRefused, say, mute, see],
+  );
+
   return {
     ...hand,
     table: shown,
@@ -324,5 +464,6 @@ export function useOnlineGame(
     nudgeAfter,
     nudge,
     nudged,
+    chat,
   };
 }

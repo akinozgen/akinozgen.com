@@ -228,8 +228,10 @@ play anything in the dictionary.
 Games between people are turn by turn with no clock: make a move, close
 the tab, come back when it's your turn. There are no accounts. Each browser
 keeps a random secret; its SHA-256 is the player's id, and the name others
-see ("Neşeli Kirpi #4821") comes from that id by a fixed list of words, on
-the server as in the browser, so nobody picks their own.
+see ("Neşeli Kirpi #4821") starts as two words drawn from that id. A player
+may roll other words or type a name of their own; the server cleans it and
+turns away rude words (`src/blocklist.ts`, built from two published lists),
+and the number after `#` stays the device's.
 
 The server is the site's Worker (`src/worker.ts`, which wraps Astro's
 handler) with two Durable Objects from `packages/harfiyen/src/server/worker`:
@@ -243,7 +245,7 @@ handler) with two Durable Objects from `packages/harfiyen/src/server/worker`:
 | -------- | ---- |
 | `GET /api/harfiyen/oda` | A new invitation; answers its code, for a link `…/games/harfiyen/#/oda/CODE` |
 | `GET /api/harfiyen/ozet` | Up to 20 rooms summed up for the list of games, without opening them |
-| `WS /api/harfiyen/ws/oda/CODE` | The room: hello, join, play, swap, pass, resign, rematch |
+| `WS /api/harfiyen/ws/oda/CODE` | The room: hello, join, play, swap, pass, resign, rematch, nudge, chat |
 | `WS /api/harfiyen/ws/lobi` | Looking for an opponent |
 | `GET /api/harfiyen/vapid` | The public key browsers subscribe to push with |
 
@@ -268,10 +270,20 @@ online play works and there are no notices. `GET /api/harfiyen/vapid` gives
 browsers the public half. On iPhones, Web Push reaches only a page added to
 the home screen.
 
+While waiting, a player may nudge the other — five times a game, thirty
+seconds apart — which shakes an open screen or, if none is open, sends a
+push. The two players can also talk: a line is cleaned on the server
+(rude words starred, links cut, `src/server/chat.ts`), kept with the room's
+last fifty in a row of its own, and sent to both screens; a player may mute
+the other, here and by push, without the other being told. Someone away
+hears of the chat by push at most every five minutes. A player gets a
+second between lines and ten a minute.
+
 For development, `pnpm --filter @harfiyen/engine dev:mp` runs the same
 router and objects alone (`packages/harfiyen/dev`, with a development VAPID
 key in its untracked `.dev.vars`), and the game's Vite server proxies
 `/api/harfiyen` to it. `node scripts/e2e-online.ts [url]`
-(in `packages/harfiyen`) plays a whole game between two sockets, a
-reconnect, a rematch and a lobby pairing against a running server.
+(in `packages/harfiyen`) plays a whole game between two sockets, a nudge,
+the chat, a reconnect, a rematch and a lobby pairing against a running
+server.
 

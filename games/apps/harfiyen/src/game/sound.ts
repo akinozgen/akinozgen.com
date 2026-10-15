@@ -1,10 +1,11 @@
 import { useEffect, useRef, useSyncExternalStore } from "react";
 
 /**
- * The game's two sounds, made on the spot with the Web Audio API (no files
- * to load): a soft "ting" when the other side's move lands, and a low
- * double knock for a nudge. Browsers only let a page make sound after the
- * player has touched it, so the audio starts on the first tap or key.
+ * The game's sounds, made on the spot with the Web Audio API (no files to
+ * load): a soft "ting" when the other side's move lands, a low double
+ * knock for a nudge, and a small pop for the other player's chat line.
+ * Browsers only let a page make sound after the player has touched it, so
+ * the audio starts on the first tap or key.
  * A switch in the top bar turns them off, remembered in this browser.
  */
 
@@ -114,6 +115,14 @@ export const synth = {
       tone(c, c.destination, at + offset, 900, 400, 0.05, 0.03, "square");
     }
   },
+  /** A soft bubble, ~80 ms: a sine sliding up an octave, with a faint click at its start. */
+  pop(): void {
+    const c = context();
+    if (!c || c.state !== "running") return;
+    const at = c.currentTime + 0.01;
+    tone(c, c.destination, at, 440, 880, 0.11, 0.08);
+    tone(c, c.destination, at, 1800, 1200, 0.015, 0.02, "triangle");
+  },
 };
 
 export function playTing(): void {
@@ -122,6 +131,10 @@ export function playTing(): void {
 
 export function playNudge(): void {
   if (soundOn()) synth.nudge();
+}
+
+export function playPop(): void {
+  if (soundOn()) synth.pop();
 }
 
 /**

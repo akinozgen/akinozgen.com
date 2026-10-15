@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { seeded } from "../src/rng.ts";
 import { CODE_PATTERN, newCode, normalizeCode } from "../src/server/codes.ts";
 import {
+  CHAT_MAX,
   MAX_MESSAGE,
   MAX_SUMMARY,
   parseCreate,
@@ -23,7 +24,9 @@ describe("room requests", () => {
     expect(room({ t: "play", n: 3, p: [[112, 5, 0], [113, 14, 1]] })).toEqual({ t: "play", n: 3, p: [[112, 5, 0], [113, 14, 1]] });
     expect(room({ t: "swap", n: 0, tiles: [3, 29] })).toEqual({ t: "swap", n: 0, tiles: [3, 29] });
     expect(room({ t: "pass", n: 7 })).toEqual({ t: "pass", n: 7 });
-    for (const t of ["join", "resign", "rematch", "cancel"]) expect(room({ t, extra: "ignored" })).toEqual({ t });
+    for (const t of ["join", "resign", "rematch", "cancel", "nudge"]) expect(room({ t, extra: "ignored" })).toEqual({ t });
+    expect(room({ t: "say", text: "Merhaba!" })).toEqual({ t: "say", text: "Merhaba!" });
+    expect(room({ t: "mute", on: true })).toEqual({ t: "mute", on: true });
 
     const sub = { endpoint: "https://fcm.googleapis.com/fcm/send/abc", keys: { p256dh: "B".padEnd(87, "A"), auth: "A".repeat(22) } };
     expect(room({ t: "push", sub: { ...sub, extra: 1 } })).toEqual({ t: "push", sub });
@@ -50,6 +53,10 @@ describe("room requests", () => {
       { t: "swap", n: 0, tiles: [30] },
       { t: "pass" },
       { t: "chat", text: "merhaba" },
+      { t: "say" },
+      { t: "say", text: 42 },
+      { t: "say", text: "x".repeat(CHAT_MAX * 4 + 1) },
+      { t: "mute", on: "yes" },
     ];
     for (const value of bad) expect(typeof value === "string" ? parseRoomRequest(value) : room(value)).toBeNull();
     expect(parseRoomRequest("x".repeat(MAX_MESSAGE + 1))).toBeNull();

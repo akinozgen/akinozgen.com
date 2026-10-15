@@ -1,6 +1,8 @@
 import type { ErrorCode } from "@harfiyen/engine";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { readJson, writeJson } from "@travelle/core";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { ChatButton, ChatDrawer, ChatIcon } from "../components/Chat.tsx";
 import { GiveUp } from "../components/GiveUp.tsx";
 import { Monogram } from "../components/Monogram.tsx";
 import { onlinePlayers } from "../components/players.tsx";
@@ -12,14 +14,43 @@ import { go } from "../game/route.ts";
 import type { SocketConstructor } from "../game/socket.ts";
 import { playNudge } from "../game/sound.ts";
 import { locative } from "../game/turkish.ts";
-import { type Nudge, type OnlineGame, useOnlineGame } from "../game/useOnlineGame.ts";
+import { type OnlineGame, useOnlineGame } from "../game/useOnlineGame.ts";
 import { Dots, GameScreen } from "./GameScreen.tsx";
 
 const HUB = "#/cevrimici";
 const TURN_TITLE = "(Sıra sende) harfiyen";
 const NUDGE_TITLE = "(Dürtüldün!) harfiyen";
+const CHAT_TITLE = "(Yeni mesaj) harfiyen";
+const TITLES = [TURN_TITLE, NUDGE_TITLE, CHAT_TITLE];
 /** How long the page shakes for a nudge; the class comes off after. */
 export const SHAKE_MS = 650;
+/** How long a word at the top stays: who nudged, or what the other player wrote. */
+const NUDGE_TOAST_MS = 3500;
+export const CHAT_TOAST_MS = 4000;
+/** The longest a chat line runs in the word at the top; the rest is in the chat. */
+const TOAST_CHARS = 90;
+
+/** Whether the chat was left open, on a computer; a phone's always starts closed. */
+const CHAT_OPEN_KEY = "harfiyen:chat-open:v1";
+/** Wide enough for the chat to sit beside the game rather than take the screen. */
+const WIDE = "(min-width: 881px)";
+
+function isWide(): boolean {
+  return window.matchMedia?.(WIDE).matches ?? true;
+}
+
+function useWide(): boolean {
+  const [wide, setWide] = useState(isWide);
+  useEffect(() => {
+    const query = window.matchMedia?.(WIDE);
+    if (!query) return;
+    const update = (): void => setWide(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+  return wide;
+}
 
 /** Errors that leave nothing to show of the room. */
 const ENDINGS: readonly ErrorCode[] = ["yok", "iptal", "dolu", "kapali", "surum"];
@@ -47,10 +78,32 @@ export function OnlineRoom({
 }): React.ReactElement {
   const api = useOnlineGame(code, lexicons, { WebSocket });
   const { room, error } = api;
-  useTurnTitle(api.yourTurn, api.nudged);
+
+  // A nudge or a chat line blinks the title of a tab in the background.
+  const [blink, setBlink] = useState<Blink | null>(null);
+  useEffect(() => {
+    if (api.nudged) setBlink({ id: api.nudged.id, title: NUDGE_TITLE });
+  }, [api.nudged]);
+  useEffect(() => {
+    if (api.chat.heard) setBlink({ id: Date.now(), title: CHAT_TITLE });
+  }, [api.chat.heard]);
+  useTurnTitle(api.yourTurn, blink);
+
+  // The chat's drawer: the top bar's button and the word at the top open it. A computer remembers it
+  // open; a phone, where it takes the whole screen, closes it when the screen turns narrow.
+  const wide = useWide();
+  const [chatOpen, setChatOpen] = useState(() => isWide() && readJson<boolean>(CHAT_OPEN_KEY) === true);
+  const showChat = useCallback((open: boolean) => {
+    setChatOpen(open);
+    if (isWide()) writeJson(CHAT_OPEN_KEY, open);
+  }, []);
+  useEffect(() => {
+    if (!wide) setChatOpen(false);
+  }, [wide]);
 
   const top = (
     <TopBar section="online" waiting={waiting}>
+      {api.chat.open && <ChatButton unread={api.chat.unread} open={chatOpen} onToggle={() => showChat(!chatOpen)} />}
       <a className="icon-button" href={HUB} aria-label="Oyunların" title="Oyunların">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M9 6h11M9 12h11M9 18h11" />
@@ -86,10 +139,23 @@ export function OnlineRoom({
   return (
     <>
       {top}
-      <RoomGame api={api} code={code} lexicons={lexicons} failed={failed} onRetry={onRetry} blocked={blocked} />
+      <RoomGame
+        api={api}
+        code={code}
+        lexicons={lexicons}
+        failed={failed}
+        onRetry={onRetry}
+        blocked={blocked}
+        chatOpen={chatOpen}
+        wide={wide}
+        onChat={showChat}
+      />
     </>
   );
 }
+
+/** A word at the top for a few seconds: who nudged, or what the other player just wrote. */
+type Toast = { kind: "nudge"; text: string } | { kind: "chat"; name: string; text: string };
 
 function RoomGame({
   api,
@@ -98,6 +164,9 @@ function RoomGame({
   failed,
   onRetry,
   blocked,
+  chatOpen,
+  wide,
+  onChat,
 }: {
   api: OnlineGame;
   code: string;
@@ -105,6 +174,10 @@ function RoomGame({
   failed: boolean;
   onRetry: () => void;
   blocked: boolean;
+  chatOpen: boolean;
+  /** The chat sits beside the game, not over it. */
+  wide: boolean;
+  onChat: (open: boolean) => void;
 }): React.ReactElement {
   const room = api.room!;
   const me = room.you ?? (room.host === null ? 0 : 1 - room.host);
@@ -151,7 +224,7 @@ function RoomGame({
   const theirs = room.rematch[them] ?? false;
 
   // A nudge from the other side: the page shakes, the phone buzzes, a knock sounds, and a word says who.
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<Toast | null>(null);
   const nudged = api.nudged;
   useEffect(() => {
     if (!nudged) return;
@@ -159,20 +232,54 @@ function RoomGame({
     navigator.vibrate?.([120, 60, 120]);
     playNudge();
     const from = room.seats[nudged.from]?.name;
-    setToast(`${from ? splitName(from).base : "Rakibin"} seni dürttü!`);
-    const timer = setTimeout(() => setToast(null), 3500);
-    return () => clearTimeout(timer);
+    setToast({ kind: "nudge", text: `${from ? splitName(from).base : "Rakibin"} seni dürttü!` });
     // Once per nudge; the room's names don't change it.
   }, [nudged]);
+
+  // The other player's line, while the chat is out of sight: a word at the top that opens it. (It has popped already.)
+  const heard = api.chat.heard;
+  useEffect(() => {
+    if (!heard || (chatOpen && document.visibilityState !== "hidden")) return;
+    setToast({ kind: "chat", name: names[heard.from] ?? "Rakibin", text: heard.text });
+    // Once per line.
+  }, [heard]);
+  // Opened, the chat has it all: the word at the top goes.
+  useEffect(() => {
+    if (chatOpen) setToast((now) => (now?.kind === "chat" ? null : now));
+  }, [chatOpen]);
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), toast.kind === "nudge" ? NUDGE_TOAST_MS : CHAT_TOAST_MS);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
 
   return (
     <div className={`room room--${room.phase}`}>
       {toast &&
         createPortal(
-          <div className="toast" role="status" aria-live="assertive">
-            <NudgeIcon />
-            {toast}
-          </div>,
+          toast.kind === "nudge" ? (
+            <div className="toast" role="status" aria-live="assertive">
+              <NudgeIcon />
+              {toast.text}
+            </div>
+          ) : (
+            <div className="toast toast--chat" role="status" aria-live="polite">
+              <button
+                type="button"
+                className="toast__open"
+                onClick={() => {
+                  setToast(null);
+                  onChat(true);
+                }}
+              >
+                <ChatIcon />
+                <span className="toast__text">
+                  <strong>{toast.name}:</strong> {shorten(toast.text, TOAST_CHARS)}
+                </span>
+              </button>
+            </div>
+          ),
           document.body,
         )}
       <GameScreen
@@ -181,7 +288,7 @@ function RoomGame({
         failed={failed}
         onRetry={onRetry}
         players={players}
-        blocked={blocked}
+        blocked={blocked || (chatOpen && !wide && api.chat.open)}
         meta={meta}
         waitingStatus={
           <span className="status__waiting">
@@ -218,8 +325,28 @@ function RoomGame({
         }
         overExtra={<Rematch mine={mine} theirs={theirs} other={other} />}
       />
+      {api.chat.open &&
+        createPortal(
+          <ChatDrawer
+            chat={api.chat}
+            me={me}
+            other={names[them]}
+            otherOnline={online[them]}
+            connected={open}
+            open={chatOpen}
+            wide={wide}
+            onClose={() => onChat(false)}
+          />,
+          document.body,
+        )}
     </div>
   );
+}
+
+/** `text`, cut to `max` characters (not halves of one) with an ellipsis if it's longer. */
+function shorten(text: string, max: number): string {
+  const chars = [...text];
+  return chars.length > max ? `${chars.slice(0, max - 1).join("")}…` : text;
 }
 
 /** `flag`, once it has held for `ms`; false again at once. */
@@ -287,18 +414,26 @@ function NudgeButton({ left, after, open, onNudge }: { left: number; after: numb
   );
 }
 
+/** Something that blinks the title of a tab in the background: a nudge, a chat line. `id` tells one from the next. */
+interface Blink {
+  id: number;
+  title: string;
+}
+
 /**
  * While it's the player's turn and the tab is in the background, its title
- * says so; after a nudge it blinks until the tab is looked at.
+ * says so; after a nudge or a chat line it blinks until the tab is looked at.
  */
-function useTurnTitle(yourTurn: boolean, nudged: Nudge | null): void {
+function useTurnTitle(yourTurn: boolean, blink: Blink | null): void {
+  // What the title says between blinks: whose turn it is, or the page's own.
+  const usual = useRef<() => string>(() => TURN_TITLE);
   useEffect(() => {
-    if (!nudged || document.visibilityState !== "hidden") return;
-    let blink = true;
-    document.title = NUDGE_TITLE;
+    if (!blink || document.visibilityState !== "hidden") return;
+    let on = true;
+    document.title = blink.title;
     const timer = setInterval(() => {
-      blink = !blink;
-      document.title = blink ? NUDGE_TITLE : TURN_TITLE;
+      on = !on;
+      document.title = on ? blink.title : usual.current();
     }, 1000);
     // Seen: the blinking stops; the title below puts the usual one back.
     const stop = (): void => {
@@ -309,11 +444,13 @@ function useTurnTitle(yourTurn: boolean, nudged: Nudge | null): void {
       clearInterval(timer);
       document.removeEventListener("visibilitychange", stop);
     };
-  }, [nudged]);
+  }, [blink]);
   useEffect(() => {
-    const before = document.title === TURN_TITLE || document.title === NUDGE_TITLE ? "harfiyen" : document.title;
+    const before = TITLES.includes(document.title) ? "harfiyen" : document.title;
+    const title = (): string => (yourTurn && document.visibilityState === "hidden" ? TURN_TITLE : before);
+    usual.current = title;
     const update = (): void => {
-      document.title = yourTurn && document.visibilityState === "hidden" ? TURN_TITLE : before;
+      document.title = title();
     };
     update();
     document.addEventListener("visibilitychange", update);

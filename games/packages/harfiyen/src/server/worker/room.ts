@@ -1,7 +1,8 @@
 import { DurableObject } from "cloudflare:workers";
 import { publicId } from "../../names.ts";
 import { freshSeed } from "../../rng.ts";
-import { parseRoomRequest, PROTOCOL, type RoomMessage, type Summary } from "../protocol.ts";
+import { canChat, type Chat, chatFor, emptyChat, mute, pushDue, pushed, say } from "../chat.ts";
+import { parseRoomRequest, PROTOCOL, type RoomMessage, type RoomRequest, type Summary } from "../protocol.ts";
 import {
   createInvite,
   createMatched,
@@ -14,6 +15,7 @@ import {
   onAlarm,
   rename,
   type Room,
+  seatOf,
   stateFor,
   summaryOf,
 } from "../room.ts";
@@ -44,6 +46,8 @@ interface Attachment {
 }
 
 const KEY = "room";
+/** The chat lives in a row of its own. */
+const CHAT_KEY = "chat";
 /** A browser sends a few messages a minute; this many in ten seconds is something else. */
 const RATE = { window: 10_000, max: 40 };
 /** Sockets one room keeps: two players, each with a spare tab or a reconnect in flight. */
@@ -57,6 +61,7 @@ const MAX_SOCKETS = 6;
  */
 export class HarfiyenRoom extends DurableObject<HarfiyenEnv> {
   private room: Room | null | undefined;
+  private chat: Chat | undefined;
 
   constructor(ctx: DurableObjectState, env: HarfiyenEnv) {
     super(ctx, env);
@@ -77,9 +82,20 @@ export class HarfiyenRoom extends DurableObject<HarfiyenEnv> {
     if (room) {
       await this.ctx.storage.put(KEY, room);
     } else {
+      this.chat = undefined;
       await this.ctx.storage.deleteAlarm();
       await this.ctx.storage.deleteAll();
     }
+  }
+
+  private async loadChat(): Promise<Chat> {
+    this.chat ??= (await this.ctx.storage.get<Chat>(CHAT_KEY)) ?? emptyChat();
+    return this.chat;
+  }
+
+  private async storeChat(chat: Chat): Promise<void> {
+    this.chat = chat;
+    await this.ctx.storage.put(CHAT_KEY, chat);
   }
 
   /** A new invitation under `code`; false if the code is taken. */
@@ -153,10 +169,17 @@ export class HarfiyenRoom extends DurableObject<HarfiyenEnv> {
       if (renamed) await this.store(renamed);
       // The newcomer gets the room; the others learn they're here.
       this.broadcast(renamed ?? room);
+      // A player gets the chat so far.
+      const seat = seatOf(room, attachment.pub);
+      if (canChat(room, seat)) send(ws, chatFor(await this.loadChat(), seat));
       return;
     }
     if (!attachment.pub) {
       send(ws, { t: "error", code: "kimlik" });
+      return;
+    }
+    if (request.t === "say" || request.t === "mute") {
+      await this.talk(ws, room, attachment.pub, request);
       return;
     }
 
@@ -177,6 +200,51 @@ export class HarfiyenRoom extends DurableObject<HarfiyenEnv> {
     if (outcome.broadcast) this.broadcast(current);
     else if (outcome.resend) send(ws, stateFor(current, attachment.pub, this.online(current)));
     if (outcome.nudge !== undefined) this.nudge(current, outcome.nudge);
+    // The game has begun: both players may talk now.
+    if (outcome.room && room.phase === "waiting" && outcome.room.phase !== "waiting") {
+      const chat = await this.loadChat();
+      for (const socket of this.ctx.getWebSockets()) {
+        const seat = seatOf(outcome.room, (socket.deserializeAttachment() as Attachment).pub);
+        if (canChat(outcome.room, seat)) send(socket, chatFor(chat, seat));
+      }
+    }
+  }
+
+  /**
+   * A chat line or a mute. A line goes to both players' screens — not to one
+   * who muted its sender — and, if the other has none open, by push, now and
+   * then. A mute sends the seat its chat as it now sees it.
+   */
+  private async talk(ws: WebSocket, room: Room, pub: string, request: Extract<RoomRequest, { t: "say" | "mute" }>): Promise<void> {
+    const seat = seatOf(room, pub);
+    if (!canChat(room, seat)) return;
+    const chat = await this.loadChat();
+    const sockets = this.ctx.getWebSockets().map((socket) => ({ socket, seat: seatOf(room, (socket.deserializeAttachment() as Attachment).pub) }));
+    if (request.t === "mute") {
+      const next = mute(chat, seat, request.on);
+      if (next) await this.storeChat(next);
+      for (const to of sockets) if (to.seat === seat) send(to.socket, chatFor(next ?? chat, seat));
+      return;
+    }
+    const now = Date.now();
+    const result = say(chat, seat, request.text, now);
+    if ("refused" in result) {
+      send(ws, { t: "sayRefused", wait: result.refused });
+      return;
+    }
+    const other = 1 - seat;
+    let next = result.chat;
+    const sub = room.push?.[other];
+    const away = !sockets.some((to) => to.seat === other);
+    if (away && sub && this.env.HARFIYEN_VAPID && pushDue(next, other, now)) {
+      next = pushed(next, other, now);
+      const notice = { title: nameAt(room, seat) ?? "Rakibin", body: result.line.text, url: `#/oda/${room.code}`, tag: `${room.code}:sohbet` };
+      this.ctx.waitUntil(this.push(other, sub, notice));
+    }
+    await this.storeChat(next);
+    for (const to of sockets) {
+      if (to.seat === seat || (to.seat === other && !next.muted[other])) send(to.socket, { t: "said", line: result.line });
+    }
   }
 
   async webSocketClose(ws: WebSocket): Promise<void> {

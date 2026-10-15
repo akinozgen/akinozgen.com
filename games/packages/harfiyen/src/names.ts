@@ -64,7 +64,7 @@ export const NAME_MAX = 24;
 const BLOCKED = new Set([...BLOCKLIST, ...["harfiyen", "admin", "moderator", "moderatör", "yönetici", "yonetici"].map((word) => foldWord(word))]);
 
 /** Blocked words this long are caught at the start of a longer word too ("orospular"); shorter ones only whole. */
-const PREFIX_MIN = 6;
+export const PREFIX_MIN = 6;
 const PREFIXES = [...BLOCKED].filter((word) => word.length >= PREFIX_MIN);
 
 /**

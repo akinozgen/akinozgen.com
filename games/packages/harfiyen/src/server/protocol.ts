@@ -25,6 +25,9 @@ export const PROTOCOL = 1;
 /** Largest message the server will read. */
 export const MAX_MESSAGE = 4096;
 
+/** Longest chat line, in characters, after cleaning. */
+export const CHAT_MAX = 160;
+
 /** How many rooms one summary request may ask about. */
 export const MAX_SUMMARY = 20;
 
@@ -54,6 +57,16 @@ export interface RoomInfo {
   /** Nobody moved for a month and the game was closed without a result. */
   abandoned?: boolean;
   updatedAt: number;
+}
+
+/** One line of the room's chat. `id` counts up from 1 within the room. */
+export interface ChatLine {
+  id: number;
+  /** The seat that said it. */
+  from: number;
+  /** Cleaned by the server: trimmed, rude words starred, links cut. */
+  text: string;
+  at: number;
 }
 
 export type ErrorCode =
@@ -93,7 +106,11 @@ export type RoomRequest =
   /** Where to send this seat's notices while it's away; null to stop. Sent after each hello. */
   | { t: "push"; sub: PushSub | null }
   /** Nudge the other player, whose turn it is: a few a game, not too often. */
-  | { t: "nudge" };
+  | { t: "nudge" }
+  /** A chat line, as typed (or a ready phrase); the server cleans it. Seated players, once both seats are taken. */
+  | { t: "say"; text: string }
+  /** Stop (or start again) receiving the other player's chat, here and by push. */
+  | { t: "mute"; on: boolean };
 
 export type RoomMessage =
   /** The room, and — for a seated player once a game has begun — their table (see `tableToJson`). */
@@ -104,6 +121,15 @@ export type RoomMessage =
   | { t: "nudge"; from: number }
   /** A nudge that couldn't go: none left, or too soon after the last; `wait` ms until the next may. */
   | { t: "nudgeRefused"; left: number; wait: number }
+  /**
+   * The chat so far, as this seat sees it (the other's lines left out while
+   * muted). Sent after a seated player's hello and after they mute or unmute.
+   */
+  | { t: "chat"; lines: ChatLine[]; muted: boolean }
+  /** A new chat line, to both players' screens (not to one who muted its sender). */
+  | { t: "said"; line: ChatLine }
+  /** A chat line that didn't go: too fast (`wait` ms until the next may), or nothing left after cleaning (`wait` 0). */
+  | { t: "sayRefused"; wait: number }
   | { t: "error"; code: ErrorCode };
 
 export type LobbyRequest = { t: "seek"; v: number; secret: string; name?: string };
@@ -185,6 +211,10 @@ export function parseRoomRequest(raw: string | ArrayBuffer): RoomRequest | null 
         : null;
     case "pass":
       return isInt(m.n, 0, 10_000) ? { t: "pass", n: m.n } : null;
+    case "say":
+      return typeof m.text === "string" && m.text.length <= CHAT_MAX * 4 ? { t: "say", text: m.text } : null;
+    case "mute":
+      return typeof m.on === "boolean" ? { t: "mute", on: m.on } : null;
     case "push":
       if (m.sub === null) return { t: "push", sub: null };
       return validSub(m.sub)

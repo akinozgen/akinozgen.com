@@ -211,7 +211,8 @@ const unchanged = (room: Room, reply?: RoomMessage): Outcome => ({ room, changed
 export function handle(
   room: Room,
   pub: string,
-  request: Exclude<RoomRequest, { t: "hello" }>,
+  /** Chat (`say`, `mute`) is the chat's business, not the room's. */
+  request: Exclude<RoomRequest, { t: "hello" | "say" | "mute" }>,
   deps: Deps,
   /** The name the sender's hello gave, for taking a seat. */
   name?: string,

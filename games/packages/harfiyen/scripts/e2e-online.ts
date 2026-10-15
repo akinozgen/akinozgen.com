@@ -1,8 +1,8 @@
 /**
  * Online play end to end, against a running Worker (the dev one by default):
  * an invitation taken by a second device, a whole game played by two
- * computer players through real sockets, a stale action, a reconnect, the
- * summary, and two seekers paired by the lobby.
+ * computer players through real sockets, a nudge, the chat, a stale action,
+ * a reconnect, the summary, and two seekers paired by the lobby.
  *
  *   pnpm --filter @harfiyen/engine dev:mp            # in one terminal
  *   node scripts/e2e-online.ts [http://localhost:8787 | https://akinozgen.com]
@@ -150,6 +150,35 @@ async function invitationAndGame(): Promise<void> {
   await nudger.until((m) => m.t === "room" && m.room.nudges[m.room.you!] === 4, "a nudge counted", 5000, sent);
   check(true, "a nudge shakes the other player, four left");
 
+  // The chat opens with the game; a line reaches both players, its rude word starred.
+  check(a.messages.some((m) => m.t === "chat") && b.messages.some((m) => m.t === "chat"), "the chat opens with the game");
+  const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+  let heardFrom = b.messages.length;
+  let saidFrom = a.messages.length;
+  a.send({ t: "say", text: "İyi oyunlar amk" });
+  const heard = await b.until((m) => m.t === "said", "a chat line", 5000, heardFrom);
+  await a.until((m) => m.t === "said", "the sender's own line back", 5000, saidFrom);
+  check(heard.t === "said" && heard.line.text === "İyi oyunlar ***", `a line reaches both, starred: ${heard.t === "said" ? heard.line.text : ""}`);
+  saidFrom = a.messages.length;
+  a.send({ t: "say", text: "bir daha" });
+  await a.until((m) => m.t === "sayRefused" && m.wait > 0, "a line too soon", 5000, saidFrom);
+  check(true, "a line too soon after the last is held back");
+  // A mute keeps the other's lines away; lifting it brings them back.
+  const muteFrom = b.messages.length;
+  b.send({ t: "mute", on: true });
+  await b.until((m) => m.t === "chat" && m.muted, "muted", 5000, muteFrom);
+  await pause(1100);
+  heardFrom = b.messages.length;
+  saidFrom = a.messages.length;
+  a.send({ t: "say", text: "duydun mu?" });
+  await a.until((m) => m.t === "said" && m.line.text === "duydun mu?", "the second line back", 5000, saidFrom);
+  await pause(500);
+  check(!b.messages.slice(heardFrom).some((m) => m.t === "said"), "a muted player doesn't get the line");
+  heardFrom = b.messages.length;
+  b.send({ t: "mute", on: false });
+  const unmuted = await b.until((m) => m.t === "chat" && !m.muted, "unmuted", 5000, heardFrom);
+  check(unmuted.t === "chat" && unmuted.lines.length === 2, "unmuted: both lines there");
+
   // An action for an older table is dropped and the state resent.
   const mover = a.table()!.turn === a.last!.room.you ? a : b;
   mover.send({ t: "pass", n: 99 });
@@ -165,6 +194,8 @@ async function invitationAndGame(): Promise<void> {
   bAgain.send({ t: "hello", v: PROTOCOL, secret: b.secret, name: "Bilge Baykuş" });
   await bAgain.until((m) => m.t === "room", "B back");
   check(bAgain.table()!.rack.join() === b.table()!.rack.join(), "reconnect: same rack back");
+  const history = await bAgain.until((m) => m.t === "chat", "the chat after a reconnect", 5000, 0);
+  check(history.t === "chat" && history.lines.length === 2, "reconnect: the chat comes back");
   await a.until((m) => m.t === "room" && (m.room.seats[bSeat]?.name.startsWith("Bilge Baykuş #") ?? false), "B's new name", 5000, mark);
   check(true, "a rename reaches the other side with the next hello");
 

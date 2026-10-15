@@ -4787,3 +4787,631 @@ a.button {
     height: 32px;
   }
 }
+
+/* --- chat --- */
+
+/* Read out, not shown. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/*
+ * The chat's drawer: down the right edge, the screen's full height, sliding
+ * in over nothing (the board stays in play). On a phone it is the screen.
+ */
+.chat-drawer {
+  --chat-w: 380px;
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  width: min(var(--chat-w), 100vw);
+  height: 100dvh;
+  background: var(--panel-solid);
+  border-left: 1px solid var(--panel-line);
+  box-shadow: -18px 0 50px rgb(30 50 70 / 16%);
+  transform: translateX(100%);
+  visibility: hidden;
+  transition:
+    transform 280ms cubic-bezier(0.2, 0.9, 0.3, 1),
+    visibility 0s linear 280ms;
+}
+
+.chat-drawer.is-open {
+  transform: none;
+  visibility: visible;
+  transition:
+    transform 280ms cubic-bezier(0.2, 0.9, 0.3, 1),
+    visibility 0s;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .chat-drawer {
+    box-shadow: -18px 0 50px rgb(0 0 0 / 45%);
+  }
+}
+
+:root[data-theme="dark"] .chat-drawer {
+  box-shadow: -18px 0 50px rgb(0 0 0 / 45%);
+}
+
+/* A phone: the whole screen, or what the keyboard leaves of it. */
+.chat-drawer.is-full {
+  top: var(--chat-top, 0px);
+  width: 100%;
+  height: var(--chat-height, 100dvh);
+  border-left: 0;
+  box-shadow: none;
+}
+
+html.is-chat-full,
+html.is-chat-full body {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+/*
+ * Wide enough, the page moves over for the drawer instead of going under it:
+ * the board gives up a little of its size so the game and the panel still
+ * fit beside it. Narrower, the drawer covers the panel's side; the board,
+ * the rack and the buttons stay clear.
+ */
+@media (min-width: 1232px) and (min-height: 521px) {
+  body {
+    transition: padding-right 280ms cubic-bezier(0.2, 0.9, 0.3, 1);
+  }
+
+  html.has-chat-drawer body {
+    padding-right: 380px;
+  }
+
+  html.has-chat-drawer .app {
+    --board: clamp(400px, min(100dvh - 372px, 100vw - 380px - var(--side) - var(--gap) - 64px), 640px);
+  }
+}
+
+/*
+ * Narrower, there's no room for both: the panel steps aside while the chat
+ * is open, the board keeps to the left, clear of the drawer, and the scores
+ * come above it as on a phone.
+ */
+@media (min-width: 881px) and (max-width: 1231px) {
+  html.has-chat-drawer .stage {
+    grid-template-columns: var(--board);
+    justify-content: start;
+  }
+
+  html.has-chat-drawer .stage > .panel {
+    display: none;
+  }
+
+  html.has-chat-drawer .stage__board > .strip-row {
+    display: flex !important;
+  }
+
+  /* The top bar runs under the drawer too: the tagline goes, so the brand and the switch stay whole. */
+  html.has-chat-drawer .brand__tag {
+    display: none;
+  }
+}
+
+.chat-drawer__head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 14px 12px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.is-full .chat-drawer__head {
+  padding: max(10px, env(safe-area-inset-top)) 12px 10px 6px;
+}
+
+.chat-drawer__who {
+  flex: 1;
+  min-width: 0;
+  margin-right: 4px;
+}
+
+.chat-drawer__title {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1.3;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.chat-drawer__name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 1px 0 0;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+.chat-drawer__other {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The other player's colour, ringed green while they're here, hollow while away. */
+.chat-drawer__dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  background: var(--bot);
+  border-radius: 50%;
+}
+
+.chat-drawer__dot.is-online {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--chain) 45%, transparent);
+}
+
+.chat-drawer__dot.is-away {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--bot);
+}
+
+/* The header's round buttons: back, hide their lines, close. */
+.chat-drawer__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  color: var(--ink-soft);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  transition:
+    color 150ms ease,
+    background 150ms ease,
+    border-color 150ms ease;
+}
+
+.chat-drawer__icon:hover:not(:disabled) {
+  color: var(--ink);
+  background: var(--well);
+}
+
+.chat-drawer__icon:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.chat-drawer__icon svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.chat-drawer__back svg {
+  width: 24px;
+  height: 24px;
+}
+
+.chat__mute svg {
+  width: 19px;
+  height: 19px;
+  stroke-width: 1.8;
+}
+
+/* On: their lines are hidden, and the button says so in the accent. */
+.chat__mute.is-on {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+/* The lines fill the drawer, sitting at the bottom by the box as in any chat; the list scrolls up from there. */
+.chat__log {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 16px 16px 10px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.chat__log:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -4px;
+}
+
+.chat__empty {
+  margin: auto;
+  padding: 24px 12px;
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+.chat__empty svg {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 6px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.55;
+}
+
+.chat__empty p {
+  margin: 0;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.chat__empty p.muted {
+  max-width: 240px;
+  margin: 4px auto 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.chat__lines {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: auto 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chat__line {
+  max-width: 82%;
+  padding: 7px 12px 6px;
+  font-size: 14.5px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  border-radius: 18px;
+}
+
+.chat__line.is-new {
+  animation: rise-in 220ms ease-out both;
+}
+
+/* The player's own lines on the right in the accent; the other's on the left, plain. */
+.chat__line--you {
+  align-self: flex-end;
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-bottom-right-radius: 6px;
+}
+
+.chat__line--them {
+  align-self: flex-start;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 7%, var(--panel-solid));
+  border-bottom-left-radius: 6px;
+}
+
+/* A change of speaker leaves a little more room. */
+.chat__line--you + .chat__line--them,
+.chat__line--them + .chat__line--you,
+.chat__day + .chat__line {
+  margin-top: 8px;
+}
+
+.chat__time {
+  float: right;
+  margin: 6px 0 -3px 10px;
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.68;
+}
+
+.chat__day {
+  align-self: center;
+  margin: 12px 0 4px;
+  padding: 2px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--ink-soft);
+  background: var(--well);
+  border-radius: 999px;
+}
+
+.chat__day:first-child {
+  margin-top: 0;
+}
+
+.chat-drawer__foot {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 16px max(14px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line);
+}
+
+/* Ready-made lines: one row, sideways, fading at the end where there's more. */
+.chat__phrases {
+  display: flex;
+  gap: 6px;
+  margin: 0 -16px;
+  padding: 1px 16px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  mask-image: linear-gradient(to right, transparent, #000 14px, #000 calc(100% - 40px), transparent);
+}
+
+.chat__phrases::-webkit-scrollbar {
+  display: none;
+}
+
+.phrase {
+  flex: none;
+  height: 32px;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  white-space: nowrap;
+  color: var(--ink);
+  background: var(--panel-solid);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    color 150ms ease,
+    background 150ms ease,
+    border-color 150ms ease,
+    transform 90ms ease;
+}
+
+.phrase:hover:not(:disabled) {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+}
+
+.phrase:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.phrase:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.chat__form {
+  position: relative;
+  display: flex;
+  gap: 8px;
+}
+
+.chat__input {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  padding: 0 16px;
+  font: inherit;
+  font-size: 15px;
+  color: var(--ink);
+  background: var(--well);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  transition:
+    border-color 150ms ease,
+    background 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.chat__input.is-long {
+  padding-right: 42px;
+}
+
+.chat__input::placeholder {
+  color: var(--ink-soft);
+  opacity: 0.75;
+}
+
+.chat__input:focus {
+  outline: none;
+  background: var(--panel-solid);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+/* Sixteen pixels on a phone, or it zooms in on the box. */
+.is-full .chat__input {
+  font-size: 16px;
+}
+
+/* Characters left, once there are few. */
+.chat__left {
+  position: absolute;
+  top: 50%;
+  right: 64px;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--warn-text);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.chat__send {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  color: var(--accent-ink);
+  background: var(--accent);
+  border: 0;
+  border-radius: 50%;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 30%, transparent);
+  cursor: pointer;
+  transition:
+    opacity 150ms ease,
+    transform 90ms ease,
+    box-shadow 150ms ease;
+}
+
+.chat__send:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.chat__send:disabled {
+  opacity: 0.4;
+  box-shadow: none;
+  cursor: default;
+}
+
+.chat__send svg {
+  width: 18px;
+  height: 18px;
+  margin: 1px 2px 0 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Why a line didn't go, and that their lines are hidden: small, under the box; empty, no room taken. */
+.chat__note,
+.chat__muted {
+  margin: -4px 0 0;
+  padding: 0 16px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.chat__note:empty {
+  margin: 0 0 -10px;
+}
+
+.chat__note.is-waiting {
+  color: var(--warn-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.chat__muted {
+  font-weight: 500;
+}
+
+/* The chat in the top bar: lit while the drawer is open, with what's unread on it. */
+.room-chat {
+  position: relative;
+}
+
+.room-chat.is-on {
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.room-chat.is-on:hover {
+  color: var(--accent-ink);
+}
+
+.room-chat__badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  background: var(--wrong);
+  border-radius: 999px;
+  box-shadow: 0 0 0 2px var(--panel-solid);
+  animation: pop 320ms ease-out;
+}
+
+/* The other player's line, while the chat is closed: a word at the top that opens it. */
+.toast--chat {
+  width: max-content;
+  max-width: min(460px, calc(100vw - 32px));
+  padding: 0;
+}
+
+@keyframes toast-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+}
+
+/* On a phone it spans the page just under the name and the tools, so the count on the chat button stays in sight. */
+@media (max-width: 880px) {
+  .toast--chat {
+    top: calc(max(10px, env(safe-area-inset-top)) + 48px);
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: none;
+    transform: none;
+    animation-name: toast-drop;
+  }
+}
+
+.toast__open {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  padding: 10px 18px;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  color: inherit;
+  background: none;
+  border: 0;
+  border-radius: inherit;
+  cursor: pointer;
+}
+
+.toast__text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toast__text strong {
+  font-weight: 800;
+}
