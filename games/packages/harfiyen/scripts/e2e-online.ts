@@ -311,9 +311,11 @@ async function lobby(): Promise<void> {
   const waiting = await x.until((m) => (m as { t: string }).t === "waiting", "waiting");
   check((waiting as unknown as { seekers: number }).seekers >= 1, "first seeker waits");
   await y.open("ws/lobi");
+  const xFrom = x.messages.length;
+  const yFrom = y.messages.length;
   y.send({ t: "seek", v: PROTOCOL });
-  const mx = (await x.until((m) => (m as { t: string }).t === "matched", "X matched")) as unknown as { code: string };
-  const my = (await y.until((m) => (m as { t: string }).t === "matched", "Y matched")) as unknown as { code: string };
+  const mx = (await x.until((m) => (m as { t: string }).t === "matched", "X matched", 5000, xFrom)) as unknown as { code: string };
+  const my = (await y.until((m) => (m as { t: string }).t === "matched", "Y matched", 5000, yFrom)) as unknown as { code: string };
   check(mx.code === my.code, `paired into room ${mx.code}`);
   const xr = new Client("XR", accountX);
   await xr.open(`ws/oda/${mx.code}`);
