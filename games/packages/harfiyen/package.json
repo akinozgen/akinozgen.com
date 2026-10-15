@@ -1,0 +1,20 @@
+{
+  "name": "@harfiyen/engine",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./data/*": "./data/*"
+  },
+  "scripts": {
+    "build:data": "node scripts/build-lexicon.ts",
+    "typecheck": "tsc --noEmit && wrangler types -c dev/wrangler.jsonc dev/worker-configuration.d.ts > /dev/null && tsc --noEmit -p tsconfig.worker.json",
+    "test": "vitest run",
+    "dev:mp": "wrangler dev -c dev/wrangler.jsonc --port 8787"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "wrangler": "4.130.0"
+  }
+}

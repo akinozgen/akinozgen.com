@@ -1,0 +1,3 @@
+dev/worker-configuration.d.ts
+.wrangler/
+dev/.dev.vars

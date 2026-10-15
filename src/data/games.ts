@@ -10,6 +10,15 @@ export interface Game {
 /** Everything under /games. The sources live in this repo under games/. */
 export const games: Game[] = [
   {
+    slug: "harfiyen",
+    name: "harfiyen",
+    tagline: "every letter counts",
+    description:
+      "A word game in Turkish: seven tiles, a board of double and triple squares and a ★ worth 25. Play a computer that only uses words people know, or a friend online, a move at a time.",
+    year: "2026",
+    tags: ["word game", "in Turkish", "online"],
+  },
+  {
     slug: "sizele",
     name: "sizele",
     tagline: "the map is lying",

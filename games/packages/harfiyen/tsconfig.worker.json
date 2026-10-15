@@ -1,0 +1,13 @@
+{
+  // The Worker side of online play, checked against the Workers runtime's
+  // types (dev/worker-configuration.d.ts, made by `wrangler types`) instead of the DOM's.
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2023"],
+    "noUncheckedIndexedAccess": false,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "types": []
+  },
+  "include": ["src/server/worker", "dev"]
+}

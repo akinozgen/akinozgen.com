@@ -1,0 +1,16 @@
+{
+	// Development only: online play on its own, without the site. The site's
+	// own wrangler.jsonc carries the same bindings for production.
+	"name": "harfiyen-dev",
+	"main": "./worker.ts",
+	"compatibility_date": "2026-03-17",
+	"rules": [{ "type": "Text", "globs": ["**/*.txt"], "fallthrough": false }],
+	"durable_objects": {
+		"bindings": [
+			{ "name": "HARFIYEN_ROOM", "class_name": "HarfiyenRoom" },
+			{ "name": "HARFIYEN_LOBBY", "class_name": "HarfiyenLobby" }
+		]
+	},
+	"migrations": [{ "tag": "harfiyen-v1", "new_sqlite_classes": ["HarfiyenRoom", "HarfiyenLobby"] }],
+	"vars": { "HARFIYEN_MP": "on" }
+}

@@ -2,7 +2,8 @@
 	"compatibility_date": "2026-03-17",
 	"compatibility_flags": ["global_fetch_strictly_public"],
 	"name": "akinozgen-portfolio",
-	"main": "@astrojs/cloudflare/entrypoints/server",
+	// Astro's handler, wrapped so harfiyen's online play can export its Durable Objects.
+	"main": "./src/worker.ts",
 	"assets": {
 		"directory": "./dist",
 		"binding": "ASSETS",
@@ -22,5 +23,17 @@
 	],
 	"observability": {
 		"enabled": true
-	}
+	},
+	// harfiyen online: one Durable Object per room, one lobby. SQLite-backed,
+	// which the Workers Free plan allows; nothing here is billed on Free, past
+	// a limit requests just fail until the next day.
+	"durable_objects": {
+		"bindings": [
+			{ "name": "HARFIYEN_ROOM", "class_name": "HarfiyenRoom" },
+			{ "name": "HARFIYEN_LOBBY", "class_name": "HarfiyenLobby" }
+		]
+	},
+	"migrations": [{ "tag": "harfiyen-v1", "new_sqlite_classes": ["HarfiyenRoom", "HarfiyenLobby"] }],
+	// "off" closes online play (503) without touching the code.
+	"vars": { "HARFIYEN_MP": "on" }
 }

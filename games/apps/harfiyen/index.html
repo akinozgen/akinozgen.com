@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- The light/dark choice (shared by the family's games), on the page before it paints: THEME_BOOT from @travelle/core. -->
+    <script>(function(){try{var t=JSON.parse(localStorage.getItem("games:theme:v1"));if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}})();</script>
+    <title>harfiyen — Türkçe kelime oyunu</title>
+    <meta name="description" content="Bilgisayara karşı Türkçe kelime oyunu: taşlarla kelime kur, H² H³ K² K³ karelerini kap, ★ karesinden 25 puan al. Tarayıcıda, kurulumsuz." />
+    <meta property="og:title" content="harfiyen — Türkçe kelime oyunu" />
+    <meta property="og:description" content="Taşlarla kelime kur, H² H³ K² K³ karelerini kap, bilgisayarı yen." />
+    <meta name="theme-color" content="#dbe5ec" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0e1626" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='11' y='2.5' width='18.5' height='18.5' rx='4.5' fill='%23f0a344' transform='rotate(8 20 12)'/%3E%3Crect x='2.5' y='10' width='19.5' height='19.5' rx='4.5' fill='%233d55c8' stroke='%23fff' stroke-width='1.5'/%3E%3Cpath d='M8 15v10M16.5 15v10M8 20h8.5' fill='none' stroke='%23fff' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="harfiyen" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

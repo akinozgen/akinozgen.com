@@ -11,6 +11,10 @@ The small browser games served under [akinozgen.com/games](https://akinozgen.com
 - **sizele** — a daily size game: how many Turkeys make a Greenland? Five
   rounds on a Mercator map, which lies, then each country slides to its
   true size.
+- **harfiyen** — a word game in Turkish, on the rules Turkish players know
+  from their phones: seven tiles, a 15×15 board of H² H³ K² K³ squares and a
+  ★ worth 25, against a computer that only plays words people use, or
+  online against a friend or whoever else is looking for a game.
 - **Çaylar Belediyeden** (`belediye`) — a card game in Turkish: you run a
   made-up Anatolian town by swiping memos left or right. TypeScript built
   with Vite; see [apps/belediye/README.md](apps/belediye/README.md).
@@ -32,6 +36,8 @@ countries dropped, and a route length you choose.
 | `apps/tessle`    | tessle — React + Vite                                                 |
 | `packages/sizele` | sizele's areas, outlines and game server                            |
 | `apps/sizele`    | sizele — React + Vite                                                 |
+| `packages/harfiyen` | harfiyen's engine: word lists, move generator, rules, the computer  |
+| `apps/harfiyen`  | harfiyen — React + Vite                                               |
 | `apps/belediye`  | Çaylar Belediyeden — TypeScript + Vite                                |
 
 ## Commands
@@ -42,6 +48,8 @@ pnpm --filter @travelle/geo build:data      # rebuild the border graph
 pnpm --filter @travelle/geo build:public    # rebuild what the browser may see
 pnpm --filter @tessle/data build:data       # rebuild tessle's pieces and groups (append-only)
 pnpm --filter @sizele/data build:data       # rebuild sizele's areas and outlines
+pnpm --filter @harfiyen/engine build:data   # rebuild harfiyen's word lists (see its data/README.md)
+pnpm --filter @harfiyen/engine dev:mp       # harfiyen's online server on :8787, for its Vite dev server
 pnpm test                                   # graph + scoring tests
 pnpm typecheck && pnpm lint                 # tsc and ESLint in every app that has them
 pnpm dev                                    # run travelle
@@ -190,3 +198,78 @@ once a day has been dealt: editing it would change days already played. A
 change needs an era, as tessle's `ERAS` does. Like the other games the API
 is stateless — it judges whatever guesses it is sent, so scores and streaks
 live in the player's browser and nothing is a leaderboard.
+
+## How harfiyen plays
+
+harfiyen has no server. `packages/harfiyen` is a pure, deterministic engine:
+`newGame(seed, rules, tiles)` shuffles the bag from the seed and `apply(game,
+action, lexicon)` moves it on, so the same seed and the same actions always
+give the same game — what a game between two browsers will need. The rules
+are the ones Turkish word-game players already know: the fixed board (8 K³,
+8 K², 8 H³, 24 H², a plain centre), Turkish Scrabble's hundred tiles, +30
+for all seven tiles, a ★ square worth +25 placed by the seed each game, and
+a game that ends on four passes or swaps in a row once fewer than twenty
+tiles are left. A
+"karışık" board scatters the same multipliers by the seed instead, in orbits
+of the board's eight symmetries and under a few spacing rules
+(`src/layout.ts`).
+
+The word lists (`data/`, see its README) load as plain text and become a
+minimal DAWG in about a tenth of a second. Moves are found with Appel and
+Jacobson's anchor-and-cross-check algorithm over it (`src/movegen.ts`),
+tested against a brute-force search. The computer only knows everyday words
+(`yaygin.txt`; `kolay.txt` on the easy level), tries its moves best first and
+"spots" each with a probability that drops for long plays and plays that
+make many words at once, after Macondo's findability filters; players may
+play anything in the dictionary.
+
+## How harfiyen plays online
+
+Games between people are turn by turn with no clock: make a move, close
+the tab, come back when it's your turn. There are no accounts. Each browser
+keeps a random secret; its SHA-256 is the player's id, and the name others
+see ("Neşeli Kirpi #4821") comes from that id by a fixed list of words, on
+the server as in the browser, so nobody picks their own.
+
+The server is the site's Worker (`src/worker.ts`, which wraps Astro's
+handler) with two Durable Objects from `packages/harfiyen/src/server/worker`:
+
+| Object | Does |
+| ------ | ---- |
+| `HarfiyenRoom`, one per room code | Holds the game — seed, bag and both racks — and sends each player only their own view (`Table`). Every move is checked with the full dictionary and stored as one row. Sockets hibernate: a room costs nothing between moves, and the browsers' keep-alive pings are answered without waking it. An alarm clears an unanswered invitation after a week, closes a game nobody has moved in for a month, and clears a finished room a week later. |
+| `HarfiyenLobby`, just one | Pairs two devices looking for a game at the same moment, makes their room and tells both where it is. It keeps the queue in its open sockets and writes nothing. |
+
+| Endpoint | Does |
+| -------- | ---- |
+| `POST /api/harfiyen/oda` | A new invitation; answers its code, for a link `…/games/harfiyen/#/oda/CODE` |
+| `POST /api/harfiyen/ozet` | Up to 20 rooms summed up for the list of games, without opening them |
+| `WS /api/harfiyen/ws/oda/CODE` | The room: hello, join, play, swap, pass, resign, rematch |
+| `WS /api/harfiyen/ws/lobi` | Looking for an opponent |
+| `GET /api/harfiyen/vapid` | The public key browsers subscribe to push with |
+
+Messages and their checks are in `src/server/protocol.ts`; the room's
+logic is plain functions in `src/server/room.ts`, tested without Cloudflare.
+The device secret never travels in a URL. Requests must come from a page of
+this site (`Origin`), and `HARFIYEN_MP = "off"` in `wrangler.jsonc` closes
+online play without a code change. Everything stays inside the Workers Free
+plan: past a daily limit requests fail until the next day; nothing is
+billed.
+
+Players away from the game hear about it by Web Push: their turn, an
+invitation taken, the end, a rematch. A browser that allows notices sends
+its push subscription to each of its rooms; the room keeps it with the
+seat and, when something happens to a seat with no socket open, encrypts a
+short notice for that browser (RFC 8291) and signs the request with the
+site's VAPID key (RFC 8292) — WebCrypto only, `src/server/webpush.ts`. The
+private key is the Worker secret `HARFIYEN_VAPID`, a P-256 JWK; without it
+online play works and there are no notices. `GET /api/harfiyen/vapid` gives
+browsers the public half. On iPhones, Web Push reaches only a page added to
+the home screen.
+
+For development, `pnpm --filter @harfiyen/engine dev:mp` runs the same
+router and objects alone (`packages/harfiyen/dev`, with a development VAPID
+key in its untracked `.dev.vars`), and the game's Vite server proxies
+`/api/harfiyen` to it. `node scripts/e2e-online.ts [url]`
+(in `packages/harfiyen`) plays a whole game between two sockets, a
+reconnect, a rematch and a lobby pairing against a running server.
+

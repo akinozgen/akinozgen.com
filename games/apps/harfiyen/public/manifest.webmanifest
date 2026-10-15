@@ -1,0 +1,17 @@
+{
+  "name": "harfiyen — Türkçe kelime oyunu",
+  "short_name": "harfiyen",
+  "description": "Türkçe kelime oyunu: bilgisayara ya da arkadaşına karşı, sırayla, acele etmeden.",
+  "lang": "tr",
+  "dir": "ltr",
+  "start_url": "./#/cevrimici",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f2ec",
+  "theme_color": "#dbe5ec",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
