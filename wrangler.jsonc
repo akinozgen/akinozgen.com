@@ -1,7 +1,8 @@
 {
 	"compatibility_date": "2026-03-17",
 	"compatibility_flags": ["global_fetch_strictly_public"],
-	"name": "akinozgen-portfolio",
+	// The Worker as Cloudflare knows it (akinozgen.com is its custom domain); Workers Builds deploys under this name.
+	"name": "akinozgencom",
 	// Astro's handler, wrapped so harfiyen's online play can export its Durable Objects.
 	"main": "./src/worker.ts",
 	"assets": {
