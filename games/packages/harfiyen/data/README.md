@@ -4,7 +4,7 @@ Built by `scripts/build-lexicon.ts`; one lower-case word per line.
 
 | File            | Words  | What it is                                                                    |
 | --------------- | ------ | ----------------------------------------------------------------------------- |
-| `kelimeler.txt` | 62,654 | Every word a player may put down                                              |
+| `kelimeler.txt` | 62,655 | Every word a player may put down                                              |
 | `zor.txt`       | 12,019 | A wider everyday vocabulary, commonest first: the computer's on the hard level |
 | `yaygin.txt`    | 8,448  | Everyday words, commonest first: the computer's on medium                      |
 | `kolay.txt`     | 4,456  | The commonest of those: the computer's on the easy level                       |
@@ -14,8 +14,8 @@ Built by `scripts/build-lexicon.ts`; one lower-case word per line.
 **`kelimeler.txt`** follows the rules Turkish word games go by: headwords of the
 Türk Dil Kurumu's *Güncel Türkçe Sözlük* — single words only, verbs in the
 infinitive (`gelmek`, never `gel`), no inflected forms — plus one-word
-country names and three short words such games have long accepted (go, jak,
-pi). Circumflexes fold into the plain letter (`kâr` → `kar`), since the game
+country names, three short words such games have long accepted (go, jak,
+pi) and one slang word everyone knows (avel). Circumflexes fold into the plain letter (`kâr` → `kar`), since the game
 has 29 tiles, and anything outside 2–15 letters is dropped (no single letters;
 nothing longer than the board). The headwords were read from the dictionary's
 JSON as collected in [ogun/guncel-turkce-sozluk](https://github.com/ogun/guncel-turkce-sozluk)

@@ -32,11 +32,11 @@ describe("player names", () => {
   });
 
   it("keep insults and impersonation out, whole words only, so the words they hide in pass", () => {
-    for (const bad of ["Orospu Çocuğu", "s1kt1r git", "Amk", "Pezevenk", "HARFIYEN", "Admin", "Kahpe", "siiiiktir", "Orospular", "Ş e r e f s i z", "AVEL", "Avel Kedi", "a v e l", "Aveller"]) {
+    for (const bad of ["Orospu Çocuğu", "s1kt1r git", "Amk", "Pezevenk", "HARFIYEN", "Admin", "Kahpe", "siiiiktir", "Orospular", "Ş e r e f s i z"]) {
       expect(cleanName(bad), bad).toBeNull();
     }
     // Teasing names a player may give themself.
-    for (const nick of ["Atkafası", "ATKAFASI", "Salak Kedi", "Mal Ahmet", "Öküz"]) expect(cleanName(nick), nick).toBe(nick);
+    for (const nick of ["Atkafası", "ATKAFASI", "Salak Kedi", "Mal Ahmet", "Öküz", "Avel", "AVEL Kedi"]) expect(cleanName(nick), nick).toBe(nick);
     const fine = ["Koç", "Ali Koç", "Malatyalı", "Cesur Tukan", "Sıkı Fıkı", "Sikke", "Ananas", "Ana Arı", "Abaza", "Amasya", "Gotham", "Picasso", "Bokser", "Salkım", "Penisilin", "Silikon"];
     for (const name of fine) expect(cleanName(name), name).toBe(name);
   });

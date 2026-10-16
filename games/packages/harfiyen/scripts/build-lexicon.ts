@@ -27,8 +27,11 @@ const arg = (name: string): string => {
   return process.argv[at + 1];
 };
 
-/** Three short words the Turkish game has long accepted that the dictionary lacks. */
-const EXTRAS = ["go", "jak", "pi"];
+/**
+ * Words the dictionary lacks that count all the same: three short ones the
+ * Turkish game has long accepted, and "avel", slang everyone knows.
+ */
+const EXTRAS = ["go", "jak", "pi", "avel"];
 /** Abbreviations, which don't count. */
 const NOT_COUNTRIES = new Set(["abd"]);
 

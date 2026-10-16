@@ -34,8 +34,6 @@ describe("chat lines", () => {
     expect(cleanChat("s i k t i r lan")).toBe("* * * * * * lan");
     expect(cleanChat("s.i.k.t.i.r")).toBe("********");
     expect(cleanChat("fuck this")).toBe("**** this");
-    expect(cleanChat("ne avel hamle")).toBe("ne **** hamle");
-    expect(cleanChat("AVEL!")).toBe("****!");
   });
 
   it("keep the everyday words the lists also hold", () => {
@@ -51,6 +49,7 @@ describe("chat lines", () => {
       "Malatyalıyım",
       "Atkafası seni",
       "Salak hamle oldu",
+      "Ben de avelim işte",
       "a b c de",
       "harfiyen çok iyi",
       "Penisilin kelimesi var mı",

@@ -23,6 +23,8 @@ describe("the word lists", () => {
       }
     }
     expect(full.length).toBeGreaterThan(60_000);
+    // Not in the dictionary, played all the same.
+    for (const extra of ["go", "jak", "pi", "avel"]) expect(lexicon.has(encode(extra)!), extra).toBe(true);
   });
 
   it("nest: easy words are everyday words, everyday words are the hard level's, all are playable", () => {
