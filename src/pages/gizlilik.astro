@@ -1,7 +1,7 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 
-const EFFECTIVE = "15 Ekim 2026";
+const EFFECTIVE = "16 Ekim 2026";
 
 const toc = [
   ["veri-sorumlusu", "Veri sorumlusu"],
@@ -51,7 +51,7 @@ const n = (id: (typeof toc)[number][0]): string => String(toc.findIndex(([key]) 
         </p>
         <ul class="meta">
           <li>Yürürlük: {EFFECTIVE}</li>
-          <li>Sürüm 1</li>
+          <li>Sürüm 2</li>
           <li><a href="#english" hreflang="en">Summary in English ↓</a></li>
         </ul>
       </header>
@@ -124,7 +124,11 @@ const n = (id: (typeof toc)[number][0]): string => String(toc.findIndex(([key]) 
                 Saklananlar: e-posta adresiniz, giriş yönteminiz, oyun adınız, oyun kayıtlarınız ve oturum bilgisi.
               </li>
               <li>Giriş Google Firebase ile yapılır; şifreniz bu sitenin sunucusuna hiç ulaşmaz.</li>
-              <li>Hesabınızı oyunlardaki hesap penceresinden istediğiniz an silebilirsiniz.</li>
+              <li>Hesaplar 18 yaşından büyükler içindir; hesap açarken bunu ve bu metni okuduğunuzu beyan edersiniz.</li>
+              <li>
+                Hesabınızı oyunlardaki hesap penceresinden istediğiniz an silebilirsiniz; iki yıl kullanılmayan hesap
+                kendiliğinden silinir.
+              </li>
             </ul>
           </div>
           <div class="card card--never">
@@ -205,7 +209,8 @@ const n = (id: (typeof toc)[number][0]): string => String(toc.findIndex(([key]) 
                 <td data-label="Veriler">
                   E-posta adresi; giriş yöntemi (Google ya da e-posta ve şifre); Firebase kullanıcı kimliği; sunucunun
                   hesaba verdiği rastgele iç kimlik (oyunlardaki “#1234” numarası bundan türetilir); hesabın açılış
-                  tarihi; son kullanım tarihi (günde en fazla bir kez güncellenir).
+                  tarihi; son kullanım tarihi (günde en fazla bir kez güncellenir); hesap açarken verdiğiniz beyanın
+                  (18 yaşından büyük olduğunuz ve bu metni okuduğunuz) zamanı ve okuduğunuz metnin sürümü.
                 </td>
                 <td data-label="Toplama">
                   Hesap açarken. E-posta, giriş yöntemi ve Firebase kimliği, girişte Firebase'in verdiği imzalı kimlik
@@ -215,7 +220,7 @@ const n = (id: (typeof toc)[number][0]): string => String(toc.findIndex(([key]) 
                   Hesabın kurulması ve giriş; hesabın her cihazda tanınması; silme gibi taleplerde hesabın
                   doğrulanması; hesap güvenliği.
                 </td>
-                <td data-label="Hukuki sebep"><span class="nb">m.5/2-c</span>; son kullanım tarihi için ayrıca <span class="nb">m.5/2-f</span></td>
+                <td data-label="Hukuki sebep"><span class="nb">m.5/2-c</span>; son kullanım tarihi ve beyan kaydı için ayrıca <span class="nb">m.5/2-f</span></td>
               </tr>
               <tr>
                 <th scope="row">Oyun adı</th>
@@ -335,7 +340,9 @@ const n = (id: (typeof toc)[number][0]): string => String(toc.findIndex(([key]) 
           </div>
         </dl>
         <p>
-          Bu metindeki işlemelerin hiçbiri açık rızanıza dayanmaz; bu nedenle sizden ayrıca açık rıza istenmez.
+          Bu metindeki işlemelerin hiçbiri açık rızanıza dayanmaz; bu nedenle sizden ayrıca açık rıza istenmez. Hesap
+          açarken işaretlediğiniz kutu, 18 yaşından büyük olduğunuzu ve bu metni okuduğunuzu beyan etmenizdir; Kanun
+          anlamında açık rıza değildir.
           Sitenin kendi kodu IP adresinizi okumaz ve saklamaz.
         </p>
       </section>
@@ -538,19 +545,21 @@ const n = (id: (typeof toc)[number][0]): string => String(toc.findIndex(([key]) 
                 <th scope="row">Hesap bilgileri, oyun adı, bulmaca kayıtları, aktarılan istatistikler, harfiyen maç geçmişi</th>
                 <td data-label="Süre">Hesabınızı silene kadar.</td>
                 <td data-label="Ayrıca">
-                  Hesap silindiğinde hemen silinir (<a href="#silme">§09</a>). Uzun süre kullanılmayan
-                  hesaplar şu an otomatik olarak silinmez.
+                  Hesap silindiğinde hemen silinir (<a href="#silme">§09</a>). İki yıl boyunca hiç kullanılmayan
+                  (girişli olarak hiçbir oyun açılmayan) hesap, bütün kayıtlarıyla birlikte günlük temizlikte otomatik
+                  silinir; önceden bildirim gönderilmez. Bu durumda Firebase'deki giriş kaydınız kalır; aynı yolla yeniden
+                  giriş yaparsanız yeni ve boş bir hesap açılır.
                 </td>
               </tr>
               <tr>
                 <th scope="row">Oturum</th>
                 <td data-label="Süre">
-                  Çerez, girişten 180 gün sonra tarayıcınızdan kendiliğinden silinir. Sunucudaki kayıt son
-                  kullanımdan 180 gün sonra geçersiz olur.
+                  Son kullanımdan 180 gün sonra geçersiz olur; çerez her kullanımda bu süreyle yenilenir, kullanılmazsa
+                  tarayıcınızdan kendiliğinden silinir.
                 </td>
                 <td data-label="Ayrıca">
-                  Çıkış yaptığınızda o oturumun kaydı hemen silinir. Süresi dolmuş oturum kayıtları şu an ayrıca
-                  temizlenmez; hesapla birlikte silinir.
+                  Çıkış yaptığınızda o oturumun kaydı hemen silinir. Süresi dolmuş oturum kayıtları günlük temizlikte
+                  ve her yeni girişte silinir.
                 </td>
               </tr>
               <tr>
@@ -562,8 +571,7 @@ const n = (id: (typeof toc)[number][0]): string => String(toc.findIndex(([key]) 
                 <th scope="row">harfiyen oda içeriği (oyun, adlar, sohbet, bildirim abonelikleri)</th>
                 <td data-label="Süre">
                   Cevapsız davet: 7 gün. 30 gün boyunca hamle yapılmayan oyun kapanır ve 7 gün sonra silinir. Biten
-                  oyunun odası, son işlemden (oyunun bitişi ya da rövanş isteği) en az 7, en geç 30 gün sonra
-                  silinir; silme, odanın bir sonraki zamanlanmış kontrolünde yapılır.
+                  oyunun odası, oyunun bitişinden 7 gün sonra silinir (rövanşla yeni bir oyun başlamadıysa).
                 </td>
                 <td data-label="Ayrıca">Oda bütün içeriğiyle birlikte silinir.</td>
               </tr>
@@ -649,9 +657,8 @@ const n = (id: (typeof toc)[number][0]): string => String(toc.findIndex(([key]) 
             bu süre içinde rakibiniz o odada adınızı ve sohbet satırlarınızı görmeye devam edebilir.
           </li>
           <li>
-            Rakibinizin maç geçmişinde, sizinle oynadığı oyunun satırında o anki görünen adınız (ör. “Neşeli Kirpi
-            #4821”) kalır. Bu satır rakibinizin hesabına aittir ve onun hesabı durdukça durur. Hesabınız silindikten
-            sonra bu ad hiçbir hesapla ilişkilendirilemez.
+            Rakibinizin maç geçmişindeki, sizinle oynadığı oyunun satırı (skor ve sonuç) rakibinize ait olduğu için
+            kalır; o satırdaki adınız ve hesap kimliğiniz hesabınızla birlikte silinir, satır “Rakip” olarak görünür.
           </li>
           <li>
             Cihazınızdaki oyun verileri sizin tarayıcınızdadır; tarayıcınızın site verilerini silme ayarından
@@ -687,7 +694,7 @@ const n = (id: (typeof toc)[number][0]): string => String(toc.findIndex(([key]) 
                 <td data-label="Ne işe yarar">
                   Girişli oturumunuzu tanır. İçinde yalnızca rastgele bir oturum kimliği vardır; hesap bilgisi yoktur.
                 </td>
-                <td data-label="Süre">Girişten itibaren 180 gün ya da çıkış yapana kadar.</td>
+                <td data-label="Süre">Son kullanımdan itibaren 180 gün ya da çıkış yapana kadar.</td>
                 <td data-label="Özellikler">
                   Yalnızca akinozgen.com ve yalnızca HTTPS; HttpOnly (sayfa kodu okuyamaz); SameSite=Strict (başka
                   sitelerin başlattığı isteklerle gönderilmez).
@@ -873,9 +880,9 @@ const n = (id: (typeof toc)[number][0]): string => String(toc.findIndex(([key]) 
       <section id="cocuklar">
         <h2><span class="n">{n("cocuklar")}</span>Çocuklar</h2>
         <p>
-          Site ve oyunlar çocuklara yönelik olarak tasarlanmamıştır, ancak herkese açıktır. Hesap açarken yaş
-          sorulmaz ve doğrulanmaz. 13 yaşından küçüklerin hesap açmaması, 18 yaşından küçüklerin ise hesabı
-          velilerinin bilgisiyle açması rica edilir. Hesapsız oynanan oyunlar sitenin veritabanında kişiye ait kayıt tutmaz.
+          Site ve oyunlar çocuklara yönelik olarak tasarlanmamıştır, ancak herkese açıktır. Hesaplar 18 yaşından
+          büyükler içindir: hesap açarken 18 yaşından büyük olduğunuzu ve bu metni okuduğunuzu bir kutuyu
+          işaretleyerek beyan etmeniz istenir ve bu beyanın zamanı kaydedilir. Yaş belgeyle doğrulanmaz. Hesapsız oynanan oyunlar sitenin veritabanında kişiye ait kayıt tutmaz.
           Çocuğunun hesap açtığını fark eden bir veli, hesabın silinmesini <a href="#basvuru">§14</a>'teki
           yollarla isteyebilir.
         </p>
@@ -892,7 +899,11 @@ const n = (id: (typeof toc)[number][0]): string => String(toc.findIndex(([key]) 
 
       <section id="yururluk">
         <h2><span class="n">{n("yururluk")}</span>Yürürlük</h2>
-        <p>Bu metin {EFFECTIVE} tarihinde yürürlüğe girmiştir (sürüm 1).</p>
+        <p>
+          Bu metin {EFFECTIVE} tarihinde yürürlüğe girmiştir (sürüm 2). Sürüm 1 (15 Ekim 2026) ile farkı: hesap açarken
+          18 yaş ve metni okuma beyanının istenmesi, iki yıl kullanılmayan hesapların silinmesi, oturum ve oda
+          sürelerinin kesinleşmesi, silinen hesabın adının rakiplerin geçmişinden kaldırılması.
+        </p>
       </section>
 
       <section id="english" class="english" lang="en">
@@ -924,7 +935,7 @@ const n = (id: (typeof toc)[number][0]): string => String(toc.findIndex(([key]) 
             <strong>harfiyen online rooms</strong> hold the game, both players' display names, the last 50 chat
             lines (filtered) and, only if you turn notifications on, your browser's push subscription. An unanswered
             invitation is deleted after 7 days; a game left idle for 30 days is closed and deleted 7 days later; the
-            room of a finished game is deleted 7 to 30 days after its last activity.
+            room of a finished game is deleted 7 days after the game ends.
           </li>
           <li>
             <strong>One cookie</strong>, <code>__Host-oturum</code>, strictly necessary for the session. No
@@ -941,7 +952,11 @@ const n = (id: (typeof toc)[number][0]): string => String(toc.findIndex(([key]) 
             answered within 30 days, free of charge. You may complain to the Turkish Personal Data Protection Board
             (<a href="https://www.kvkk.gov.tr/" rel="noopener">kvkk.gov.tr</a>).
           </li>
-          <li>Effective 15 October 2026 (version 1).</li>
+          <li>
+            <strong>Accounts are for adults:</strong> opening one asks you to confirm you are 18 or older and have read
+            this notice. Accounts unused for two years are deleted automatically.
+          </li>
+          <li>Effective 16 October 2026 (version 2).</li>
         </ul>
       </section>
     </article>

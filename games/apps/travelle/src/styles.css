@@ -360,6 +360,16 @@ body {
   gap: 8px;
 }
 
+/*
+ * The account's round button, in the same place in every game: on a wide
+ * screen the first of the tools, at their spacing; on a phone at the end of
+ * the switch's row (see below).
+ */
+.topbar__account {
+  display: flex;
+  margin-right: -4px;
+}
+
 .chip,
 .lang__select,
 .icon-button {
@@ -411,9 +421,24 @@ body {
   transform: scale(0.96);
 }
 
+/* Shown only where a chip is down to its icon (narrow phones, below). */
+.chip__icon {
+  display: none;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .modes {
   display: flex;
   gap: 2px;
+  /* The middle of the room between the name and the buttons. */
+  margin-inline: auto;
   padding: 3px;
   background: var(--panel);
   border: 1px solid var(--panel-line);
@@ -532,12 +557,40 @@ body {
     order: -1;
   }
 
+  /*
+   * Two rows: the name and the tools, then the switch with the account at
+   * the far end, under the tools.
+   */
   .topbar {
     top: max(10px, env(safe-area-inset-top));
     left: 10px;
     right: 10px;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "brand tools tools"
+      "modes modes account";
     gap: 8px;
+  }
+
+  .topbar__brand {
+    grid-area: brand;
+  }
+
+  .topbar__tools {
+    grid-area: tools;
+    justify-self: end;
+  }
+
+  .modes {
+    grid-area: modes;
+    justify-self: start;
+    margin-inline: 0;
+  }
+
+  .topbar__account {
+    grid-area: account;
+    margin-right: 0;
   }
 
   .topbar__title {
@@ -548,13 +601,8 @@ body {
     display: none;
   }
 
-  /* Close enough that the tools still fit beside the name on a 390px phone. */
   .topbar__tools {
     gap: 6px;
-  }
-
-  .modes {
-    order: 3;
   }
 
   .chip,
@@ -571,6 +619,46 @@ body {
 
   .prompt {
     font-size: 19px;
+  }
+}
+
+/* Narrow phones: the text chips keep only their icons, round like the theme switch, so the tools fit beside the name. */
+@media (max-width: 480px) {
+  .topbar .chip {
+    position: relative;
+    justify-content: center;
+    width: 32px;
+    padding: 0;
+  }
+
+  .chip__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .chip__icon {
+    display: block;
+  }
+
+  .chip__glyph {
+    font-size: 16px;
+    line-height: 1;
+  }
+}
+
+/* The narrowest phones: still the name and the tools on one row. */
+@media (max-width: 350px) {
+  .topbar__title {
+    font-size: 21px;
+  }
+
+  .topbar__tools {
+    gap: 4px;
   }
 }
 

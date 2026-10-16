@@ -7,7 +7,8 @@ import { Avatar } from "./avatar.tsx";
 import { BackIcon, CloseIcon, DiceIcon, EyeIcon, GoogleMark, MailIcon, Spinner } from "./icons.tsx";
 import { loadedFirebase, loadFirebase, preloadFirebase } from "./load.ts";
 import { accountMessage, MIN_PASSWORD, problemOf } from "./messages.ts";
-import { clearNotice, finishSignIn, useAccount } from "./store.ts";
+import { CONSENT_VERSION, MIN_AGE } from "../protocol.ts";
+import { cancelConsent, clearNotice, finishSignIn, useAccount } from "./store.ts";
 
 /**
  * The account, in a sheet over the game: signing in (Google first, or an
@@ -20,7 +21,7 @@ type Banner = { tone: "info" | "error"; text: string };
 type View =
   | { name: "start" }
   | { name: "reset" }
-  | { name: "verify"; pending: FirebaseUser; banner: Banner | null; fresh: boolean }
+  | { name: "verify"; pending: FirebaseUser; banner: Banner | null; fresh: boolean; agreed: boolean }
   | { name: "delete" };
 
 const PURPOSE = "Skorların ve oyunların cihazlar arasında seninle gelir.";
@@ -46,7 +47,9 @@ export function AccountSheet({ onClose }: { onClose: () => void }): React.ReactE
     ? view.name === "delete"
       ? "delete"
       : "profile"
-    : account.status === "loading"
+    : account.consent
+      ? "consent"
+      : account.status === "loading"
       ? "loading"
       : view.name === "delete"
         ? "start"
@@ -64,6 +67,8 @@ export function AccountSheet({ onClose }: { onClose: () => void }): React.ReactE
         ? "Hesabı sil"
         : screen === "verify"
           ? "E-postanı doğrula"
+          : screen === "consent"
+            ? "Hesap aç"
           : screen === "reset"
             ? "Şifreni sıfırla"
             : "Hesap";
@@ -90,13 +95,14 @@ export function AccountSheet({ onClose }: { onClose: () => void }): React.ReactE
             setBanner(null);
             setView({ name: "reset" });
           }}
-          onVerify={(pending, note, fresh) => setView({ name: "verify", pending, banner: note, fresh })}
+          onVerify={(pending, note, fresh, agreed) => setView({ name: "verify", pending, banner: note, fresh, agreed })}
         />
       )}
       {screen === "reset" && <Reset email={email} setEmail={setEmail} onBack={back} />}
       {view.name === "verify" && screen === "verify" && (
-        <Verify pending={view.pending} banner={view.banner} fresh={view.fresh} onBack={back} />
+        <Verify pending={view.pending} banner={view.banner} fresh={view.fresh} agreed={view.agreed} onBack={back} />
       )}
+      {screen === "consent" && account.consent && <Consent pending={account.consent} />}
       {screen === "profile" && user && (
         <Profile user={user} onDelete={() => setView({ name: "delete" })} onSignedOut={onClose} />
       )}
@@ -262,9 +268,10 @@ function SignIn({
   setEmail: (email: string) => void;
   banner: Banner | null;
   onReset: () => void;
-  onVerify: (pending: FirebaseUser, note: Banner | null, fresh: boolean) => void;
+  onVerify: (pending: FirebaseUser, note: Banner | null, fresh: boolean, agreed: boolean) => void;
 }): React.ReactElement {
   const [mode, setMode] = useState<"in" | "up">("in");
+  const [agreed, setAgreed] = useState(false);
   const [password, setPassword] = useState("");
   const [shown, setShown] = useState(false);
   const [busy, setBusy] = useState<"google" | "email" | null>(null);
@@ -310,6 +317,7 @@ function SignIn({
     if (mode === "up" && password.length < MIN_PASSWORD) {
       return complain("email", `Şifre en az ${MIN_PASSWORD} karakter olmalı.`);
     }
+    if (mode === "up" && !agreed) return complain("email", AGREE_FIRST);
     setProblem(null);
     setBusy("email");
     try {
@@ -320,13 +328,13 @@ function SignIn({
         await kit.sendVerification(created).catch((error: unknown) => {
           note = { tone: "error", text: problemOf(error) };
         });
-        onVerify(created, note, true);
+        onVerify(created, note, true, true);
         return;
       }
       const found = await kit.signInWithPassword(address, password);
-      if (!found.emailVerified) return onVerify(found, null, false);
+      if (!found.emailVerified) return onVerify(found, null, false, false);
       const result = await finishSignIn(kit, found);
-      if (result.kind === "verify") onVerify(found, null, false);
+      if (result.kind === "verify") onVerify(found, null, false, false);
       else if (result.kind === "error") complain("email", result.message);
     } catch (error) {
       complain("email", problemOf(error));
@@ -434,6 +442,7 @@ function SignIn({
             </button>
           </div>
         </div>
+        {mode === "up" && <AgreeBox checked={agreed} onChange={setAgreed} />}
         {problem?.tone === "error" && about === "email" && <Message banner={problem} />}
         <button
           type="submit"
@@ -516,12 +525,15 @@ function Verify({
   pending,
   banner,
   fresh,
+  agreed,
   onBack,
 }: {
   pending: FirebaseUser;
   banner: Banner | null;
   /** Just made: the email is on its way. Otherwise an older account that never got verified. */
   fresh: boolean;
+  /** The player agreed when signing up: the account opens as soon as the address checks out. */
+  agreed: boolean;
   onBack: () => void;
 }): React.ReactElement {
   const [busy, setBusy] = useState<"check" | "send" | null>(null);
@@ -540,7 +552,7 @@ function Verify({
         if (!quiet) setMessage(notYet);
         return;
       }
-      const result = await finishSignIn(kit, pending, true);
+      const result = await finishSignIn(kit, pending, true, agreed);
       if (result.kind === "verify") setMessage(notYet);
       else if (result.kind === "error") setMessage({ tone: "error", text: result.message });
     } catch (error) {
@@ -628,6 +640,87 @@ function Verify({
         <BackIcon />
         Başka bir yolla giriş yap
       </button>
+    </div>
+  );
+}
+
+const AGREE_FIRST = `Hesap açmak için ${MIN_AGE} yaşından büyük olduğunu ve gizlilik metnini okuduğunu onayla.`;
+
+/** The say-so a new account is opened on: age and the notice, one box, never ticked for the player. */
+function AgreeBox({ checked, onChange }: { checked: boolean; onChange: (checked: boolean) => void }): React.ReactElement {
+  return (
+    <label className="account-agree">
+      <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
+      <span>
+        {MIN_AGE} yaşından büyüğüm ve{" "}
+        <a href="/gizlilik/" target="_blank" rel="noopener">
+          gizlilik metnini
+        </a>{" "}
+        okudum.
+      </span>
+    </label>
+  );
+}
+
+/**
+ * A first sign-in, with Google or an address signed up elsewhere: Firebase
+ * knows the player, the site has no account for them yet, and opens one
+ * only once they agree.
+ */
+function Consent({ pending }: { pending: FirebaseUser }): React.ReactElement {
+  const [agreed, setAgreed] = useState(false);
+  const [busy, setBusy] = useState<"open" | "cancel" | null>(null);
+  const [message, setMessage] = useState<Banner | null>(null);
+
+  const open = async (): Promise<void> => {
+    if (!agreed) return setMessage({ tone: "error", text: AGREE_FIRST });
+    setBusy("open");
+    setMessage(null);
+    try {
+      const kit = loadedFirebase() ?? (await loadFirebase());
+      const result = await finishSignIn(kit, pending, true, true);
+      if (result.kind === "error") setMessage({ tone: "error", text: result.message });
+    } catch (error) {
+      setMessage({ tone: "error", text: problemOf(error) });
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const cancel = async (): Promise<void> => {
+    setBusy("cancel");
+    await cancelConsent();
+  };
+
+  return (
+    <div className="account-consent" data-version={CONSENT_VERSION}>
+      <p className="account-lead">
+        {pending.email ? (
+          <>
+            <strong>{pending.email}</strong> ile ilk kez giriş yapıyorsun. akinozgen.com'da senin için bir hesap açılacak:
+            adın, e-postan ve oyun kayıtların burada tutulur.
+          </>
+        ) : (
+          <>İlk kez giriş yapıyorsun. akinozgen.com'da senin için bir hesap açılacak: adın, e-postan ve oyun kayıtların burada tutulur.</>
+        )}
+      </p>
+      <AgreeBox checked={agreed} onChange={setAgreed} />
+      <Message banner={message} />
+      <div className="account-stack">
+        <button
+          type="button"
+          className="account-btn account-btn--primary"
+          onClick={open}
+          disabled={busy !== null || !agreed}
+          aria-busy={busy === "open" || undefined}
+        >
+          {busy === "open" && <Spinner />}
+          Hesabı aç
+        </button>
+        <button type="button" className="account-btn" onClick={cancel} disabled={busy !== null}>
+          Vazgeç
+        </button>
+      </div>
     </div>
   );
 }

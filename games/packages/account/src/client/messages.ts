@@ -58,6 +58,8 @@ export function accountMessage(error: ApiError): string {
       return "Bu ad kullanılamaz.";
     case "dogrulanmadi":
       return "E-posta adresin henüz doğrulanmamış.";
+    case "onay":
+      return "Hesap açmak için onayın gerekiyor.";
     default:
       return SOMETHING_WRONG;
   }

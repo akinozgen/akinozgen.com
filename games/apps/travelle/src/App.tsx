@@ -104,18 +104,25 @@ export function App(): React.ReactElement {
           </button>
         ))}
       </nav>
-      <div className="topbar__tools">
+      <div className="topbar__account">
         <AccountButton />
+      </div>
+      <div className="topbar__tools">
         {mode === "endless" && (
           <button type="button" className="chip" onClick={() => setShowSetup(true)}>
-            <span aria-hidden="true">⚙</span>
-            {t("setup")}
+            <span className="chip__glyph" aria-hidden="true">⚙</span>
+            <span className="chip__label">{t("setup")}</span>
           </button>
         )}
         <LanguagePicker />
         <ThemeToggle />
         <button type="button" className="chip" onClick={() => setShowRules(true)}>
-          {t("rules")}
+          <svg viewBox="0 0 24 24" className="chip__icon" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M9.6 9.3a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5v.6" />
+            <circle cx="12" cy="17" r=".6" />
+          </svg>
+          <span className="chip__label">{t("rules")}</span>
         </button>
       </div>
     </header>

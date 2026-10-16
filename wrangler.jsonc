@@ -34,6 +34,8 @@
 			"migrations_dir": "migrations"
 		}
 	],
+	// Once a day, at a quiet hour: accounts unused for two years are deleted (see src/worker.ts).
+	"triggers": { "crons": ["17 3 * * *"] },
 	"observability": {
 		"enabled": true
 	},

@@ -2,7 +2,7 @@ import type { User as FirebaseUser } from "firebase/auth";
 import { useMemo, useSyncExternalStore } from "react";
 import type { User } from "../protocol.ts";
 import { type ApiError, deleteAccount, endSession, exchangeToken, fetchMe, renameAccount } from "./api.ts";
-import { type FirebaseKit, loadFirebase } from "./load.ts";
+import { type FirebaseKit, loadedFirebase, loadFirebase } from "./load.ts";
 import { accountMessage, errorCode, firebaseMessage, OFFLINE, problemOf } from "./messages.ts";
 import { cachedUser, cacheUser, takeRedirect } from "./storage.ts";
 
@@ -20,6 +20,8 @@ export interface AccountState {
   user: User | null;
   /** Something to tell the player that happened without them in the sign-in: a redirect sign-in that failed. */
   notice: string | null;
+  /** A first sign-in, held in Firebase while the player is asked to agree to an account being opened. */
+  consent: FirebaseUser | null;
 }
 
 export interface Account extends AccountState {
@@ -35,7 +37,7 @@ const CHANNEL = "hesap";
 
 const initial = (): AccountState => {
   const user = cachedUser();
-  return user ? { status: "in", user, notice: null } : { status: "loading", user: null, notice: null };
+  return user ? { status: "in", user, notice: null, consent: null } : { status: "loading", user: null, notice: null, consent: null };
 };
 
 let state: AccountState = initial();
@@ -53,7 +55,7 @@ function set(next: Partial<AccountState>): void {
   for (const listener of listeners) listener();
 }
 
-const signedIn = (user: User): void => set({ status: "in", user });
+const signedIn = (user: User): void => set({ status: "in", user, consent: null });
 const signedOut = (): void => set({ status: "out", user: null });
 
 /** Tells the other tabs of this site to ask again. */
@@ -137,26 +139,38 @@ async function finishRedirect(): Promise<void> {
   return refresh();
 }
 
-export type SignInOutcome = { kind: "in"; user: User } | { kind: "verify" } | { kind: "error"; message: string };
+export type SignInOutcome = { kind: "in"; user: User } | { kind: "verify" } | { kind: "consent" } | { kind: "error"; message: string };
 
 /**
  * After Firebase has said who the player is: its token for the site's
  * session, then out of Firebase. An address not yet verified keeps the
- * Firebase sign-in, for asking again once it is.
+ * Firebase sign-in, for asking again once it is; so does a first sign-in
+ * the player hasn't yet agreed to open an account with (`agreed`), which
+ * the sheet then asks about.
  */
-export async function finishSignIn(kit: FirebaseKit, found: FirebaseUser, fresh = false): Promise<SignInOutcome> {
+export async function finishSignIn(kit: FirebaseKit, found: FirebaseUser, fresh = false, agreed = false): Promise<SignInOutcome> {
   let token: string;
   try {
     token = await found.getIdToken(fresh);
   } catch (error) {
     return { kind: "error", message: problemOf(error) };
   }
-  const reply = await exchangeToken(token);
+  const reply = await exchangeToken(token, agreed);
   if (!reply.ok && reply.error === "dogrulanmadi") return { kind: "verify" };
+  if (!reply.ok && reply.error === "onay") {
+    set({ consent: found });
+    return { kind: "consent" };
+  }
   await kit.leave().catch(() => {});
   if (!reply.ok) return { kind: "error", message: accountMessage(reply.error) };
   changed(() => signedIn(reply.data.user));
   return { kind: "in", user: reply.data.user };
+}
+
+/** The player won't open an account after all: out of Firebase, back to the start. */
+export async function cancelConsent(): Promise<void> {
+  set({ consent: null });
+  await loadedFirebase()?.leave().catch(() => {});
 }
 
 export async function signOut(): Promise<ApiError | null> {

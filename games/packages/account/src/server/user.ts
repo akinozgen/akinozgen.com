@@ -12,6 +12,9 @@ export interface UserRow {
   name: string | null;
   created_at: number;
   seen_at: number;
+  /** When the player agreed to the notice, and which version; null for accounts from before consent was asked. */
+  consented_at?: number | null;
+  consent_version?: string | null;
 }
 
 /** The account as its player sees it. The words default to two drawn from the id, as harfiyen's device names did. */

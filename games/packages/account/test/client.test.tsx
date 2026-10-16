@@ -2,7 +2,7 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AccountButton, resetAccountCache } from "../src/client/index.ts";
-import type { User } from "../src/protocol.ts";
+import { CONSENT_VERSION, type User } from "../src/protocol.ts";
 
 /**
  * The client against a fake server (fetch) and a fake Firebase (both
@@ -71,7 +71,7 @@ type Call = { path: string; headers: Headers; order: number };
 let order = 0;
 let calls: Call[] = [];
 /** The fake server: what each endpoint answers, as [status, body]. */
-let answers: Record<string, () => [number, unknown] | Promise<[number, unknown]>> = {};
+let answers: Record<string, (call: Call) => [number, unknown] | Promise<[number, unknown]>> = {};
 
 const json = (status: number, body: unknown): Response =>
   new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
@@ -89,9 +89,10 @@ beforeEach(() => {
     vi.fn(async (input: string, init?: RequestInit) => {
       const url = new URL(input, "http://localhost");
       const path = url.pathname.replace(/^\/api\/hesap\//, "");
-      calls.push({ path: `${path}${url.search}`, headers: new Headers(init?.headers), order: order++ });
+      const call = { path: `${path}${url.search}`, headers: new Headers(init?.headers), order: order++ };
+      calls.push(call);
       const answer = answers[path];
-      return answer ? json(...(await answer())) : json(404, { error: "yok" });
+      return answer ? json(...(await answer(call))) : json(404, { error: "yok" });
     }),
   );
   for (const mock of Object.values(firebase)) if (typeof mock === "function") mock.mockReset();
@@ -177,6 +178,46 @@ describe("the account button", () => {
     answer();
     expect(await button("Giriş yap")).toBeTruthy();
     expect(sessionStorage.getItem("hesap:ben:v1")).toBeNull();
+  });
+});
+
+describe("a first sign-in", () => {
+  it("opens an account only once the player agrees, and says so to the server", async () => {
+    let agreed = false;
+    answers.giris = (call) => {
+      if (call.headers.get("X-Hesap-Onay") === CONSENT_VERSION) {
+        agreed = true;
+        return [200, { user: ME }];
+      }
+      return [403, { error: "onay" }];
+    };
+    firebase.signInWithPopup.mockResolvedValue({ user: firebaseUser() });
+    const sheet = await openSignIn();
+    fireEvent.click(within(sheet).getByRole("button", { name: "Google ile devam et" }));
+
+    expect(await screen.findByRole("heading", { name: "Hesap aç" })).toBeTruthy();
+    const open = within(sheet).getByRole("button", { name: "Hesabı aç" }) as HTMLButtonElement;
+    expect(open.disabled).toBe(true);
+    // Firebase keeps the sign-in while the player decides.
+    expect(calls.some((call) => call.path === "firebase:signOut")).toBe(false);
+
+    fireEvent.click(within(sheet).getByRole("checkbox", { name: /18 yaşından büyüğüm/ }));
+    fireEvent.click(open);
+    expect(await screen.findByRole("heading", { name: "Hesabın" })).toBeTruthy();
+    expect(agreed).toBe(true);
+    expect(calls.some((call) => call.path === "firebase:signOut")).toBe(true);
+  });
+
+  it("leaves Firebase and opens nothing when the player declines", async () => {
+    answers.giris = () => [403, { error: "onay" }];
+    firebase.signInWithPopup.mockResolvedValue({ user: firebaseUser() });
+    const sheet = await openSignIn();
+    fireEvent.click(within(sheet).getByRole("button", { name: "Google ile devam et" }));
+    expect(await screen.findByRole("heading", { name: "Hesap aç" })).toBeTruthy();
+    fireEvent.click(within(sheet).getByRole("button", { name: "Vazgeç" }));
+    expect(await screen.findByRole("button", { name: "Google ile devam et" })).toBeTruthy();
+    expect(calls.some((call) => call.path === "firebase:signOut")).toBe(true);
+    expect(calls.filter((call) => call.path === "giris").every((call) => !call.headers.get("X-Hesap-Onay"))).toBe(true);
   });
 });
 
@@ -277,6 +318,11 @@ describe("signing in with an email", () => {
     expect(firebase.createUserWithEmailAndPassword).not.toHaveBeenCalled();
 
     fill(sheet, "yeni@example.com", "uzun-bir-sifre");
+    fireEvent.click(submit(sheet));
+    expect((await within(sheet).findByRole("alert")).textContent).toContain("18 yaşından büyük");
+    expect(firebase.createUserWithEmailAndPassword).not.toHaveBeenCalled();
+
+    fireEvent.click(within(sheet).getByRole("checkbox", { name: /18 yaşından büyüğüm/ }));
     fireEvent.click(submit(sheet));
     expect(await screen.findByRole("heading", { name: "E-postanı doğrula" })).toBeTruthy();
     expect(firebase.createUserWithEmailAndPassword).toHaveBeenCalledWith(expect.anything(), "yeni@example.com", "uzun-bir-sifre");

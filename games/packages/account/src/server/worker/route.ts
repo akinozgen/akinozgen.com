@@ -1,12 +1,23 @@
 import { cleanName } from "../../../../harfiyen/src/names.ts";
 import { FIREBASE_PROJECT } from "../../config.ts";
-import { ACCOUNT_HEADER, type AccountError, DATA_HEADER, NAME_HEADER, PUZZLE_GAMES, type PuzzleGame } from "../../protocol.ts";
+import {
+  ACCOUNT_HEADER,
+  type AccountError,
+  CONSENT_HEADER,
+  CONSENT_VERSION,
+  DATA_HEADER,
+  NAME_HEADER,
+  PUZZLE_GAMES,
+  type PuzzleGame,
+} from "../../protocol.ts";
 import { originAllowed } from "../origin.ts";
 import { clearedCookie, newSessionId, newUserId, sessionCookie, sessionHash, sessionIdOf } from "../session.ts";
 import { googleKeys, verifyIdToken } from "../token.ts";
 import { type UserRow, userOf } from "../user.ts";
 import { finishedPlays, importedStats, importStats } from "./plays.ts";
-import { accountFor, endSession, removeAccount, setName, startSession, userBySession } from "./store.ts";
+import { accountOf, endSession, openAccount, removeAccount, setName, startSession, userBySession } from "./store.ts";
+
+export { purgeIdle } from "./store.ts";
 
 export { proxyFirebaseAuth } from "./proxy.ts";
 export type { UserRow } from "../user.ts";
@@ -64,7 +75,12 @@ export async function routeAccount(request: Request, env: AccountEnv): Promise<R
     if (claims.provider === "password" && !claims.emailVerified && env.ACCOUNT_ALLOW_UNVERIFIED !== "on") {
       return fail("dogrulanmadi", 403);
     }
-    const row = await accountFor(env.DB, claims, newUserId(), now);
+    let row = await accountOf(env.DB, claims, now);
+    if (!row) {
+      // A first sign-in opens an account only with the player's say-so (18 or older, the notice read).
+      if (request.headers.get(CONSENT_HEADER) !== CONSENT_VERSION) return fail("onay", 403);
+      row = await openAccount(env.DB, claims, newUserId(), CONSENT_VERSION, now);
+    }
     // A sign-in replaces whatever session this browser had.
     if (hash) await endSession(env.DB, hash);
     const id = newSessionId();

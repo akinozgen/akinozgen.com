@@ -56,6 +56,11 @@ export function AccountButton(): React.ReactElement {
     if (account.notice) show();
   }, [account.notice]);
 
+  // A first sign-in (from a redirect, say) waiting for the player's consent: the sheet asks.
+  useEffect(() => {
+    if (account.consent) show();
+  }, [account.consent]);
+
   useEffect(() => {
     window.addEventListener(OPEN_EVENT, show);
     return () => window.removeEventListener(OPEN_EVENT, show);

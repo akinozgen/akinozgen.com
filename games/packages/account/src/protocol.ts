@@ -7,7 +7,10 @@
  *
  *   GET /api/hesap/ben                     → {user: User | null}
  *   GET /api/hesap/giris   Authorization: Bearer <Firebase ID token>
- *                                          → {user} and the session cookie
+ *                          [X-Hesap-Onay: <CONSENT_VERSION>]
+ *                                          → {user} and the session cookie; for a Firebase user with
+ *                                            no account yet, 403 `onay` unless the header says the
+ *                                            player is 18 or older and has read this version of the notice
  *   GET /api/hesap/cikis                   → {ok: true}, the cookie cleared
  *   GET /api/hesap/ad      X-Hesap-Ad: <name, URI-encoded>
  *                                          → {user}; an empty name puts the default back
@@ -33,6 +36,12 @@ export const ACCOUNT_HEADER = "X-Hesap";
 export const NAME_HEADER = "X-Hesap-Ad";
 /** The header a device's stats travel in, to be imported. */
 export const DATA_HEADER = "X-Hesap-Veri";
+/** The header that carries a new player's consent: the version of the privacy notice they read. */
+export const CONSENT_HEADER = "X-Hesap-Onay";
+/** The privacy notice (/gizlilik/) a new account agrees to, by the date it took effect. */
+export const CONSENT_VERSION = "2026-10-16";
+/** How old a player must say they are to open an account. */
+export const MIN_AGE = 18;
 
 /** The games whose puzzles an account keeps (see migrations/0003_plays.sql). */
 export const PUZZLE_GAMES = ["travelle", "vexle", "tessle", "sizele"] as const;
@@ -77,6 +86,8 @@ export type AccountError =
   | "eski"
   /** An email-and-password account whose address isn't verified yet. */
   | "dogrulanmadi"
+  /** No account for this Firebase user yet, and no consent to open one. */
+  | "onay"
   /** A name that isn't fit to show. */
   | "ad"
   /** Not from a page of this site, or without the header. */

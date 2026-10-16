@@ -11,6 +11,7 @@
  * site must not, and against the site that refusal is what's checked.
  */
 import { FIREBASE_CONFIG } from "../src/config.ts";
+import { CONSENT_VERSION } from "../src/protocol.ts";
 
 const base = process.argv[2] ?? "http://localhost:8787";
 const live = new URL(base).hostname !== "localhost";
@@ -53,7 +54,9 @@ try {
   check((await call("giris", null, { Authorization: "Bearer not.a.token" })).status === 401, "a junk token is turned away");
   check((await fetch(`${base}/api/hesap/ben`, { headers: { Origin: origin } })).status === 403, "no X-Hesap header → 403");
 
-  const first = await call("giris", null, { Authorization: `Bearer ${token}` });
+  const unasked = await call("giris", null, { Authorization: `Bearer ${token}` });
+  check(unasked.status === 403 && unasked.body.error === (live ? "dogrulanmadi" : "onay"), live ? "an unverified address is kept out first" : "a first sign-in without consent opens no account");
+  const first = await call("giris", null, { Authorization: `Bearer ${token}`, "X-Hesap-Onay": CONSENT_VERSION });
   if (live) {
     check(first.status === 403 && first.body.error === "dogrulanmadi", "the site keeps an unverified address out");
   } else {

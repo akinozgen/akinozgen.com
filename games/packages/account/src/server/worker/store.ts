@@ -30,16 +30,25 @@ export async function userBySession(db: D1Database, hash: string, now: number): 
   return user;
 }
 
-/** The account for a Firebase user, made the first time they sign in; email and provider kept current. */
-export async function accountFor(db: D1Database, claims: IdClaims, newId: string, now: number): Promise<UserRow> {
-  await db
+/** The account a Firebase user signs in to, if they have one; email and provider kept current. */
+export async function accountOf(db: D1Database, claims: IdClaims, now: number): Promise<UserRow | null> {
+  return db
+    .prepare("UPDATE users SET email = ?, provider = ?, seen_at = ? WHERE firebase_uid = ? RETURNING *")
+    .bind(claims.email, claims.provider, now, claims.uid)
+    .first<UserRow>();
+}
+
+/** A new account for a Firebase user, with the consent it was opened on. */
+export async function openAccount(db: D1Database, claims: IdClaims, newId: string, consent: string, now: number): Promise<UserRow> {
+  const row = await db
     .prepare(
-      `INSERT INTO users (id, firebase_uid, email, provider, name, created_at, seen_at) VALUES (?, ?, ?, ?, NULL, ?, ?)
-       ON CONFLICT (firebase_uid) DO UPDATE SET email = excluded.email, provider = excluded.provider, seen_at = excluded.seen_at`,
+      `INSERT INTO users (id, firebase_uid, email, provider, name, created_at, seen_at, consented_at, consent_version)
+       VALUES (?, ?, ?, ?, NULL, ?, ?, ?, ?)
+       ON CONFLICT (firebase_uid) DO UPDATE SET email = excluded.email, provider = excluded.provider, seen_at = excluded.seen_at
+       RETURNING *`,
     )
-    .bind(newId, claims.uid, claims.email, claims.provider, now, now)
-    .run();
-  const row = await db.prepare("SELECT * FROM users WHERE firebase_uid = ?").bind(claims.uid).first<UserRow>();
+    .bind(newId, claims.uid, claims.email, claims.provider, now, now, now, consent)
+    .first<UserRow>();
   if (!row) throw new Error("account not written");
   return row;
 }
@@ -58,6 +67,28 @@ export async function endSession(db: D1Database, hash: string): Promise<void> {
 
 export async function setName(db: D1Database, userId: string, name: string | null): Promise<UserRow | null> {
   return db.prepare("UPDATE users SET name = ? WHERE id = ? RETURNING *").bind(name, userId).first<UserRow>();
+}
+
+/** Accounts nobody has used in this long are deleted, with everything they hold. */
+export const IDLE_ACCOUNT = 2 * 365 * DAY;
+
+/**
+ * The daily clean-up: accounts unused for two years go (their names leaving
+ * other players' records, as on a deletion), and sessions that have run out.
+ * Returns how many accounts went.
+ */
+export async function purgeIdle(db: D1Database, now: number): Promise<number> {
+  const cutoff = now - IDLE_ACCOUNT;
+  const [, gone] = await db.batch([
+    db
+      .prepare(
+        "UPDATE harfiyen_results SET opponent = NULL, opponent_id = NULL WHERE opponent_id IN (SELECT id FROM users WHERE seen_at < ?)",
+      )
+      .bind(cutoff),
+    db.prepare("DELETE FROM users WHERE seen_at < ?").bind(cutoff),
+    db.prepare("DELETE FROM sessions WHERE expires_at <= ?").bind(now),
+  ]);
+  return gone!.meta.changes;
 }
 
 /**

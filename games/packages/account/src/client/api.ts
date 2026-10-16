@@ -1,4 +1,4 @@
-import { ACCOUNT_HEADER, type AccountError, NAME_HEADER, type User } from "../protocol.ts";
+import { ACCOUNT_HEADER, type AccountError, CONSENT_HEADER, CONSENT_VERSION, NAME_HEADER, type User } from "../protocol.ts";
 
 /**
  * The account API from the page (see protocol.ts): five GETs, each with the
@@ -13,7 +13,7 @@ export type ApiError = AccountError | "ag";
 export type ApiReply<T> = { ok: true; data: T } | { ok: false; error: ApiError; status: number };
 
 const BASE = "/api/hesap";
-const ERRORS: readonly AccountError[] = ["oturum", "token", "eski", "dogrulanmadi", "ad", "koken", "yok"];
+const ERRORS: readonly AccountError[] = ["oturum", "token", "eski", "dogrulanmadi", "onay", "ad", "koken", "yok"];
 
 async function call<T>(
   path: string,
@@ -60,9 +60,13 @@ const done = (body: Record<string, unknown>): { ok: true } | null => (body.ok ==
 export const fetchMe = (): Promise<ApiReply<{ user: User | null }>> =>
   call("ben", (body) => (body.user === null ? { user: null } : withUser(body)));
 
-/** Trades a Firebase ID token for the site's session (the cookie comes with the answer). */
-export const exchangeToken = (idToken: string): Promise<ApiReply<{ user: User }>> =>
-  call("giris", withUser, { Authorization: `Bearer ${idToken}` });
+/**
+ * Trades a Firebase ID token for the site's session (the cookie comes with
+ * the answer). `agreed`: the player has said they're 18 or older and have
+ * read the notice, which a first sign-in needs to open an account.
+ */
+export const exchangeToken = (idToken: string, agreed = false): Promise<ApiReply<{ user: User }>> =>
+  call("giris", withUser, { Authorization: `Bearer ${idToken}`, ...(agreed ? { [CONSENT_HEADER]: CONSENT_VERSION } : {}) });
 
 /** Ends the session. */
 export const endSession = (): Promise<ApiReply<{ ok: true }>> => call("cikis", done);

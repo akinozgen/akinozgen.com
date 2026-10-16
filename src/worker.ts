@@ -11,7 +11,7 @@
 import { handle } from "@astrojs/cloudflare/handler";
 import words from "../games/packages/harfiyen/data/kelimeler.txt?raw";
 import { type HarfiyenEnv, provideWords, routeHarfiyen } from "../games/packages/harfiyen/src/server/worker/route.ts";
-import { type AccountEnv, proxyFirebaseAuth, routeAccount } from "../games/packages/account/src/server/worker/route.ts";
+import { type AccountEnv, proxyFirebaseAuth, purgeIdle, routeAccount } from "../games/packages/account/src/server/worker/route.ts";
 
 export { HarfiyenLobby, HarfiyenRoom } from "../games/packages/harfiyen/src/server/worker/route.ts";
 
@@ -24,5 +24,9 @@ export default {
     if (pathname.startsWith("/api/harfiyen/")) return routeHarfiyen(request, env as HarfiyenEnv);
     if (pathname.startsWith("/__/")) return proxyFirebaseAuth(request);
     return handle(request, env, ctx);
+  },
+  /** Once a day (wrangler.jsonc's cron): accounts unused for two years are deleted, run-out sessions cleared. */
+  async scheduled(_controller, env) {
+    await purgeIdle((env as unknown as AccountEnv).DB, Date.now());
   },
 } satisfies ExportedHandler<Env>;

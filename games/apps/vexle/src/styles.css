@@ -242,6 +242,8 @@ body {
 .modes {
   display: flex;
   gap: 2px;
+  /* The middle of the room between the name and the buttons. */
+  margin-inline: auto;
   padding: 3px;
   background: var(--panel);
   border: 1px solid var(--panel-line);
@@ -352,6 +354,16 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+/*
+ * The account's round button, in the same place in every game: on a wide
+ * screen the first of the tools, at their spacing; on a phone at the end of
+ * the switch's row (see below).
+ */
+.topbar__account {
+  display: flex;
+  margin-right: -4px;
 }
 
 .lang__select,
@@ -1756,14 +1768,22 @@ body {
     display: none;
   }
 
+  /* The switch takes a row of its own under the name and the tools, with the account at its end. */
   .topbar {
     flex-wrap: wrap;
   }
 
   .modes {
     order: 3;
-    width: 100%;
+    /* Too wide for the first row, with room left for the account beside it. */
+    flex: 1 0 calc(100% - 52px);
+    margin-inline: 0;
     justify-content: stretch;
+  }
+
+  .topbar__account {
+    order: 4;
+    margin-right: 0;
   }
 
   .modes__tab {
@@ -1825,9 +1845,75 @@ body {
     grid-template-columns: 1fr;
     justify-items: center;
   }
+}
 
-  .lang__select {
-    max-width: 104px;
+/* Phones: the name and the tools share the first row, a size down. */
+@media (max-width: 420px) {
+  .brand {
+    gap: 7px;
+  }
+
+  .brand__mark {
+    width: 26px;
+    height: 26px;
+  }
+
+  .brand__name {
+    font-size: 24px;
+  }
+
+  .topbar__tools {
+    gap: 4px;
+  }
+
+  .topbar .icon-button {
+    width: 34px;
+    height: 34px;
+  }
+
+  .topbar .lang__select {
+    height: 34px;
+    padding: 0 26px 0 11px;
+    font-size: 12px;
+    background-position: right 9px center;
+  }
+}
+
+/* The narrowest phones: still the name and the tools on one row. */
+@media (max-width: 350px) {
+  .app {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .topbar {
+    column-gap: 8px;
+  }
+
+  .brand {
+    gap: 6px;
+  }
+
+  .brand__mark {
+    width: 24px;
+    height: 24px;
+  }
+
+  .brand__name {
+    font-size: 21px;
+  }
+
+  .topbar .icon-button {
+    width: 32px;
+    height: 32px;
+  }
+
+  .topbar .lang__select {
+    height: 32px;
+  }
+
+  .modes__tab {
+    padding: 0 10px;
   }
 }
 

@@ -102,8 +102,10 @@ export function App(): React.ReactElement {
             </button>
           ))}
         </nav>
-        <nav className="topbar__tools">
+        <div className="topbar__account">
           <AccountButton />
+        </div>
+        <nav className="topbar__tools">
           <LanguagePicker />
           <ThemeToggle />
           <button type="button" className="icon-button" aria-label={t("stats")} onClick={() => setSheet("stats")}>

@@ -893,3 +893,35 @@
     transition: none;
   }
 }
+
+/* --- consent: the one box a new account is opened on --- */
+
+.account-agree {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.account-agree input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 1px 0 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.account-agree a {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.account-consent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}

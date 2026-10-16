@@ -18,6 +18,7 @@ import { chooseMove } from "../src/bot.ts";
 import { type Game, newGame } from "../src/game.ts";
 import { Lexicon } from "../src/lexicon.ts";
 import { FIREBASE_CONFIG } from "../../account/src/config.ts";
+import { CONSENT_VERSION } from "../../account/src/protocol.ts";
 import { PROTOCOL, type RoomMessage, toWire } from "../src/server/protocol.ts";
 import { type Table, tableFromJson } from "../src/view.ts";
 
@@ -49,7 +50,9 @@ async function account(name?: string): Promise<Account> {
     return json;
   };
   const user = await firebase("signUp", { email: `e2e-${crypto.randomUUID().slice(0, 8)}@example.com`, password: crypto.randomUUID(), returnSecureToken: true });
-  const signIn = await fetch(`${base}/api/hesap/giris`, { headers: { Origin: origin, "X-Hesap": "1", Authorization: `Bearer ${user.idToken}` } });
+  const signIn = await fetch(`${base}/api/hesap/giris`, {
+    headers: { Origin: origin, "X-Hesap": "1", Authorization: `Bearer ${user.idToken}`, "X-Hesap-Onay": CONSENT_VERSION },
+  });
   const signedIn = (await signIn.json()) as { user?: { tag: string } };
   const cookie = signIn.headers.get("Set-Cookie")?.split(";")[0];
   if (!cookie || !signedIn.user) throw new Error(`sign-in failed: ${signIn.status}`);
