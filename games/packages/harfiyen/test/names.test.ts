@@ -32,7 +32,7 @@ describe("player names", () => {
   });
 
   it("keep insults and impersonation out, whole words only, so the words they hide in pass", () => {
-    for (const bad of ["Orospu Çocuğu", "s1kt1r git", "Amk", "Pezevenk", "HARFIYEN", "Admin", "Kahpe", "siiiiktir", "Orospular", "Ş e r e f s i z"]) {
+    for (const bad of ["Orospu Çocuğu", "s1kt1r git", "Amk", "Pezevenk", "HARFIYEN", "Admin", "Kahpe", "siiiiktir", "Orospular", "Ş e r e f s i z", "AVEL", "Avel Kedi", "a v e l", "Aveller"]) {
       expect(cleanName(bad), bad).toBeNull();
     }
     // Teasing names a player may give themself.
