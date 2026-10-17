@@ -43,7 +43,7 @@ export function useDrag(api: PlayApi, onJoker: (square: number) => void) {
 
   const onPointerDown = useCallback(
     (event: React.PointerEvent) => {
-      if (event.button !== 0 || !api.yourTurn) return;
+      if (event.button !== 0) return;
       const el = (event.target as Element).closest<HTMLElement>("[data-slot],[data-draft]");
       if (!el) return;
       let from: Lift["from"];

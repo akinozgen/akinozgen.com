@@ -1064,6 +1064,11 @@ a.modes__tab {
   background: color-mix(in srgb, var(--detour) 16%, transparent);
 }
 
+.badge--wait {
+  color: var(--ink-soft);
+  background: var(--well);
+}
+
 .rack {
   --rack-gap: 8px;
   container-type: inline-size;
@@ -1079,14 +1084,6 @@ a.modes__tab {
     inset 0 1px 0 rgb(255 255 255 / 28%),
     inset 0 -4px 0 rgb(80 50 15 / 14%),
     var(--panel-shadow);
-  transition:
-    opacity 250ms ease,
-    filter 250ms ease;
-}
-
-.rack--waiting {
-  opacity: 0.62;
-  filter: saturate(0.6);
 }
 
 .rack__slot,
@@ -1108,11 +1105,7 @@ a.modes__tab {
   animation: rise-in 280ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
 }
 
-.rack__slot:disabled {
-  cursor: default;
-}
-
-.rack--live .rack__slot:hover:not(.is-picked) {
+.rack__slot:hover:not(.is-picked) {
   transform: translateY(-2px);
 }
 

@@ -39,16 +39,18 @@ export function arrange(before: readonly number[], rack: readonly number[]): num
 }
 
 /**
- * The player's hand on their turn: the rack in their order, the tiles laid
- * on the board but not yet played, the one picked up, and what the board
- * would read. The same whether the other side is the computer or a person.
+ * The player's hand: the rack in their order, the tiles laid on the board
+ * but not yet played, the one picked up, and what the board would read.
+ * Tiles can be tried on either turn; only playing them waits for the move.
+ * The same whether the other side is the computer or a person.
  */
 export function useHand(
   rack: readonly number[],
   board: Board,
   rules: Rules,
   lexicon: Lexicon | null,
-  yourTurn: boolean,
+  /** A game is on: dealt and not over. */
+  live: boolean,
   initialView?: number[],
 ) {
   const [view, setView] = useState<number[]>(() => initialView ?? [...rack]);
@@ -70,6 +72,15 @@ export function useHand(
     // Only the rack's contents matter, not the array it came in.
   }, [rackKey]);
 
+  // The other side's word may land where a tile was being tried: that tile goes back. A game that ends takes them all back.
+  useEffect(() => {
+    setDraft((before) => {
+      const kept = live ? before.filter((d) => board.cells[d.square] === -1) : [];
+      return kept.length === before.length ? before : kept;
+    });
+    if (!live) setSelected(null);
+  }, [board, live]);
+
   const placements: Placement[] = useMemo(
     () => draft.filter((d) => d.letter !== -1).map((d) => ({ square: d.square, letter: d.letter, joker: d.joker })),
     [draft],
@@ -88,7 +99,7 @@ export function useHand(
 
   const place = useCallback(
     (slot: number, square: number): Draft | null => {
-      if (!yourTurn || board.cells[square] !== -1) return null;
+      if (!live || board.cells[square] !== -1) return null;
       if (draft.some((d) => d.square === square)) return null;
       const tile = view[slot];
       const joker = tile === JOKER;
@@ -97,7 +108,7 @@ export function useHand(
       setSelected(null);
       return entry;
     },
-    [yourTurn, board, draft, view],
+    [live, board, draft, view],
   );
 
   const move = useCallback(

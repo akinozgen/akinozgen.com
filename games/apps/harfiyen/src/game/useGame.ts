@@ -59,7 +59,7 @@ export function useGame(lexicons: Lexicons | null) {
 
   const table = useMemo(() => viewOf(game, HUMAN), [game]);
   const yourTurn = game.turn === HUMAN && !game.over;
-  const hand = useHand(table.rack, table.board, table.rules, lexicons?.full ?? null, yourTurn, saved?.view);
+  const hand = useHand(table.rack, table.board, table.rules, lexicons?.full ?? null, !game.over, saved?.view);
 
   useEffect(() => {
     writeJson(SAVE_KEY, { game: saveGame(game), level, view: hand.view } satisfies Saved);

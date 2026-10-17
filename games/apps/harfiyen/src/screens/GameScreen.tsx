@@ -151,13 +151,18 @@ export function GameScreen({
   };
 
   const onRackTap = (slot: number): void => {
-    if (wasDrag() || !api.yourTurn) return;
+    if (wasDrag()) return;
     api.setSelected(api.selected === slot ? null : slot);
   };
 
   const unnamed = api.draft.some((d) => d.letter === -1);
   const canPlay = api.yourTurn && !api.busy && reading?.ok === true;
   const score = reading?.play?.score;
+
+  // A joker whose square the other side's word just took goes back to the rack, and its picker closes.
+  useEffect(() => {
+    if (naming !== null && !api.draft.some((d) => d.square === naming)) setNaming(null);
+  }, [naming, api.draft]);
 
   // The keyboard's square on the board, and which way typed letters run from it.
   const [cursor, setCursor] = useState(CENTER);
@@ -224,7 +229,7 @@ export function GameScreen({
         if (api.draft.length > 0) api.recallAll();
         return;
       }
-      if (!api.yourTurn || !inGame) return;
+      if (!inGame) return;
       if (event.key === " " && target?.closest("[data-square]")) {
         event.preventDefault();
         setTyping((way) => (way === "across" ? "down" : "across"));
@@ -295,6 +300,7 @@ export function GameScreen({
           ))}
           {reading.play.bingo && <span className="badge badge--bingo">Hepsi +{game.rules.bingo}</span>}
           {reading.play.star && <span className="badge badge--star">★ +{game.rules.starBonus}</span>}
+          {!api.yourTurn && <span className="badge badge--wait">Sıra karşıda</span>}
         </span>
       );
     } else if (reading) {
@@ -406,7 +412,6 @@ export function GameScreen({
                 selected={api.selected}
                 dragging={lift && "slot" in lift.from ? lift.from.slot : null}
                 values={game.rules.values}
-                disabled={!api.yourTurn}
                 size={game.rules.rackSize}
                 onTap={onRackTap}
               />
@@ -452,7 +457,7 @@ export function GameScreen({
                 </button>
                 <button type="button" className="button button--primary controls__play" disabled={!canPlay} onClick={api.submit}>
                   Oyna
-                  {canPlay && score !== undefined && <span className="button__score">+{score}</span>}
+                  {reading?.ok && score !== undefined && <span className="button__score">+{score}</span>}
                 </button>
               </div>
             </div>

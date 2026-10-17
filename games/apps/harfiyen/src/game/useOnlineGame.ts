@@ -323,7 +323,7 @@ export function useOnlineGame(
   const shown = useMemo(() => table ?? emptyTable(seat), [table, seat]);
   const playing = room?.phase === "playing" && table !== null && !table.over;
   const yourTurn = playing && table.turn === table.seat;
-  const hand = useHand(shown.rack, shown.board, shown.rules, lexicons?.full ?? null, yourTurn);
+  const hand = useHand(shown.rack, shown.board, shown.rules, lexicons?.full ?? null, playing);
 
   // The rack keeps the order the player gave it, across reloads too.
   const restored = useRef(false);

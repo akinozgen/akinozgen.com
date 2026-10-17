@@ -114,6 +114,38 @@ describe("an online game", () => {
     expect(result.current.view.slice(0, 2)).toEqual(rackOf("at"));
   });
 
+  it("on the other side's turn, tiles can be tried and scored but not played; their word takes back a tile in its way", () => {
+    const { result, socket } = start();
+    const table = tableFor(0, "kalemat", 1);
+    socket.receive({ t: "room", room: roomInfo(), table });
+    expect(result.current.yourTurn).toBe(false);
+    act(() => {
+      for (let i = 0; i < 5; i++) result.current.place(i, CENTRE_ROW + 5 + i);
+    });
+    expect(result.current.draft).toHaveLength(5);
+    expect(result.current.reading?.ok).toBe(true);
+    act(() => result.current.submit());
+    act(() => result.current.swap([0]));
+    act(() => result.current.pass());
+    expect(socket.sent).toHaveLength(1);
+
+    // Their word lands on the square the K was tried on; the rest stay, and now it's this side's move.
+    const cells = [...(table as { board: { cells: number[] } }).board.cells];
+    cells[CENTRE_ROW + 5] = rackOf("e")[0];
+    const after = laterTable(table, {
+      log: [{ player: 1, kind: "play", placements: [], words: ["ev"], score: 8, bingo: false, star: false }],
+      turn: 0,
+      board: { cells, joker: Array(cells.length).fill(0) } as never,
+    });
+    socket.receive({ t: "room", room: roomInfo(), table: after });
+    expect(result.current.yourTurn).toBe(true);
+    expect(result.current.draft.map((d) => d.square)).toEqual([6, 7, 8, 9].map((i) => CENTRE_ROW + i));
+
+    // A game that ends takes the rest back.
+    socket.receive({ t: "room", room: roomInfo({ phase: "over" }), table: laterTable(after, { over: { reason: "resign", winner: 1, leftovers: [0, 0] } }) });
+    expect(result.current.draft).toEqual([]);
+  });
+
   it("swaps and passes with the turn count too", () => {
     const { result, socket } = start();
     socket.receive({ t: "room", room: roomInfo(), table: tableFor(0) });

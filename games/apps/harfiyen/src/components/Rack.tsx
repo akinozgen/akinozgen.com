@@ -8,7 +8,6 @@ export function Rack({
   selected,
   dragging,
   values,
-  disabled,
   size,
   onTap,
 }: {
@@ -18,12 +17,11 @@ export function Rack({
   selected: number | null;
   dragging: number | null;
   values: readonly number[];
-  disabled: boolean;
   size: number;
   onTap: (slot: number) => void;
 }): React.ReactElement {
   return (
-    <div className={`rack${disabled ? " rack--waiting" : " rack--live"}`} data-rack="" role="group" aria-label="Harflerin">
+    <div className="rack" data-rack="" role="group" aria-label="Harflerin">
       {free.map((slot, i) => {
         const tile = view[slot];
         const joker = tile === JOKER;
@@ -37,7 +35,6 @@ export function Rack({
             style={{ animationDelay: `${i * 35}ms` }}
             aria-pressed={selected === slot}
             aria-label={tileName(joker ? -1 : tile, joker, value)}
-            disabled={disabled}
             onClick={() => onTap(slot)}
           >
             <Tile letter={joker ? -1 : tile} joker={joker} value={value} />
