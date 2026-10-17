@@ -27,7 +27,7 @@ export interface Piece {
   rings: number[][];
   /** Where the name sits, in the same frame as the rings. */
   label: [number, number];
-  /** The region it is. Left out in hard mode, until the round is over. */
+  /** The region it is. (A puzzle an older page saved in hard mode may lack it.) */
   id?: string;
 }
 
@@ -40,7 +40,8 @@ export interface Puzzle {
   pieces: Piece[];
   /**
    * The finished map's silhouette, north up, around the table's origin:
-   * the frame the pieces go into. Flat rings, filled even-odd.
+   * the frame the pieces go into. Flat rings, filled even-odd. Empty in
+   * hard mode, which is played without it.
    */
   outline: number[][];
 }

@@ -56,7 +56,7 @@ interface SavedGame {
   started: boolean;
   status: Status;
   reveal?: Reveal;
-  /** Played with hard mode on from the first move, and never switched off. */
+  /** Played with hard mode (no frame) on from the first move, and never switched off. */
   hardAll: boolean;
   /** Signed in: boards the server has judged for this round, as far as this page has seen… */
   checks?: number;
@@ -67,6 +67,8 @@ interface SavedGame {
 const GAME_PREFIX = "tessle:game:v1:";
 const ENDLESS_KEY = "tessle:endless:v1";
 const HARD_KEY = "tessle:hard:v1";
+/** Hard mode is one switch for both modes: flipped in one, it holds in the other at once. */
+const HARD_EVENT = "tessle:hard";
 const KEEP_GAMES = 14;
 
 /**
@@ -135,9 +137,9 @@ export interface Tessle {
   started: boolean;
   /** Time on the round so far, live; once it is over and on the account's record, the server's. */
   elapsed: () => number;
-  /** Pieces not yet in the frame. */
+  /** Pieces not yet in the frame; without one, separate things still to fit together. */
   left: number;
-  /** Names to print on the pieces, or null while they are hidden. */
+  /** Names to print on the pieces, or null until they are known. */
   labels: string[] | null;
   reveal: Reveal | null;
   hard: boolean;
@@ -170,6 +172,8 @@ export function useTessle(mode: Mode = "daily", active = true): Tessle {
   const key = endless ? ENDLESS_KEY : `${GAME_PREFIX}${date}`;
   const statsKey = endless ? ENDLESS_STATS_KEY : STATS_KEY;
   const [hard, setHardState] = useState<boolean>(() => readJson<boolean>(HARD_KEY) ?? false);
+  const hardRef = useRef(hard);
+  hardRef.current = hard;
   const [saved, setSaved] = useState<SavedGame>(() => {
     const stored = readJson<SavedGame>(key);
     if (stored && typeof stored.moves === "number") return stored;
@@ -263,7 +267,9 @@ export function useTessle(mode: Mode = "daily", active = true): Tessle {
     tableRound.current = id;
     // A puzzle saved before the frame existed waits for it to be fetched.
     if (!puzzle.outline) return;
-    const fresh = new Table(puzzle.pieces, savedRef.current.table, puzzle.outline);
+    // Hard mode has no frame; nor has a finished round, which lies wherever it was solved.
+    const framed = !hardRef.current && savedRef.current.status === "playing";
+    const fresh = new Table(puzzle.pieces, savedRef.current.table, framed ? puzzle.outline : []);
     // A finished round always opens as the finished map.
     if (savedRef.current.status !== "playing" && savedRef.current.reveal) fresh.settle(savedRef.current.reveal, 0);
     setTable(fresh);
@@ -271,9 +277,10 @@ export function useTessle(mode: Mode = "daily", active = true): Tessle {
   }, [puzzle, endless, saved.round, date, layout]);
 
   const loadingPuzzle = useRef(false);
+  /** Asks for the puzzle, unless it is already being asked for; says whether it did. */
   const load = useCallback(
-    (withHard: boolean) => {
-      if (loadingPuzzle.current) return;
+    (withHard: boolean): boolean => {
+      if (loadingPuzzle.current) return false;
       loadingPuzzle.current = true;
       setLoading(true);
       setFailed(false);
@@ -285,7 +292,8 @@ export function useTessle(mode: Mode = "daily", active = true): Tessle {
             if (current.puzzle) {
               // Asked again for the names or the frame: the shapes are the same ones.
               const pieces = current.puzzle.pieces.map((piece, i) => ({ ...piece, id: piece.id ?? fetched.pieces[i]?.id }));
-              store({ ...current, puzzle: { ...current.puzzle, pieces, outline: fetched.outline } });
+              const outline = fetched.outline.length > 0 ? fetched.outline : (current.puzzle.outline ?? []);
+              store({ ...current, puzzle: { ...current.puzzle, pieces, outline } });
             } else {
               store({ ...current, puzzle: fetched });
             }
@@ -300,14 +308,26 @@ export function useTessle(mode: Mode = "daily", active = true): Tessle {
           });
       };
       attempt();
+      return true;
     },
     [roundKey, store],
   );
 
+  // Fetched once for each need: the puzzle; the names, or the frame, a page
+  // saved without (an older one in hard mode, or this one turning it off).
+  // An answer that still lacks them is not asked again until the player retries.
+  const fetchedFor = useRef<string | null>(null);
   useEffect(() => {
-    if (active && (!saved.puzzle || !saved.puzzle.outline)) load(hard);
+    if (!active) return;
+    const current = saved.puzzle;
+    const missing =
+      !current || !current.outline || current.pieces.some((piece) => !piece.id) || (!hard && current.outline.length === 0);
+    if (!missing) return;
+    const want = `${saved.round ?? date}:${hard}`;
+    if (current && fetchedFor.current === want) return;
+    if (load(hard)) fetchedFor.current = want;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, saved.round, saved.puzzle]);
+  }, [active, saved.round, saved.puzzle, hard]);
 
   // --- the end of a round ---
   const finish = useCallback(
@@ -411,7 +431,7 @@ export function useTessle(mode: Mode = "daily", active = true): Tessle {
     queue.moved.clear();
     queue.busy = true;
     queue.lastAt = Date.now();
-    askFit(roundKey, board, moved, table.unitsPerPx, mark(), maybeSignedIn)
+    askFit(roundKey, board, moved, table.unitsPerPx, table.frame !== null, mark(), maybeSignedIn)
       .then((reply) => {
         const { stale } = table.applyFit(reply, sent, performance.now());
         queue.failures = 0;
@@ -444,6 +464,21 @@ export function useTessle(mode: Mode = "daily", active = true): Tessle {
   }, [table, roundKey, store, bank, finish, mark, maybeSignedIn]);
 
   useEffect(() => () => window.clearTimeout(fitQueue.current.timer), []);
+
+  // Hard mode switched mid-round: the frame goes, or comes back once it is
+  // here, and the board is judged again with or without it.
+  useEffect(() => {
+    if (!table || !puzzle?.outline || savedRef.current.status !== "playing") return;
+    const outline = hard ? [] : puzzle.outline;
+    if (outline === table.outline || (outline.length === 0 && !table.frame)) return;
+    table.setOutline(outline);
+    store({ ...savedRef.current, table: table.save() });
+    if (!savedRef.current.started) return;
+    const queue = fitQueue.current;
+    queue.dirty = true;
+    queue.failures = 0;
+    pump();
+  }, [table, hard, puzzle?.outline, store, pump]);
 
   /**
    * The account has this round further along than the page (played on
@@ -516,7 +551,7 @@ export function useTessle(mode: Mode = "daily", active = true): Tessle {
     const sent = table.snapshot();
     const board = current.status === "won" && current.judged ? current.judged : current.started ? boardText(sent) : null;
     queue.busy = true;
-    askFit(roundKey, board, [], table.unitsPerPx, mark(), true)
+    askFit(roundKey, board, [], table.unitsPerPx, table.frame !== null, mark(), true)
       .then((reply) => {
         if (board === null) return;
         if (savedRef.current.status === "playing") {
@@ -600,20 +635,26 @@ export function useTessle(mode: Mode = "daily", active = true): Tessle {
     pump();
   }, [pump]);
 
-  const setHard = useCallback(
-    (next: boolean) => {
+  // The switch, flipped here or in the other mode.
+  useEffect(() => {
+    const onHard = (event: Event): void => {
+      const next = (event as CustomEvent<boolean>).detail;
       setHardState(next);
-      writeJson(HARD_KEY, next);
       const current = savedRef.current;
       if (current.status !== "playing") return;
       // Before the first move the round simply starts in the new mode;
       // switching off once it is under way forfeits the mark.
       const hardAll = current.started ? current.hardAll && next : next;
       if (hardAll !== current.hardAll) store({ ...current, hardAll });
-      if (!next && current.puzzle && current.puzzle.pieces.some((piece) => !piece.id)) load(false);
-    },
-    [store, load],
-  );
+    };
+    window.addEventListener(HARD_EVENT, onHard);
+    return () => window.removeEventListener(HARD_EVENT, onHard);
+  }, [store]);
+
+  const setHard = useCallback((next: boolean) => {
+    writeJson(HARD_KEY, next);
+    window.dispatchEvent(new CustomEvent(HARD_EVENT, { detail: next }));
+  }, []);
 
   const next = useCallback(() => {
     if (!endless) return;
@@ -627,7 +668,7 @@ export function useTessle(mode: Mode = "daily", active = true): Tessle {
 
   const over = saved.status !== "playing";
   const ids = over ? saved.reveal?.ids : puzzle?.pieces.map((piece) => piece.id ?? "");
-  const labels = ids && (over || !hard) && ids.every(Boolean) ? ids : null;
+  const labels = ids && ids.every(Boolean) ? ids : null;
 
   return {
     mode,
@@ -640,7 +681,7 @@ export function useTessle(mode: Mode = "daily", active = true): Tessle {
     moves: saved.moves,
     started: saved.started,
     elapsed: shownElapsed,
-    left: table?.unplaced ?? puzzle?.pieces.length ?? 0,
+    left: (table?.frame ? table.unplaced : table?.clusters) ?? puzzle?.pieces.length ?? 0,
     labels,
     reveal: saved.reveal ?? null,
     hard,

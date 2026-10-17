@@ -17,8 +17,8 @@ import {
  * tessle's game server. The browser gets each country as a loose piece:
  * centred on itself, turned by a secret number of steps, in shuffled order.
  * Where a piece belongs, which way is north, which pieces share a border
- * and — in hard mode — which countries they are, stay here. Whether two
- * pieces fit, and whether the map is whole, is decided here too.
+ * and — in hard mode — the outline they make together, stay here. Whether
+ * two pieces fit, and whether the map is whole, is decided here too.
  *
  * Everything is a GET carrying the whole board, so no state is kept and any
  * edge can answer.
@@ -412,7 +412,7 @@ function silhouette(rings: number[][], cx: number, cy: number): number[][] {
 export interface Round {
   /** Region ids, in the order the pieces are sent. */
   ids: string[];
-  /** Pieces with their ids; hard mode strips them on the way out. */
+  /** The pieces as they are sent. */
   pieces: Piece[];
   /** Each piece's centre in the finished map, north up. */
   centres: Point[];
@@ -651,9 +651,16 @@ function reveal(round: Round): Reveal {
  * they face the same way and sit within the snap distance of where the map
  * puts one relative to the other. Each group that fits is snapped exactly
  * into place around a piece that stayed still, so a piece dropped onto the
- * board joins it rather than dragging it along.
+ * board joins it rather than dragging it along. Without the frame (hard
+ * mode), pieces only fit each other and the map is whole as one group.
  */
-export function judgeFit(round: Round, board: readonly PieceState[], moved: ReadonlySet<number>, unitsPerPx: number): FitReply {
+export function judgeFit(
+  round: Round,
+  board: readonly PieceState[],
+  moved: ReadonlySet<number>,
+  unitsPerPx: number,
+  withFrame = true,
+): FitReply {
   const n = round.ids.length;
   const tolerance = SNAP_PX * Math.min(UNITS_PER_PX.max, Math.max(UNITS_PER_PX.min, unitsPerPx));
   const facing = board.map(({ r }, i) => (round.turns[i] + r) % STEPS);
@@ -675,7 +682,7 @@ export function judgeFit(round: Round, board: readonly PieceState[], moved: Read
     if (dx * dx + dy * dy <= tolerance * tolerance) parent[find(i)] = find(j);
   }
   // A piece north up and near its place drops into the frame.
-  for (let i = 0; i < n; i++) {
+  for (let i = 0; i < n && withFrame; i++) {
     if (facing[i] !== 0) continue;
     const dx = board[i].x - round.home[i][0];
     const dy = board[i].y - round.home[i][1];
@@ -782,12 +789,9 @@ export async function handleTessle(
     }
 
     if (action === "daily" || action === "endless") {
+      // Hard mode plays without the frame, and the frame stays here.
       const hard = query.get("hard") === "1";
-      const puzzle: Puzzle = {
-        ...meta,
-        pieces: round.pieces.map(({ rings, label, id }) => (hard ? { rings, label } : { rings, label, id })),
-        outline: round.outline,
-      };
+      const puzzle: Puzzle = { ...meta, pieces: round.pieces, outline: hard ? [] : round.outline };
       return ok(puzzle);
     }
     if (action === "reveal") return ok(reveal(round));
@@ -801,7 +805,7 @@ export async function handleTessle(
     const board = parseBoard(query.get("p"), count);
     const moved = parseMoved(query.get("m"), count);
     const u = Number(query.get("u"));
-    return ok(judgeFit(round, board, moved, Number.isFinite(u) && u > 0 ? u : 1));
+    return ok(judgeFit(round, board, moved, Number.isFinite(u) && u > 0 ? u : 1, query.get("frame") !== "0"));
   } catch (error) {
     if (error instanceof BadRequest) return fail(400, error.message);
     throw error;

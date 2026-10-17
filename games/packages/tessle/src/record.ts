@@ -24,9 +24,9 @@ export interface TessleMoves {
   /** The player gave up and was shown the answer. */
   gaveUp: boolean;
   /**
-   * The page's word that the names were hidden throughout. The server can't
-   * know: it sends the names to any request for the round without `hard`,
-   * and whether the page shows them is the page's business. Until the first
+   * The page's word that the frame was hidden throughout. The server can't
+   * know: it sends the frame to any request for the round without `hard`,
+   * and whether the page shows it is the page's business. Until the first
    * board it follows the page; after that it only turns off.
    */
   hard: boolean;
@@ -53,7 +53,7 @@ export interface TessleResult {
  * The record a `fit` or `reveal` request belongs to, or null for any other:
  * "d:<date>" for a day's map, "e:<round>" for an endless one. `n` is the
  * boards the page has seen judged; `hard` is the page's claim that the round
- * has been played with the names hidden.
+ * has been played with the frame hidden.
  */
 export function tessleRules(action: string, query: URLSearchParams): PlayRules<TessleMoves, TessleResult, TessleRequest> | null {
   if (action !== "fit" && action !== "reveal") return null;

@@ -104,7 +104,9 @@ export function Board({
     const ctx = context;
 
     const paths = table.shapes.map((shape) => pathOf(shape.rings));
-    const framePath = table.outline.length > 0 ? pathOf(table.outline) : null;
+    // Hard mode takes the frame away mid-round, and turning it off brings it back.
+    let frameOutline: number[][] | null = null;
+    let framePath: Path2D | null = null;
     let palette = readPalette(wrap);
     let width = 0;
     let height = 0;
@@ -202,6 +204,10 @@ export function Board({
         dpr * (height / 2 - camera.y * camera.scale),
       );
       // The frame: where the finished map goes.
+      if (frameOutline !== table.outline) {
+        frameOutline = table.outline;
+        framePath = frameOutline.length > 0 ? pathOf(frameOutline) : null;
+      }
       if (framePath) {
         ctx.fillStyle = palette.slot;
         ctx.fill(framePath, "evenodd");

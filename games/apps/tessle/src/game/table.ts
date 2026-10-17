@@ -155,9 +155,9 @@ export class Table {
   readonly flashes = new Map<number, number>();
   /** Board units per screen pixel, as the board last drew them: the server's snap distance follows it. */
   unitsPerPx = 1;
-  /** The finished map's silhouette, at the table's origin: the frame. */
-  readonly outline: number[][];
-  readonly frame: Box | null;
+  /** The finished map's silhouette, at the table's origin: the frame. Empty in hard mode. */
+  outline: number[][];
+  frame: Box | null;
   /** Pieces the frame holds: they stay put. */
   placed: Set<number>;
   private laidOut: boolean;
@@ -179,6 +179,21 @@ export class Table {
 
   get isPlaced(): boolean {
     return this.laidOut;
+  }
+
+  /**
+   * Shows the frame, or takes it away (hard mode). Taken away, it lets go of
+   * the pieces it held: they lie where they are, loose, until the server says
+   * again which of them fit each other.
+   */
+  setOutline(outline: number[][]): void {
+    this.outline = outline;
+    this.frame = outline.length > 0 ? boxOf(outline) : null;
+    if (!this.frame && this.placed.size > 0) {
+      this.groups = this.groups.filter((group) => !group.some((i) => this.placed.has(i)));
+      this.placed = new Set();
+    }
+    this.invalidate();
   }
 
   subscribe(listener: () => void): () => void {

@@ -24,6 +24,7 @@ async function get<T>(action: string, params: Record<string, string | undefined>
 const roundParams = (key: RoundKey): Record<string, string> =>
   "date" in key ? { d: key.date } : { e: String(key.round) };
 
+/** The round's pieces; in hard mode without the frame, which the server keeps. */
 export function fetchPuzzle(key: RoundKey, hard: boolean): Promise<Puzzle> {
   const flag = hard ? "1" : undefined;
   return "date" in key
@@ -46,7 +47,7 @@ export function boardOf(text: string, count: number): PieceState[] | null {
 
 /**
  * What a signed-in page tells the server along with a board: how many boards
- * it has seen judged (`n`), and its word that the names have stayed hidden
+ * it has seen judged (`n`), and its word that the frame has stayed hidden
  * (`hard`), which only the page can know.
  */
 export interface Mark {
@@ -57,12 +58,17 @@ export interface Mark {
 const markParams = (mark: Mark | undefined): Record<string, string | undefined> =>
   mark ? { n: String(mark.checks), hard: mark.hard ? "1" : undefined } : {};
 
-/** Which pieces fit on `board` (a boardText); none, to ask where a round stands before anything is on it. */
+/**
+ * Which pieces fit on `board` (a boardText); none, to ask where a round
+ * stands before anything is on it. Without `frame` (hard mode), pieces only
+ * fit each other.
+ */
 export function askFit(
   key: RoundKey,
   board: string | null,
   moved: readonly number[],
   unitsPerPx: number,
+  frame: boolean,
   mark?: Mark,
   signedIn = false,
 ): Promise<FitReply> {
@@ -73,6 +79,7 @@ export function askFit(
       p: board ?? undefined,
       m: moved.join(","),
       u: unitsPerPx.toFixed(2),
+      frame: frame ? undefined : "0",
       ...markParams(mark),
     },
     signedIn,

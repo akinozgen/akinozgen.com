@@ -1,7 +1,7 @@
 import { useId } from "react";
 import { useLocale } from "../i18n/index.tsx";
 
-/** Hard mode: no names on the pieces. A switch, not a setting buried in a menu. */
+/** Hard mode: no frame to fill. A switch, not a setting buried in a menu. */
 export function HardToggle({
   on,
   disabled = false,

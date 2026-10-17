@@ -167,6 +167,18 @@ describe("the table", () => {
     expect(new Table(pieces, table.save(), outline).placed.has(0)).toBe(true);
   });
 
+  it("lets go of the pieces it held when the frame is taken away", async () => {
+    const { pieces, outline } = await puzzle();
+    const table = new Table(pieces, { pieces: pieces.map(() => ({ x: 0, y: 0, r: 0 })), groups: [[0, 1], [2, 3]], order: pieces.map((_, i) => i), placed: [0, 1] }, outline);
+    table.setOutline([]);
+    expect(table.frame).toBeNull();
+    expect(table.placed.size).toBe(0);
+    expect(table.groups).toEqual([[2, 3]]);
+    expect(table.unplaced).toBe(pieces.length);
+    table.setOutline(outline);
+    expect(table.frame).not.toBeNull();
+  });
+
   it("saves and restores", async () => {
     const { pieces } = await puzzle();
     const table = new Table(pieces);

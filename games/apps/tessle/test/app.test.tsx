@@ -86,15 +86,43 @@ describe("a round", () => {
     expect(result.current.labels).toEqual(answer.ids);
   });
 
-  it("hides the names in hard mode until the round is over", async () => {
+  it("plays hard mode without the frame, and brings it back when switched off", async () => {
     localStorage.setItem("tessle:hard:v1", "true");
     const { result } = renderHook(() => useTessle("daily"));
-    await waitFor(() => expect(result.current.puzzle).not.toBeNull());
-    expect(result.current.labels).toBeNull();
-    expect(result.current.puzzle!.pieces.every((piece) => piece.id === undefined)).toBe(true);
-    // Switching it off before the first move asks the server for the names.
+    await waitFor(() => expect(result.current.table).not.toBeNull());
+    expect(result.current.puzzle!.outline).toEqual([]);
+    expect(result.current.table!.frame).toBeNull();
+    expect(result.current.labels).not.toBeNull();
+    expect(result.current.left).toBe(result.current.puzzle!.pieces.length);
+    // Switching it off asks the server for the frame.
     act(() => result.current.setHard(false));
-    await waitFor(() => expect(result.current.labels).not.toBeNull());
+    await waitFor(() => expect(result.current.table!.frame).not.toBeNull());
+    expect(result.current.puzzle!.outline.length).toBeGreaterThan(0);
     expect(result.current.hardAll).toBe(false);
+    // And on again, it goes.
+    act(() => result.current.setHard(true));
+    await waitFor(() => expect(result.current.table!.frame).toBeNull());
+  });
+
+  it("is won in hard mode as one piece, wherever it lies", async () => {
+    localStorage.setItem("tessle:hard:v1", "true");
+    const { result } = renderHook(() => useTessle("daily"));
+    await waitFor(() => expect(result.current.table).not.toBeNull());
+    const table = result.current.table!;
+    table.layout(1.6, 1);
+    const answer = (await (await fetch(`/api/tessle/reveal?d=${DAY}`)).json()) as Reveal;
+    table.state = answer.home.map(([x, y], i) => ({ x: x + 4000, y: y - 2000, r: answer.turns[i] }));
+    act(() => result.current.act([0]));
+    await waitFor(() => expect(result.current.status).toBe("won"));
+    expect(result.current.hardAll).toBe(true);
+    expect(result.current.stats).toMatchObject({ played: 1, won: 1, hardWins: 1 });
+  });
+
+  it("flips hard mode in both modes at once", async () => {
+    const { result } = renderHook(() => ({ daily: useTessle("daily"), endless: useTessle("endless", false) }));
+    expect(result.current.endless.hard).toBe(false);
+    act(() => result.current.daily.setHard(true));
+    expect(result.current.daily.hard).toBe(true);
+    expect(result.current.endless.hard).toBe(true);
   });
 });

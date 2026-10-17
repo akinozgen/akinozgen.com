@@ -127,10 +127,12 @@ describe("the pieces", () => {
     expect((await dailyRound(SEED, 3)).turns.some((k) => k !== 0)).toBe(true);
   });
 
-  it("keep their names to themselves in hard mode", async () => {
+  it("keep the frame to themselves in hard mode, and the names on", async () => {
+    const normal = (await call("daily", { date: DAY })).body as Puzzle;
     const puzzle = (await call("daily", { date: DAY, hard: "1" })).body as Puzzle;
-    expect(puzzle.pieces.every((piece) => piece.id === undefined)).toBe(true);
-    expect(JSON.stringify(puzzle)).not.toMatch(/"id"/);
+    expect(puzzle.outline).toEqual([]);
+    expect(puzzle.pieces).toEqual(normal.pieces);
+    expect(puzzle.pieces.every((piece) => typeof piece.id === "string")).toBe(true);
   });
 
   it("deal endless rounds from the browser's number, the same each time", async () => {
@@ -217,6 +219,20 @@ describe("fitting", () => {
     expect((await fit(board)).placed).toEqual([]);
   });
 
+  it("holds nothing in a frame that is not there (hard mode)", async () => {
+    const reveal = await revealFor();
+    const far = (i: number): PieceState => ({ x: 5000 + i * 3000, y: -5000, r: 0 });
+    const board = reveal.home.map((_, i) => far(i));
+    board[2] = { x: reveal.home[2][0] + 4, y: reveal.home[2][1] - 3, r: reveal.turns[2] };
+    expect((await fit(board, { m: "2", frame: "0" })).placed).toEqual([]);
+    // Whole as one group, wherever it lies.
+    const whole = await fit(solvedBoard(reveal, 0, 3000, 3000), { frame: "0" });
+    expect(whole.placed).toEqual([]);
+    expect(whole.groups).toHaveLength(1);
+    expect(whole.solved).toBe(true);
+    expect(whole.reveal).not.toBeNull();
+  });
+
   it("calls the map whole when every piece is in the frame", async () => {
     const reveal = await revealFor();
     const reply = await fit(solvedBoard(reveal));
@@ -244,7 +260,7 @@ describe("fitting", () => {
     };
     const within = reveal.home.filter(([x, y]) => inside(x, y)).length;
     expect(within).toBeGreaterThanOrEqual(reveal.ids.length - 1);
-    expect((await call("daily", { date: DAY, hard: "1" })).body).toHaveProperty("outline");
+    expect((await call("daily", { date: DAY, hard: "1" })).body).toHaveProperty("outline", []);
   });
 
   it("only joins pieces that share a border", async () => {
