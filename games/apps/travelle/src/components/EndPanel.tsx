@@ -1,6 +1,7 @@
 import { msUntilNextDay, type Stats } from "@travelle/core";
 import { useEffect, useState } from "react";
 import { Confetti } from "./Confetti.tsx";
+import { StatsView } from "./StatsView.tsx";
 import type { Puzzle } from "../game/puzzle.ts";
 import { copyText, shareText } from "../game/share.ts";
 import { plural, useLocale } from "../i18n/index.tsx";
@@ -81,29 +82,7 @@ export function EndPanel({
         </p>
       )}
 
-      <dl className="stats">
-        <div>
-          <dt>{t("statPlayed")}</dt>
-          <dd>{stats.played}</dd>
-        </div>
-        <div>
-          <dt>{t("statSolved")}</dt>
-          <dd>{stats.won}</dd>
-        </div>
-        <div>
-          <dt>{t("statPerfect")}</dt>
-          <dd>{stats.perfect}</dd>
-        </div>
-        <div>
-          <dt>{t("statStreak")}</dt>
-          <dd>{stats.streak}</dd>
-        </div>
-        <div>
-          <dt>{t("statBest")}</dt>
-          <dd>{stats.bestStreak}</dd>
-        </div>
-      </dl>
-      {game.imported > 0 && <p className="muted stats__note">{t("importedNote", { n: game.imported })}</p>}
+      <StatsView stats={stats} imported={game.imported} />
     </section>
   );
 }

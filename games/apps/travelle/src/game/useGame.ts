@@ -4,7 +4,7 @@ import type { HintName, Status, TravelleResult, Verdict } from "@travelle/geo/cl
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { judge } from "./api.ts";
 import type { Puzzle } from "./puzzle.ts";
-import { deviceStats, importedStats, movesOf, statsFromRecords } from "./records.ts";
+import { deviceStats, type Kind, localStatsKey, movesOf, shownRecord } from "./records.ts";
 import { isRegion } from "./regions.ts";
 
 /** The hints Travle offers, in the order they're shown. */
@@ -187,14 +187,8 @@ export function useGame({ puzzle, statsKey, sequence }: Round): Game {
     }
   }, [status, signedIn, refresh]);
 
-  // Signed in, the record is the account's, counted from the server's verdicts;
-  // until it arrives, nothing is shown rather than this browser's own.
   const kind = puzzle.kind;
-  const shown = useMemo(() => {
-    if (records.status === "ready") return statsFromRecords(records.plays, records.imported, kind);
-    return records.status === "loading" ? emptyStats : stats;
-  }, [records.status, records.plays, records.imported, kind, stats]);
-  const imported = records.status === "ready" ? (importedStats(records.imported, kind)?.played ?? 0) : 0;
+  const { stats: shown, imported } = useMemo(() => shownRecord(records, kind, stats), [records, kind, stats]);
 
   const guess = useCallback(
     (regionId: string) => {
@@ -246,4 +240,11 @@ export function useGame({ puzzle, statsKey, sequence }: Round): Game {
     giveUp,
     retry,
   };
+}
+
+/** One mode's record away from a round, for the stats sheet: what a round would show. */
+export function useRecord(kind: Kind): { stats: Stats; imported: number } {
+  const records = usePuzzleRecords<TravelleResult>("travelle", deviceStats);
+  const [local] = useState(() => readJson<Stats>(localStatsKey(kind)) ?? emptyStats);
+  return useMemo(() => shownRecord(records, kind, local), [records, kind, local]);
 }

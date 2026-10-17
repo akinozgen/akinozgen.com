@@ -135,9 +135,21 @@ export function Board({
             )}
             {footer}
           </aside>
+          <Credits />
         </div>
       </div>
     </>
+  );
+}
+
+/** Under the globe on a wide screen; at the end of the sheet on a phone. */
+function Credits(): React.ReactElement {
+  const { t } = useLocale();
+  return (
+    <footer className="credits">
+      <a href="/games/">akinozgen.com/games</a>
+      <span>{t("credit")}</span>
+    </footer>
   );
 }
 
@@ -154,6 +166,7 @@ export function EmptyBoard({ children }: { children: React.ReactNode }): React.R
           <aside className="panel panel--play">
             <p className="empty">{children}</p>
           </aside>
+          <Credits />
         </div>
       </div>
     </>

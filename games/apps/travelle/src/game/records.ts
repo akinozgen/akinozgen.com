@@ -1,4 +1,5 @@
 import type { Imported, PlayRecord } from "@akinozgen/account";
+import type { PuzzleRecords } from "@akinozgen/account/client";
 import { emptyStats, readJson, recordResult, type Stats } from "@travelle/core";
 import type { TravelleMoves, TravelleResult } from "@travelle/geo/client";
 import { ENDLESS_STATS_KEY } from "./endless.ts";
@@ -13,6 +14,9 @@ import { EPOCH } from "./puzzle.ts";
 export const DAILY_STATS_KEY = "travle:stats:v1";
 
 export type Kind = "daily" | "endless";
+
+/** Where this browser keeps one mode's own record. */
+export const localStatsKey = (kind: Kind): string => (kind === "daily" ? DAILY_STATS_KEY : ENDLESS_STATS_KEY);
 
 /** What the device had recorded, for the one-time import; null when it has nothing. */
 export function deviceStats(): { daily: Stats | null; endless: Stats | null } | null {
@@ -66,6 +70,18 @@ export function statsFromRecords(plays: readonly PlayRecord<TravelleResult>[], i
     for (const play of rounds) stats = recordResult(stats, round++, play.result);
   }
   return stats;
+}
+
+/**
+ * The record to show. Signed in, the account's, counted from the server's
+ * verdicts; until it arrives, nothing rather than this browser's own. Signed
+ * out, or with the server out of reach, `local`.
+ */
+export function shownRecord(records: PuzzleRecords<TravelleResult>, kind: Kind, local: Stats): { stats: Stats; imported: number } {
+  if (records.status === "ready") {
+    return { stats: statsFromRecords(records.plays, records.imported, kind), imported: importedStats(records.imported, kind)?.played ?? 0 };
+  }
+  return { stats: records.status === "loading" ? emptyStats : local, imported: 0 };
 }
 
 /** A record's moves as the server sent them back, if they look like travelle's. */

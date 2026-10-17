@@ -189,6 +189,23 @@ describe("the trimmings", () => {
     const countdown = await screen.findByText(/Next travelle in/);
     expect(countdown.textContent).toMatch(/\d\d:\d\d:\d\d/);
   });
+
+  it("keeps both records in the stats sheet, and the way back to the games", async () => {
+    await renderApp();
+    expect(screen.getByRole("link", { name: "akinozgen.com/games" }).getAttribute("href")).toBe("/games/");
+
+    fireEvent.click(screen.getByRole("button", { name: "Give up" }));
+    await screen.findByText(/Next travelle in/);
+    fireEvent.click(screen.getByRole("button", { name: "Statistics" }));
+
+    const sheet = screen.getByRole("dialog", { name: "Statistics" });
+    const [daily, endless] = Array.from(sheet.querySelectorAll<HTMLElement>(".stats"));
+    expect(within(sheet).getByRole("heading", { name: "Daily" })).toBeTruthy();
+    expect(within(sheet).getByRole("heading", { name: "Endless" })).toBeTruthy();
+    expect(within(daily!).getByText("Played").nextElementSibling?.textContent).toBe("1");
+    expect(within(endless!).getByText("Played").nextElementSibling?.textContent).toBe("0");
+    expect(within(sheet).getByText("Finish a round to start your record.")).toBeTruthy();
+  });
 });
 
 describe("languages", () => {

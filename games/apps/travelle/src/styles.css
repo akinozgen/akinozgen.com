@@ -233,6 +233,7 @@ body {
   grid-template:
     "top top top" auto
     "play window side" minmax(0, 1fr)
+    "play credits side" auto
     / minmax(300px, 360px) minmax(0, 1fr) minmax(280px, 330px);
   gap: 16px;
   padding: 16px;
@@ -317,14 +318,42 @@ body {
   pointer-events: auto;
 }
 
-.topbar__brand {
+.brand {
+  flex: none;
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 10px;
   min-width: 0;
 }
 
-.topbar__title {
+/* A route: the start, one country on the way, the end. */
+.brand__mark {
+  width: 30px;
+  height: 30px;
+  flex: none;
+}
+
+.brand__mark path {
+  fill: none;
+  stroke: var(--chain);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.brand__mark circle:nth-of-type(1) {
+  fill: var(--start);
+}
+
+.brand__mark circle:nth-of-type(2) {
+  fill: var(--chain);
+}
+
+.brand__mark circle:nth-of-type(3) {
+  fill: var(--end);
+}
+
+.brand__name {
   margin: 0;
   font-size: 30px;
   font-weight: 850;
@@ -336,7 +365,7 @@ body {
 /* Gradient only where it can be clipped to the glyphs; elsewhere the solid
    accent above stands, rather than a title made of transparent text. */
 @supports (background-clip: text) or (-webkit-background-clip: text) {
-  .topbar__title {
+  .brand__name {
     background: linear-gradient(105deg, var(--start), var(--accent) 40%, var(--end) 75%, var(--chain));
     -webkit-background-clip: text;
     background-clip: text;
@@ -344,10 +373,10 @@ body {
   }
 }
 
-.topbar__tag {
+.brand__tag {
   color: var(--ink-soft);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 650;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -356,7 +385,6 @@ body {
 .topbar__tools {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
   gap: 8px;
 }
 
@@ -370,14 +398,13 @@ body {
   margin-right: -4px;
 }
 
-.chip,
 .lang__select,
 .icon-button {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  height: 36px;
-  padding: 0 14px;
+  justify-content: center;
+  gap: 7px;
+  height: 38px;
   font: inherit;
   font-size: 13px;
   font-weight: 600;
@@ -389,15 +416,28 @@ body {
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   cursor: pointer;
+  text-decoration: none;
+  transition:
+    color 150ms ease,
+    transform 90ms ease;
 }
 
 .lang__select {
-  padding: 0 10px;
+  padding: 0 32px 0 14px;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5l3 3 3-3' fill='none' stroke='%23888' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
+}
+
+.lang__select option {
+  color: initial;
 }
 
 .icon-button {
-  justify-content: center;
-  width: 36px;
+  width: 38px;
   padding: 0;
 }
 
@@ -411,7 +451,6 @@ body {
   stroke-linejoin: round;
 }
 
-.chip:hover,
 .lang__select:hover,
 .icon-button:hover {
   color: var(--accent);
@@ -421,24 +460,24 @@ body {
   transform: scale(0.96);
 }
 
-/* Shown only where a chip is down to its icon (narrow phones, below). */
-.chip__icon {
-  display: none;
-  flex: none;
-  width: 18px;
-  height: 18px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+/* The middle of the room between the name and the buttons. */
+.topbar__modes {
+  position: relative;
+  display: flex;
+  margin-inline: auto;
+}
+
+/* Hangs off the switch's right, so turning endless on doesn't shift the switch. */
+.topbar__setup {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 8px);
+  translate: 0 -50%;
 }
 
 .modes {
   display: flex;
   gap: 2px;
-  /* The middle of the room between the name and the buttons. */
-  margin-inline: auto;
   padding: 3px;
   background: var(--panel);
   border: 1px solid var(--panel-line);
@@ -449,8 +488,11 @@ body {
 }
 
 .modes__tab {
-  height: 30px;
-  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 16px;
   font: inherit;
   font-size: 13px;
   font-weight: 650;
@@ -459,6 +501,9 @@ body {
   border: 0;
   border-radius: 999px;
   cursor: pointer;
+  transition:
+    color 150ms ease,
+    background 150ms ease;
 }
 
 .modes__tab:hover:not(.is-on) {
@@ -468,6 +513,32 @@ body {
 .modes__tab.is-on {
   color: #fff;
   background: var(--accent);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .modes__tab.is-on {
+    color: #0b1020;
+  }
+}
+
+:root[data-theme="dark"] .modes__tab.is-on {
+  color: #0b1020;
+}
+
+/* Under the globe, between the panels. */
+.credits {
+  grid-area: credits;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-self: end;
+  gap: 4px 18px;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.credits a {
+  color: inherit;
 }
 
 /* --- the route being asked for --- */
@@ -573,7 +644,7 @@ body {
     gap: 8px;
   }
 
-  .topbar__brand {
+  .brand {
     grid-area: brand;
   }
 
@@ -582,10 +653,24 @@ body {
     justify-self: end;
   }
 
-  .modes {
+  .topbar__modes {
     grid-area: modes;
-    justify-self: start;
+    gap: 8px;
     margin-inline: 0;
+  }
+
+  .modes {
+    flex: 1;
+  }
+
+  .topbar__setup {
+    position: static;
+    translate: none;
+  }
+
+  .modes__tab {
+    flex: 1;
+    justify-content: center;
   }
 
   .topbar__account {
@@ -593,28 +678,13 @@ body {
     margin-right: 0;
   }
 
-  .topbar__title {
-    font-size: 24px;
-  }
-
-  .topbar__tag {
+  .brand__tag {
     display: none;
   }
 
-  .topbar__tools {
-    gap: 6px;
-  }
-
-  .chip,
-  .lang__select {
-    height: 32px;
-    padding: 0 11px;
-    font-size: 12px;
-  }
-
-  .icon-button {
-    width: 32px;
-    height: 32px;
+  .credits {
+    align-self: stretch;
+    margin-top: 6px;
   }
 
   .prompt {
@@ -622,43 +692,71 @@ body {
   }
 }
 
-/* Narrow phones: the text chips keep only their icons, round like the theme switch, so the tools fit beside the name. */
-@media (max-width: 480px) {
-  .topbar .chip {
-    position: relative;
-    justify-content: center;
-    width: 32px;
-    padding: 0;
+/* Phones: the name and the tools share the first row, a size down. */
+@media (max-width: 420px) {
+  .brand {
+    gap: 7px;
   }
 
-  .chip__label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
+  .brand__mark {
+    width: 26px;
+    height: 26px;
   }
 
-  .chip__icon {
-    display: block;
+  .brand__name {
+    font-size: 24px;
   }
 
-  .chip__glyph {
-    font-size: 16px;
-    line-height: 1;
+  .topbar__tools {
+    gap: 4px;
+  }
+
+  .topbar .icon-button {
+    width: 34px;
+    height: 34px;
+  }
+
+  .topbar .lang__select {
+    height: 34px;
+    padding: 0 26px 0 11px;
+    font-size: 12px;
+    background-position: right 9px center;
   }
 }
 
 /* The narrowest phones: still the name and the tools on one row. */
 @media (max-width: 350px) {
-  .topbar__title {
-    font-size: 21px;
+  .topbar {
+    column-gap: 8px;
   }
 
-  .topbar__tools {
-    gap: 4px;
+  .brand {
+    gap: 6px;
+  }
+
+  .brand__mark {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* A longer name than its siblings': a size smaller, and a slimmer picker. */
+  .brand__name {
+    font-size: 20px;
+  }
+
+  .topbar .icon-button {
+    width: 32px;
+    height: 32px;
+  }
+
+  .topbar .lang__select {
+    height: 32px;
+    padding: 0 22px 0 9px;
+    background-position: right 7px center;
+  }
+
+  .modes__tab {
+    padding: 0 10px;
   }
 }
 
@@ -667,7 +765,7 @@ body {
     grid-template-columns: minmax(280px, 320px) minmax(0, 1fr) minmax(250px, 290px);
   }
 
-  .topbar__tag {
+  .brand__tag {
     display: none;
   }
 }
