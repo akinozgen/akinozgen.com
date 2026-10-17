@@ -508,6 +508,10 @@ a.modes__tab {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  /* Tiles are dragged here: a press that misses one mustn't start selecting the board's text instead. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .stage__meta {

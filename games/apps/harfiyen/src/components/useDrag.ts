@@ -76,6 +76,8 @@ export function useDrag(api: PlayApi, onJoker: (square: number) => void) {
         touch: event.pointerType === "touch" || event.pointerType === "pen",
       };
       dragged.current = false;
+      // Text selected elsewhere would be dragged along instead, or ride over the board.
+      window.getSelection()?.removeAllRanges();
 
       // On a zoomed board, a tile held near the window's edge pans the board that way.
       let pan = 0;

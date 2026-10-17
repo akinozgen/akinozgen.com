@@ -338,7 +338,8 @@ export function GameScreen({
 
   return (
     <PlayersProvider value={players}>
-      <main className="stage" onPointerDown={onPointerDown}>
+      {/* The browser's own dragging — of selected text, of a picture — would take the pointer from a tile's. */}
+      <main className="stage" onPointerDown={onPointerDown} onDragStart={(event) => event.preventDefault()}>
         <section className="stage__board">
           <div className="stage__meta only-wide">
             <p className="stage__when">{meta}</p>
